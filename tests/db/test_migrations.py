@@ -22,8 +22,10 @@ EXPECTED_TABLES = {
     "organizations",
     "payments",
     "products",
+    "refresh_tokens",
     "sequences",
     "subscriptions",
+    "user_credentials",
     "users",
 }
 
@@ -67,9 +69,9 @@ def test_every_business_table_has_organization_id(alembic_config):
     engine = create_engine(f"sqlite:///{db_path.as_posix()}")
     try:
         inspector = inspect(engine)
-        # users are global (they authenticate before a tenant is bound);
-        # organizations is the tenant itself.
-        exempt = {"alembic_version", "users", "organizations"}
+        # users + credentials are global (they authenticate before a tenant is
+        # bound); organizations is the tenant itself.
+        exempt = {"alembic_version", "users", "organizations", "user_credentials"}
         for table in set(inspector.get_table_names()) - exempt:
             columns = {col["name"] for col in inspector.get_columns(table)}
             assert "organization_id" in columns, f"{table} is missing organization_id"

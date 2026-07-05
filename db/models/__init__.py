@@ -2,6 +2,7 @@ from ._base import Base
 from .audit_log import AuditLogRow
 from .client import ClientRow
 from .company import CompanyRow
+from .credential import RefreshTokenRow, UserCredentialRow
 from .credit_note import CreditNoteLineRow, CreditNoteRow
 from .invoice import InvoiceLineRow, InvoiceRow
 from .organization import OrganizationRow
@@ -24,7 +25,9 @@ __all__ = [
     "OrganizationRow",
     "PaymentRow",
     "ProductRow",
+    "RefreshTokenRow",
     "SequenceRow",
     "SubscriptionRow",
+    "UserCredentialRow",
     "UserRow",
 ]
