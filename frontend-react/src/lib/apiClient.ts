@@ -102,7 +102,9 @@ export class ApiClient {
     this.baseUrl = options.baseUrl.replace(/\/$/, "");
     this.tokens = options.tokens ?? new MemoryTokenStore();
     this.onAuthLost = options.onAuthLost;
-    this.fetchImpl = options.fetchImpl ?? fetch;
+    // bind: calling an unbound `fetch` through an instance property rebinds
+    // `this` and throws "Illegal invocation" in browsers (fine in Node).
+    this.fetchImpl = options.fetchImpl ?? fetch.bind(globalThis);
   }
 
   private async rawRequest(
