@@ -1,0 +1,26 @@
+{
+  "name": "billgen-monorepo",
+  "private": true,
+  "version": "0.0.1",
+  "workspaces": [
+    "frontend-react",
+    "frontend-electron",
+    "frontend-saas"
+  ],
+  "scripts": {
+    "dev:saas": "npm --workspace frontend-saas run dev",
+    "dev:electron": "npm --workspace frontend-electron run dev",
+    "build": "npm run --workspaces --if-present build",
+    "test": "npm run --workspaces --if-present test",
+    "lint": "npm run --workspaces --if-present lint",
+    "typecheck": "npm run --workspaces --if-present typecheck"
+  },
+  "devDependencies": {
+    "eslint": "^9.10.0",
+    "@typescript-eslint/eslint-plugin": "^8.4.0",
+    "@typescript-eslint/parser": "^8.4.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.0"
+  }
+}

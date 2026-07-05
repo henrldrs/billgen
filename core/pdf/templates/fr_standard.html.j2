@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+<meta charset="utf-8">
+<title>{{ doc_title }} {{ invoice.reference }}</title>
+<style>
+  @page { size: A4; margin: 18mm; }
+  body { font-family: "Segoe UI", Arial, sans-serif; color: #1a1a1a; font-size: 10pt; }
+  header { display: flex; justify-content: space-between; margin-bottom: 24px; }
+  .company h1 { font-size: 14pt; margin: 0 0 4px; }
+  .muted { color: #555; }
+  .doc-title { text-align: right; }
+  .doc-title h2 { font-size: 20pt; margin: 0; letter-spacing: 2px; }
+  .meta { display: flex; justify-content: flex-end; margin: 16px 0; }
+  .client-block { border: 1px solid #ddd; padding: 10px 14px; min-width: 220px; }
+  table.lines { width: 100%; border-collapse: collapse; margin-top: 18px; }
+  table.lines th { background: #f2f2f2; text-align: left; padding: 6px 8px; border-bottom: 2px solid #333; }
+  table.lines td { padding: 6px 8px; border-bottom: 1px solid #e0e0e0; }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  .totals { margin-top: 14px; margin-left: auto; width: 45%; }
+  .totals table { width: 100%; border-collapse: collapse; }
+  .totals td { padding: 4px 8px; }
+  .totals .grand td { font-weight: bold; border-top: 2px solid #333; font-size: 11pt; }
+  .mentions { margin-top: 18px; font-size: 8.5pt; color: #444; }
+  footer { margin-top: 28px; padding-top: 8px; border-top: 1px solid #ccc; font-size: 8.5pt; color: #555; }
+</style>
+</head>
+<body>
+<header>
+  <div class="company">
+    <h1>{{ company.name }}</h1>
+    {% if company.address_line1 %}<div class="muted">{{ company.address_line1 }}</div>{% endif %}
+    {% if company.postal_code or company.city %}<div class="muted">{{ company.postal_code or "" }} {{ company.city or "" }}</div>{% endif %}
+    {% if company.vat_number %}<div class="muted">TVA : {{ company.vat_number }}</div>{% endif %}
+    {% if company.email %}<div class="muted">{{ company.email }}</div>{% endif %}
+  </div>
+  <div class="doc-title">
+    <h2>{{ doc_title }}</h2>
+    <div>N° {{ invoice.reference }}</div>
+    <div>Date : {{ issue_date_fmt }}</div>
+    {% if due_date_fmt %}<div>Échéance : {{ due_date_fmt }}</div>{% endif %}
+  </div>
+</header>
+
+<div class="meta">
+  <div class="client-block">
+    <strong>{{ client.name }}</strong><br>
+    {% if client.address_line1 %}{{ client.address_line1 }}<br>{% endif %}
+    {% if client.postal_code or client.city %}{{ client.postal_code or "" }} {{ client.city or "" }}<br>{% endif %}
+    {% if client.vat_number %}TVA : {{ client.vat_number }}{% endif %}
+  </div>
+</div>
+
+<table class="lines">
+  <thead>
+    <tr><th>Description</th><th class="num">Qté</th><th class="num">PU HT</th><th class="num">Total HT</th></tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr>
+      <td>{{ row.description }}</td>
+      <td class="num">{{ row.quantity }}</td>
+      <td class="num">{{ row.unit_price_fmt }}</td>
+      <td class="num">{{ row.net_fmt }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div class="totals">
+  <table>
+    {% if totals.discount_fmt %}
+    <tr><td>Sous-total HT</td><td class="num">{{ totals.subtotal_fmt }}</td></tr>
+    <tr><td>Remise</td><td class="num">−{{ totals.discount_fmt }}</td></tr>
+    {% endif %}
+    <tr><td>Total HT</td><td class="num">{{ totals.net_fmt }}</td></tr>
+    {% for v in totals.vat_rows %}
+    <tr><td>TVA {{ v.rate }} %</td><td class="num">{{ v.amount_fmt }}</td></tr>
+    {% endfor %}
+    <tr class="grand"><td>Total TTC</td><td class="num">{{ totals.ttc_fmt }}</td></tr>
+  </table>
+</div>
+
+{% if invoice.comments %}<p>{{ invoice.comments }}</p>{% endif %}
+
+{% if mentions %}
+<div class="mentions">
+  {% for m in mentions %}<div>{{ m }}</div>{% endfor %}
+</div>
+{% endif %}
+
+<footer>
+  {% if company.iban %}IBAN : {{ company.iban }}{% if company.bic %} · BIC : {{ company.bic }}{% endif %}{% endif %}
+  {% if invoice.payment_terms %}<div>{{ invoice.payment_terms }}</div>{% endif %}
+</footer>
+</body>
+</html>

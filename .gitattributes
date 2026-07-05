@@ -1,0 +1,12 @@
+# Normalize all text files to LF in the repo (Docker/Linux builds expect LF);
+# working copies on Windows may check out CRLF where tools need it.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.woff2 binary
+*.ico binary
+*.pdf binary

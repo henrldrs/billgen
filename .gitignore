@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Build output
+dist/
+build/
+frontend-*/dist/
+frontend-*/build/
+
+# Node
+node_modules/
+.pnpm-store/
+.npm/
+
+# Tauri / Electron
+frontend-electron/src-tauri/target/
+frontend-electron/release/
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Databases (dev artifacts)
+*.db
+*.sqlite
+*.sqlite3
+var/
+
+# Logs
+*.log
+logs/
+
+# Secrets and licenses
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.billgenlic
