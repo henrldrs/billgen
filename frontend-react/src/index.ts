@@ -11,8 +11,9 @@ export {
   type TokenStore,
 } from "./lib/apiClient";
 
-// i18n
+// i18n & display formatting
 export { t, type Lang, type MessageKey } from "./lib/translations";
+export { formatDate, formatMoney, monthName } from "./lib/format";
 
 // Providers & hooks
 export { BillGenProvider, useApi } from "./providers/BillGenProvider";
@@ -27,4 +28,10 @@ export { Modal } from "./components/Modal";
 export { Spinner } from "./components/Spinner";
 
 // Panels
+export { ActivityPanel } from "./panels/ActivityPanel";
 export { ClientsPanel } from "./panels/ClientsPanel";
+export { CompanyForm } from "./panels/CompanyForm";
+export { DashboardPanel } from "./panels/DashboardPanel";
+export { HistoryPanel } from "./panels/HistoryPanel";
+export { InvoiceBuilderPanel } from "./panels/InvoiceBuilderPanel";
+export { ProductsPanel } from "./panels/ProductsPanel";
