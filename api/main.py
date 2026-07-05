@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.engine import Engine
 
+from core.pdf import PdfEngineUnavailableError
 from core.services import BusinessRuleError, NotFoundError
 from core.tenancy import TenantContextError, TenantViolationError
 from db.engine import make_engine
@@ -15,8 +16,21 @@ from db.session import make_session_factory
 
 from .config import Settings, get_settings
 from .logging_config import configure_logging
-from .middleware import TenantBindingMiddleware
-from .routers import auth, companies, health, organizations, users
+from .middleware import RateLimitMiddleware, TenantBindingMiddleware
+from .routers import (
+    activity,
+    auth,
+    clients,
+    companies,
+    credit_notes,
+    health,
+    invoices,
+    organizations,
+    payments,
+    products,
+    reports,
+    users,
+)
 from .security import AuthService, JwtCodec
 from .security.errors import AuthError
 
@@ -61,6 +75,9 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
 
     app.add_middleware(TenantBindingMiddleware, codec=codec)
     app.add_middleware(
+        RateLimitMiddleware, requests_per_minute=settings.rate_limit_per_minute
+    )
+    app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origin_list,
         allow_credentials=True,
@@ -89,11 +106,25 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
         # Reaching a repository without a bound org is a server bug, not user error.
         return JSONResponse(status_code=500, content={"detail": "Tenant context missing"})
 
+    @app.exception_handler(PdfEngineUnavailableError)
+    async def pdf_engine_handler(request: Request, exc: PdfEngineUnavailableError):  # noqa: ANN202
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "PDF engine unavailable on this server"},
+        )
+
     app.include_router(health.router)
     app.include_router(auth.router)
     app.include_router(users.router)
     app.include_router(organizations.router)
     app.include_router(companies.router)
+    app.include_router(clients.router)
+    app.include_router(products.router)
+    app.include_router(invoices.router)
+    app.include_router(credit_notes.router)
+    app.include_router(payments.router)
+    app.include_router(reports.router)
+    app.include_router(activity.router)
     return app
 
 

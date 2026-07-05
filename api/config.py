@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     # Comma-separated in the env var, e.g. "http://localhost:5173,https://app.billgen.be"
     cors_origins: str = "http://localhost:5173"
 
+    # Requests per minute per client IP; 0 disables the limiter.
+    rate_limit_per_minute: int = 120
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
