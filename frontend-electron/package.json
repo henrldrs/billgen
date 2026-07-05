@@ -1,0 +1,6 @@
+{
+  "name": "@billgen/desktop",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Placeholder — Tauri desktop wrapper lands in Phase 9"
+}
