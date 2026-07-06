@@ -11,8 +11,8 @@ Read this instead of re-deriving context.
 | | |
 |---|---|
 | Location | `C:\Users\hdr_s\Documents\business model\BillGen BETA` |
-| Phases done | 0–9 (domain → rules → DB → services → API → business routers → UI kit → SaaS shell → desktop) |
-| Tests | **Python 161 passed, 1 skipped** (`python -m pytest tests`); **frontend 29 passed** (`npm run test --workspace @billgen/ui`) |
+| Phases done | 0–9, **11** (domain → rules → DB → services → API → business routers → UI kit → SaaS shell → desktop → legacy import). Phase 10 (billing) not yet started. |
+| Tests | **Python 174 passed, 1 skipped** (`python -m pytest tests`); **frontend 32 passed** (`npm run test --workspace @billgen/ui`) |
 | Git | local only, **not pushed**. One commit + tag per phase (`phase-4` … `phase-9b`). Branch `main`. |
 | Skip reason | 1 PDF test skips because WeasyPrint's native (Pango/GTK) stack isn't installed — HTML rendering is fully tested; only the HTML→PDF byte step needs it. |
 | Not a migration | The legacy React/Python apps (`D:\CODING\audit-v2-react-exe`, `myshop-*`) are reference only. Do not edit them. |
@@ -71,7 +71,8 @@ the API's OpenAPI schema, so the UI cannot drift from the server contract.
 | `core/rules/belgian_legal.py` | `legal_mention_for()`, `mandatory_mentions_for_invoice()` | Mandatory legal mentions FR/NL/EN/ES. |
 | `core/tenancy.py` | `organization_context()`, `current_organization_id()`, `guard_tenant()`, `TenantContextError`, `TenantViolationError` | **The multi-tenant backbone.** A `ContextVar` holds the current org. |
 | `core/repository/` | abstract `*Repository` ports + `UnitOfWork`; `sequence_repo` (`INVOICE_SERIES`, `CREDIT_NOTE_SERIES`, `monthly_bucket()`) | Storage-agnostic interfaces. No `org_id` params — read from context. No invoice hard-delete; audit log is append-only. |
-| `core/services/` | `InvoiceService`, `CreditNoteService`, `PaymentService`, `Company/Client/Product/Organization/Activity/ReportingService`, `PdfService`, `PeppolService`; `errors.py` (`NotFoundError`, `BusinessRuleError`); `_audit.record()`; `numbering_service` | **Use-cases.** Each opens one `UnitOfWork`, does the work, writes an audit entry, commits once. |
+| `core/services/` | `InvoiceService`, `CreditNoteService`, `PaymentService`, `Company/Client/Product/Organization/Activity/ReportingService`, `PdfService`, `PeppolService`, `ImportService`; `errors.py` (`NotFoundError`, `BusinessRuleError`); `_audit.record()`; `numbering_service` | **Use-cases.** Each opens one `UnitOfWork`, does the work, writes an audit entry, commits once. |
+| `core/imports/` | `parse_backup()`, `map_company/map_client/map_product`, `ImportReport`, `MappingError`, `APP_NAME` | Pure legacy-import layer: parses a `FinanceFlow BillGen` backup (`{app, keys}` with `billgen-*` localStorage keys) and maps its records onto domain models. No framework, no I/O. |
 | `core/pdf/` | `registry` (`TEMPLATES`, `get_template`), `renderer` (`render_html`, `html_to_pdf`, `PdfEngineUnavailableError`), `context` (`build_invoice_context`), `templates/*.html.j2` | Server-side PDF via Jinja2 + WeasyPrint. 4 templates: fr_standard, fr_detailed, nl_minimal, credit_note. |
 | `core/einvoicing/` | `ubl_builder.build_invoice_ubl()`, `ubl_validator.validate_invoice_ubl()` | Peppol BIS 3.0 / UBL 2.1 XML (stdlib ElementTree). |
 | `core/utils/` | `money.format_amount()`, `dates.format_date()`, `jsonsafe.json_safe()` | Formatting + audit-log JSON safety (Decimal→str). |
@@ -100,7 +101,7 @@ the API's OpenAPI schema, so the UI cannot drift from the server contract.
 | `api/security/password.py` | `hash_password`, `verify_password` | argon2id. |
 | `api/security/auth_service.py` | `AuthService` (`signup`, `login`, `refresh`, `logout`, `desktop_bootstrap`), `DESKTOP_EMAIL` | Composes ORM rows directly (users/orgs/credentials/refresh tokens). Refresh tokens rotate (single-use). |
 | `api/deps.py` | `get_uow_factory`, `get_auth_service`, `current_user_id`, `current_role` | FastAPI dependencies. |
-| `api/routers/*.py` | `health, auth, desktop, users, organizations, companies, clients, products, invoices, credit_notes, payments, reports, activity` | Thin HTTP → service translation. |
+| `api/routers/*.py` | `health, auth, desktop, users, organizations, companies, clients, products, imports, invoices, credit_notes, payments, reports, activity` | Thin HTTP → service translation. `imports` exposes `POST /imports/legacy/{preview,commit}` (dry-run vs. write). |
 | `api/schemas/*.py` | request/response Pydantic DTOs | Separate from domain models. |
 
 ### `desktop/` — desktop sidecar core (pure Python, toolchain-independent)
@@ -121,7 +122,7 @@ the API's OpenAPI schema, so the UI cannot drift from the server contract.
 | `src/hooks/queries.ts` | `useClients`, `useInvoices`, `useInvoicePreview`, `useCreateInvoice`, `useVoidInvoice`, `useIssueCreditNote`, `useRecordPayment`, `useKpi`, `useRevenue`, `useActivity`, `useCompanies`, `useProducts`, … | Server-state hooks with cache invalidation. |
 | `src/hooks/useAuth.tsx` | `AuthProvider`, `useAuth` | In-memory session (the SaaS shell adds persistence on top). |
 | `src/components/` | `Button`, `Field`, `Modal`, `Spinner`, `EmptyState` | Semantic `bg-*` classNames; styled by the app shells. |
-| `src/panels/` | `ClientsPanel`, `ProductsPanel`, `InvoiceBuilderPanel`, `HistoryPanel`, `DashboardPanel`, `ActivityPanel`, `CompanyForm` | Dumb panels: data via hooks, `t()` for i18n, no math. |
+| `src/panels/` | `ClientsPanel`, `ProductsPanel`, `InvoiceBuilderPanel`, `HistoryPanel`, `DashboardPanel`, `ActivityPanel`, `CompanyForm`, `ImportPanel` | Dumb panels: data via hooks, `t()` for i18n, no math. `ImportPanel` = file picker → preview → confirm for legacy backups. |
 | `src/lib/format.ts` | `formatMoney`, `formatDate`, `monthName` | Display-only (Intl). **Not** the legally binding server formatting. |
 
 ### `frontend-saas/` — public web app
@@ -236,7 +237,34 @@ payment → dashboard) and the Tauri shell **compiles clean** (`cargo build`).
 
 - **Phase 10** — Stripe billing + plan enforcement (`SubscriptionRow` already
   exists), email (Postmark), VIES VAT check.
-- **Phase 11** — import tool (legacy localStorage / CSV → an org).
+- **Phase 11 — DONE (backend + UI).** Legacy import end to end:
+  - **Backend:** `core/imports/` + `ImportService` + `POST
+    /imports/legacy/{preview,commit}`. Imports **companies, clients, products**
+    from a `FinanceFlow BillGen` backup JSON, with dry-run preview, per-scope
+    name dedup (idempotent), and a structured report. The exact legacy shapes
+    were recovered from the shipped app's sourcemaps (`app.asar`); its export
+    format is `BillgenBackup` = `{app, keys}` where `keys` maps `billgen-*`
+    localStorage keys to stringified JSON.
+  - **UI (11b):** `ImportPanel` in `@billgen/ui` (file picker → preview →
+    confirm, with counts table + issues + invoice note), `useImportPreview` /
+    `useImportCommit` hooks, `ApiClient.previewLegacyImport` /
+    `commitLegacyImport`, and the `/app/import` route + nav link in the SaaS
+    shell. Browser-verified end to end (import → data persisted with correct
+    mappings). Reads files via `FileReader` (jsdom/older browsers lack
+    `File.text()`). While here, made `AppShell` company selection sticky so an
+    import (which adds a company + invalidates the list) no longer yanks the
+    user onto a different company mid-task.
+- **Phase 11b remainder — still open:**
+  - **Historical invoices are deliberately NOT imported.** Recreating them
+    would mint live, gapless, legally-binding invoice numbers as an import
+    side effect. They are *counted* and surfaced as `invoices_detected` in the
+    report so nothing is silently dropped. Importing them needs a design that
+    preserves the original reference **without** consuming the live sequence
+    (e.g. an `imported/historical` marker).
+  - `ImportPanel` is wired into the **SaaS** shell only; the desktop shell
+    (`frontend-electron`) doesn't mount it yet.
+  - CSV path (per-entity CSV → the same `ImportService`) if a user has data
+    outside the BillGen app.
 - **Phase 12** — CI, `npm/pip/cargo audit`, **PyInstaller-freeze the sidecar** for
   a packaged desktop, `tauri build` NSIS installer + `signtool`.
 - Smaller: HistoryPanel has no PDF/Peppol **download buttons** yet (endpoints

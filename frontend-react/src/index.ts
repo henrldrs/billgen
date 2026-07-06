@@ -33,5 +33,6 @@ export { ClientsPanel } from "./panels/ClientsPanel";
 export { CompanyForm } from "./panels/CompanyForm";
 export { DashboardPanel } from "./panels/DashboardPanel";
 export { HistoryPanel } from "./panels/HistoryPanel";
+export { ImportPanel } from "./panels/ImportPanel";
 export { InvoiceBuilderPanel } from "./panels/InvoiceBuilderPanel";
 export { ProductsPanel } from "./panels/ProductsPanel";

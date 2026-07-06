@@ -38,3 +38,7 @@ export type PaymentResponse = components["schemas"]["PaymentResponse"];
 export type KpiResponse = components["schemas"]["KpiResponse"];
 export type RevenueByMonthResponse = components["schemas"]["RevenueByMonthResponse"];
 export type ActivityEntryResponse = components["schemas"]["ActivityEntryResponse"];
+
+export type ImportReport = components["schemas"]["ImportReport"];
+export type ImportEntityCounts = components["schemas"]["ImportEntityCounts"];
+export type ImportIssue = components["schemas"]["ImportIssue"];

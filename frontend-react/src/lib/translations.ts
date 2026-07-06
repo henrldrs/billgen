@@ -247,6 +247,95 @@ const MESSAGES = {
     nl: "PDF-sjabloon",
     es: "Plantilla PDF",
   },
+
+  // ---- import -----------------------------------------------------------------
+  "import.title": {
+    en: "Import data",
+    fr: "Importer des données",
+    nl: "Gegevens importeren",
+    es: "Importar datos",
+  },
+  "import.intro": {
+    en: "Import companies, clients, and products from a FinanceFlow BillGen backup file (.json). Nothing is written until you confirm.",
+    fr: "Importez entreprises, clients et produits depuis une sauvegarde FinanceFlow BillGen (.json). Rien n'est enregistré avant votre confirmation.",
+    nl: "Importeer bedrijven, klanten en producten uit een FinanceFlow BillGen-back-up (.json). Er wordt niets opgeslagen tot u bevestigt.",
+    es: "Importe empresas, clientes y productos desde una copia de FinanceFlow BillGen (.json). No se guarda nada hasta que confirme.",
+  },
+  "import.choose": {
+    en: "Choose backup file",
+    fr: "Choisir un fichier",
+    nl: "Back-upbestand kiezen",
+    es: "Elegir archivo",
+  },
+  "import.preview": {
+    en: "Preview import",
+    fr: "Prévisualiser",
+    nl: "Voorbeeld",
+    es: "Vista previa",
+  },
+  "import.confirm": {
+    en: "Confirm import",
+    fr: "Confirmer l'import",
+    nl: "Import bevestigen",
+    es: "Confirmar importación",
+  },
+  "import.reset": {
+    en: "Start over",
+    fr: "Recommencer",
+    nl: "Opnieuw",
+    es: "Empezar de nuevo",
+  },
+  "import.previewHeading": {
+    en: "Preview — nothing has been saved yet",
+    fr: "Aperçu — rien n'a encore été enregistré",
+    nl: "Voorbeeld — nog niets opgeslagen",
+    es: "Vista previa — aún no se ha guardado nada",
+  },
+  "import.doneHeading": {
+    en: "Import complete",
+    fr: "Import terminé",
+    nl: "Import voltooid",
+    es: "Importación completada",
+  },
+  "import.companies": {
+    en: "Companies",
+    fr: "Entreprises",
+    nl: "Bedrijven",
+    es: "Empresas",
+  },
+  "import.clients": { en: "Clients", fr: "Clients", nl: "Klanten", es: "Clientes" },
+  "import.products": {
+    en: "Products",
+    fr: "Produits",
+    nl: "Producten",
+    es: "Productos",
+  },
+  "import.created": { en: "New", fr: "Nouveaux", nl: "Nieuw", es: "Nuevos" },
+  "import.skipped": {
+    en: "Skipped",
+    fr: "Ignorés",
+    nl: "Overgeslagen",
+    es: "Omitidos",
+  },
+  "import.failed": { en: "Failed", fr: "Échecs", nl: "Mislukt", es: "Fallidos" },
+  "import.invoicesNote": {
+    en: "invoice(s) were found in the backup. Historical invoices are not imported — importing them would create new legal invoice numbers.",
+    fr: "facture(s) trouvée(s) dans la sauvegarde. Les factures historiques ne sont pas importées — cela créerait de nouveaux numéros légaux.",
+    nl: "factuur(en) gevonden in de back-up. Historische facturen worden niet geïmporteerd — dat zou nieuwe wettelijke factuurnummers aanmaken.",
+    es: "factura(s) encontrada(s) en la copia. Las facturas históricas no se importan — crearía nuevos números legales.",
+  },
+  "import.issues": {
+    en: "Rows that could not be imported",
+    fr: "Lignes non importées",
+    nl: "Niet-geïmporteerde rijen",
+    es: "Filas no importadas",
+  },
+  "import.badFile": {
+    en: "That file is not valid JSON.",
+    fr: "Ce fichier n'est pas un JSON valide.",
+    nl: "Dat bestand is geen geldige JSON.",
+    es: "Ese archivo no es un JSON válido.",
+  },
 } as const;
 
 export type MessageKey = keyof typeof MESSAGES;

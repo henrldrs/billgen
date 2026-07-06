@@ -7,6 +7,7 @@ import {
   CompanyForm,
   DashboardPanel,
   HistoryPanel,
+  ImportPanel,
   InvoiceBuilderPanel,
   ProductsPanel,
   useCompanies,
@@ -50,6 +51,11 @@ export function HistoryRoute() {
 export function ActivityRoute() {
   const { lang } = useOutletContext<ShellContext>();
   return <ActivityPanel lang={lang} />;
+}
+
+export function ImportRoute() {
+  const { lang } = useOutletContext<ShellContext>();
+  return <ImportPanel lang={lang} />;
 }
 
 export function SettingsRoute() {

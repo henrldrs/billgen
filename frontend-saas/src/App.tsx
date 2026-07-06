@@ -11,6 +11,7 @@ import {
   ClientsRoute,
   DashboardRoute,
   HistoryRoute,
+  ImportRoute,
   InvoiceBuilderRoute,
   ProductsRoute,
   SettingsRoute,
@@ -46,6 +47,7 @@ export function App() {
               <Route path="invoices/new" element={<InvoiceBuilderRoute />} />
               <Route path="invoices" element={<HistoryRoute />} />
               <Route path="activity" element={<ActivityRoute />} />
+              <Route path="import" element={<ImportRoute />} />
               <Route path="settings" element={<SettingsRoute />} />
             </Route>
             <Route path="*" element={<Navigate to="/app" replace />} />

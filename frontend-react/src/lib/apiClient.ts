@@ -16,6 +16,7 @@ import type {
   CompanyResponse,
   CreditNoteIssueRequest,
   CreditNoteResponse,
+  ImportReport,
   InvoiceCreateRequest,
   InvoicePreviewRequest,
   InvoicePreviewResponse,
@@ -333,6 +334,18 @@ export class ApiClient {
 
   listPayments(invoiceId: string): Promise<PaymentResponse[]> {
     return this.request("GET", `/payments?invoice_id=${invoiceId}`);
+  }
+
+  // ---- imports -----------------------------------------------------------------
+
+  /** Dry run: what would a legacy backup import create/skip? Writes nothing. */
+  previewLegacyImport(backup: unknown): Promise<ImportReport> {
+    return this.request("POST", "/imports/legacy/preview", backup);
+  }
+
+  /** Import a legacy backup into the current org. Idempotent (dedup by name). */
+  commitLegacyImport(backup: unknown): Promise<ImportReport> {
+    return this.request("POST", "/imports/legacy/commit", backup);
   }
 
   // ---- reports & activity ------------------------------------------------------

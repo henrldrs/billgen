@@ -9,7 +9,7 @@ import {
   type CompanyResponse,
   type Lang,
 } from "@billgen/ui";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 
 import { useSession } from "../auth/session";
@@ -28,6 +28,15 @@ export function AppShell() {
   const navigate = useNavigate();
   const { data: companies, isLoading } = useCompanies();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // Pin the active company once the list loads. Without this, refetches (e.g.
+  // after an import adds a company) fall back to companies[0] and yank the user
+  // onto a different company mid-task.
+  useEffect(() => {
+    if (selectedId == null && companies && companies.length > 0) {
+      setSelectedId(companies[0].id);
+    }
+  }, [companies, selectedId]);
 
   if (isLoading) return <Spinner label="Loading…" />;
 
@@ -60,6 +69,7 @@ export function AppShell() {
     { to: "/app/invoices/new", label: t(lang, "invoice.title") },
     { to: "/app/invoices", label: t(lang, "history.title") },
     { to: "/app/activity", label: t(lang, "activity.title") },
+    { to: "/app/import", label: t(lang, "import.title") },
     { to: "/app/settings", label: t(lang, "company.title") },
   ];
 

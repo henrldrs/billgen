@@ -215,3 +215,26 @@ export function useActivity(params?: { limit?: number; targetType?: string }) {
     queryFn: () => api.activity(params),
   });
 }
+
+// ---- imports -------------------------------------------------------------------
+
+export function useImportPreview() {
+  const api = useApi();
+  return useMutation({
+    mutationFn: (backup: unknown) => api.previewLegacyImport(backup),
+  });
+}
+
+export function useImportCommit() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (backup: unknown) => api.commitLegacyImport(backup),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["companies"] });
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["activity"] });
+    },
+  });
+}

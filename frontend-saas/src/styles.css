@@ -300,3 +300,60 @@ textarea.bg-field__input {
 .bg-activity__target {
   font-weight: 600;
 }
+
+/* ---- import panel ---------------------------------------------------------- */
+.bg-import__intro {
+  color: var(--bg-ink-soft);
+  font-size: 0.9rem;
+  margin: 0 0 1rem;
+  max-width: 46rem;
+}
+.bg-import__file {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  cursor: pointer;
+}
+.bg-import__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+}
+.bg-import__filename {
+  font-size: 0.9rem;
+  color: var(--bg-ink-soft);
+}
+.bg-import__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.bg-import__report h2 {
+  font-size: 1rem;
+  margin: 0.5rem 0 0.75rem;
+}
+.bg-import__note {
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--bg-radius);
+  background: var(--bg-surface-alt);
+  color: var(--bg-ink-soft);
+  font-size: 0.85rem;
+}
+.bg-import__issues {
+  margin-top: 1rem;
+}
+.bg-import__issues h3 {
+  font-size: 0.9rem;
+  margin: 0 0 0.4rem;
+}
+.bg-import__issues ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+  color: var(--bg-danger);
+}
