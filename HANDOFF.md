@@ -261,8 +261,11 @@ payment → dashboard) and the Tauri shell **compiles clean** (`cargo build`).
     report so nothing is silently dropped. Importing them needs a design that
     preserves the original reference **without** consuming the live sequence
     (e.g. an `imported/historical` marker).
-  - `ImportPanel` is wired into the **SaaS** shell only; the desktop shell
-    (`frontend-electron`) doesn't mount it yet.
+  - `ImportPanel` is mounted in **both** the SaaS shell and the desktop shell
+    (`frontend-electron` — `.bg-import*` styles mirrored into its `styles.css`;
+    typecheck-verified, Tauri build not re-run). Note: the desktop shell shows
+    `companies[0]` with no company switcher, so importing a *new* company there
+    isn't reachable in the UI yet — a desktop company-selector is a separate gap.
   - CSV path (per-entity CSV → the same `ImportService`) if a user has data
     outside the BillGen app.
 - **Phase 12** — CI, `npm/pip/cargo audit`, **PyInstaller-freeze the sidecar** for

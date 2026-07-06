@@ -7,6 +7,7 @@ import {
   CompanyForm,
   DashboardPanel,
   HistoryPanel,
+  ImportPanel,
   InvoiceBuilderPanel,
   ProductsPanel,
   Spinner,
@@ -23,6 +24,7 @@ type Tab =
   | "new-invoice"
   | "invoices"
   | "activity"
+  | "import"
   | "settings";
 
 function isLang(value: string): value is Lang {
@@ -60,6 +62,7 @@ export function DesktopShell() {
     { id: "new-invoice", label: t(lang, "invoice.title") },
     { id: "invoices", label: t(lang, "history.title") },
     { id: "activity", label: t(lang, "activity.title") },
+    { id: "import", label: t(lang, "import.title") },
     { id: "settings", label: t(lang, "company.title") },
   ];
 
@@ -121,6 +124,7 @@ export function DesktopShell() {
           )}
           {tab === "invoices" && <HistoryPanel companyId={companyId} lang={lang} />}
           {tab === "activity" && <ActivityPanel lang={lang} />}
+          {tab === "import" && <ImportPanel lang={lang} />}
           {tab === "settings" && <CompanyForm lang={lang} />}
         </main>
       </div>
