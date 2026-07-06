@@ -24,6 +24,7 @@ node_modules/
 
 # Tauri / Electron
 frontend-electron/src-tauri/target/
+frontend-electron/src-tauri/gen/
 frontend-electron/release/
 
 # IDE / OS

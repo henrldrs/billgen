@@ -192,6 +192,18 @@ export class ApiClient {
     return result;
   }
 
+  /** Desktop build only: mint a local single-user session (404 on hosted API). */
+  async desktopBootstrap(): Promise<LoginResponse> {
+    const result = await this.request<LoginResponse>(
+      "POST",
+      "/auth/desktop-bootstrap",
+      undefined,
+      { auth: false },
+    );
+    this.tokens.set(result.tokens);
+    return result;
+  }
+
   async logout(): Promise<void> {
     const refresh = this.tokens.getRefresh();
     if (refresh) {
