@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     # Requests per minute per client IP; 0 disables the limiter.
     rate_limit_per_minute: int = 120
 
+    # Desktop build: enables POST /auth/desktop-bootstrap (single local user).
+    # MUST stay false for hosted SaaS — it mints an account with no credentials.
+    desktop_mode: bool = False
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]

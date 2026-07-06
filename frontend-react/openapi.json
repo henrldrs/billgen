@@ -208,6 +208,28 @@
         }
       }
     },
+    "/auth/desktop-bootstrap": {
+      "post": {
+        "tags": [
+          "desktop"
+        ],
+        "summary": "Desktop Bootstrap",
+        "description": "Local single-user session for the desktop build. 404 unless desktop_mode\nis on, so a hosted deployment cannot be coerced into minting an account.",
+        "operationId": "desktop_bootstrap_auth_desktop_bootstrap_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users/me": {
       "get": {
         "tags": [

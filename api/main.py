@@ -23,6 +23,7 @@ from .routers import (
     clients,
     companies,
     credit_notes,
+    desktop,
     health,
     invoices,
     organizations,
@@ -55,6 +56,7 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
             engine.dispose()
 
     app = FastAPI(title="BillGen API", version="0.1.0", lifespan=lifespan)
+    app.state.settings = settings
     app.state.session_factory = session_factory
     app.state.uow_factory = lambda: SqlAlchemyUnitOfWork(session_factory)
     app.state.auth_service = AuthService(session_factory, codec)
@@ -115,6 +117,7 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
 
     app.include_router(health.router)
     app.include_router(auth.router)
+    app.include_router(desktop.router)
     app.include_router(users.router)
     app.include_router(organizations.router)
     app.include_router(companies.router)

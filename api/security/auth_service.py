@@ -25,6 +25,7 @@ from .jwt import JwtCodec, TokenPair
 from .password import hash_password, verify_password
 
 MIN_PASSWORD_LENGTH = 8
+DESKTOP_EMAIL = "desktop@localhost.billgen"
 
 
 @dataclass(frozen=True)
@@ -210,3 +211,50 @@ class AuthService:
                     )
                 )
             session.commit()
+
+    def desktop_bootstrap(self) -> LoginResult:
+        """Single-user local session for the desktop build. Creates a singleton
+        local org + owner on first call, then issues tokens on every call. Only
+        reachable when settings.desktop_mode is on (guarded at the router)."""
+        with self._session_factory() as session:
+            user = session.execute(
+                select(UserRow).where(UserRow.email == DESKTOP_EMAIL)
+            ).scalar_one_or_none()
+
+            if user is None:
+                org = OrganizationRow(id=uuid4(), name="My Business")
+                user = UserRow(
+                    id=uuid4(), email=DESKTOP_EMAIL, display_name="Local user"
+                )
+                session.add_all([org, user])
+                session.flush()
+                session.add_all(
+                    [
+                        OrgMembershipRow(
+                            organization_id=org.id, user_id=user.id, role="owner"
+                        ),
+                        UserCredentialRow(
+                            user_id=user.id,
+                            # random: desktop login is via bootstrap, never password
+                            password_hash=hash_password(uuid4().hex),
+                        ),
+                    ]
+                )
+                org_id = org.id
+            else:
+                membership = session.execute(
+                    select(OrgMembershipRow).where(OrgMembershipRow.user_id == user.id)
+                ).scalar_one()
+                org_id = membership.organization_id
+
+            tokens = self._issue_pair(session, user.id, org_id, "owner")
+            session.commit()
+            return LoginResult(
+                user_id=user.id,
+                email=user.email,
+                display_name=user.display_name,
+                organization_id=org_id,
+                role="owner",
+                memberships=[(org_id, "owner")],
+                tokens=tokens,
+            )
