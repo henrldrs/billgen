@@ -3,6 +3,7 @@ from .client_service import ClientService
 from .company_service import CompanyService
 from .credit_note_service import CreditNoteService
 from .errors import BusinessRuleError, NotFoundError
+from .import_service import ImportService
 from .invoice_service import InvoiceService
 from .organization_service import OrganizationService
 from .payment_service import PaymentService
@@ -17,6 +18,7 @@ __all__ = [
     "ClientService",
     "CompanyService",
     "CreditNoteService",
+    "ImportService",
     "InvoiceService",
     "KpiSummary",
     "NotFoundError",

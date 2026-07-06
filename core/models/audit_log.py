@@ -19,6 +19,7 @@ class AuditAction(str, Enum):
     DELETE = "delete"
     LOGIN = "login"
     LOGOUT = "logout"
+    IMPORT = "import"
     ERROR = "error"
 
 

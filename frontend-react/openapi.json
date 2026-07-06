@@ -710,6 +710,96 @@
         }
       }
     },
+    "/imports/legacy/preview": {
+      "post": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Preview Legacy Import",
+        "description": "Dry run: report what an import would create/skip, writing nothing.",
+        "operationId": "preview_legacy_import_imports_legacy_preview_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object",
+                "title": "Payload",
+                "description": "A FinanceFlow BillGen backup: the whole `{app, keys}` object, or just the `billgen-*` keys map. Values may be JSON strings or already parsed."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportReport"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/imports/legacy/commit": {
+      "post": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Commit Legacy Import",
+        "description": "Import companies, clients, and products into the current organization.\nIdempotent: rows that already exist (by name, within scope) are skipped.",
+        "operationId": "commit_legacy_import_imports_legacy_commit_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object",
+                "title": "Payload",
+                "description": "A FinanceFlow BillGen backup: the whole `{app, keys}` object, or just the `billgen-*` keys map. Values may be JSON strings or already parsed."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportReport"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/invoices/preview": {
       "post": {
         "tags": [
@@ -2669,6 +2759,101 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "ImportEntityCounts": {
+        "properties": {
+          "created": {
+            "type": "integer",
+            "title": "Created",
+            "default": 0
+          },
+          "skipped": {
+            "type": "integer",
+            "title": "Skipped",
+            "default": 0
+          },
+          "failed": {
+            "type": "integer",
+            "title": "Failed",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "ImportEntityCounts"
+      },
+      "ImportIssue": {
+        "properties": {
+          "entity": {
+            "type": "string",
+            "title": "Entity"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entity",
+          "name",
+          "reason"
+        ],
+        "title": "ImportIssue"
+      },
+      "ImportReport": {
+        "properties": {
+          "dry_run": {
+            "type": "boolean",
+            "title": "Dry Run"
+          },
+          "companies": {
+            "$ref": "#/components/schemas/ImportEntityCounts",
+            "default": {
+              "created": 0,
+              "skipped": 0,
+              "failed": 0
+            }
+          },
+          "clients": {
+            "$ref": "#/components/schemas/ImportEntityCounts",
+            "default": {
+              "created": 0,
+              "skipped": 0,
+              "failed": 0
+            }
+          },
+          "products": {
+            "$ref": "#/components/schemas/ImportEntityCounts",
+            "default": {
+              "created": 0,
+              "skipped": 0,
+              "failed": 0
+            }
+          },
+          "invoices_detected": {
+            "type": "integer",
+            "title": "Invoices Detected",
+            "default": 0
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/ImportIssue"
+            },
+            "type": "array",
+            "title": "Issues",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "dry_run"
+        ],
+        "title": "ImportReport",
+        "description": "`dry_run=True` means nothing was written; the counts are a prediction.\n`created`/`skipped`/`failed` sum to the number of source rows seen. Duplicates\n(already present, or repeated within the file) count as `skipped`."
       },
       "InvoiceCreateRequest": {
         "properties": {

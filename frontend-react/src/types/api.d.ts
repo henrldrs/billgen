@@ -251,6 +251,47 @@ export interface paths {
         patch: operations["update_product_products__product_id__patch"];
         trace?: never;
     };
+    "/imports/legacy/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview Legacy Import
+         * @description Dry run: report what an import would create/skip, writing nothing.
+         */
+        post: operations["preview_legacy_import_imports_legacy_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/imports/legacy/commit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Commit Legacy Import
+         * @description Import companies, clients, and products into the current organization.
+         *     Idempotent: rows that already exist (by name, within scope) are skipped.
+         */
+        post: operations["commit_legacy_import_imports_legacy_commit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/invoices/preview": {
         parameters: {
             query?: never;
@@ -842,6 +883,77 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** ImportEntityCounts */
+        ImportEntityCounts: {
+            /**
+             * Created
+             * @default 0
+             */
+            created?: number;
+            /**
+             * Skipped
+             * @default 0
+             */
+            skipped?: number;
+            /**
+             * Failed
+             * @default 0
+             */
+            failed?: number;
+        };
+        /** ImportIssue */
+        ImportIssue: {
+            /** Entity */
+            entity: string;
+            /** Name */
+            name: string;
+            /** Reason */
+            reason: string;
+        };
+        /**
+         * ImportReport
+         * @description `dry_run=True` means nothing was written; the counts are a prediction.
+         *     `created`/`skipped`/`failed` sum to the number of source rows seen. Duplicates
+         *     (already present, or repeated within the file) count as `skipped`.
+         */
+        ImportReport: {
+            /** Dry Run */
+            dry_run: boolean;
+            /**
+             * @default {
+             *       "created": 0,
+             *       "skipped": 0,
+             *       "failed": 0
+             *     }
+             */
+            companies?: components["schemas"]["ImportEntityCounts"];
+            /**
+             * @default {
+             *       "created": 0,
+             *       "skipped": 0,
+             *       "failed": 0
+             *     }
+             */
+            clients?: components["schemas"]["ImportEntityCounts"];
+            /**
+             * @default {
+             *       "created": 0,
+             *       "skipped": 0,
+             *       "failed": 0
+             *     }
+             */
+            products?: components["schemas"]["ImportEntityCounts"];
+            /**
+             * Invoices Detected
+             * @default 0
+             */
+            invoices_detected?: number;
+            /**
+             * Issues
+             * @default []
+             */
+            issues?: components["schemas"]["ImportIssue"][];
         };
         /** InvoiceCreateRequest */
         InvoiceCreateRequest: {
@@ -1882,6 +1994,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProductResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_legacy_import_imports_legacy_preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportReport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    commit_legacy_import_imports_legacy_commit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportReport"];
                 };
             };
             /** @description Validation Error */

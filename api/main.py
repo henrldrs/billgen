@@ -25,6 +25,7 @@ from .routers import (
     credit_notes,
     desktop,
     health,
+    imports,
     invoices,
     organizations,
     payments,
@@ -123,6 +124,7 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
     app.include_router(companies.router)
     app.include_router(clients.router)
     app.include_router(products.router)
+    app.include_router(imports.router)
     app.include_router(invoices.router)
     app.include_router(credit_notes.router)
     app.include_router(payments.router)
