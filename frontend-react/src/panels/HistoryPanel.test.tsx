@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -57,6 +57,43 @@ test("voiding an invoice asks for a reason and refreshes the list", async () => 
   expect(await table.findByText("voided")).toBeInTheDocument();
   // voided invoices lose their action buttons
   expect(screen.queryByRole("button", { name: "Void" })).not.toBeInTheDocument();
+});
+
+test("downloads an invoice PDF (read-only re-render, no mutation)", async () => {
+  server.use(
+    http.get(`${BASE}/invoices`, () =>
+      HttpResponse.json([invoiceRecord("inv-1", "ACME-BC07012026")]),
+    ),
+    http.get(`${BASE}/invoices/inv-1/pdf`, () =>
+      new HttpResponse(new Blob(["%PDF-1.7 fake"]), {
+        headers: { "Content-Type": "application/pdf" },
+      }),
+    ),
+  );
+
+  // jsdom implements neither of these; stub so saveBlob can run.
+  const createUrl = vi.fn((_blob: Blob) => "blob:mock");
+  const revokeUrl = vi.fn();
+  URL.createObjectURL = createUrl as typeof URL.createObjectURL;
+  URL.revokeObjectURL = revokeUrl as typeof URL.revokeObjectURL;
+  let savedAs = "";
+  const clickSpy = vi
+    .spyOn(HTMLAnchorElement.prototype, "click")
+    .mockImplementation(function (this: HTMLAnchorElement) {
+      savedAs = this.download;
+    });
+
+  renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
+  const user = userEvent.setup();
+
+  await user.click(await screen.findByRole("button", { name: "Download PDF" }));
+
+  await waitFor(() => expect(clickSpy).toHaveBeenCalled());
+  expect(createUrl).toHaveBeenCalledWith(expect.any(Blob));
+  expect(savedAs).toBe("ACME-BC07012026.pdf");
+  expect(revokeUrl).toHaveBeenCalled();
+
+  clickSpy.mockRestore();
 });
 
 test("recording a payment posts amount and date", async () => {

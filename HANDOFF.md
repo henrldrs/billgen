@@ -12,7 +12,7 @@ Read this instead of re-deriving context.
 |---|---|
 | Location | `C:\Users\hdr_s\Documents\business model\BillGen BETA` |
 | Phases done | 0–9, **11** (domain → rules → DB → services → API → business routers → UI kit → SaaS shell → desktop → legacy import). Phase 10 (billing) not yet started. |
-| Tests | **Python 174 passed, 1 skipped** (`python -m pytest tests`); **frontend 32 passed** (`npm run test --workspace @billgen/ui`) |
+| Tests | **Python 174 passed, 1 skipped** (`python -m pytest tests`); **frontend 33 passed** (`npm run test --workspace @billgen/ui`) |
 | Git | local only, **not pushed**. One commit + tag per phase (`phase-4` … `phase-9b`). Branch `main`. |
 | Skip reason | 1 PDF test skips because WeasyPrint's native (Pango/GTK) stack isn't installed — HTML rendering is fully tested; only the HTML→PDF byte step needs it. |
 | Not a migration | The legacy React/Python apps (`D:\CODING\audit-v2-react-exe`, `myshop-*`) are reference only. Do not edit them. |
@@ -267,10 +267,15 @@ payment → dashboard) and the Tauri shell **compiles clean** (`cargo build`).
     outside the BillGen app.
 - **Phase 12** — CI, `npm/pip/cargo audit`, **PyInstaller-freeze the sidecar** for
   a packaged desktop, `tauri build` NSIS installer + `signtool`.
-- Smaller: HistoryPanel has no PDF/Peppol **download buttons** yet (endpoints
-  exist and are tested); a `.bg-totals` CSS width nit; the UBL builder attaches a
-  document-level discount to the first VAT category on mixed-rate invoices
-  (revisit before real Peppol Access Point integration).
+- Smaller: **DONE** — HistoryPanel now has **PDF + Peppol XML download buttons**
+  (`saveBlob` → existing `invoicePdf`/`invoicePeppolXml` client methods; read-only
+  re-renders, no data written beyond the export audit entry; browser-verified:
+  Peppol 200, PDF 503 handled gracefully where WeasyPrint is absent). Still open:
+  a `.bg-totals` CSS "nit" (under-specified — it's the on-screen totals box in the
+  invoice **builder**, `styles.css`; no concrete defect found, deferred pending a
+  specific repro); the UBL builder attaches a document-level discount to the first
+  VAT category on mixed-rate invoices (revisit before real Peppol Access Point
+  integration).
 - Repo is **local only** — no remote. Commit + tag per phase.
 
 ---

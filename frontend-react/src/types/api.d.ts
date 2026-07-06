@@ -886,21 +886,12 @@ export interface components {
         };
         /** ImportEntityCounts */
         ImportEntityCounts: {
-            /**
-             * Created
-             * @default 0
-             */
-            created?: number;
-            /**
-             * Skipped
-             * @default 0
-             */
-            skipped?: number;
-            /**
-             * Failed
-             * @default 0
-             */
-            failed?: number;
+            /** Created */
+            created: number;
+            /** Skipped */
+            skipped: number;
+            /** Failed */
+            failed: number;
         };
         /** ImportIssue */
         ImportIssue: {
@@ -911,49 +902,17 @@ export interface components {
             /** Reason */
             reason: string;
         };
-        /**
-         * ImportReport
-         * @description `dry_run=True` means nothing was written; the counts are a prediction.
-         *     `created`/`skipped`/`failed` sum to the number of source rows seen. Duplicates
-         *     (already present, or repeated within the file) count as `skipped`.
-         */
-        ImportReport: {
+        /** ImportReportResponse */
+        ImportReportResponse: {
             /** Dry Run */
             dry_run: boolean;
-            /**
-             * @default {
-             *       "created": 0,
-             *       "skipped": 0,
-             *       "failed": 0
-             *     }
-             */
-            companies?: components["schemas"]["ImportEntityCounts"];
-            /**
-             * @default {
-             *       "created": 0,
-             *       "skipped": 0,
-             *       "failed": 0
-             *     }
-             */
-            clients?: components["schemas"]["ImportEntityCounts"];
-            /**
-             * @default {
-             *       "created": 0,
-             *       "skipped": 0,
-             *       "failed": 0
-             *     }
-             */
-            products?: components["schemas"]["ImportEntityCounts"];
-            /**
-             * Invoices Detected
-             * @default 0
-             */
-            invoices_detected?: number;
-            /**
-             * Issues
-             * @default []
-             */
-            issues?: components["schemas"]["ImportIssue"][];
+            companies: components["schemas"]["ImportEntityCounts"];
+            clients: components["schemas"]["ImportEntityCounts"];
+            products: components["schemas"]["ImportEntityCounts"];
+            /** Invoices Detected */
+            invoices_detected: number;
+            /** Issues */
+            issues: components["schemas"]["ImportIssue"][];
         };
         /** InvoiceCreateRequest */
         InvoiceCreateRequest: {
@@ -2028,7 +1987,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ImportReport"];
+                    "application/json": components["schemas"]["ImportReportResponse"];
                 };
             };
             /** @description Validation Error */
@@ -2063,7 +2022,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ImportReport"];
+                    "application/json": components["schemas"]["ImportReportResponse"];
                 };
             };
             /** @description Validation Error */

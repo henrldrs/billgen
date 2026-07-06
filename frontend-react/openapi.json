@@ -737,7 +737,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ImportReport"
+                  "$ref": "#/components/schemas/ImportReportResponse"
                 }
               }
             }
@@ -782,7 +782,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ImportReport"
+                  "$ref": "#/components/schemas/ImportReportResponse"
                 }
               }
             }
@@ -2764,21 +2764,23 @@
         "properties": {
           "created": {
             "type": "integer",
-            "title": "Created",
-            "default": 0
+            "title": "Created"
           },
           "skipped": {
             "type": "integer",
-            "title": "Skipped",
-            "default": 0
+            "title": "Skipped"
           },
           "failed": {
             "type": "integer",
-            "title": "Failed",
-            "default": 0
+            "title": "Failed"
           }
         },
         "type": "object",
+        "required": [
+          "created",
+          "skipped",
+          "failed"
+        ],
         "title": "ImportEntityCounts"
       },
       "ImportIssue": {
@@ -2804,56 +2806,43 @@
         ],
         "title": "ImportIssue"
       },
-      "ImportReport": {
+      "ImportReportResponse": {
         "properties": {
           "dry_run": {
             "type": "boolean",
             "title": "Dry Run"
           },
           "companies": {
-            "$ref": "#/components/schemas/ImportEntityCounts",
-            "default": {
-              "created": 0,
-              "skipped": 0,
-              "failed": 0
-            }
+            "$ref": "#/components/schemas/ImportEntityCounts"
           },
           "clients": {
-            "$ref": "#/components/schemas/ImportEntityCounts",
-            "default": {
-              "created": 0,
-              "skipped": 0,
-              "failed": 0
-            }
+            "$ref": "#/components/schemas/ImportEntityCounts"
           },
           "products": {
-            "$ref": "#/components/schemas/ImportEntityCounts",
-            "default": {
-              "created": 0,
-              "skipped": 0,
-              "failed": 0
-            }
+            "$ref": "#/components/schemas/ImportEntityCounts"
           },
           "invoices_detected": {
             "type": "integer",
-            "title": "Invoices Detected",
-            "default": 0
+            "title": "Invoices Detected"
           },
           "issues": {
             "items": {
               "$ref": "#/components/schemas/ImportIssue"
             },
             "type": "array",
-            "title": "Issues",
-            "default": []
+            "title": "Issues"
           }
         },
         "type": "object",
         "required": [
-          "dry_run"
+          "dry_run",
+          "companies",
+          "clients",
+          "products",
+          "invoices_detected",
+          "issues"
         ],
-        "title": "ImportReport",
-        "description": "`dry_run=True` means nothing was written; the counts are a prediction.\n`created`/`skipped`/`failed` sum to the number of source rows seen. Duplicates\n(already present, or repeated within the file) count as `skipped`."
+        "title": "ImportReportResponse"
       },
       "InvoiceCreateRequest": {
         "properties": {

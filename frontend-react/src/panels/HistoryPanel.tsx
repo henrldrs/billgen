@@ -17,6 +17,19 @@ import {
 } from "../hooks/queries";
 import { formatDate, formatMoney } from "../lib/format";
 import { t, type Lang } from "../lib/translations";
+import { useApi } from "../providers/BillGenProvider";
+
+/** Trigger a browser "Save as" for a fetched document blob. */
+function saveBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
 
 export interface HistoryPanelProps {
   companyId: string;
@@ -41,9 +54,33 @@ export function HistoryPanel({ companyId, lang = "en" }: HistoryPanelProps) {
     status: statusFilter || undefined,
   });
 
+  const api = useApi();
   const voidInvoice = useVoidInvoice();
   const issueCreditNote = useIssueCreditNote();
   const recordPayment = useRecordPayment();
+
+  // Downloads are read-only re-renders of an issued invoice — no new data, no
+  // sequence consumed (the server only appends an export audit entry).
+  const [downloading, setDownloading] = useState<string | null>(null);
+  const [downloadFailed, setDownloadFailed] = useState(false);
+
+  const download = async (kind: "pdf" | "xml", invoiceId: string, reference: string) => {
+    const key = `${invoiceId}:${kind}`;
+    const safeRef = reference.replace(/\//g, "-");
+    setDownloading(key);
+    setDownloadFailed(false);
+    try {
+      if (kind === "pdf") {
+        saveBlob(await api.invoicePdf(invoiceId), `${safeRef}.pdf`);
+      } else {
+        saveBlob(await api.invoicePeppolXml(invoiceId), `${safeRef}.xml`);
+      }
+    } catch {
+      setDownloadFailed(true);
+    } finally {
+      setDownloading(null);
+    }
+  };
 
   const [action, setAction] = useState<PendingAction | null>(null);
   const [reason, setReason] = useState("");
@@ -109,6 +146,12 @@ export function HistoryPanel({ companyId, lang = "en" }: HistoryPanelProps) {
         </div>
       </header>
 
+      {downloadFailed ? (
+        <div className="bg-field__error" role="alert">
+          {t(lang, "history.downloadError")}
+        </div>
+      ) : null}
+
       {invoices && invoices.length > 0 ? (
         <table className="bg-table">
           <thead>
@@ -132,6 +175,20 @@ export function HistoryPanel({ companyId, lang = "en" }: HistoryPanelProps) {
                   </span>
                 </td>
                 <td>
+                  <Button
+                    variant="secondary"
+                    disabled={downloading === `${invoice.id}:pdf`}
+                    onClick={() => void download("pdf", invoice.id, invoice.reference)}
+                  >
+                    {t(lang, "history.downloadPdf")}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    disabled={downloading === `${invoice.id}:xml`}
+                    onClick={() => void download("xml", invoice.id, invoice.reference)}
+                  >
+                    {t(lang, "history.downloadXml")}
+                  </Button>
                   {invoice.status !== "voided" ? (
                     <>
                       <Button

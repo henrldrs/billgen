@@ -169,6 +169,24 @@ const MESSAGES = {
     es: "Fecha de pago",
   },
   "history.record": { en: "Record", fr: "Enregistrer", nl: "Registreren", es: "Registrar" },
+  "history.downloadPdf": {
+    en: "Download PDF",
+    fr: "Télécharger PDF",
+    nl: "Pdf downloaden",
+    es: "Descargar PDF",
+  },
+  "history.downloadXml": {
+    en: "Peppol XML",
+    fr: "XML Peppol",
+    nl: "Peppol-XML",
+    es: "XML Peppol",
+  },
+  "history.downloadError": {
+    en: "Could not download the document. Please try again.",
+    fr: "Téléchargement du document impossible. Veuillez réessayer.",
+    nl: "Kon het document niet downloaden. Probeer het opnieuw.",
+    es: "No se pudo descargar el documento. Inténtelo de nuevo.",
+  },
 
   // ---- dashboard --------------------------------------------------------------------
   "dashboard.title": {
