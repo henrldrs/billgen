@@ -28,7 +28,7 @@ async def test_client_crud(client):
     assert patched.status_code == 200
     assert patched.json()["name"] == "Bigger Corp"
     assert patched.json()["city"] == "Gent"
-    assert patched.json()["vat_number"] == "BE9876543210"  # untouched field survives
+    assert patched.json()["vat_number"] == "BE9876543265"  # untouched field survives
 
 
 async def test_product_crud(client):

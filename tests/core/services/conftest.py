@@ -35,7 +35,9 @@ def env():
             organization_id=org.id,
             name="Acme Consulting",
             legal_name="Acme Consulting SPRL",
-            vat_number="BE0123456789",
+            vat_number="BE0123456749",  # mod-97 valid
+            registration_number="0123456749",
+            email="billing@acme.be",
             address_line1="Rue de la Loi 1",
             postal_code="1000",
             city="Bruxelles",
@@ -47,7 +49,8 @@ def env():
             organization_id=org.id,
             company_id=company.id,
             name="Big Corp",
-            vat_number="BE9876543210",
+            vat_number="BE9876543265",  # mod-97 valid
+            email="ap@bigcorp.be",
             address_line1="Grote Markt 5",
             postal_code="2000",
             city="Antwerpen",

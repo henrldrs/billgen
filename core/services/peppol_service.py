@@ -5,7 +5,8 @@ from ..einvoicing import build_invoice_ubl, validate_invoice_ubl
 from ..models import AuditAction
 from ..repository import UnitOfWork
 from . import _audit
-from .errors import BusinessRuleError, NotFoundError
+from .errors import BusinessRuleError, NotFoundError, PeppolValidationError
+from .peppol_validation import validate_peppol_parties
 
 
 class PeppolService:
@@ -25,6 +26,11 @@ class PeppolService:
             client = uow.clients.get(invoice.client_id)
             if company is None or client is None:
                 raise NotFoundError("Invoice company or client missing")
+
+            # Gate: refuse to emit XML for invalid parties / B2C (Peppol is B2B/B2G).
+            party_errors = validate_peppol_parties(company, client)
+            if party_errors:
+                raise PeppolValidationError(party_errors)
 
             xml = build_invoice_ubl(invoice, company, client)
             problems = validate_invoice_ubl(xml)

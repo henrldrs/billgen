@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.engine import Engine
 
 from core.pdf import PdfEngineUnavailableError
-from core.services import BusinessRuleError, NotFoundError
+from core.services import BusinessRuleError, NotFoundError, PeppolValidationError
 from core.tenancy import TenantContextError, TenantViolationError
 from db.engine import make_engine
 from db.repositories import SqlAlchemyUnitOfWork
@@ -95,6 +95,18 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
     @app.exception_handler(NotFoundError)
     async def not_found_handler(request: Request, exc: NotFoundError):  # noqa: ANN202
         return JSONResponse(status_code=404, content={"detail": str(exc)})
+
+    @app.exception_handler(PeppolValidationError)
+    async def peppol_validation_handler(request: Request, exc: PeppolValidationError):  # noqa: ANN202
+        return JSONResponse(
+            status_code=422,
+            content={
+                "detail": "Invoice is not deliverable over Peppol",
+                "errors": [
+                    {"field": e.field, "message_key": e.message_key} for e in exc.errors
+                ],
+            },
+        )
 
     @app.exception_handler(BusinessRuleError)
     async def business_rule_handler(request: Request, exc: BusinessRuleError):  # noqa: ANN202

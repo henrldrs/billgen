@@ -2,6 +2,14 @@
 
 Stdlib ElementTree only — deterministic output, no native dependencies.
 
+Belgian localisation (ported from the approved FinanceFlow reference): for a BE
+seller the document uses the stricter **UBL.BE** customization, carries the two
+mandatory ``AdditionalDocumentReference`` markers, the Belgian tax-category code
+(BTCC) in ``cbc:Name``, an OGM-VCS structured payment communication, and the
+KBO enterprise number as ``PartyLegalEntity/CompanyID``. The EN 16931 tax engine
+(Decimal math, per-line categories, multi-rate ``TaxSubtotal`` grouping,
+document-level discounts) is unchanged and layered underneath.
+
 Known simplification (documented, revisit before Peppol AP integration):
 a document-level discount on a mixed-VAT-rate invoice is attached to the
 first rate's tax category; strict EN 16931 wants it split per category.
@@ -11,14 +19,24 @@ from decimal import Decimal
 from xml.etree import ElementTree as ET
 
 from ..models import Client, Company, Currency, Invoice, VATCategory
-from ..rules import discount_amount, quantize
+from ..rules import (
+    btcc_code,
+    discount_amount,
+    peppol_endpoint,
+    quantize,
+    structured_communication,
+)
 
 NS_INVOICE = "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
 NS_CAC = "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
 NS_CBC = "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
 
-CUSTOMIZATION_ID = (
+# Vanilla Peppol BIS Billing 3.0 vs. the stricter Belgian UBL.BE profile.
+CUSTOMIZATION_ID_BIS = (
     "urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0"
+)
+CUSTOMIZATION_ID_UBL_BE = (
+    "urn:cen.eu:en16931:2017#conformant#urn:UBL.BE:1.0.0.20180214"
 )
 PROFILE_ID = "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0"
 
@@ -48,11 +66,44 @@ def _amount(parent: ET.Element, tag: str, value: Decimal, currency: Currency) ->
     return _cbc(parent, tag, str(quantize(value, currency)), currencyID=currency.value)
 
 
+def _legal_company_id(company: Company) -> str | None:
+    """KBO/CBE enterprise number (10 digits) for a BE supplier's
+    PartyLegalEntity/CompanyID schemeID=0208, or None."""
+    if company.country_code.upper() != "BE":
+        return None
+    raw = company.registration_number or company.vat_number
+    digits = "".join(ch for ch in (raw or "") if ch.isdigit())
+    return digits.zfill(10) if digits else None
+
+
+def _tax_category(
+    parent: ET.Element, *, tag: str = "TaxCategory", category_id: str, rate: Decimal,
+    btcc: str | None, exemption_reason: str | None,
+) -> None:
+    """Emit a tax category (cac:TaxCategory or cac:ClassifiedTaxCategory) in
+    EN 16931 child order: ID, Name (BTCC), Percent, TaxExemptionReason, TaxScheme."""
+    category = _cac(parent, tag)
+    _cbc(category, "ID", category_id)
+    if btcc is not None:
+        _cbc(category, "Name", btcc)
+    _cbc(category, "Percent", str(rate))
+    if exemption_reason:
+        _cbc(category, "TaxExemptionReason", exemption_reason)
+    scheme = _cac(category, "TaxScheme")
+    _cbc(scheme, "ID", "VAT")
+
+
 def _party(parent: ET.Element, tag: str, *, name: str, vat_number: str | None,
            street: str | None, city: str | None, postal_code: str | None,
-           country_code: str) -> None:
+           country_code: str, endpoint: tuple[str, str] | None,
+           email: str | None, legal_company_id: str | None) -> None:
     wrapper = _cac(parent, tag)
     party = _cac(wrapper, "Party")
+
+    # cbc:EndpointID must be the first Party child per the UBL element sequence.
+    if endpoint is not None:
+        scheme_id, value = endpoint
+        _cbc(party, "EndpointID", value, schemeID=scheme_id)
 
     party_name = _cac(party, "PartyName")
     _cbc(party_name, "Name", name)
@@ -75,6 +126,12 @@ def _party(parent: ET.Element, tag: str, *, name: str, vat_number: str | None,
 
     legal = _cac(party, "PartyLegalEntity")
     _cbc(legal, "RegistrationName", name)
+    if legal_company_id is not None:
+        _cbc(legal, "CompanyID", legal_company_id, schemeID="0208")
+
+    if email:
+        contact = _cac(party, "Contact")
+        _cbc(contact, "ElectronicMail", email)
 
 
 def _allocated_line_nets(invoice: Invoice) -> tuple[list[Decimal], Decimal]:
@@ -94,9 +151,12 @@ def _allocated_line_nets(invoice: Invoice) -> tuple[list[Decimal], Decimal]:
 
 def build_invoice_ubl(invoice: Invoice, company: Company, client: Client) -> str:
     cur = invoice.currency
+    # A BE seller drives the Belgian UBL.BE profile and its localisation.
+    is_be = company.country_code.upper() == "BE"
+
     root = ET.Element(ET.QName(NS_INVOICE, "Invoice"))
 
-    _cbc(root, "CustomizationID", CUSTOMIZATION_ID)
+    _cbc(root, "CustomizationID", CUSTOMIZATION_ID_UBL_BE if is_be else CUSTOMIZATION_ID_BIS)
     _cbc(root, "ProfileID", PROFILE_ID)
     _cbc(root, "ID", invoice.reference)
     _cbc(root, "IssueDate", invoice.issue_date.isoformat())
@@ -106,7 +166,20 @@ def build_invoice_ubl(invoice: Invoice, company: Company, client: Client) -> str
     if invoice.comments:
         _cbc(root, "Note", invoice.comments)
     _cbc(root, "DocumentCurrencyCode", cur.value)
-    _cbc(root, "BuyerReference", client.name)
+    # BT-10 BuyerReference: the invoice's own reference (a real accounting ref),
+    # not the buyer's name.
+    _cbc(root, "BuyerReference", invoice.reference)
+
+    # UBL.BE mandatory markers (ubl-BE-01/02/03): emitted after BuyerReference,
+    # before AccountingSupplierParty.
+    if is_be:
+        for doc_id, description in (
+            (invoice.reference, "Invoice"),
+            ("UBL.BE", "CommercialInvoice"),
+        ):
+            ref = _cac(root, "AdditionalDocumentReference")
+            _cbc(ref, "ID", doc_id)
+            _cbc(ref, "DocumentDescription", description)
 
     _party(
         root, "AccountingSupplierParty",
@@ -114,6 +187,10 @@ def build_invoice_ubl(invoice: Invoice, company: Company, client: Client) -> str
         vat_number=company.vat_number,
         street=company.address_line1, city=company.city,
         postal_code=company.postal_code, country_code=company.country_code,
+        endpoint=peppol_endpoint(
+            company.country_code, company.vat_number, company.registration_number
+        ),
+        email=company.email, legal_company_id=_legal_company_id(company),
     )
     _party(
         root, "AccountingCustomerParty",
@@ -121,11 +198,16 @@ def build_invoice_ubl(invoice: Invoice, company: Company, client: Client) -> str
         vat_number=client.vat_number,
         street=client.address_line1, city=client.city,
         postal_code=client.postal_code, country_code=client.country_code,
+        endpoint=peppol_endpoint(client.country_code, client.vat_number),
+        email=client.email, legal_company_id=None,
     )
 
     if company.iban:
         means = _cac(root, "PaymentMeans")
         _cbc(means, "PaymentMeansCode", "30")  # credit transfer
+        if is_be:
+            # OGM-VCS structured communication, before PayeeFinancialAccount.
+            _cbc(means, "PaymentID", structured_communication(invoice.reference))
         account = _cac(means, "PayeeFinancialAccount")
         _cbc(account, "ID", company.iban)
         if company.bic:
@@ -153,16 +235,16 @@ def build_invoice_ubl(invoice: Invoice, company: Company, client: Client) -> str
             or "Discount",
         )
         _amount(allowance, "Amount", doc_allowance, cur)
-        category = _cac(allowance, "TaxCategory")
-        _cbc(category, "ID", first_vat.category.value)
-        _cbc(category, "Percent", str(first_vat.rate))
-        scheme = _cac(category, "TaxScheme")
-        _cbc(scheme, "ID", "VAT")
+        _tax_category(
+            allowance, category_id=first_vat.category.value, rate=first_vat.rate,
+            btcc=btcc_code(first_vat.category, first_vat.rate) if is_be else None,
+            exemption_reason=None,
+        )
 
     # Tax subtotals grouped by (category, rate) over allocated nets.
-    groups: dict[tuple[str, Decimal], dict[str, Decimal]] = {}
+    groups: dict[tuple[VATCategory, Decimal], dict[str, Decimal]] = {}
     for line, net in zip(invoice.lines, allocated_nets, strict=True):
-        key = (line.vat.category.value, line.vat.rate)
+        key = (line.vat.category, line.vat.rate)
         group = groups.setdefault(key, {"taxable": Decimal(0), "tax": Decimal(0)})
         group["taxable"] += net
         group["tax"] += net * line.vat.rate / Decimal(100)
@@ -170,18 +252,15 @@ def build_invoice_ubl(invoice: Invoice, company: Company, client: Client) -> str
     total_tax = sum((g["tax"] for g in groups.values()), Decimal(0))
     tax_total = _cac(root, "TaxTotal")
     _amount(tax_total, "TaxAmount", total_tax, cur)
-    for (category_id, rate), group in groups.items():
+    for (category, rate), group in groups.items():
         subtotal = _cac(tax_total, "TaxSubtotal")
         _amount(subtotal, "TaxableAmount", group["taxable"], cur)
         _amount(subtotal, "TaxAmount", group["tax"], cur)
-        category = _cac(subtotal, "TaxCategory")
-        _cbc(category, "ID", category_id)
-        _cbc(category, "Percent", str(rate))
-        reason = _EXEMPTION_REASONS.get(category_id)
-        if reason:
-            _cbc(category, "TaxExemptionReason", reason)
-        scheme = _cac(category, "TaxScheme")
-        _cbc(scheme, "ID", "VAT")
+        _tax_category(
+            subtotal, category_id=category.value, rate=rate,
+            btcc=btcc_code(category, rate) if is_be else None,
+            exemption_reason=_EXEMPTION_REASONS.get(category.value),
+        )
 
     line_extension_total = sum(nets_pre_doc_discount, Decimal(0))
     tax_exclusive = line_extension_total - doc_allowance
@@ -200,11 +279,12 @@ def build_invoice_ubl(invoice: Invoice, company: Company, client: Client) -> str
         _amount(ubl_line, "LineExtensionAmount", net_pre, cur)
         item = _cac(ubl_line, "Item")
         _cbc(item, "Name", line.description[:100])
-        classified = _cac(item, "ClassifiedTaxCategory")
-        _cbc(classified, "ID", line.vat.category.value)
-        _cbc(classified, "Percent", str(line.vat.rate))
-        scheme = _cac(classified, "TaxScheme")
-        _cbc(scheme, "ID", "VAT")
+        _tax_category(
+            item, tag="ClassifiedTaxCategory",
+            category_id=line.vat.category.value, rate=line.vat.rate,
+            btcc=btcc_code(line.vat.category, line.vat.rate) if is_be else None,
+            exemption_reason=None,
+        )
         price = _cac(ubl_line, "Price")
         _amount(price, "PriceAmount", line.unit_price, cur)
 

@@ -54,7 +54,7 @@ async def create_company(
     payload = {
         "name": name,
         "legal_name": "Acme Consulting SPRL",
-        "vat_number": "BE0123456789",
+        "vat_number": "BE0123456749",
         "address_line1": "Rue de la Loi 1",
         "postal_code": "1000",
         "city": "Bruxelles",
@@ -78,7 +78,7 @@ async def create_client_record(
     payload = {
         "company_id": company_id,
         "name": name,
-        "vat_number": "BE9876543210",
+        "vat_number": "BE9876543265",
         "address_line1": "Grote Markt 5",
         "postal_code": "2000",
         "city": "Antwerpen",
