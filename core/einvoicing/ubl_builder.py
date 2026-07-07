@@ -2,17 +2,22 @@
 
 Stdlib ElementTree only — deterministic output, no native dependencies.
 
-Belgian localisation (ported from the approved FinanceFlow reference): for a BE
-seller the document uses the stricter **UBL.BE** customization, carries the two
-mandatory ``AdditionalDocumentReference`` markers, the Belgian tax-category code
-(BTCC) in ``cbc:Name``, an OGM-VCS structured payment communication, and the
-KBO enterprise number as ``PartyLegalEntity/CompanyID``. The EN 16931 tax engine
-(Decimal math, per-line categories, multi-rate ``TaxSubtotal`` grouping,
-document-level discounts) is unchanged and layered underneath.
+Profile: standard **Peppol BIS Billing 3.0** for every seller (validated against
+OpenPeppol UBL Invoice 2026.5 / BIS Billing 3.0.21). BE sellers additionally carry
+the Belgian elements that BIS accepts — an OGM-VCS structured payment communication
+in ``PaymentMeans/PaymentID`` and the KBO enterprise number as
+``PartyLegalEntity/CompanyID`` (scheme 0208). The EN 16931 tax engine (Decimal math,
+per-line categories, multi-rate ``TaxSubtotal`` grouping, document-level discounts)
+is layered underneath.
 
-Known simplification (documented, revisit before Peppol AP integration):
-a document-level discount on a mixed-VAT-rate invoice is attached to the
-first rate's tax category; strict EN 16931 wants it split per category.
+Note: the older ``UBL.BE:1.0.0.20180214`` customization (with its
+``AdditionalDocumentReference`` markers and BTCC ``cbc:Name`` codes) was dropped —
+it fails Peppol BIS validation (PEPPOL-EN16931-R004) on the CustomizationID and is a
+Mercurius/B2G-era profile, not what the B2B Peppol network validates today.
+
+A document-level discount on a mixed-VAT-rate invoice is split **per VAT
+category** (one ``AllowanceCharge`` each), as EN 16931 / the UBL.BE schematron
+require; the parts are quantized to sum exactly to the document allowance total.
 """
 
 from decimal import Decimal
@@ -20,7 +25,6 @@ from xml.etree import ElementTree as ET
 
 from ..models import Client, Company, Currency, Invoice, VATCategory
 from ..rules import (
-    btcc_code,
     discount_amount,
     peppol_endpoint,
     quantize,
@@ -31,12 +35,9 @@ NS_INVOICE = "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
 NS_CAC = "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
 NS_CBC = "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
 
-# Vanilla Peppol BIS Billing 3.0 vs. the stricter Belgian UBL.BE profile.
+# Standard Peppol BIS Billing 3.0 specification identifier (PEPPOL-EN16931-R004).
 CUSTOMIZATION_ID_BIS = (
     "urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0"
-)
-CUSTOMIZATION_ID_UBL_BE = (
-    "urn:cen.eu:en16931:2017#conformant#urn:UBL.BE:1.0.0.20180214"
 )
 PROFILE_ID = "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0"
 
@@ -151,12 +152,12 @@ def _allocated_line_nets(invoice: Invoice) -> tuple[list[Decimal], Decimal]:
 
 def build_invoice_ubl(invoice: Invoice, company: Company, client: Client) -> str:
     cur = invoice.currency
-    # A BE seller drives the Belgian UBL.BE profile and its localisation.
+    # A BE seller adds the Belgian elements BIS accepts (structured comm, KBO id).
     is_be = company.country_code.upper() == "BE"
 
     root = ET.Element(ET.QName(NS_INVOICE, "Invoice"))
 
-    _cbc(root, "CustomizationID", CUSTOMIZATION_ID_UBL_BE if is_be else CUSTOMIZATION_ID_BIS)
+    _cbc(root, "CustomizationID", CUSTOMIZATION_ID_BIS)
     _cbc(root, "ProfileID", PROFILE_ID)
     _cbc(root, "ID", invoice.reference)
     _cbc(root, "IssueDate", invoice.issue_date.isoformat())
@@ -169,17 +170,6 @@ def build_invoice_ubl(invoice: Invoice, company: Company, client: Client) -> str
     # BT-10 BuyerReference: the invoice's own reference (a real accounting ref),
     # not the buyer's name.
     _cbc(root, "BuyerReference", invoice.reference)
-
-    # UBL.BE mandatory markers (ubl-BE-01/02/03): emitted after BuyerReference,
-    # before AccountingSupplierParty.
-    if is_be:
-        for doc_id, description in (
-            (invoice.reference, "Invoice"),
-            ("UBL.BE", "CommercialInvoice"),
-        ):
-            ref = _cac(root, "AdditionalDocumentReference")
-            _cbc(ref, "ID", doc_id)
-            _cbc(ref, "DocumentDescription", description)
 
     _party(
         root, "AccountingSupplierParty",
@@ -225,21 +215,53 @@ def build_invoice_ubl(invoice: Invoice, company: Company, client: Client) -> str
         for line in invoice.lines
     ]
 
-    if doc_allowance > 0 and invoice.lines:
-        first_vat = invoice.lines[0].vat
-        allowance = _cac(root, "AllowanceCharge")
-        _cbc(allowance, "ChargeIndicator", "false")
-        _cbc(
-            allowance, "AllowanceChargeReason",
-            (invoice.invoice_discount.reason if invoice.invoice_discount else None)
-            or "Discount",
-        )
-        _amount(allowance, "Amount", doc_allowance, cur)
-        _tax_category(
-            allowance, category_id=first_vat.category.value, rate=first_vat.rate,
-            btcc=btcc_code(first_vat.category, first_vat.rate) if is_be else None,
-            exemption_reason=None,
-        )
+    # A document-level discount must be split *per VAT category* on a mixed-rate
+    # invoice: EN 16931 (and the UBL.BE schematron) require each document-level
+    # AllowanceCharge to carry the VAT category it reduces, and the per-category
+    # taxable amounts (below) already net out their share. `net_pre - allocated`
+    # is exactly the discount each line absorbed; grouped by (category, rate) and
+    # summed it reconstructs the allowance per category (and sums to doc_allowance).
+    doc_allowance_by_group: dict[tuple[VATCategory, Decimal], Decimal] = {}
+    if doc_allowance > 0:
+        for line, net_pre, net_alloc in zip(
+            invoice.lines, nets_pre_doc_discount, allocated_nets, strict=True
+        ):
+            key = (line.vat.category, line.vat.rate)
+            doc_allowance_by_group[key] = (
+                doc_allowance_by_group.get(key, Decimal(0)) + (net_pre - net_alloc)
+            )
+
+    # Quantize each group's amount so the parts sum *exactly* to the quantized
+    # document allowance (largest group absorbs the sub-cent residual) — keeps
+    # BR-CO-11 (AllowanceTotalAmount == Σ document allowance amounts) exact.
+    emitted_allowance = Decimal(0)
+    if doc_allowance_by_group:
+        doc_allowance_q = quantize(doc_allowance, cur)
+        group_items = [
+            (key, quantize(amount, cur)) for key, amount in doc_allowance_by_group.items()
+        ]
+        residual = doc_allowance_q - sum((q for _, q in group_items), Decimal(0))
+        if residual != 0:
+            biggest = max(range(len(group_items)), key=lambda i: group_items[i][1])
+            key, q = group_items[biggest]
+            group_items[biggest] = (key, q + residual)
+
+        reason = (
+            invoice.invoice_discount.reason if invoice.invoice_discount else None
+        ) or "Discount"
+        for (category, rate), amount in group_items:
+            if amount <= 0:
+                continue
+            emitted_allowance += amount
+            allowance = _cac(root, "AllowanceCharge")
+            _cbc(allowance, "ChargeIndicator", "false")
+            _cbc(allowance, "AllowanceChargeReason", reason)
+            _amount(allowance, "Amount", amount, cur)
+            _tax_category(
+                allowance, category_id=category.value, rate=rate,
+                btcc=None,
+                exemption_reason=None,
+            )
 
     # Tax subtotals grouped by (category, rate) over allocated nets.
     groups: dict[tuple[VATCategory, Decimal], dict[str, Decimal]] = {}
@@ -258,7 +280,7 @@ def build_invoice_ubl(invoice: Invoice, company: Company, client: Client) -> str
         _amount(subtotal, "TaxAmount", group["tax"], cur)
         _tax_category(
             subtotal, category_id=category.value, rate=rate,
-            btcc=btcc_code(category, rate) if is_be else None,
+            btcc=None,
             exemption_reason=_EXEMPTION_REASONS.get(category.value),
         )
 
@@ -268,8 +290,8 @@ def build_invoice_ubl(invoice: Invoice, company: Company, client: Client) -> str
     _amount(totals, "LineExtensionAmount", line_extension_total, cur)
     _amount(totals, "TaxExclusiveAmount", tax_exclusive, cur)
     _amount(totals, "TaxInclusiveAmount", tax_exclusive + total_tax, cur)
-    if doc_allowance > 0:
-        _amount(totals, "AllowanceTotalAmount", doc_allowance, cur)
+    if emitted_allowance > 0:
+        _amount(totals, "AllowanceTotalAmount", emitted_allowance, cur)
     _amount(totals, "PayableAmount", tax_exclusive + total_tax, cur)
 
     for line, net_pre in zip(invoice.lines, nets_pre_doc_discount, strict=True):
@@ -282,7 +304,7 @@ def build_invoice_ubl(invoice: Invoice, company: Company, client: Client) -> str
         _tax_category(
             item, tag="ClassifiedTaxCategory",
             category_id=line.vat.category.value, rate=line.vat.rate,
-            btcc=btcc_code(line.vat.category, line.vat.rate) if is_be else None,
+            btcc=None,
             exemption_reason=None,
         )
         price = _cac(ubl_line, "Price")

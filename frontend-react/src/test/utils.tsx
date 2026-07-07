@@ -53,6 +53,7 @@ export function companyRecord(extra: Partial<CompanyResponse> = {}): CompanyResp
     name: "Acme Consulting",
     legal_name: null,
     vat_number: null,
+    registration_number: null,
     email: null,
     address_line1: null,
     postal_code: null,

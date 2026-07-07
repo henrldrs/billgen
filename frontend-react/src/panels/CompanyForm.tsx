@@ -20,6 +20,12 @@ export function CompanyForm({ lang = "en", onCreated }: CompanyFormProps) {
 
   const [name, setName] = useState("");
   const [vatNumber, setVatNumber] = useState("");
+  const [registrationNumber, setRegistrationNumber] = useState("");
+  const [email, setEmail] = useState("");
+  const [addressLine1, setAddressLine1] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [city, setCity] = useState("");
+  const [countryCode, setCountryCode] = useState("BE");
   const [iban, setIban] = useState("");
   const [bic, setBic] = useState("");
   const [prefix, setPrefix] = useState("");
@@ -32,6 +38,12 @@ export function CompanyForm({ lang = "en", onCreated }: CompanyFormProps) {
       {
         name,
         vat_number: vatNumber || null,
+        registration_number: registrationNumber || null,
+        email: email || null,
+        address_line1: addressLine1 || null,
+        postal_code: postalCode || null,
+        city: city || null,
+        country_code: countryCode.toUpperCase() || "BE",
         iban: iban || null,
         bic: bic || null,
         invoice_reference_prefix: prefix,
@@ -58,6 +70,38 @@ export function CompanyForm({ lang = "en", onCreated }: CompanyFormProps) {
           label={t(lang, "company.vat")}
           value={vatNumber}
           onChange={(event) => setVatNumber(event.target.value)}
+        />
+        <Field
+          label={t(lang, "company.registration")}
+          value={registrationNumber}
+          onChange={(event) => setRegistrationNumber(event.target.value)}
+        />
+        <Field
+          label={t(lang, "company.email")}
+          value={email}
+          type="email"
+          onChange={(event) => setEmail(event.target.value)}
+        />
+        <Field
+          label={t(lang, "company.address")}
+          value={addressLine1}
+          onChange={(event) => setAddressLine1(event.target.value)}
+        />
+        <Field
+          label={t(lang, "company.postalCode")}
+          value={postalCode}
+          onChange={(event) => setPostalCode(event.target.value)}
+        />
+        <Field
+          label={t(lang, "company.city")}
+          value={city}
+          onChange={(event) => setCity(event.target.value)}
+        />
+        <Field
+          label={t(lang, "company.country")}
+          value={countryCode}
+          maxLength={2}
+          onChange={(event) => setCountryCode(event.target.value)}
         />
         <Field
           label={t(lang, "company.iban")}

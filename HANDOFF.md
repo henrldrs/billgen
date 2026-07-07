@@ -11,13 +11,43 @@ Read this instead of re-deriving context.
 | | |
 |---|---|
 | Location | `C:\Users\hdr_s\Documents\business model\BillGen BETA` |
-| Phases done | 0–9, **11** (domain → rules → DB → services → API → business routers → UI kit → SaaS shell → desktop → legacy import). Phase 10 (billing) not yet started. |
-| Tests | **Python 174 passed, 1 skipped** (`python -m pytest tests`); **frontend 33 passed** (`npm run test --workspace @billgen/ui`) |
-| Git | local only, **not pushed**. One commit + tag per phase (`phase-4` … `phase-9b`). Branch `main`. |
+| Phases done | 0–9, **11** (domain → rules → DB → services → API → business routers → UI kit → SaaS shell → desktop → legacy import) + **Peppol e-invoicing** (Helger-validated Peppol BIS 3.0 + Belgian elements + pre-export validation gate; `771e903` then switched off UBL.BE). Phase 10 (billing) not yet started. |
+| Tests | **Python 186 passed, 1 skipped** (`python -m pytest tests`); **frontend 33 passed** (`npm run test --workspace @billgen/ui`) |
+| Git | local only, **not pushed**. One commit + tag per phase (`phase-4` … `phase-9b`); later work (import, polish, peppol) committed on `main` without tags. Branch `main`. |
 | Skip reason | 1 PDF test skips because WeasyPrint's native (Pango/GTK) stack isn't installed — HTML rendering is fully tested; only the HTML→PDF byte step needs it. |
-| Not a migration | The legacy React/Python apps (`D:\CODING\audit-v2-react-exe`, `myshop-*`) are reference only. Do not edit them. |
+| Not a migration | The legacy React/Python apps (`D:\CODING\audit-v2-react-exe`, `myshop-*`) are reference only. Do not edit them. The **approved Peppol reference** is `D:\CODING\FinanceFlow Bill Generator` (the demo) — inventoried in [docs/COMPARISON_demo_vs_new.md](docs/COMPARISON_demo_vs_new.md). |
+| Audit progress | The demo was formally audited (`D:\CODING\audit-v2-react-exe`, Apr 2026). How this rebuild answers those findings is scored in [docs/AUDIT_PROGRESS_vs_demo.md](docs/AUDIT_PROGRESS_vs_demo.md) — see §0.1 below. |
 
 Design decision of record: [docs/ARCHITECTURE/ADR-0001-three-layer.md](docs/ARCHITECTURE/ADR-0001-three-layer.md).
+
+---
+
+## 0.1 Audit progress vs. the audited demo (Apr 2026 → now)
+
+The shipped demo (React + localStorage, at `D:\CODING\audit-v2-react-exe`) was audited
+across three tracks: **A. SaaS/commercial** (`00`–`15`, verdict *do not launch*,
+**51%**), **B. mom/private-use** (`BETA VERSION/audit 29-4`), and the **C. Electron
+portable EXE** it built. Full finding-by-finding scoring is in
+[docs/AUDIT_PROGRESS_vs_demo.md](docs/AUDIT_PROGRESS_vs_demo.md). Summary:
+
+- **The rebuild closed the engineering / data-integrity / compliance half; the
+  commercial-launch half is still untouched (by design — it's Phase 10+).** Indicative
+  weighted re-score: **~2.54 (51%) → ~3.17 (~63%)**, still under the audit's 70% launch
+  line, and the entire remaining gap is in categories **10 Monetization / 11 Support /
+  12 Legal**.
+- **Solved at the root:** localStorage → real DB; gapless numbering (row-locked, no
+  hard-delete); mock dashboard → real KPIs; **zero tests → 185 Py + 33 FE**; deeper
+  Peppol (multi-rate + Helger-validated BIS 3.0 + structured comm + pre-export gate); plus net-new
+  **backend + tested multi-tenancy** the demo never had.
+- **Partly done:** desktop `.exe` (Tauri shell compiles clean, but no signed installer /
+  frozen sidecar — Phase 12); license (`desktop/licensing.py` verifies Ed25519, but no
+  activation flow / plan gating).
+- **Still open (the whole commercial layer):** EV code-signing, EULA/privacy/legal
+  entity, checkout/Merchant-of-Record, product telemetry, support inbox, accountant
+  sign-off.
+- **Debts the rebuild carries:** agenda/VAT-reminder feature not ported; UX polish
+  below the demo's glassmorphism; Helger/Access-Point XML validation still pending on
+  both sides; historical invoices deliberately not imported.
 
 ---
 
@@ -69,12 +99,14 @@ the API's OpenAPI schema, so the UI cannot drift from the server contract.
 | `core/rules/numbering.py` | `client_initials()`, `format_display_reference()`, `format_credit_note_reference()` | Legacy display reference `{prefix}{initials}{MM}{seq}{YYYY}`; credit-note `CN-{prefix}{YYYY}/{NNNN}`. |
 | `core/rules/discounts.py` | `discount_amount()` | Percentage / fixed (capped at base). |
 | `core/rules/belgian_legal.py` | `legal_mention_for()`, `mandatory_mentions_for_invoice()` | Mandatory legal mentions FR/NL/EN/ES. |
+| `core/rules/identifiers.py` | `canonicalize_vat()`, `validate_belgian_vat()`, `validate_iban()`, `validate_bic()`, `ISO_COUNTRY_CODES` | Belgian identifier checksums (VAT mod-97, IBAN ISO 13616, BIC ISO 9362). Ported from the approved demo; feeds the Peppol gate. |
+| `core/rules/belgian_peppol.py` | `structured_communication()`, `btcc_code()`, `peppol_endpoint()` | OGM-VCS structured payment communication; Belgian tax-category code (BTCC); Peppol EndpointID scheme (BE 0208 / non-BE 9925). |
 | `core/tenancy.py` | `organization_context()`, `current_organization_id()`, `guard_tenant()`, `TenantContextError`, `TenantViolationError` | **The multi-tenant backbone.** A `ContextVar` holds the current org. |
 | `core/repository/` | abstract `*Repository` ports + `UnitOfWork`; `sequence_repo` (`INVOICE_SERIES`, `CREDIT_NOTE_SERIES`, `monthly_bucket()`) | Storage-agnostic interfaces. No `org_id` params — read from context. No invoice hard-delete; audit log is append-only. |
-| `core/services/` | `InvoiceService`, `CreditNoteService`, `PaymentService`, `Company/Client/Product/Organization/Activity/ReportingService`, `PdfService`, `PeppolService`, `ImportService`; `errors.py` (`NotFoundError`, `BusinessRuleError`); `_audit.record()`; `numbering_service` | **Use-cases.** Each opens one `UnitOfWork`, does the work, writes an audit entry, commits once. |
+| `core/services/` | `InvoiceService`, `CreditNoteService`, `PaymentService`, `Company/Client/Product/Organization/Activity/ReportingService`, `PdfService`, `PeppolService`, `ImportService`; `peppol_validation.validate_peppol_parties()`; `errors.py` (`NotFoundError`, `BusinessRuleError`, `PeppolValidationError`, `FieldError`); `_audit.record()`; `numbering_service` | **Use-cases.** Each opens one `UnitOfWork`, does the work, writes an audit entry, commits once. `PeppolService` runs the party-validation gate before building XML. |
 | `core/imports/` | `parse_backup()`, `map_company/map_client/map_product`, `ImportReport`, `MappingError`, `APP_NAME` | Pure legacy-import layer: parses a `FinanceFlow BillGen` backup (`{app, keys}` with `billgen-*` localStorage keys) and maps its records onto domain models. No framework, no I/O. |
 | `core/pdf/` | `registry` (`TEMPLATES`, `get_template`), `renderer` (`render_html`, `html_to_pdf`, `PdfEngineUnavailableError`), `context` (`build_invoice_context`), `templates/*.html.j2` | Server-side PDF via Jinja2 + WeasyPrint. 4 templates: fr_standard, fr_detailed, nl_minimal, credit_note. |
-| `core/einvoicing/` | `ubl_builder.build_invoice_ubl()`, `ubl_validator.validate_invoice_ubl()` | Peppol BIS 3.0 / UBL 2.1 XML (stdlib ElementTree). |
+| `core/einvoicing/` | `ubl_builder.build_invoice_ubl()`, `ubl_validator.validate_invoice_ubl()` | **Standard Peppol BIS Billing 3.0** / UBL 2.1 XML (stdlib ElementTree), Helger-validated (2026.5). BE sellers additionally carry the Belgian elements BIS accepts — EndpointIDs, OGM-VCS structured communication (`PaymentID`), KBO legal id, party contact — layered over the EN 16931 multi-rate/discount engine. (The older UBL.BE profile/markers/BTCC were dropped — see §9.) |
 | `core/utils/` | `money.format_amount()`, `dates.format_date()`, `jsonsafe.json_safe()` | Formatting + audit-log JSON safety (Decimal→str). |
 
 ### `db/` — persistence (implements the core ports)
@@ -206,8 +238,8 @@ Live totals in the builder come from `POST /invoices/preview` (pure calculation,
 
 | Suite | Command | Count |
 |---|---|---|
-| Python (core/api/db/desktop) | `python -m pytest tests` | 161 passed, 1 skipped |
-| Frontend (`@billgen/ui`) | `npm run test --workspace @billgen/ui` | 29 passed |
+| Python (core/api/db/desktop) | `python -m pytest tests` | 186 passed, 1 skipped |
+| Frontend (`@billgen/ui`) | `npm run test --workspace @billgen/ui` | 33 passed |
 
 The Python skip is the real-PDF-bytes test (needs WeasyPrint's native stack). The
 whole app flow was also **browser-verified** in Phase 8 (signup → invoice →
@@ -234,6 +266,24 @@ payment → dashboard) and the Tauri shell **compiles clean** (`cargo build`).
 ---
 
 ## 9. Known gaps & next phases
+
+> **Plan of record (next up):** the **invoice lifecycle split — draft → issued →
+> delivered** — is designed in
+> [docs/ARCHITECTURE/ADR-0002-invoice-lifecycle.md](docs/ARCHITECTURE/ADR-0002-invoice-lifecycle.md).
+> Today `InvoiceService.create()` burns the gapless number and sets `ISSUED` at
+> create time (`invoice_service.py:75,95`) — there is no draft. The plan: split into
+> `create_draft()` (no number, deletable) + `issue()` (a deliberate, confirm-gated,
+> local act that assigns the number and finalizes — **not** dependent on the Peppol
+> network; Peppol is delivery, not issuance). Delivery/payment status become a
+> *separate, async* track (port + external adapter). Sequencing lives in the ADR.
+> This is the next **foundation-hardening** item, ahead of backup/restore.
+>
+> **Foundation-hardening track:** (1) Peppol → trustworthy ✅ **done** (forms surface
+> gate fields; mixed-rate discount split per category; BE switched to plain BIS;
+> **both non-BE and BE invoices Helger-validated** against OpenPeppol 2026.5).
+> (2) draft→issue split ← *next, per ADR-0002*. (3) backup/restore. (4) CI + quality
+> gate. (5) lightweight crash reporting. Audit-vs-now scoring:
+> [docs/AUDIT_PROGRESS_vs_demo.md](docs/AUDIT_PROGRESS_vs_demo.md).
 
 - **Phase 10** — Stripe billing + plan enforcement (`SubscriptionRow` already
   exists), email (Postmark), VIES VAT check.
@@ -268,6 +318,58 @@ payment → dashboard) and the Tauri shell **compiles clean** (`cargo build`).
     isn't reachable in the UI yet — a desktop company-selector is a separate gap.
   - CSV path (per-entity CSV → the same `ImportService`) if a user has data
     outside the BillGen app.
+- **Peppol e-invoicing hardening — DONE (`771e903`).** Ported the *approved* demo
+  (`D:\CODING\FinanceFlow Bill Generator`, `frontend/src/lib/peppol.ts`) into the
+  new architecture, placed by layer (see [docs/COMPARISON_demo_vs_new.md](docs/COMPARISON_demo_vs_new.md)):
+  - **Rules (pure):** `core/rules/identifiers.py` (VAT/IBAN/BIC checksums) +
+    `core/rules/belgian_peppol.py` (OGM-VCS, BTCC, EndpointID scheme).
+  - **Builder:** emits **standard Peppol BIS Billing 3.0** for every seller
+    (`CustomizationID` = the Peppol id, PEPPOL-EN16931-R004). BE sellers add the
+    Belgian elements BIS accepts: `EndpointID` (0208), `Contact/ElectronicMail`,
+    OGM-VCS `PaymentID`, supplier `PartyLegalEntity/CompanyID` (KBO). `BuyerReference`
+    = the invoice ref. The EN 16931 multi-rate/discount/Decimal engine underneath.
+    *(The UBL.BE profile + `AdditionalDocumentReference` markers + BTCC `cbc:Name`
+    were dropped — they failed BIS R004; see the Helger result below.)*
+  - **Gate:** `PeppolService` refuses to build XML for invalid parties / **B2C**
+    (customer without VAT); API returns **422** `{errors:[{field,message_key}]}`
+    (runtime shape, *not* in the generated FE types — handle by hand in the UI).
+  - **Still open / caveats:**
+    - **Helger validation — PASSED (non-BE *and* BE).** Both
+      `var/peppol_samples/nonbe_seller_multirate_discount.xml` and
+      `be_seller_multirate_discount.xml` validate **clean** against *OpenPeppol UBL
+      Invoice 2026.5 / BIS Billing 3.0.21* on the Helger validator. So the EN 16931
+      tax engine (multi-rate `TaxSubtotal` grouping, per-category discount split,
+      BR-CO-* totals) **and** the Belgian-elements-on-BIS output are proven against
+      the current production schematron. (En route: the BE file first failed with one
+      error — `PEPPOL-EN16931-R004`, the UBL.BE `CustomizationID` — which is why BE
+      output was switched to plain BIS. Validate the *Invoice* VESID, not Credit Note
+      / UBL.BE.) Regenerate anytime via `scripts/generate_peppol_samples.py`.
+      **Remaining Peppol gate is transport, not format:** a real Access-Point
+      round-trip (a later phase) — schematron-valid ≠ delivered.
+    - **Mixed-rate document discount — FIXED.** A document-level discount on a
+      mixed-VAT-rate invoice now emits **one `AllowanceCharge` per VAT category**
+      (each carrying its category; parts quantized to sum exactly to
+      `AllowanceTotalAmount`, BR-CO-11), instead of pinning the whole allowance to
+      the first category. Single-rate output is byte-identical to before. Covered by
+      `test_mixed_rate_document_discount_splits_per_category`.
+    - **Group D — partly done.** Company/client onboarding forms now surface the
+      fields the Peppol gate needs: `CompanyForm` collects `registration_number`,
+      `email`, `address_line1`, `postal_code`, `city`, `country_code` (was
+      name/vat/iban/bic/prefix only — a company made there could **never** pass the
+      gate, which requires an address); `ClientsPanel` adds `address_line1`,
+      `postal_code`, `country_code`. `CompanyResponse` now returns
+      `registration_number` (openapi.json + `api.d.ts` regenerated). Verified: FE
+      typecheck clean, 33 FE + 185 Py tests green.
+    - **Deferred (Group D remainder):** editable `Invoice.buyer_reference`;
+      draft→certified labeling discipline in the front ends.
+- **Next phases discussed, NOT started:**
+  - **Automatic Peppol transmission** — send structured XML straight to the buyer
+    via an Access Point (Doccle/Billit/Unifiedpost/…): needs an AP account+API,
+    SMP/SML participant lookup, and accept/reject handling. (Distinct from the
+    demo's manual "PDF through Doccle" flow.)
+  - **Automatic payment reconciliation** — detect paid/unpaid from a bank feed
+    (CODA / PSD2 aggregator like Ponto/Isabel) matched on the OGM-VCS
+    `PaymentID` (already emitted). Today only **manual** `PaymentService` exists.
 - **Phase 12** — CI, `npm/pip/cargo audit`, **PyInstaller-freeze the sidecar** for
   a packaged desktop, `tauri build` NSIS installer + `signtool`.
 - Smaller: **DONE** — HistoryPanel now has **PDF + Peppol XML download buttons**
@@ -276,9 +378,7 @@ payment → dashboard) and the Tauri shell **compiles clean** (`cargo build`).
   Peppol 200, PDF 503 handled gracefully where WeasyPrint is absent). Still open:
   a `.bg-totals` CSS "nit" (under-specified — it's the on-screen totals box in the
   invoice **builder**, `styles.css`; no concrete defect found, deferred pending a
-  specific repro); the UBL builder attaches a document-level discount to the first
-  VAT category on mixed-rate invoices (revisit before real Peppol Access Point
-  integration).
+  specific repro). *(The Peppol/UBL caveats moved to the Peppol bullet above.)*
 - Repo is **local only** — no remote. Commit + tag per phase.
 
 ---
@@ -306,6 +406,12 @@ payment → dashboard) and the Tauri shell **compiles clean** (`cargo build`).
 ## 11. Git — phases and tags
 
 ```
+771e903  (no tag)  peppol: approved demo localisation + pre-export validation gate
+a9b8dee  (no tag)  polish: mount ImportPanel in the desktop shell
+53f466f  (no tag)  polish: invoice download buttons + import API-schema separation
+783af28  (no tag)  Phase 11b: import UI — ImportPanel
+c4d704d  (no tag)  Phase 11: legacy import backend
+1dbd0a1  (no tag)  docs: session handoff + billgen.bat launcher
 d4e52ce  phase-9b  Tauri desktop shell (spawns sidecar, compiles clean)
 b5577b8  phase-9a  desktop sidecar core (bootstrap, licensing, local auto-login)
 bac89f3  phase-8   SaaS shell (auth pages, app shell, browser-verified)
@@ -316,4 +422,5 @@ cff1e3e  phase-5   FastAPI skeleton, JWT auth, tenant middleware
 b69bbc8  phase-4   monorepo skeleton + CORE domain/rules/DB/services
 ```
 
-To return to any checkpoint: `git checkout phase-6` (etc.).
+Work after `phase-9b` (import, polish, peppol) is committed on `main` **without
+tags**. To return to a tagged checkpoint: `git checkout phase-6` (etc.).

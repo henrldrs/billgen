@@ -38,7 +38,15 @@ const MESSAGES = {
   "clients.name": { en: "Name", fr: "Nom", nl: "Naam", es: "Nombre" },
   "clients.email": { en: "Email", fr: "E-mail", nl: "E-mail", es: "Correo" },
   "clients.vat": { en: "VAT number", fr: "N° TVA", nl: "BTW-nummer", es: "NIF-IVA" },
+  "clients.address": { en: "Address", fr: "Adresse", nl: "Adres", es: "Dirección" },
+  "clients.postalCode": {
+    en: "Postal code",
+    fr: "Code postal",
+    nl: "Postcode",
+    es: "Código postal",
+  },
   "clients.city": { en: "City", fr: "Ville", nl: "Stad", es: "Ciudad" },
+  "clients.country": { en: "Country", fr: "Pays", nl: "Land", es: "País" },
 
   // ---- products ---------------------------------------------------------------
   "products.title": {
@@ -250,6 +258,27 @@ const MESSAGES = {
     es: "Nombre de la empresa",
   },
   "company.vat": { en: "VAT number", fr: "N° TVA", nl: "BTW-nummer", es: "NIF-IVA" },
+  "company.registration": {
+    en: "Enterprise number (KBO/BCE)",
+    fr: "N° d'entreprise (BCE)",
+    nl: "Ondernemingsnummer (KBO)",
+    es: "N.º de empresa",
+  },
+  "company.email": { en: "Email", fr: "E-mail", nl: "E-mail", es: "Correo" },
+  "company.address": { en: "Address", fr: "Adresse", nl: "Adres", es: "Dirección" },
+  "company.postalCode": {
+    en: "Postal code",
+    fr: "Code postal",
+    nl: "Postcode",
+    es: "Código postal",
+  },
+  "company.city": { en: "City", fr: "Ville", nl: "Stad", es: "Ciudad" },
+  "company.country": {
+    en: "Country code",
+    fr: "Code pays",
+    nl: "Landcode",
+    es: "Código de país",
+  },
   "company.iban": { en: "IBAN", fr: "IBAN", nl: "IBAN", es: "IBAN" },
   "company.bic": { en: "BIC", fr: "BIC", nl: "BIC", es: "BIC" },
   "company.prefix": {

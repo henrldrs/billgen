@@ -29,6 +29,7 @@ class CompanyResponse(BaseModel):
     name: str
     legal_name: str | None
     vat_number: str | None
+    registration_number: str | None
     email: str | None
     address_line1: str | None
     postal_code: str | None

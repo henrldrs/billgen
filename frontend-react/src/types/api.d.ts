@@ -764,6 +764,8 @@ export interface components {
             legal_name: string | null;
             /** Vat Number */
             vat_number: string | null;
+            /** Registration Number */
+            registration_number: string | null;
             /** Email */
             email: string | null;
             /** Address Line1 */

@@ -24,13 +24,19 @@ export function ClientsPanel({ companyId, lang = "en" }: ClientsPanelProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [vatNumber, setVatNumber] = useState("");
+  const [addressLine1, setAddressLine1] = useState("");
+  const [postalCode, setPostalCode] = useState("");
   const [city, setCity] = useState("");
+  const [countryCode, setCountryCode] = useState("BE");
 
   const resetForm = () => {
     setName("");
     setEmail("");
     setVatNumber("");
+    setAddressLine1("");
+    setPostalCode("");
     setCity("");
+    setCountryCode("BE");
   };
 
   const handleSubmit = (event: FormEvent) => {
@@ -41,7 +47,10 @@ export function ClientsPanel({ companyId, lang = "en" }: ClientsPanelProps) {
         name,
         email: email || null,
         vat_number: vatNumber || null,
+        address_line1: addressLine1 || null,
+        postal_code: postalCode || null,
         city: city || null,
+        country_code: countryCode.toUpperCase() || "BE",
       },
       {
         onSuccess: () => {
@@ -111,9 +120,25 @@ export function ClientsPanel({ companyId, lang = "en" }: ClientsPanelProps) {
             onChange={(event) => setVatNumber(event.target.value)}
           />
           <Field
+            label={t(lang, "clients.address")}
+            value={addressLine1}
+            onChange={(event) => setAddressLine1(event.target.value)}
+          />
+          <Field
+            label={t(lang, "clients.postalCode")}
+            value={postalCode}
+            onChange={(event) => setPostalCode(event.target.value)}
+          />
+          <Field
             label={t(lang, "clients.city")}
             value={city}
             onChange={(event) => setCity(event.target.value)}
+          />
+          <Field
+            label={t(lang, "clients.country")}
+            value={countryCode}
+            maxLength={2}
+            onChange={(event) => setCountryCode(event.target.value)}
           />
           {createClient.isError ? (
             <div role="alert">{t(lang, "common.error")}</div>

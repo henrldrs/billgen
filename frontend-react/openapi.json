@@ -2389,6 +2389,17 @@
             ],
             "title": "Vat Number"
           },
+          "registration_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registration Number"
+          },
           "email": {
             "anyOf": [
               {
@@ -2483,6 +2494,7 @@
           "name",
           "legal_name",
           "vat_number",
+          "registration_number",
           "email",
           "address_line1",
           "postal_code",
