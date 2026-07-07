@@ -848,6 +848,7 @@
           "invoices"
         ],
         "summary": "Create Invoice",
+        "description": "Create a DRAFT invoice \u2014 no number is consumed. Finalize it with\nPOST /invoices/{id}/issue.",
         "operationId": "create_invoice_invoices_post",
         "requestBody": {
           "required": true,
@@ -951,7 +952,103 @@
         }
       }
     },
+    "/invoices/{invoice_id}/issue": {
+      "post": {
+        "tags": [
+          "invoices"
+        ],
+        "summary": "Issue Invoice",
+        "description": "Issue a draft: consume the gapless number, freeze totals, set ISSUED.",
+        "operationId": "issue_invoice_invoices__invoice_id__issue_post",
+        "parameters": [
+          {
+            "name": "invoice_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Invoice Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/IssueRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/invoices/{invoice_id}": {
+      "delete": {
+        "tags": [
+          "invoices"
+        ],
+        "summary": "Delete Invoice",
+        "description": "Hard-delete a DRAFT invoice. Issued invoices return 409 (never deleted).",
+        "operationId": "delete_invoice_invoices__invoice_id__delete",
+        "parameters": [
+          {
+            "name": "invoice_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Invoice Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
       "get": {
         "tags": [
           "invoices"
@@ -3185,11 +3282,25 @@
             "title": "Client Id"
           },
           "reference": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Reference"
           },
           "sequence_global": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Sequence Global"
           },
           "issue_date": {
@@ -3353,6 +3464,37 @@
           "voided"
         ],
         "title": "InvoiceStatus"
+      },
+      "IssueRequest": {
+        "properties": {
+          "issue_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issue Date"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          }
+        },
+        "type": "object",
+        "title": "IssueRequest",
+        "description": "Issue a draft. Both dates are optional: the draft's own dates (or today +\ndefault term) are used when omitted."
       },
       "KpiResponse": {
         "properties": {

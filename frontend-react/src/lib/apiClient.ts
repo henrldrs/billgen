@@ -21,6 +21,7 @@ import type {
   InvoicePreviewRequest,
   InvoicePreviewResponse,
   InvoiceResponse,
+  IssueRequest,
   KpiResponse,
   LoginRequest,
   LoginResponse,
@@ -283,6 +284,16 @@ export class ApiClient {
 
   getInvoice(invoiceId: string): Promise<InvoiceResponse> {
     return this.request("GET", `/invoices/${invoiceId}`);
+  }
+
+  /** Issue a draft: consumes the gapless number and finalizes it (ISSUED). */
+  issueInvoice(invoiceId: string, body?: IssueRequest): Promise<InvoiceResponse> {
+    return this.request("POST", `/invoices/${invoiceId}/issue`, body ?? {});
+  }
+
+  /** Hard-delete a DRAFT invoice. 409 if it has already been issued. */
+  deleteInvoice(invoiceId: string): Promise<void> {
+    return this.request("DELETE", `/invoices/${invoiceId}`);
   }
 
   voidInvoice(invoiceId: string, reason: string): Promise<InvoiceResponse> {

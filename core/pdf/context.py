@@ -3,10 +3,19 @@ Jinja2 templates stay logic-free presentation."""
 
 from decimal import Decimal
 
-from ..models import Client, Company, CreditNote, Invoice
+from ..models import Client, Company, CreditNote, Invoice, InvoiceStatus
 from ..rules import invoice_totals, line_totals, mandatory_mentions_for_invoice
 from ..utils import format_amount, format_date
 from .registry import TemplateSpec
+
+# Draft/proforma watermark (ADR-0002): a draft has no gapless number and no VAT
+# force, so its PDF must not read as a valid invoice.
+_DRAFT_WATERMARK = {
+    "fr": "CECI N'EST PAS UNE FACTURE VALIDE",
+    "nl": "DIT IS GEEN GELDIGE FACTUUR",
+    "en": "NOT A VALID INVOICE",
+    "es": "NO ES UNA FACTURA VÁLIDA",
+}
 
 
 def _plain(value: Decimal) -> str:
@@ -51,12 +60,20 @@ def build_invoice_context(
     for category in {line.vat.category for line in invoice.lines}:
         mentions.extend(mandatory_mentions_for_invoice(category, lang))
 
+    is_draft = invoice.status is InvoiceStatus.DRAFT
+    watermark = _DRAFT_WATERMARK.get(lang, _DRAFT_WATERMARK["en"]) if is_draft else None
+    # A draft has no reference yet — fall back to the watermark label as the number.
+    reference_display = invoice.reference or (watermark if is_draft else "")
+
     return {
         "lang": lang,
         "doc_title": spec.doc_title,
         "company": company,
         "client": client,
         "invoice": invoice,
+        "is_draft": is_draft,
+        "watermark": watermark,
+        "reference_display": reference_display,
         "issue_date_fmt": format_date(invoice.issue_date, lang),
         "due_date_fmt": format_date(invoice.due_date, lang) if invoice.due_date else None,
         "rows": rows,

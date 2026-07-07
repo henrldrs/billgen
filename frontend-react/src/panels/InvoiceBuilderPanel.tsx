@@ -61,7 +61,9 @@ export function InvoiceBuilderPanel({
   const [clientId, setClientId] = useState("");
   const [lines, setLines] = useState<LineDraft[]>([{ ...EMPTY_LINE }]);
   const [comments, setComments] = useState("");
-  const [createdReference, setCreatedReference] = useState<string | null>(null);
+  // A saved invoice starts as a DRAFT (no number yet), so there's no reference to
+  // show — just confirm it was saved and point the user to Invoices to issue it.
+  const [draftSaved, setDraftSaved] = useState(false);
 
   const valid = linesAreValid(lines);
   const serializedLines = useMemo(() => JSON.stringify(lines), [lines]);
@@ -88,7 +90,7 @@ export function InvoiceBuilderPanel({
       },
       {
         onSuccess: (invoice) => {
-          setCreatedReference(invoice.reference);
+          setDraftSaved(true);
           setClientId("");
           setLines([{ ...EMPTY_LINE }]);
           setComments("");
@@ -108,9 +110,9 @@ export function InvoiceBuilderPanel({
         <h1>{t(lang, "invoice.title")}</h1>
       </header>
 
-      {createdReference ? (
+      {draftSaved ? (
         <div className="bg-banner bg-banner--success" role="status">
-          {t(lang, "invoice.created")} <strong>{createdReference}</strong>
+          {t(lang, "invoice.created")}
         </div>
       ) : null}
 

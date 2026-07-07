@@ -6,15 +6,14 @@ import pytest
 from core.models import InvoiceStatus
 from core.services import BusinessRuleError, InvoiceService, PaymentService
 
-from .conftest import ISSUE_DATE, make_lines
+from .conftest import issue_invoice
 
 PAID_ON = date(2026, 7, 20)
 
 
 def _issue_invoice(env):
-    return InvoiceService(env.uow_factory).create(
-        company_id=env.company.id, client_id=env.client.id,
-        lines=make_lines(), issue_date=ISSUE_DATE,
+    return issue_invoice(
+        env.uow_factory, company_id=env.company.id, client_id=env.client.id
     )
 
 

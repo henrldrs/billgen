@@ -2,7 +2,7 @@
 <html lang="{{ lang }}">
 <head>
 <meta charset="utf-8">
-<title>{{ doc_title }} {{ invoice.reference }}</title>
+<title>{{ doc_title }} {{ reference_display }}</title>
 <style>
   @page { size: A4; margin: 20mm; }
   body { font-family: Helvetica, Arial, sans-serif; color: #222; font-size: 10pt; }
@@ -20,12 +20,18 @@
   .totals .grand td { font-weight: 700; border-top: 1px solid #222; }
   .mentions { margin-top: 16px; font-size: 8.5pt; color: #555; }
   footer { margin-top: 24px; font-size: 8.5pt; color: #666; }
+  .draft-watermark { position: fixed; top: 42%; left: 0; right: 0; text-align: center;
+    transform: rotate(-30deg); font-size: 44pt; font-weight: bold; letter-spacing: 4px;
+    color: rgba(200, 0, 0, 0.18); z-index: 0; pointer-events: none; }
+  .draft-note { color: #c00000; font-weight: 700; }
 </style>
 </head>
 <body>
+{% if is_draft %}<div class="draft-watermark">{{ watermark }}</div>{% endif %}
 <div class="head">
   <h2>{{ doc_title }}</h2>
-  <div class="muted">Nr. {{ invoice.reference }} · Datum: {{ issue_date_fmt }}{% if due_date_fmt %} · Vervaldatum: {{ due_date_fmt }}{% endif %}</div>
+  <div class="muted">Nr. {{ reference_display }} · Datum: {{ issue_date_fmt }}{% if due_date_fmt %} · Vervaldatum: {{ due_date_fmt }}{% endif %}</div>
+  {% if is_draft %}<div class="draft-note">{{ watermark }}</div>{% endif %}
 </div>
 
 <div class="blocks">

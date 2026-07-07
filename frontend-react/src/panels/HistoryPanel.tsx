@@ -10,8 +10,10 @@ import { Field } from "../components/Field";
 import { Modal } from "../components/Modal";
 import { Spinner } from "../components/Spinner";
 import {
+  useDeleteInvoice,
   useInvoices,
   useIssueCreditNote,
+  useIssueInvoice,
   useRecordPayment,
   useVoidInvoice,
 } from "../hooks/queries";
@@ -36,7 +38,7 @@ export interface HistoryPanelProps {
   lang?: Lang;
 }
 
-type ActionKind = "void" | "credit_note" | "payment";
+type ActionKind = "void" | "credit_note" | "payment" | "issue" | "delete";
 
 interface PendingAction {
   kind: ActionKind;
@@ -44,7 +46,7 @@ interface PendingAction {
   reference: string;
 }
 
-const STATUS_FILTERS = ["", "issued", "partially_paid", "paid", "voided"] as const;
+const STATUS_FILTERS = ["", "draft", "issued", "partially_paid", "paid", "voided"] as const;
 
 export function HistoryPanel({ companyId, lang = "en" }: HistoryPanelProps) {
   const filterSelectId = useId();
@@ -56,6 +58,8 @@ export function HistoryPanel({ companyId, lang = "en" }: HistoryPanelProps) {
 
   const api = useApi();
   const voidInvoice = useVoidInvoice();
+  const issueInvoice = useIssueInvoice();
+  const deleteInvoice = useDeleteInvoice();
   const issueCreditNote = useIssueCreditNote();
   const recordPayment = useRecordPayment();
 
@@ -102,6 +106,10 @@ export function HistoryPanel({ companyId, lang = "en" }: HistoryPanelProps) {
         { invoiceId: action.invoiceId, reason },
         { onSuccess: closeAction },
       );
+    } else if (action.kind === "issue") {
+      issueInvoice.mutate(action.invoiceId, { onSuccess: closeAction });
+    } else if (action.kind === "delete") {
+      deleteInvoice.mutate(action.invoiceId, { onSuccess: closeAction });
     } else if (action.kind === "credit_note") {
       issueCreditNote.mutate(
         { invoice_id: action.invoiceId, reason },
@@ -119,9 +127,18 @@ export function HistoryPanel({ companyId, lang = "en" }: HistoryPanelProps) {
   if (isError) return <div role="alert">{t(lang, "common.error")}</div>;
 
   const actionPending =
-    voidInvoice.isPending || issueCreditNote.isPending || recordPayment.isPending;
+    voidInvoice.isPending ||
+    issueInvoice.isPending ||
+    deleteInvoice.isPending ||
+    issueCreditNote.isPending ||
+    recordPayment.isPending;
   const actionFailed =
-    voidInvoice.isError || issueCreditNote.isError || recordPayment.isError;
+    voidInvoice.isError ||
+    issueInvoice.isError ||
+    deleteInvoice.isError ||
+    issueCreditNote.isError ||
+    recordPayment.isError;
+  const isConfirmOnly = action?.kind === "issue" || action?.kind === "delete";
 
   return (
     <section className="bg-panel" aria-label={t(lang, "history.title")}>
@@ -166,7 +183,11 @@ export function HistoryPanel({ companyId, lang = "en" }: HistoryPanelProps) {
           <tbody>
             {invoices.map((invoice) => (
               <tr key={invoice.id}>
-                <td>{invoice.reference}</td>
+                <td>
+                  {invoice.reference ?? (
+                    <em className="bg-muted">{t(lang, "history.draft")}</em>
+                  )}
+                </td>
                 <td>{formatDate(invoice.issue_date, lang)}</td>
                 <td>{formatMoney(invoice.total_ttc, invoice.currency, lang)}</td>
                 <td>
@@ -175,60 +196,105 @@ export function HistoryPanel({ companyId, lang = "en" }: HistoryPanelProps) {
                   </span>
                 </td>
                 <td>
-                  <Button
-                    variant="secondary"
-                    disabled={downloading === `${invoice.id}:pdf`}
-                    onClick={() => void download("pdf", invoice.id, invoice.reference)}
-                  >
-                    {t(lang, "history.downloadPdf")}
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    disabled={downloading === `${invoice.id}:xml`}
-                    onClick={() => void download("xml", invoice.id, invoice.reference)}
-                  >
-                    {t(lang, "history.downloadXml")}
-                  </Button>
-                  {invoice.status !== "voided" ? (
+                  {invoice.status === "draft" ? (
+                    // A draft has no gapless number: it can be issued (finalized)
+                    // or freely deleted. The only export is the watermarked PDF.
                     <>
                       <Button
                         variant="secondary"
+                        disabled={downloading === `${invoice.id}:pdf`}
                         onClick={() =>
-                          setAction({
-                            kind: "payment",
-                            invoiceId: invoice.id,
-                            reference: invoice.reference,
-                          })
+                          void download("pdf", invoice.id, `draft-${invoice.id}`)
                         }
                       >
-                        {t(lang, "history.payment")}
+                        {t(lang, "history.downloadPdf")}
                       </Button>
                       <Button
-                        variant="secondary"
                         onClick={() =>
                           setAction({
-                            kind: "credit_note",
+                            kind: "issue",
                             invoiceId: invoice.id,
-                            reference: invoice.reference,
+                            reference: t(lang, "history.draft"),
                           })
                         }
                       >
-                        {t(lang, "history.creditNote")}
+                        {t(lang, "history.issue")}
                       </Button>
                       <Button
                         variant="danger"
                         onClick={() =>
                           setAction({
-                            kind: "void",
+                            kind: "delete",
                             invoiceId: invoice.id,
-                            reference: invoice.reference,
+                            reference: t(lang, "history.draft"),
                           })
                         }
                       >
-                        {t(lang, "history.void")}
+                        {t(lang, "history.delete")}
                       </Button>
                     </>
-                  ) : null}
+                  ) : (
+                    <>
+                      <Button
+                        variant="secondary"
+                        disabled={downloading === `${invoice.id}:pdf`}
+                        onClick={() =>
+                          void download("pdf", invoice.id, invoice.reference ?? invoice.id)
+                        }
+                      >
+                        {t(lang, "history.downloadPdf")}
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        disabled={downloading === `${invoice.id}:xml`}
+                        onClick={() =>
+                          void download("xml", invoice.id, invoice.reference ?? invoice.id)
+                        }
+                      >
+                        {t(lang, "history.downloadXml")}
+                      </Button>
+                      {invoice.status !== "voided" ? (
+                        <>
+                          <Button
+                            variant="secondary"
+                            onClick={() =>
+                              setAction({
+                                kind: "payment",
+                                invoiceId: invoice.id,
+                                reference: invoice.reference ?? invoice.id,
+                              })
+                            }
+                          >
+                            {t(lang, "history.payment")}
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            onClick={() =>
+                              setAction({
+                                kind: "credit_note",
+                                invoiceId: invoice.id,
+                                reference: invoice.reference ?? invoice.id,
+                              })
+                            }
+                          >
+                            {t(lang, "history.creditNote")}
+                          </Button>
+                          <Button
+                            variant="danger"
+                            onClick={() =>
+                              setAction({
+                                kind: "void",
+                                invoiceId: invoice.id,
+                                reference: invoice.reference ?? invoice.id,
+                              })
+                            }
+                          >
+                            {t(lang, "history.void")}
+                          </Button>
+                        </>
+                      ) : null}
+                    </>
+                  )}
                 </td>
               </tr>
             ))}
@@ -261,6 +327,13 @@ export function HistoryPanel({ companyId, lang = "en" }: HistoryPanelProps) {
                 onChange={(event) => setPaidOn(event.target.value)}
               />
             </>
+          ) : isConfirmOnly ? (
+            <p>
+              {t(
+                lang,
+                action?.kind === "issue" ? "history.issueConfirm" : "history.deleteConfirm",
+              )}
+            </p>
           ) : (
             <Field
               label={t(
@@ -277,8 +350,12 @@ export function HistoryPanel({ companyId, lang = "en" }: HistoryPanelProps) {
             <Button variant="secondary" onClick={closeAction}>
               {t(lang, "common.cancel")}
             </Button>
-            <Button type="submit" disabled={actionPending}>
-              {t(lang, "history.record")}
+            <Button
+              type="submit"
+              variant={action?.kind === "delete" ? "danger" : "primary"}
+              disabled={actionPending}
+            >
+              {t(lang, isConfirmOnly ? "history.confirm" : "history.record")}
             </Button>
           </div>
         </form>

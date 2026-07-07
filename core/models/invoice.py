@@ -34,8 +34,10 @@ class Invoice(TenantModel):
     company_id: UUID
     client_id: UUID
 
-    reference: str = Field(min_length=1, max_length=64)
-    sequence_global: int = Field(ge=1)
+    # Assigned only at issue(): a DRAFT has no gapless number yet. Once issued,
+    # both are set and frozen (ADR-0002). Kept nullable so drafts carry no number.
+    reference: str | None = Field(default=None, max_length=64)
+    sequence_global: int | None = Field(default=None, ge=1)
 
     issue_date: date
     due_date: date | None = None

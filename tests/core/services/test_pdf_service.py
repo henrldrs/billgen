@@ -11,7 +11,7 @@ from core.services import (
     PdfService,
 )
 
-from .conftest import ISSUE_DATE, make_lines
+from .conftest import ISSUE_DATE, issue_invoice, make_lines
 
 
 def _weasyprint_available() -> bool:
@@ -24,9 +24,12 @@ def _weasyprint_available() -> bool:
 
 
 def _issue_invoice(env, **kwargs):
-    return InvoiceService(env.uow_factory).create(
-        company_id=env.company.id, client_id=env.client.id,
-        lines=make_lines(), issue_date=ISSUE_DATE, **kwargs,
+    return issue_invoice(
+        env.uow_factory,
+        company_id=env.company.id,
+        client_id=env.client.id,
+        issue_date=ISSUE_DATE,
+        **kwargs,
     )
 
 
@@ -38,6 +41,26 @@ def test_fr_standard_html_contains_key_facts(env):
     assert "Big Corp" in html
     assert "1 512,50 €" in html  # fr formatting, NBSP separators
     assert "04/07/2026" in html
+
+
+def test_draft_html_is_watermarked_not_a_valid_invoice(env):
+    draft = InvoiceService(env.uow_factory).create_draft(
+        company_id=env.company.id, client_id=env.client.id,
+        lines=make_lines(), issue_date=ISSUE_DATE,
+    )
+    html = PdfService(env.uow_factory).render_invoice_html(draft.id)
+    # Jinja escapes the apostrophe; match the escaping-safe part of the phrase.
+    assert "PAS UNE FACTURE VALIDE" in html  # fr_standard draft watermark
+    assert '<div class="draft-watermark">' in html
+
+
+def test_issued_html_has_no_watermark(env):
+    invoice = _issue_invoice(env)
+    html = PdfService(env.uow_factory).render_invoice_html(invoice.id)
+    # The watermark overlay div is only emitted for drafts (the CSS class always
+    # sits in <style>, so assert on the element, not the selector).
+    assert '<div class="draft-watermark">' not in html
+    assert "PAS UNE FACTURE VALIDE" not in html
 
 
 def test_fr_detailed_has_vat_column_and_terms(env):

@@ -267,6 +267,17 @@ class SqlAlchemyInvoiceRepository(InvoiceRepository):
         self._s.flush()
         return row_to_invoice(row)
 
+    def delete(self, invoice_id: UUID) -> None:
+        row = self._get_row(invoice_id)
+        if row is None:
+            raise LookupError(f"Invoice {invoice_id} not found in current organization")
+        # Last-line guard on the gapless invariant: a numbered (issued) invoice is
+        # never hard-deleted, even if a caller slips past the service-level check.
+        if row.status != InvoiceStatus.DRAFT.value:
+            raise ValueError("Refusing to hard-delete a non-draft invoice")
+        self._s.delete(row)
+        self._s.flush()
+
 
 class SqlAlchemyCreditNoteRepository(CreditNoteRepository):
     def __init__(self, session: Session) -> None:

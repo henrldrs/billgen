@@ -12,7 +12,7 @@ Read this instead of re-deriving context.
 |---|---|
 | Location | `C:\Users\hdr_s\Documents\business model\BillGen BETA` |
 | Phases done | 0–9, **11** (domain → rules → DB → services → API → business routers → UI kit → SaaS shell → desktop → legacy import) + **Peppol e-invoicing** (Helger-validated Peppol BIS 3.0 + Belgian elements + pre-export validation gate; `771e903` then switched off UBL.BE). Phase 10 (billing) not yet started. |
-| Tests | **Python 186 passed, 1 skipped** (`python -m pytest tests`); **frontend 33 passed** (`npm run test --workspace @billgen/ui`) |
+| Tests | **Python 200 passed, 1 skipped** (`python -m pytest tests`); **frontend 36 passed** (`npm run test --workspace @billgen/ui`) |
 | Git | local only, **not pushed**. One commit + tag per phase (`phase-4` … `phase-9b`); later work (import, polish, peppol) committed on `main` without tags. Branch `main`. |
 | Skip reason | 1 PDF test skips because WeasyPrint's native (Pango/GTK) stack isn't installed — HTML rendering is fully tested; only the HTML→PDF byte step needs it. |
 | Not a migration | The legacy React/Python apps (`D:\CODING\audit-v2-react-exe`, `myshop-*`) are reference only. Do not edit them. The **approved Peppol reference** is `D:\CODING\FinanceFlow Bill Generator` (the demo) — inventoried in [docs/COMPARISON_demo_vs_new.md](docs/COMPARISON_demo_vs_new.md). |
@@ -224,9 +224,17 @@ Live totals in the builder come from `POST /invoices/preview` (pure calculation,
 - **Gapless numbering:** `SequenceRow` per `(org, company, scope)`, advanced under
   a row lock, consumed inside the same transaction as the invoice → no gaps on
   rollback. Invoices and credit notes have independent series.
-- **No hard delete:** correcting an issued invoice = issue a **credit note**
-  (`CreditNoteService.issue()` mirrors lines, voids + links the invoice). Void
-  exists for pre-send mistakes.
+- **Draft → issued lifecycle (ADR-0002, done):** `InvoiceService.create_draft()`
+  makes a DRAFT with **no number** (`reference`/`sequence_global` are nullable);
+  `issue()` is the sole place the gapless number is consumed — it freezes issue
+  date + lines + totals, sets ISSUED, writes an `issue` audit entry, all in one
+  transaction. Issuance is a local act; it never touches Peppol/the network.
+  `POST /invoices` now returns a draft; `POST /invoices/{id}/issue` finalizes it.
+- **No hard delete (except drafts):** a DRAFT has no number, so it is freely
+  hard-deletable (`delete_draft()` + repo `delete()`, guarded to drafts; `DELETE
+  /invoices/{id}` → 204, 409 if already issued). Correcting an **issued** invoice
+  = issue a **credit note** (`CreditNoteService.issue()` mirrors lines, voids +
+  links the invoice). Void exists for pre-send mistakes.
 - **Stored totals:** `subtotal_ht/total_vat/total_ttc` are persisted on the
   invoice (legally binding at issue time), computed once by `invoice_totals()`.
 - **Audit log:** append-only `AuditLogRow`; every mutation writes one in the same
@@ -270,18 +278,20 @@ payment → dashboard) and the Tauri shell **compiles clean** (`cargo build`).
 > **Plan of record (next up):** the **invoice lifecycle split — draft → issued →
 > delivered** — is designed in
 > [docs/ARCHITECTURE/ADR-0002-invoice-lifecycle.md](docs/ARCHITECTURE/ADR-0002-invoice-lifecycle.md).
-> Today `InvoiceService.create()` burns the gapless number and sets `ISSUED` at
-> create time (`invoice_service.py:75,95`) — there is no draft. The plan: split into
-> `create_draft()` (no number, deletable) + `issue()` (a deliberate, confirm-gated,
-> local act that assigns the number and finalizes — **not** dependent on the Peppol
-> network; Peppol is delivery, not issuance). Delivery/payment status become a
-> *separate, async* track (port + external adapter). Sequencing lives in the ADR.
-> This is the next **foundation-hardening** item, ahead of backup/restore.
+> **Step 1 is DONE.** `InvoiceService.create()` was split into `create_draft()` (no
+> number, DRAFT, hard-deletable) + `issue()` (the sole place the gapless number is
+> consumed — freezes issue date + lines + totals, sets ISSUED, audits `issue`, one
+> transaction; **not** dependent on the Peppol network). `POST /invoices` creates a
+> draft; `POST /invoices/{id}/issue` finalizes; `DELETE /invoices/{id}` hard-deletes a
+> draft only. UI gained a confirm-gated Issue + Delete action and a DRAFT badge; draft
+> PDFs are watermarked "not a valid invoice"; drafts are excluded from KPI/revenue.
+> Migration `b7f2c1a9d3e4` makes `reference`/`sequence_global` nullable. Remaining
+> steps: delivery/payment status as a *separate, async* track (port + external adapter).
 >
 > **Foundation-hardening track:** (1) Peppol → trustworthy ✅ **done** (forms surface
 > gate fields; mixed-rate discount split per category; BE switched to plain BIS;
 > **both non-BE and BE invoices Helger-validated** against OpenPeppol 2026.5).
-> (2) draft→issue split ← *next, per ADR-0002*. (3) backup/restore. (4) CI + quality
+> (2) draft→issue split ✅ **done** (ADR-0002 step 1). (3) backup/restore. (4) CI + quality
 > gate. (5) lightweight crash reporting. Audit-vs-now scoring:
 > [docs/AUDIT_PROGRESS_vs_demo.md](docs/AUDIT_PROGRESS_vs_demo.md).
 

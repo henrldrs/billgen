@@ -49,9 +49,11 @@ function mockEndpoints() {
       };
       expect(body.client_id).toBe("c-1");
       expect(body.lines[0].unit_price).toBe("125.00");
-      return HttpResponse.json(invoiceRecord("inv-1", "ACME-BC07012026"), {
-        status: 201,
-      });
+      // POST /invoices now creates a DRAFT: no number yet.
+      return HttpResponse.json(
+        invoiceRecord("inv-1", null, { status: "draft", sequence_global: null }),
+        { status: 201 },
+      );
     }),
   );
 }
@@ -71,8 +73,8 @@ test("shows live totals from the preview endpoint and creates the invoice", asyn
   expect(await screen.findByText("€1,512.50")).toBeInTheDocument();
   expect(screen.getByText("€262.50")).toBeInTheDocument();
 
-  await user.click(screen.getByRole("button", { name: "Create invoice" }));
-  expect(await screen.findByRole("status")).toHaveTextContent("ACME-BC07012026");
+  await user.click(screen.getByRole("button", { name: "Save draft" }));
+  expect(await screen.findByRole("status")).toHaveTextContent("Draft saved");
 });
 
 test("create is disabled until a client is picked and lines are valid", async () => {
@@ -80,7 +82,7 @@ test("create is disabled until a client is picked and lines are valid", async ()
   renderWithProvider(<InvoiceBuilderPanel companyId={COMPANY_ID} />);
   const user = userEvent.setup();
 
-  const createButton = await screen.findByRole("button", { name: "Create invoice" });
+  const createButton = await screen.findByRole("button", { name: "Save draft" });
   expect(createButton).toBeDisabled();
 
   await user.type(screen.getByLabelText("Description 1"), "Something");

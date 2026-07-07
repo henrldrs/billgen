@@ -17,7 +17,7 @@ export function renderWithProvider(ui: ReactNode) {
 
 export function invoiceRecord(
   id: string,
-  reference: string,
+  reference: string | null,
   extra: Partial<InvoiceResponse> = {},
 ): InvoiceResponse {
   return {

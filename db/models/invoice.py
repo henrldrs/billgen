@@ -32,8 +32,11 @@ class InvoiceRow(TenantRowMixin, Base):
         Uuid, ForeignKey("clients.id"), nullable=False, index=True
     )
 
-    reference: Mapped[str] = mapped_column(String(64), nullable=False)
-    sequence_global: Mapped[int] = mapped_column(Integer, nullable=False)
+    # Nullable: a DRAFT invoice has no gapless number yet (ADR-0002). Assigned at
+    # issue(). NULLs are distinct under the unique constraints, so many drafts
+    # coexist; issued rows still get a unique (org, company, reference/sequence).
+    reference: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    sequence_global: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     issue_date: Mapped[date] = mapped_column(Date, nullable=False)
     due_date: Mapped[date | None] = mapped_column(Date)

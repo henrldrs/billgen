@@ -58,6 +58,14 @@ class VoidRequest(BaseModel):
     reason: str = Field(min_length=1)
 
 
+class IssueRequest(BaseModel):
+    """Issue a draft. Both dates are optional: the draft's own dates (or today +
+    default term) are used when omitted."""
+
+    issue_date: date | None = None
+    due_date: date | None = None
+
+
 class VATOut(BaseModel):
     category: str
     rate: Decimal
@@ -84,8 +92,8 @@ class InvoiceResponse(BaseModel):
     id: UUID
     company_id: UUID
     client_id: UUID
-    reference: str
-    sequence_global: int
+    reference: str | None
+    sequence_global: int | None
     issue_date: date
     due_date: date | None
     currency: str

@@ -5,6 +5,7 @@ from types import SimpleNamespace
 import pytest
 
 from core.models import Client, Company, InvoiceLine, Organization, VATRate
+from core.services import InvoiceService
 from core.tenancy import organization_context
 from db.engine import make_engine
 from db.models import Base
@@ -71,6 +72,19 @@ def env():
         )
 
     engine.dispose()
+
+
+def issue_invoice(uow_factory, *, issue_date=ISSUE_DATE, lines=None, **kwargs):
+    """Create a draft and immediately issue it — the common "I need an issued
+    invoice" shortcut for downstream service tests (payments, credit notes, PDF,
+    Peppol, reporting). Mirrors the old one-step create() behaviour."""
+    service = InvoiceService(uow_factory)
+    draft = service.create_draft(
+        lines=lines if lines is not None else make_lines(),
+        issue_date=issue_date,
+        **kwargs,
+    )
+    return service.issue(draft.id, issue_date=issue_date)
 
 
 def make_lines() -> list[InvoiceLine]:

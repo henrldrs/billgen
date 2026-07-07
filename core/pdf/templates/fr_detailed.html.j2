@@ -2,7 +2,7 @@
 <html lang="{{ lang }}">
 <head>
 <meta charset="utf-8">
-<title>{{ doc_title }} {{ invoice.reference }}</title>
+<title>{{ doc_title }} {{ reference_display }}</title>
 <style>
   @page { size: A4; margin: 18mm; }
   body { font-family: "Segoe UI", Arial, sans-serif; color: #1a1a1a; font-size: 10pt; }
@@ -25,9 +25,14 @@
   .conditions { margin-top: 16px; border: 1px solid #ddd; padding: 8px 12px; font-size: 9pt; }
   .conditions h3 { margin: 0 0 4px; font-size: 9.5pt; }
   footer { margin-top: 28px; padding-top: 8px; border-top: 1px solid #ccc; font-size: 8.5pt; color: #555; }
+  .draft-watermark { position: fixed; top: 42%; left: 0; right: 0; text-align: center;
+    transform: rotate(-30deg); font-size: 46pt; font-weight: bold; letter-spacing: 4px;
+    color: rgba(200, 0, 0, 0.18); z-index: 0; pointer-events: none; }
+  .draft-note { color: #c00000; font-weight: bold; font-size: 9pt; }
 </style>
 </head>
 <body>
+{% if is_draft %}<div class="draft-watermark">{{ watermark }}</div>{% endif %}
 <header>
   <div class="company">
     <h1>{{ company.name }}</h1>
@@ -41,7 +46,8 @@
   </div>
   <div class="doc-title">
     <h2>{{ doc_title }}</h2>
-    <div>N° {{ invoice.reference }}</div>
+    <div>N° {{ reference_display }}</div>
+    {% if is_draft %}<div class="draft-note">{{ watermark }}</div>{% endif %}
     <div>Date : {{ issue_date_fmt }}</div>
     {% if due_date_fmt %}<div>Échéance : {{ due_date_fmt }}</div>{% endif %}
   </div>

@@ -322,8 +322,32 @@ export interface paths {
         /** List Invoices */
         get: operations["list_invoices_invoices_get"];
         put?: never;
-        /** Create Invoice */
+        /**
+         * Create Invoice
+         * @description Create a DRAFT invoice — no number is consumed. Finalize it with
+         *     POST /invoices/{id}/issue.
+         */
         post: operations["create_invoice_invoices_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/invoices/{invoice_id}/issue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Issue Invoice
+         * @description Issue a draft: consume the gapless number, freeze totals, set ISSUED.
+         */
+        post: operations["issue_invoice_invoices__invoice_id__issue_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -341,7 +365,11 @@ export interface paths {
         get: operations["get_invoice_invoices__invoice_id__get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete Invoice
+         * @description Hard-delete a DRAFT invoice. Issued invoices return 409 (never deleted).
+         */
+        delete: operations["delete_invoice_invoices__invoice_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1018,9 +1046,9 @@ export interface components {
              */
             client_id: string;
             /** Reference */
-            reference: string;
+            reference: string | null;
             /** Sequence Global */
-            sequence_global: number;
+            sequence_global: number | null;
             /**
              * Issue Date
              * Format: date
@@ -1061,6 +1089,17 @@ export interface components {
          * @enum {string}
          */
         InvoiceStatus: "draft" | "issued" | "paid" | "partially_paid" | "overdue" | "voided";
+        /**
+         * IssueRequest
+         * @description Issue a draft. Both dates are optional: the draft's own dates (or today +
+         *     default term) are used when omitted.
+         */
+        IssueRequest: {
+            /** Issue Date */
+            issue_date?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+        };
         /** KpiResponse */
         KpiResponse: {
             /** Invoiced Total */
@@ -2136,6 +2175,41 @@ export interface operations {
             };
         };
     };
+    issue_invoice_invoices__invoice_id__issue_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["IssueRequest"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_invoice_invoices__invoice_id__get: {
         parameters: {
             query?: never;
@@ -2155,6 +2229,35 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["InvoiceResponse"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_invoice_invoices__invoice_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

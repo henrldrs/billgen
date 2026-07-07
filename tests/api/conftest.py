@@ -108,11 +108,22 @@ def invoice_payload(company_id: str, client_id: str, **overrides) -> dict:
     return payload
 
 
-async def create_invoice(
+async def create_draft(
     client: httpx.AsyncClient, headers: dict, company_id: str, client_id: str, **overrides
 ) -> dict:
+    """POST /invoices creates a DRAFT (no number consumed)."""
     response = await client.post(
         "/invoices", json=invoice_payload(company_id, client_id, **overrides), headers=headers
     )
     assert response.status_code == 201, response.text
     return response.json()
+
+
+async def create_invoice(
+    client: httpx.AsyncClient, headers: dict, company_id: str, client_id: str, **overrides
+) -> dict:
+    """Create a draft and issue it — the common "I need an issued invoice" path."""
+    draft = await create_draft(client, headers, company_id, client_id, **overrides)
+    issued = await client.post(f"/invoices/{draft['id']}/issue", json={}, headers=headers)
+    assert issued.status_code == 200, issued.text
+    return issued.json()

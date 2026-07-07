@@ -15,6 +15,7 @@ from ..schemas.invoices import (
     InvoicePreviewRequest,
     InvoicePreviewResponse,
     InvoiceResponse,
+    IssueRequest,
     VoidRequest,
 )
 
@@ -80,7 +81,9 @@ def create_invoice(
     user_id: UUID = Depends(current_user_id),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
 ):
-    invoice = InvoiceService(uow_factory).create(
+    """Create a DRAFT invoice — no number is consumed. Finalize it with
+    POST /invoices/{id}/issue."""
+    invoice = InvoiceService(uow_factory).create_draft(
         company_id=body.company_id,
         client_id=body.client_id,
         lines=_to_core_lines(body.lines),
@@ -94,6 +97,35 @@ def create_invoice(
         actor_user_id=user_id,
     )
     return _to_response(invoice)
+
+
+@router.post("/{invoice_id}/issue", response_model=InvoiceResponse)
+def issue_invoice(
+    invoice_id: UUID,
+    body: IssueRequest | None = None,
+    user_id: UUID = Depends(current_user_id),
+    uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+):
+    """Issue a draft: consume the gapless number, freeze totals, set ISSUED."""
+    body = body or IssueRequest()
+    invoice = InvoiceService(uow_factory).issue(
+        invoice_id,
+        issue_date=body.issue_date,
+        due_date=body.due_date,
+        actor_user_id=user_id,
+    )
+    return _to_response(invoice)
+
+
+@router.delete("/{invoice_id}", status_code=204)
+def delete_invoice(
+    invoice_id: UUID,
+    user_id: UUID = Depends(current_user_id),
+    uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+):
+    """Hard-delete a DRAFT invoice. Issued invoices return 409 (never deleted)."""
+    InvoiceService(uow_factory).delete_draft(invoice_id, actor_user_id=user_id)
+    return Response(status_code=204)
 
 
 @router.get("", response_model=list[InvoiceResponse])

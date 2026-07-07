@@ -96,6 +96,75 @@ test("downloads an invoice PDF (read-only re-render, no mutation)", async () => 
   clickSpy.mockRestore();
 });
 
+function draftRecord(id = "inv-1") {
+  return invoiceRecord(id, null, { status: "draft", sequence_global: null });
+}
+
+test("a draft shows a Draft badge and placeholder with Issue/Delete actions", async () => {
+  server.use(http.get(`${BASE}/invoices`, () => HttpResponse.json([draftRecord()])));
+
+  renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
+  const table = within(await screen.findByRole("table"));
+
+  expect(table.getByText("Draft")).toBeInTheDocument(); // reference placeholder
+  expect(table.getByText("draft")).toBeInTheDocument(); // status badge
+  expect(screen.getByRole("button", { name: "Issue" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
+  // A draft has no gapless number yet, so no void / credit-note / XML actions.
+  expect(screen.queryByRole("button", { name: "Void" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Credit note" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Peppol XML" })).not.toBeInTheDocument();
+});
+
+test("issuing a draft confirms then assigns a number", async () => {
+  const draft = draftRecord();
+  let issueBody: unknown = null;
+  server.use(
+    http.get(`${BASE}/invoices`, () => HttpResponse.json([draft])),
+    http.post(`${BASE}/invoices/inv-1/issue`, async ({ request }) => {
+      issueBody = await request.json();
+      draft.status = "issued";
+      draft.reference = "ACME-BC07012026";
+      draft.sequence_global = 1;
+      return HttpResponse.json(draft);
+    }),
+  );
+
+  renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
+  const user = userEvent.setup();
+
+  await user.click(await screen.findByRole("button", { name: "Issue" }));
+  const dialog = await screen.findByRole("dialog");
+  await user.click(within(dialog).getByRole("button", { name: "Confirm" }));
+
+  const table = within(await screen.findByRole("table"));
+  expect(await table.findByText("issued")).toBeInTheDocument();
+  expect(table.getByText("ACME-BC07012026")).toBeInTheDocument();
+  expect(issueBody).toEqual({}); // no date overrides sent
+});
+
+test("deleting a draft confirms then removes it", async () => {
+  let deleted = false;
+  server.use(
+    http.get(`${BASE}/invoices`, () =>
+      HttpResponse.json(deleted ? [] : [draftRecord()]),
+    ),
+    http.delete(`${BASE}/invoices/inv-1`, () => {
+      deleted = true;
+      return new HttpResponse(null, { status: 204 });
+    }),
+  );
+
+  renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
+  const user = userEvent.setup();
+
+  await user.click(await screen.findByRole("button", { name: "Delete" }));
+  const dialog = await screen.findByRole("dialog");
+  await user.click(within(dialog).getByRole("button", { name: "Confirm" }));
+
+  expect(await screen.findByText("No invoices yet.")).toBeInTheDocument();
+});
+
 test("recording a payment posts amount and date", async () => {
   const record = invoiceRecord("inv-1", "ACME-BC07012026");
   server.use(

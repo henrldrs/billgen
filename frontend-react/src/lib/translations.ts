@@ -114,16 +114,16 @@ const MESSAGES = {
     es: "Comentarios",
   },
   "invoice.create": {
-    en: "Create invoice",
-    fr: "Créer la facture",
-    nl: "Factuur aanmaken",
-    es: "Crear factura",
+    en: "Save draft",
+    fr: "Enregistrer le brouillon",
+    nl: "Concept opslaan",
+    es: "Guardar borrador",
   },
   "invoice.created": {
-    en: "Invoice created:",
-    fr: "Facture créée :",
-    nl: "Factuur aangemaakt:",
-    es: "Factura creada:",
+    en: "Draft saved — issue it from Invoices to finalize the number.",
+    fr: "Brouillon enregistré — émettez-le depuis Factures pour finaliser le numéro.",
+    nl: "Concept opgeslagen — geef het uit via Facturen om het nummer vast te leggen.",
+    es: "Borrador guardado — emítalo desde Facturas para asignar el número.",
   },
   "invoice.subtotal": { en: "Subtotal", fr: "Total HT", nl: "Subtotaal", es: "Base" },
   "invoice.discount": { en: "Discount", fr: "Remise", nl: "Korting", es: "Descuento" },
@@ -195,6 +195,22 @@ const MESSAGES = {
     nl: "Kon het document niet downloaden. Probeer het opnieuw.",
     es: "No se pudo descargar el documento. Inténtelo de nuevo.",
   },
+  "history.draft": { en: "Draft", fr: "Brouillon", nl: "Concept", es: "Borrador" },
+  "history.issue": { en: "Issue", fr: "Émettre", nl: "Uitgeven", es: "Emitir" },
+  "history.issueConfirm": {
+    en: "Issue this draft? A gapless invoice number will be assigned and the invoice becomes final — this cannot be undone.",
+    fr: "Émettre ce brouillon ? Un numéro de facture séquentiel sera attribué et la facture deviendra définitive — action irréversible.",
+    nl: "Dit concept uitgeven? Er wordt een sluitend factuurnummer toegekend en de factuur wordt definitief — dit kan niet ongedaan worden gemaakt.",
+    es: "¿Emitir este borrador? Se asignará un número de factura correlativo y la factura será definitiva — no se puede deshacer.",
+  },
+  "history.delete": { en: "Delete", fr: "Supprimer", nl: "Verwijderen", es: "Eliminar" },
+  "history.deleteConfirm": {
+    en: "Delete this draft permanently? Drafts have no invoice number, so nothing legal is lost.",
+    fr: "Supprimer définitivement ce brouillon ? Les brouillons n'ont pas de numéro de facture, rien de légal n'est perdu.",
+    nl: "Dit concept definitief verwijderen? Concepten hebben geen factuurnummer, er gaat niets wettelijks verloren.",
+    es: "¿Eliminar este borrador de forma permanente? Los borradores no tienen número de factura, no se pierde nada legal.",
+  },
+  "history.confirm": { en: "Confirm", fr: "Confirmer", nl: "Bevestigen", es: "Confirmar" },
 
   // ---- dashboard --------------------------------------------------------------------
   "dashboard.title": {

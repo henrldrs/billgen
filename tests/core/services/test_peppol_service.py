@@ -12,16 +12,18 @@ from core.models import (
     VATCategory,
     VATRate,
 )
-from core.services import InvoiceService, PeppolService, PeppolValidationError
+from core.services import PeppolService, PeppolValidationError
 from core.tenancy import organization_context
 
-from .conftest import ISSUE_DATE, make_lines
+from .conftest import issue_invoice, make_lines
 
 
 def _issue_invoice(env, lines=None):
-    return InvoiceService(env.uow_factory).create(
-        company_id=env.company.id, client_id=env.client.id,
-        lines=lines or make_lines(), issue_date=ISSUE_DATE,
+    return issue_invoice(
+        env.uow_factory,
+        company_id=env.company.id,
+        client_id=env.client.id,
+        lines=lines or make_lines(),
     )
 
 
@@ -140,9 +142,8 @@ def test_gate_blocks_b2c_customer(env):
         with env.uow_factory() as uow:
             uow.clients.add(b2c)
             uow.commit()
-    invoice = InvoiceService(env.uow_factory).create(
-        company_id=env.company.id, client_id=b2c.id,
-        lines=make_lines(), issue_date=ISSUE_DATE,
+    invoice = issue_invoice(
+        env.uow_factory, company_id=env.company.id, client_id=b2c.id
     )
     with pytest.raises(PeppolValidationError) as exc:
         PeppolService(env.uow_factory).generate_invoice_xml(invoice.id)
@@ -204,9 +205,11 @@ def test_mixed_rate_document_discount_splits_per_category(env):
             vat=VATRate(category=VATCategory.STANDARD, rate=Decimal("6")),
         ),
     ]
-    invoice = InvoiceService(env.uow_factory).create(
-        company_id=env.company.id, client_id=env.client.id,
-        lines=lines, issue_date=ISSUE_DATE,
+    invoice = issue_invoice(
+        env.uow_factory,
+        company_id=env.company.id,
+        client_id=env.client.id,
+        lines=lines,
         invoice_discount=Discount(type=DiscountType.PERCENTAGE, value=Decimal("10")),
     )
     xml = PeppolService(env.uow_factory).generate_invoice_xml(invoice.id)

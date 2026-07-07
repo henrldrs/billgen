@@ -26,6 +26,7 @@ export type InvoiceLineIn = components["schemas"]["InvoiceLineIn"];
 export type InvoicePreviewRequest = components["schemas"]["InvoicePreviewRequest"];
 export type InvoicePreviewResponse = components["schemas"]["InvoicePreviewResponse"];
 export type InvoiceCreateRequest = components["schemas"]["InvoiceCreateRequest"];
+export type IssueRequest = components["schemas"]["IssueRequest"];
 export type InvoiceResponse = components["schemas"]["InvoiceResponse"];
 
 export type CreditNoteIssueRequest = components["schemas"]["CreditNoteIssueRequest"];

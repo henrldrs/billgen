@@ -5,8 +5,10 @@ from ..models import Invoice, InvoiceStatus
 
 
 class InvoiceRepository(ABC):
-    """Note: hard-delete is deliberately absent. Correction goes through
-    void + credit note (ADR-0001, Belgian gapless numbering)."""
+    """Hard-delete is allowed for DRAFT invoices only (ADR-0002): a draft has no
+    gapless number, so deleting it cannot leave a gap. Issued invoices are never
+    hard-deleted — correction goes through void + credit note (ADR-0001, Belgian
+    gapless numbering)."""
 
     @abstractmethod
     def add(self, invoice: Invoice) -> Invoice: ...
@@ -26,3 +28,10 @@ class InvoiceRepository(ABC):
 
     @abstractmethod
     def update(self, invoice: Invoice) -> Invoice: ...
+
+    @abstractmethod
+    def delete(self, invoice_id: UUID) -> None:
+        """Hard-delete an invoice. Callers MUST ensure it is still a DRAFT; the
+        implementation refuses to delete a numbered (issued) invoice as a
+        last-line guard on the gapless invariant."""
+        ...

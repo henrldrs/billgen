@@ -8,7 +8,7 @@ from core.services import (
     ReportingService,
 )
 
-from .conftest import make_lines
+from .conftest import issue_invoice, make_lines
 
 JULY_4 = date(2026, 7, 4)
 AUG_1 = date(2026, 8, 1)
@@ -16,24 +16,23 @@ CHECK_DATE = date(2026, 8, 15)  # after JULY_4 + 30d due date -> unpaid = overdu
 
 
 def test_kpi_summary_and_revenue(env):
-    invoices = InvoiceService(env.uow_factory)
     payments = PaymentService(env.uow_factory)
     credit_notes = CreditNoteService(env.uow_factory)
 
-    paid = invoices.create(
-        company_id=env.company.id, client_id=env.client.id,
-        lines=make_lines(), issue_date=JULY_4,
+    paid = issue_invoice(
+        env.uow_factory, company_id=env.company.id, client_id=env.client.id,
+        issue_date=JULY_4,
     )
     payments.record(invoice_id=paid.id, amount=Decimal("1512.50"), paid_on=AUG_1)
 
-    overdue = invoices.create(
-        company_id=env.company.id, client_id=env.client.id,
-        lines=make_lines(), issue_date=JULY_4,
+    overdue = issue_invoice(
+        env.uow_factory, company_id=env.company.id, client_id=env.client.id,
+        issue_date=JULY_4,
     )
 
-    cancelled = invoices.create(
-        company_id=env.company.id, client_id=env.client2.id,
-        lines=make_lines(), issue_date=AUG_1,
+    cancelled = issue_invoice(
+        env.uow_factory, company_id=env.company.id, client_id=env.client2.id,
+        issue_date=AUG_1,
     )
     credit_notes.issue(invoice_id=cancelled.id, reason="cancelled", issue_date=AUG_1)
 
@@ -52,3 +51,22 @@ def test_kpi_summary_and_revenue(env):
     revenue = reporting.revenue_by_month(env.company.id, 2026)
     assert revenue[7] == Decimal("3025.00")  # both July invoices are non-voided
     assert 8 not in revenue  # August invoice was voided
+
+
+def test_drafts_are_excluded_from_totals_and_revenue(env):
+    # An issued July invoice counts; a draft in the same month must not.
+    issue_invoice(
+        env.uow_factory, company_id=env.company.id, client_id=env.client.id,
+        issue_date=JULY_4,
+    )
+    InvoiceService(env.uow_factory).create_draft(
+        company_id=env.company.id, client_id=env.client.id,
+        lines=make_lines(), issue_date=JULY_4,
+    )
+
+    reporting = ReportingService(env.uow_factory)
+    kpi = reporting.kpi_summary(env.company.id, today=CHECK_DATE)
+
+    assert kpi.invoiced_total == Decimal("1512.50")  # only the issued invoice
+    assert kpi.counts["draft"] == 1  # the draft is still surfaced as a count
+    assert reporting.revenue_by_month(env.company.id, 2026)[7] == Decimal("1512.50")

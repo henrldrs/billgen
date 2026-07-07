@@ -50,7 +50,9 @@ class ReportingService:
                 counts[status] = counts.get(status, 0) + 1
                 if status == InvoiceStatus.OVERDUE.value:
                     overdue_count += 1
-                if invoice.status is InvoiceStatus.VOIDED:
+                # Drafts have no VAT force and voided invoices are cancelled —
+                # neither counts as invoiced revenue (they still show in `counts`).
+                if invoice.status in (InvoiceStatus.VOIDED, InvoiceStatus.DRAFT):
                     continue
                 invoiced_total += invoice.total_ttc
                 paid_total += sum(
@@ -71,7 +73,10 @@ class ReportingService:
             invoices = uow.invoices.list(company_id=company_id)
         result: dict[int, Decimal] = {}
         for invoice in invoices:
-            if invoice.status is InvoiceStatus.VOIDED or invoice.issue_date.year != year:
+            if (
+                invoice.status in (InvoiceStatus.VOIDED, InvoiceStatus.DRAFT)
+                or invoice.issue_date.year != year
+            ):
                 continue
             month = invoice.issue_date.month
             result[month] = result.get(month, _ZERO) + invoice.total_ttc

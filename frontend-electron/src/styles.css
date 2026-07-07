@@ -205,6 +205,14 @@ textarea.bg-field__input {
   background: #fdf1f0;
   color: var(--bg-danger);
 }
+.bg-badge--draft {
+  background: var(--bg-surface-alt);
+  color: var(--bg-ink-soft);
+  border: 1px dashed var(--bg-line);
+}
+.bg-muted {
+  color: var(--bg-ink-soft);
+}
 
 .bg-spinner {
   display: flex;

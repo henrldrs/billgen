@@ -7,6 +7,7 @@ from .conftest import (
     bearer,
     create_client_record,
     create_company,
+    create_draft,
     create_invoice,
     invoice_payload,
     signup,
@@ -48,6 +49,65 @@ async def test_preview_returns_totals_without_burning_sequence(client):
 
     invoice = await create_invoice(client, headers, company["id"], record["id"])
     assert invoice["sequence_global"] == 1  # preview did not consume a number
+
+
+async def test_post_invoices_creates_a_draft(client):
+    headers, company, record = await _setup(client)
+    draft = await create_draft(client, headers, company["id"], record["id"])
+
+    assert draft["status"] == "draft"
+    assert draft["reference"] is None
+    assert draft["sequence_global"] is None
+    # Totals are still computed for display.
+    assert Decimal(str(draft["total_ttc"])) == Decimal("1512.50")
+
+
+async def test_issue_draft_assigns_number(client):
+    headers, company, record = await _setup(client)
+    draft = await create_draft(client, headers, company["id"], record["id"])
+
+    issued = await client.post(
+        f"/invoices/{draft['id']}/issue", json={}, headers=headers
+    )
+    assert issued.status_code == 200, issued.text
+    body = issued.json()
+    assert body["status"] == "issued"
+    assert body["reference"] == "ACME-BC07012026"
+    assert body["sequence_global"] == 1
+
+    # Re-issuing an already-issued invoice is a business-rule conflict.
+    again = await client.post(
+        f"/invoices/{draft['id']}/issue", json={}, headers=headers
+    )
+    assert again.status_code == 409
+
+    audit = await client.get(
+        "/activity", params={"target_type": "invoice"}, headers=headers
+    )
+    actions = [entry["action"] for entry in audit.json()]
+    assert "create" in actions and "issue" in actions
+
+
+async def test_delete_draft_then_gone(client):
+    headers, company, record = await _setup(client)
+    draft = await create_draft(client, headers, company["id"], record["id"])
+
+    deleted = await client.delete(f"/invoices/{draft['id']}", headers=headers)
+    assert deleted.status_code == 204
+
+    gone = await client.get(f"/invoices/{draft['id']}", headers=headers)
+    assert gone.status_code == 404
+
+
+async def test_delete_issued_invoice_conflict(client):
+    headers, company, record = await _setup(client)
+    invoice = await create_invoice(client, headers, company["id"], record["id"])
+
+    response = await client.delete(f"/invoices/{invoice['id']}", headers=headers)
+    assert response.status_code == 409
+    # Still retrievable.
+    still = await client.get(f"/invoices/{invoice['id']}", headers=headers)
+    assert still.status_code == 200
 
 
 async def test_create_invoice_full_shape(client):

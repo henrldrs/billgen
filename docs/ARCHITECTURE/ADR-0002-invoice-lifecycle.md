@@ -1,7 +1,10 @@
 # ADR-0002 — Invoice lifecycle: draft → issued → delivered
 
 - **Date:** 2026-07-07
-- **Status:** Accepted (design); implementation pending
+- **Status:** Accepted. **Step 1 (draft → issue split) implemented** — `create_draft()` +
+  `issue()` + `delete_draft()`, `POST /invoices/{id}/issue`, `DELETE /invoices/{id}`, UI
+  Issue/Delete actions + DRAFT badge, watermarked draft PDF. Steps 2–5 (delivery track,
+  backup/restore, CI, external integrations) remain pending.
 - **Deciders:** Product owner + Data Architect
 - **Supersedes:** the create-time issuance behaviour introduced in phases 4–6
 
@@ -115,7 +118,13 @@ retention wins for fiscal documents. Deletion is therefore *scoped*, not uniform
 
 1. **Draft → issue split** (this ADR's core): `create_draft()` + `issue()`, move
    numbering, add legal-state handling, `POST /invoices/{id}/issue`, UI "Issue" action,
-   draft PDF watermark. *Pure core + api + ui; no external deps.* ← **next**
+   draft PDF watermark. *Pure core + api + ui; no external deps.* ← **DONE.**
+   Notes: `Invoice.reference`/`sequence_global` are now nullable (a draft carries no
+   number); the gapless number is consumed only in `issue()`; DRAFT invoices are
+   hard-deletable (`delete_draft()` + repo `delete()` guarded to drafts) while issued
+   invoices stay no-delete; drafts are excluded from KPI/revenue totals; migration
+   `b7f2c1a9d3e4` relaxes the two NOT NULLs (unique constraints preserved — NULLs are
+   distinct).
 2. **Delivery-state track:** model fields + migration + `AccessPointGateway` port
    (no live transmission yet; state settable manually / marked "delivered outside app").
 3. **Backup / restore** (foundation item #2): full-tenant export/restore reusing the
