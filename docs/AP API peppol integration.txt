@@ -1,0 +1,380 @@
+Peppol integration blueprint (KBC‑style status, multi‑tenant, Belgium‑ready)
+You’re basically building what banks expose as a “feature”—but as your own backbone. Let’s design it cleanly so BillGen can plug Peppol in once and reuse it across web, desktop, and mobile.
+
+1. High‑level architecture
+Components
+BillGen Core API
+
+Your main backend (Node/Python/Go)
+
+Owns tenants, invoices, Peppol status, and business logic.
+
+Peppol Access Point API
+
+e.g. e‑invoice.be Peppol API—JSON in, UBL out, certified AP. 
+
+Frontends
+
+Web (React/Vite)
+
+Desktop (Tauri)
+
+Mobile (Tauri Mobile or React Native)
+
+Data flow (send)
+User creates invoice in BillGen.
+
+BillGen validates business rules and stores invoice.
+
+BillGen calls Peppol AP:
+
+POST /api/documents with JSON invoice.
+
+Store returned document_id.
+
+BillGen calls:
+
+POST /api/documents/:id/send to route via Peppol. 
+
+Peppol AP processes, validates BIS 3.0, serializes to UBL, routes to recipient.
+
+BillGen polls or receives webhook events and updates internal status timeline.
+
+Data flow (receive)
+Supplier sends invoice to your customer via Peppol.
+
+Peppol AP receives and pushes signed webhook to BillGen. 
+
+BillGen:
+
+Verifies signature.
+
+Stores inbound invoice.
+
+Links to tenant/customer.
+
+Frontends show “New Peppol invoice received” with full timeline.
+
+2. API integration with a Peppol Access Point
+Using e‑invoice.be as the concrete example (you can swap provider later):
+
+2.1. Sending an invoice
+Step 1 — Create document
+
+Endpoint: POST /api/documents
+
+Payload (example):
+
+json
+{
+  "vendor_name": "Acme BV",
+  "vendor_vat": "BE0123456789",
+  "vendor_peppol_id": "0208:BE0123456789",
+  "customer_name": "Beta SRL",
+  "customer_peppol_id": "0208:BE9876543210",
+  "invoice_number": "INV-2026-0001",
+  "invoice_date": "2026-07-07",
+  "currency": "EUR",
+  "lines": [
+    {
+      "description": "Consulting services",
+      "quantity": 10,
+      "unit_price": 100,
+      "vat_rate": 21
+    }
+  ],
+  "payment_terms": "30 days"
+}
+The AP handles:
+
+BIS 3.0 validation
+
+UBL XML generation
+
+Peppol routing 
+
+You store:
+
+document_id
+
+Initial status: created.
+
+Step 2 — Send via Peppol
+
+Endpoint: POST /api/documents/:id/send
+
+On success, set status: sent.
+
+2.2. Receiving invoices
+Configure webhook URL in the AP dashboard.
+
+AP sends JSON payload for inbound documents:
+
+document_id
+
+sender/receiver Peppol IDs
+
+amounts, lines, etc.
+
+You:
+
+Verify signature.
+
+Create inbound invoice record.
+
+Attach to tenant/customer.
+
+3. Status timeline (like KBC’s app)
+The AP exposes a per‑document timeline of every state change. 
+
+3.1. Internal status model
+Define a normalized status enum:
+
+created — JSON accepted by AP.
+
+validated — BIS 3.0 checks passed.
+
+serialized — UBL XML generated.
+
+routed — handed to recipient AP.
+
+delivered — delivered to recipient inbox.
+
+failed — any error (validation, routing, etc.).
+
+3.2. Timeline table
+Table: invoice_status_events
+
+id (PK)
+
+invoice_id (FK → invoices)
+
+peppol_document_id (string)
+
+status (enum)
+
+source ("peppol" / "system" / "user")
+
+message (text, optional)
+
+created_at (timestamp)
+
+Every webhook or poll result becomes an event row. Frontends simply render the ordered list.
+
+3.3. Frontend component
+Vertical stepper:
+
+Created → Validated → Sent → Delivered
+
+Each step:
+
+Label: status
+
+Timestamp: from invoice_status_events
+
+Details: message (e.g. “Recipient AP: X, Participant ID: Y”)
+
+4. Multi‑tenant SaaS design
+e‑invoice.be is explicitly built for SaaS with N tenants: one org key, many tenant keys. 
+
+4.1. Tenant model
+Table: tenants
+
+id (PK)
+
+name
+
+country
+
+vat_number
+
+peppol_participant_id (e.g. 0208:BE0123456789)
+
+peppol_tenant_key (API key from AP)
+
+peppol_status (pending, live, draft)
+
+4.2. Tenant provisioning flow
+Admin creates tenant in BillGen.
+
+BillGen calls AP:
+
+“Create tenant” / “Register customer on Peppol”.
+
+AP returns:
+
+Tenant ID
+
+Tenant API key
+
+Store keys encrypted.
+
+Mark tenant as live when registration completes.
+
+4.3. Per‑tenant routing
+Every call to AP uses:
+
+Org API key + Tenant API key (depending on provider).
+
+Your backend middleware:
+
+Reads tenant_id from JWT/session.
+
+Injects correct Peppol credentials into outbound requests.
+
+5. Database schema (minimal but solid)
+5.1. tenants
+id
+
+name
+
+vat_number
+
+peppol_participant_id
+
+peppol_tenant_key
+
+created_at
+
+updated_at
+
+5.2. invoices
+id
+
+tenant_id
+
+direction (outbound / inbound)
+
+number
+
+date
+
+currency
+
+total_amount
+
+peppol_document_id
+
+peppol_status (latest status)
+
+raw_payload_json (for audit)
+
+created_at
+
+updated_at
+
+5.3. invoice_status_events
+As defined above.
+
+6. Backend implementation sketch
+6.1. Sending invoice (pseudo‑Node)
+ts
+async function sendInvoiceToPeppol(invoiceId: string, tenantId: string) {
+  const tenant = await db.tenants.findById(tenantId);
+  const invoice = await db.invoices.findById(invoiceId);
+
+  const payload = mapInvoiceToPeppolJson(invoice, tenant);
+
+  const doc = await peppolClient.createDocument(payload, tenant.peppol_tenant_key);
+  await db.invoices.update(invoiceId, { peppol_document_id: doc.id });
+
+  await db.invoice_status_events.insert({
+    invoice_id: invoiceId,
+    peppol_document_id: doc.id,
+    status: "created",
+    source: "peppol"
+  });
+
+  await peppolClient.sendDocument(doc.id, tenant.peppol_tenant_key);
+
+  await db.invoice_status_events.insert({
+    invoice_id: invoiceId,
+    peppol_document_id: doc.id,
+    status: "sent",
+    source: "peppol"
+  });
+
+  // Optionally poll or rely on webhook for delivered status
+}
+6.2. Webhook handler (receive + status updates)
+ts
+app.post("/webhooks/peppol", async (req, res) => {
+  const signatureValid = verifyPeppolSignature(req);
+  if (!signatureValid) return res.status(401).end();
+
+  const event = req.body;
+
+  if (event.type === "document_status_changed") {
+    await db.invoice_status_events.insert({
+      invoice_id: event.invoice_id,
+      peppol_document_id: event.document_id,
+      status: event.status,
+      message: event.message,
+      source: "peppol"
+    });
+
+    await db.invoices.update(event.invoice_id, {
+      peppol_status: event.status
+    });
+  }
+
+  if (event.type === "document_received") {
+    // Create inbound invoice
+    const invoiceId = await createInboundInvoiceFromPeppol(event);
+    await db.invoice_status_events.insert({
+      invoice_id: invoiceId,
+      peppol_document_id: event.document_id,
+      status: "received",
+      source: "peppol"
+    });
+  }
+
+  res.status(200).end();
+});
+7. Frontend consumption
+All frontends call the same backend endpoints:
+
+GET /invoices/:id
+
+Returns invoice + latest peppol_status.
+
+GET /invoices/:id/timeline
+
+Returns ordered invoice_status_events.
+
+You implement:
+
+React/Tauri component:
+
+Fetch timeline.
+
+Render stepper.
+
+Mobile screen:
+
+Same JSON, different layout.
+
+8. Operational checklist
+Choose AP (e‑invoice.be, Storecove, Billit, etc.).
+
+Get sandbox keys and test with fake invoices. 
+
+Implement:
+
+Outbound send flow.
+
+Webhook receiver.
+
+Status timeline.
+
+Design tenant onboarding:
+
+Register customers on Peppol via API.
+
+Store tenant keys securely.
+
+Add monitoring:
+
+Log Peppol errors (validation, routing).
+
+Alert on repeated failures per tenant.
