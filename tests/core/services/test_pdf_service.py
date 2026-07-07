@@ -14,12 +14,14 @@ from core.services import (
 from .conftest import ISSUE_DATE, issue_invoice, make_lines
 
 
-def _weasyprint_available() -> bool:
-    try:
-        import weasyprint  # noqa: F401, PLC0415
+def _pdf_engine_available() -> bool:
+    """Any usable HTML->PDF engine (Chromium or WeasyPrint)."""
+    from core.pdf import PdfEngineUnavailableError, html_to_pdf  # noqa: PLC0415
 
+    try:
+        html_to_pdf("<html><body>x</body></html>")
         return True
-    except Exception:
+    except PdfEngineUnavailableError:
         return False
 
 
@@ -132,8 +134,30 @@ def test_pdf_export_is_audited(env, monkeypatch):
     assert any(entry.action.value == "export_pdf" for entry in entries)
 
 
-@pytest.mark.skipif(not _weasyprint_available(), reason="WeasyPrint native stack absent")
+@pytest.mark.skipif(not _pdf_engine_available(), reason="No PDF engine available")
 def test_real_pdf_bytes(env):
     invoice = _issue_invoice(env)
     pdf = PdfService(env.uow_factory).render_invoice_pdf(invoice.id)
     assert pdf.startswith(b"%PDF")
+
+
+def test_free_tier_pdf_has_brand_footer(env):
+    invoice = _issue_invoice(env)
+    html = PdfService(env.uow_factory).render_invoice_html(invoice.id)
+    # Assert on the footer element (the CSS class always sits in <style>).
+    assert '<div class="brand-footer">' in html
+    assert "Créé avec BillGen" in html  # localized brand line (fr_standard)
+    assert "data:image/png;base64," in html  # self-contained embedded logo
+
+
+def test_branding_can_be_suppressed(env):
+    # The `branded` seam lets a future paid plan drop the footer (Phase 10).
+    from core.pdf import build_invoice_context, get_template, render_html  # noqa: PLC0415
+
+    invoice = _issue_invoice(env)
+    spec = get_template("fr_standard")
+    ctx = build_invoice_context(invoice, env.company, env.client, spec, branded=False)
+    html = render_html(spec.filename, ctx)
+    assert '<div class="brand-footer">' not in html
+    assert "BillGen" not in html
+    assert "data:image/png;base64," not in html

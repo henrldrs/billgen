@@ -12,9 +12,9 @@ Read this instead of re-deriving context.
 |---|---|
 | Location | `C:\Users\hdr_s\Documents\business model\BillGen BETA` |
 | Phases done | 0–9, **11** (domain → rules → DB → services → API → business routers → UI kit → SaaS shell → desktop → legacy import) + **Peppol e-invoicing** (Helger-validated Peppol BIS 3.0 + Belgian elements + pre-export validation gate; `771e903` then switched off UBL.BE). Phase 10 (billing) not yet started. |
-| Tests | **Python 200 passed, 1 skipped** (`python -m pytest tests`); **frontend 36 passed** (`npm run test --workspace @billgen/ui`) |
+| Tests | **Python 203 passed, 0 skipped** (`python -m pytest tests`); **frontend 36 passed** (`npm run test --workspace @billgen/ui`) |
 | Git | local only, **not pushed**. One commit + tag per phase (`phase-4` … `phase-9b`); later work (import, polish, peppol) committed on `main` without tags. Branch `main`. |
-| Skip reason | 1 PDF test skips because WeasyPrint's native (Pango/GTK) stack isn't installed — HTML rendering is fully tested; only the HTML→PDF byte step needs it. |
+| PDF engine | **Headless Chromium via Playwright** (primary, cross-platform incl. Windows/desktop) with **WeasyPrint** as a fallback for the Docker/SaaS image. Setup on a fresh box: `pip install playwright` then `python -m playwright install chromium`. Without any engine, `/pdf` returns a clean 503. Free-tier PDFs carry a subtle "Made with BillGen" footer + logo. |
 | Not a migration | The legacy React/Python apps (`D:\CODING\audit-v2-react-exe`, `myshop-*`) are reference only. Do not edit them. The **approved Peppol reference** is `D:\CODING\FinanceFlow Bill Generator` (the demo) — inventoried in [docs/COMPARISON_demo_vs_new.md](docs/COMPARISON_demo_vs_new.md). |
 | Audit progress | The demo was formally audited (`D:\CODING\audit-v2-react-exe`, Apr 2026). How this rebuild answers those findings is scored in [docs/AUDIT_PROGRESS_vs_demo.md](docs/AUDIT_PROGRESS_vs_demo.md) — see §0.1 below. |
 
@@ -105,7 +105,7 @@ the API's OpenAPI schema, so the UI cannot drift from the server contract.
 | `core/repository/` | abstract `*Repository` ports + `UnitOfWork`; `sequence_repo` (`INVOICE_SERIES`, `CREDIT_NOTE_SERIES`, `monthly_bucket()`) | Storage-agnostic interfaces. No `org_id` params — read from context. No invoice hard-delete; audit log is append-only. |
 | `core/services/` | `InvoiceService`, `CreditNoteService`, `PaymentService`, `Company/Client/Product/Organization/Activity/ReportingService`, `PdfService`, `PeppolService`, `ImportService`; `peppol_validation.validate_peppol_parties()`; `errors.py` (`NotFoundError`, `BusinessRuleError`, `PeppolValidationError`, `FieldError`); `_audit.record()`; `numbering_service` | **Use-cases.** Each opens one `UnitOfWork`, does the work, writes an audit entry, commits once. `PeppolService` runs the party-validation gate before building XML. |
 | `core/imports/` | `parse_backup()`, `map_company/map_client/map_product`, `ImportReport`, `MappingError`, `APP_NAME` | Pure legacy-import layer: parses a `FinanceFlow BillGen` backup (`{app, keys}` with `billgen-*` localStorage keys) and maps its records onto domain models. No framework, no I/O. |
-| `core/pdf/` | `registry` (`TEMPLATES`, `get_template`), `renderer` (`render_html`, `html_to_pdf`, `PdfEngineUnavailableError`), `context` (`build_invoice_context`), `templates/*.html.j2` | Server-side PDF via Jinja2 + WeasyPrint. 4 templates: fr_standard, fr_detailed, nl_minimal, credit_note. |
+| `core/pdf/` | `registry` (`TEMPLATES`, `get_template`), `renderer` (`render_html`, `html_to_pdf`, `PdfEngineUnavailableError`), `context` (`build_invoice_context`, `branded`), `templates/*.html.j2`, `assets/billgen_logo.png` | Server-side PDF via Jinja2 → **headless Chromium (Playwright), WeasyPrint fallback**. 4 templates: fr_standard, fr_detailed, nl_minimal, credit_note. Draft PDFs are watermarked; free-tier PDFs carry a "Made with BillGen" footer + embedded logo (`branded` flag = seam for paid-tier removal). |
 | `core/einvoicing/` | `ubl_builder.build_invoice_ubl()`, `ubl_validator.validate_invoice_ubl()` | **Standard Peppol BIS Billing 3.0** / UBL 2.1 XML (stdlib ElementTree), Helger-validated (2026.5). BE sellers additionally carry the Belgian elements BIS accepts — EndpointIDs, OGM-VCS structured communication (`PaymentID`), KBO legal id, party contact — layered over the EN 16931 multi-rate/discount engine. (The older UBL.BE profile/markers/BTCC were dropped — see §9.) |
 | `core/utils/` | `money.format_amount()`, `dates.format_date()`, `jsonsafe.json_safe()` | Formatting + audit-log JSON safety (Decimal→str). |
 
@@ -246,12 +246,13 @@ Live totals in the builder come from `POST /invoices/preview` (pure calculation,
 
 | Suite | Command | Count |
 |---|---|---|
-| Python (core/api/db/desktop) | `python -m pytest tests` | 186 passed, 1 skipped |
-| Frontend (`@billgen/ui`) | `npm run test --workspace @billgen/ui` | 33 passed |
+| Python (core/api/db/desktop) | `python -m pytest tests` | 203 passed, 0 skipped |
+| Frontend (`@billgen/ui`) | `npm run test --workspace @billgen/ui` | 36 passed |
 
-The Python skip is the real-PDF-bytes test (needs WeasyPrint's native stack). The
-whole app flow was also **browser-verified** in Phase 8 (signup → invoice →
-payment → dashboard) and the Tauri shell **compiles clean** (`cargo build`).
+The real-PDF-bytes test now runs against Chromium (Playwright) instead of being
+skipped. The whole app flow was also **browser-verified** in Phase 8 (signup →
+invoice → payment → dashboard) and the Tauri shell **compiles clean** (`cargo
+build`).
 
 ---
 
@@ -259,7 +260,10 @@ payment → dashboard) and the Tauri shell **compiles clean** (`cargo build`).
 
 - **Python 3.14.4**, system install, **no venv**. Deps via pip: `fastapi uvicorn
   pyjwt argon2-cffi pydantic-settings sqlalchemy alembic jinja2 httpx structlog
-  cryptography pytest pytest-asyncio` (+ `Pillow` for icon gen).
+  cryptography pytest pytest-asyncio playwright` (+ `Pillow` for icon/logo gen).
+  **PDF engine needs a browser:** after `pip install playwright`, run
+  `python -m playwright install chromium` (one-time, ~150 MB). Without it, PDF
+  export returns 503 but everything else works.
 - **Node v24.15.0 / npm 11** — npm workspaces (`frontend-react`, `frontend-saas`,
   `frontend-electron`).
 - **Rust 1.96.1 (MSVC)** at `%USERPROFILE%\.cargo\bin` — **NOT on the default
@@ -395,6 +399,12 @@ payment → dashboard) and the Tauri shell **compiles clean** (`cargo build`).
 
 ## 10. Gotchas already paid for (don't rediscover)
 
+- **Sync Playwright can't run on a thread with a live asyncio loop.** The PDF
+  routes are sync `def` handlers, so Starlette runs them in its threadpool (off
+  the event-loop thread) where `sync_playwright()` is fine. Don't call
+  `html_to_pdf()` directly from an `async def` — it'll raise "Sync API inside the
+  asyncio loop". (That's why the API PDF test asserts `status in (200, 503)`
+  instead of probing the engine on the loop thread.)
 - **Pydantic v2 serializes `Decimal` as a JSON string** — frontend/tests parse
   with `Decimal(str(v))` / `Number(...)`.
 - **Unbound `fetch` as an instance property throws "Illegal invocation" in
