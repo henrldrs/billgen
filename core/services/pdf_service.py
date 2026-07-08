@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from uuid import UUID
 
-from ..models import AuditAction, Client, Company, CreditNote, Invoice
+from ..models import AuditAction, Client, Company, CreditNote, Invoice, PlanTier
 from ..pdf import (
     UnknownTemplateError,
     build_credit_note_context,
@@ -31,6 +31,12 @@ class PdfService:
             raise NotFoundError("Invoice company or client missing")
         return invoice, company, client
 
+    def _branded(self, uow: UnitOfWork, organization_id: UUID) -> bool:
+        """BillGen branding appears on free-tier documents only, whatever the
+        template; paid tiers get unbranded output. Unknown org → branded (safe)."""
+        organization = uow.organizations.get(organization_id)
+        return organization is None or organization.plan_tier is PlanTier.FREE
+
     def _invoice_html(
         self, uow: UnitOfWork, invoice_id: UUID, template_id: str | None
     ) -> tuple[str, Invoice]:
@@ -39,7 +45,10 @@ class PdfService:
             spec = get_template(template_id or invoice.pdf_template)
         except UnknownTemplateError as exc:
             raise BusinessRuleError(f"Unknown PDF template: {exc.args[0]}") from exc
-        context = build_invoice_context(invoice, company, client, spec)
+        context = build_invoice_context(
+            invoice, company, client, spec,
+            branded=self._branded(uow, invoice.organization_id),
+        )
         return render_html(spec.filename, context), invoice
 
     def render_invoice_html(self, invoice_id: UUID, template_id: str | None = None) -> str:
@@ -79,7 +88,10 @@ class PdfService:
         if company is None or client is None or original is None:
             raise NotFoundError("Credit note company, client, or invoice missing")
         spec = get_template(credit_note.pdf_template)
-        context = build_credit_note_context(credit_note, company, client, original, spec)
+        context = build_credit_note_context(
+            credit_note, company, client, original, spec,
+            branded=self._branded(uow, credit_note.organization_id),
+        )
         return render_html(spec.filename, context), credit_note
 
     def render_credit_note_html(self, credit_note_id: UUID) -> str:

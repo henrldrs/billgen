@@ -161,3 +161,51 @@ def test_branding_can_be_suppressed(env):
     assert '<div class="brand-footer">' not in html
     assert "BillGen" not in html
     assert "data:image/png;base64," not in html
+
+
+def test_free_tier_branding_on_every_template(env):
+    # Free tier: the brand footer must appear on every template we offer.
+    invoice = _issue_invoice(env)
+    for template in ("fr_standard", "fr_detailed", "nl_minimal"):
+        html = PdfService(env.uow_factory).render_invoice_html(invoice.id, template)
+        assert '<div class="brand-footer">' in html, template
+
+
+def test_paid_tier_documents_are_unbranded(env):
+    # Paid tiers get unbranded documents — no footer on any template, nor on
+    # credit notes. The tier is read from the invoice's organization.
+    from core.models import Client, Company, Organization, PlanTier  # noqa: PLC0415
+    from core.tenancy import organization_context  # noqa: PLC0415
+
+    paid_org = Organization(name="Paid SPRL", plan_tier=PlanTier.BUSINESS)
+    with env.uow_factory() as uow:
+        uow.organizations.add(paid_org)
+        uow.commit()
+
+    with organization_context(paid_org.id):
+        company = Company(
+            organization_id=paid_org.id,
+            name="Paid Co",
+            invoice_reference_prefix="PAID-",
+        )
+        client = Client(organization_id=paid_org.id, company_id=company.id, name="Cust")
+        with env.uow_factory() as uow:
+            uow.companies.add(company)
+            uow.clients.add(client)
+            uow.commit()
+
+        invoice = issue_invoice(
+            env.uow_factory,
+            company_id=company.id,
+            client_id=client.id,
+            issue_date=ISSUE_DATE,
+        )
+        for template in ("fr_standard", "fr_detailed", "nl_minimal"):
+            html = PdfService(env.uow_factory).render_invoice_html(invoice.id, template)
+            assert '<div class="brand-footer">' not in html, template
+
+        credit_note = CreditNoteService(env.uow_factory).issue(
+            invoice_id=invoice.id, reason="Correction", issue_date=ISSUE_DATE
+        )
+        html = PdfService(env.uow_factory).render_credit_note_html(credit_note.id)
+        assert '<div class="brand-footer">' not in html
