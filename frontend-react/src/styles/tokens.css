@@ -1,0 +1,87 @@
+/* BillGen brand tokens — single source of truth for color and shape.
+ *
+ * Two layers:
+ *   1. Raw brand scales (--brand-*): the palette and its variants. Never
+ *      referenced by components directly.
+ *   2. Semantic tokens (--bg-*): what components actually use. Re-skinning
+ *      BillGen (or reusing the component library in another app) means
+ *      remapping this layer only.
+ *
+ * Canonical anchors (approved 2026-07-08, from the BillGen logo palette):
+ *   #10B981 green · #334155 navy/slate · #E5E7EB line gray · #FFFFFF · #1F2937 ink
+ */
+
+:root {
+  /* ---- raw brand scales ---------------------------------------------------- */
+  /* Green (Tailwind emerald) — brand primary, anchor at 500 */
+  --brand-green-50: #ecfdf5;
+  --brand-green-100: #d1fae5;
+  --brand-green-200: #a7f3d0;
+  --brand-green-300: #6ee7b7;
+  --brand-green-400: #34d399;
+  --brand-green-500: #10b981;
+  --brand-green-600: #059669;
+  --brand-green-700: #047857;
+  --brand-green-800: #065f46;
+  --brand-green-900: #064e3b;
+
+  /* Navy/slate (Tailwind slate) — brand neutral, anchor at 700 */
+  --brand-slate-50: #f8fafc;
+  --brand-slate-100: #f1f5f9;
+  --brand-slate-200: #e2e8f0;
+  --brand-slate-300: #cbd5e1;
+  --brand-slate-400: #94a3b8;
+  --brand-slate-500: #64748b;
+  --brand-slate-600: #475569;
+  --brand-slate-700: #334155;
+  --brand-slate-800: #1e293b;
+  --brand-slate-900: #0f172a;
+
+  /* Status hues (Tailwind red / amber) */
+  --brand-red-50: #fef2f2;
+  --brand-red-100: #fee2e2;
+  --brand-red-600: #dc2626;
+  --brand-red-700: #b91c1c;
+  --brand-amber-50: #fffbeb;
+  --brand-amber-100: #fef3c7;
+  --brand-amber-700: #b45309;
+
+  /* ---- semantic tokens ------------------------------------------------------ */
+  /* Text */
+  --bg-ink: #1f2937;                       /* primary text (canonical anchor) */
+  --bg-ink-soft: var(--brand-slate-500);   /* secondary text, labels */
+
+  /* Surfaces */
+  --bg-surface: #ffffff;                   /* cards, panels, inputs */
+  --bg-surface-alt: var(--brand-slate-50); /* page background, subtle fills */
+  --bg-line: #e5e7eb;                      /* borders, dividers (canonical anchor) */
+
+  /* Brand action */
+  --bg-accent: var(--brand-green-500);        /* primary actions, active states */
+  --bg-accent-strong: var(--brand-green-600); /* hover/pressed */
+  --bg-accent-soft: var(--brand-green-100);   /* tinted fills behind accent text */
+  --bg-accent-ink: var(--brand-green-700);    /* accent-colored text on white */
+
+  /* Navy — sidebar, emphasis, logo "Bill" */
+  --bg-navy: #334155;                      /* canonical anchor */
+  --bg-navy-strong: var(--brand-slate-800);
+  --bg-navy-soft: var(--brand-slate-100);
+
+  /* Navigation (consumed by sidebar/topbar components) */
+  --bg-sidebar: var(--bg-navy);
+  --bg-sidebar-ink: var(--brand-slate-50);
+  --bg-sidebar-ink-soft: var(--brand-slate-400);
+  --bg-sidebar-active: var(--bg-accent);
+  --bg-sidebar-line: var(--brand-slate-600);
+
+  /* Status */
+  --bg-danger: var(--brand-red-600);
+  --bg-danger-soft: var(--brand-red-50);
+  --bg-success: var(--brand-green-700);
+  --bg-success-soft: var(--brand-green-50);
+  --bg-warn: var(--brand-amber-700);
+  --bg-warn-soft: var(--brand-amber-50);
+
+  /* Shape */
+  --bg-radius: 8px;
+}
