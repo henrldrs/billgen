@@ -178,7 +178,9 @@ def invoice_pdf(
     service = PdfService(uow_factory)
     invoice = InvoiceService(uow_factory).get(invoice_id)
     pdf = service.render_invoice_pdf(invoice_id, template, actor_user_id=user_id)
-    filename = invoice.reference.replace("/", "-")
+    # Drafts have no reference yet (assigned at issue time).
+    reference = invoice.reference or f"draft-{invoice_id.hex[:8]}"
+    filename = reference.replace("/", "-")
     return Response(
         content=pdf,
         media_type="application/pdf",
@@ -194,7 +196,9 @@ def invoice_peppol(
 ):
     invoice = InvoiceService(uow_factory).get(invoice_id)
     xml = PeppolService(uow_factory).generate_invoice_xml(invoice_id, actor_user_id=user_id)
-    filename = invoice.reference.replace("/", "-")
+    # Drafts have no reference yet (assigned at issue time).
+    reference = invoice.reference or f"draft-{invoice_id.hex[:8]}"
+    filename = reference.replace("/", "-")
     return Response(
         content=xml,
         media_type="application/xml",

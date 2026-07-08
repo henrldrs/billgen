@@ -123,6 +123,7 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
 
     @app.exception_handler(PdfEngineUnavailableError)
     async def pdf_engine_handler(request: Request, exc: PdfEngineUnavailableError):  # noqa: ANN202
+        _access_log.error("pdf_engine_unavailable", engine_errors=str(exc))
         return JSONResponse(
             status_code=503,
             content={"detail": "PDF engine unavailable on this server"},

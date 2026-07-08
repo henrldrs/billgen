@@ -194,6 +194,19 @@ async def test_invoice_pdf_endpoint(client):
         assert response.content.startswith(b"%PDF")
 
 
+async def test_draft_invoice_pdf_endpoint(client):
+    headers, company, record = await _setup(client)
+    draft = await create_draft(client, headers, company["id"], record["id"])
+
+    # A draft has no reference yet; the filename must fall back, not crash.
+    response = await client.get(f"/invoices/{draft['id']}/pdf", headers=headers)
+    assert response.status_code in (200, 503)
+    if response.status_code == 200:
+        assert response.content.startswith(b"%PDF")
+        disposition = response.headers["content-disposition"]
+        assert "draft-" in disposition
+
+
 async def test_invoice_peppol_endpoint(client):
     headers, company, record = await _setup(client)
     invoice = await create_invoice(client, headers, company["id"], record["id"])

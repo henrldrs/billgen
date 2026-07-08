@@ -1,9 +1,17 @@
 import logging
+import sys
 
 import structlog
 
 
 def configure_logging() -> None:
+    # Windows consoles often use a legacy codepage (cp1252); a log record with
+    # characters outside it (e.g. Playwright's box-drawing banners) must never
+    # crash the request that emitted it.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(errors="backslashreplace")
+
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     structlog.configure(
         processors=[
