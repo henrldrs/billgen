@@ -96,6 +96,67 @@ test("downloads an invoice PDF (read-only re-render, no mutation)", async () => 
   clickSpy.mockRestore();
 });
 
+test("shows a confirmation once the PDF is saved", async () => {
+  server.use(
+    http.get(`${BASE}/invoices`, () =>
+      HttpResponse.json([invoiceRecord("inv-1", "ACME-BC07012026")]),
+    ),
+    http.get(`${BASE}/invoices/inv-1/pdf`, () =>
+      new HttpResponse(new Blob(["%PDF-1.7 fake"]), {
+        headers: { "Content-Type": "application/pdf" },
+      }),
+    ),
+  );
+
+  URL.createObjectURL = vi.fn(() => "blob:mock") as typeof URL.createObjectURL;
+  URL.revokeObjectURL = vi.fn() as typeof URL.revokeObjectURL;
+  const clickSpy = vi
+    .spyOn(HTMLAnchorElement.prototype, "click")
+    .mockImplementation(() => {});
+
+  renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
+  const user = userEvent.setup();
+
+  await user.click(await screen.findByRole("button", { name: "Download PDF" }));
+
+  const status = await screen.findByRole("status");
+  expect(status).toHaveTextContent("Saved ACME-BC07012026.pdf");
+
+  clickSpy.mockRestore();
+});
+
+test("a blocked Peppol export lists the offending fields", async () => {
+  server.use(
+    http.get(`${BASE}/invoices`, () =>
+      HttpResponse.json([invoiceRecord("inv-1", "ACME-BC07012026")]),
+    ),
+    http.get(`${BASE}/invoices/inv-1/peppol.xml`, () =>
+      HttpResponse.json(
+        {
+          detail: "Invoice is not deliverable over Peppol",
+          errors: [
+            { field: "company.vat", message_key: "errSupplierVat" },
+            { field: "client.vat", message_key: "errCustomerVatB2C" },
+          ],
+        },
+        { status: 422 },
+      ),
+    ),
+  );
+
+  renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
+  const user = userEvent.setup();
+
+  await user.click(await screen.findByRole("button", { name: "Peppol XML" }));
+
+  const alert = await screen.findByRole("alert");
+  expect(alert).toHaveTextContent(
+    "Peppol export blocked — fix the following before exporting:",
+  );
+  expect(alert).toHaveTextContent("Your company VAT number is missing or invalid.");
+  expect(alert).toHaveTextContent("The client has no VAT number (B2C).");
+});
+
 function draftRecord(id = "inv-1") {
   return invoiceRecord(id, null, { status: "draft", sequence_global: null });
 }

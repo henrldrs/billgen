@@ -71,14 +71,22 @@ export class MemoryTokenStore implements TokenStore {
   }
 }
 
+/** One entry of a structured validation error (e.g. the Peppol export gate). */
+export interface ApiFieldError {
+  field: string;
+  message_key: string;
+}
+
 export class ApiError extends Error {
   readonly status: number;
   readonly detail: string;
+  readonly errors: ApiFieldError[];
 
-  constructor(status: number, detail: string) {
+  constructor(status: number, detail: string, errors: ApiFieldError[] = []) {
     super(`API ${status}: ${detail}`);
     this.status = status;
     this.detail = detail;
+    this.errors = errors;
   }
 }
 
@@ -162,13 +170,26 @@ export class ApiClient {
 
     if (!response.ok) {
       let detail = response.statusText;
+      let errors: ApiFieldError[] = [];
       try {
-        const parsed = (await response.json()) as { detail?: unknown };
+        const parsed = (await response.json()) as {
+          detail?: unknown;
+          errors?: unknown;
+        };
         if (typeof parsed.detail === "string") detail = parsed.detail;
+        if (Array.isArray(parsed.errors)) {
+          errors = parsed.errors.filter(
+            (e): e is ApiFieldError =>
+              typeof e === "object" &&
+              e !== null &&
+              typeof (e as ApiFieldError).field === "string" &&
+              typeof (e as ApiFieldError).message_key === "string",
+          );
+        }
       } catch {
         /* non-JSON error body */
       }
-      throw new ApiError(response.status, detail);
+      throw new ApiError(response.status, detail, errors);
     }
 
     if (response.status === 204) return undefined as T;

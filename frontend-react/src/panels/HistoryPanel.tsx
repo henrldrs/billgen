@@ -17,12 +17,23 @@ import {
   useRecordPayment,
   useVoidInvoice,
 } from "../hooks/queries";
+import { ApiError } from "../lib/apiClient";
 import { formatDate, formatMoney } from "../lib/format";
-import { t, type Lang } from "../lib/translations";
+import { t, tPeppolError, type Lang } from "../lib/translations";
 import { useApi } from "../providers/BillGenProvider";
 
-/** Trigger a browser "Save as" for a fetched document blob. */
-function saveBlob(blob: Blob, filename: string) {
+/** Minimal typing for the File System Access API save dialog. */
+type SaveFilePicker = (options: {
+  suggestedName?: string;
+}) => Promise<{
+  createWritable(): Promise<{
+    write(data: Blob): Promise<void>;
+    close(): Promise<void>;
+  }>;
+}>;
+
+/** Trigger a browser "Save as" for a fetched document blob (no dialog). */
+function saveBlobViaAnchor(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -31,6 +42,28 @@ function saveBlob(blob: Blob, filename: string) {
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
+}
+
+/** Save a document blob, letting the user pick the destination when the
+ *  browser supports it (Chromium/WebView2); otherwise fall back to the
+ *  classic downloads-folder anchor. Returns false when the user cancelled. */
+async function saveBlob(blob: Blob, filename: string): Promise<boolean> {
+  const picker = (window as { showSaveFilePicker?: SaveFilePicker })
+    .showSaveFilePicker;
+  if (picker) {
+    try {
+      const handle = await picker({ suggestedName: filename });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return true;
+    } catch (err) {
+      if ((err as DOMException)?.name === "AbortError") return false;
+      // Picker unavailable in this context (e.g. sandboxed iframe) — fall back.
+    }
+  }
+  saveBlobViaAnchor(blob, filename);
+  return true;
 }
 
 export interface HistoryPanelProps {
@@ -67,20 +100,29 @@ export function HistoryPanel({ companyId, lang = "en" }: HistoryPanelProps) {
   // sequence consumed (the server only appends an export audit entry).
   const [downloading, setDownloading] = useState<string | null>(null);
   const [downloadFailed, setDownloadFailed] = useState(false);
+  const [downloadedFile, setDownloadedFile] = useState<string | null>(null);
+  const [peppolErrors, setPeppolErrors] = useState<string[]>([]);
 
   const download = async (kind: "pdf" | "xml", invoiceId: string, reference: string) => {
     const key = `${invoiceId}:${kind}`;
-    const safeRef = reference.replace(/\//g, "-");
+    const filename = `${reference.replace(/\//g, "-")}.${kind}`;
     setDownloading(key);
     setDownloadFailed(false);
+    setDownloadedFile(null);
+    setPeppolErrors([]);
     try {
-      if (kind === "pdf") {
-        saveBlob(await api.invoicePdf(invoiceId), `${safeRef}.pdf`);
+      const blob =
+        kind === "pdf"
+          ? await api.invoicePdf(invoiceId)
+          : await api.invoicePeppolXml(invoiceId);
+      if (await saveBlob(blob, filename)) setDownloadedFile(filename);
+    } catch (err) {
+      if (err instanceof ApiError && err.errors.length > 0) {
+        // Peppol export gate: show exactly which fields block the export.
+        setPeppolErrors(err.errors.map((e) => e.message_key));
       } else {
-        saveBlob(await api.invoicePeppolXml(invoiceId), `${safeRef}.xml`);
+        setDownloadFailed(true);
       }
-    } catch {
-      setDownloadFailed(true);
     } finally {
       setDownloading(null);
     }
@@ -166,6 +208,23 @@ export function HistoryPanel({ companyId, lang = "en" }: HistoryPanelProps) {
       {downloadFailed ? (
         <div className="bg-field__error" role="alert">
           {t(lang, "history.downloadError")}
+        </div>
+      ) : null}
+
+      {peppolErrors.length > 0 ? (
+        <div className="bg-field__error" role="alert">
+          <p>{t(lang, "history.peppolBlocked")}</p>
+          <ul>
+            {peppolErrors.map((key) => (
+              <li key={key}>{tPeppolError(lang, key)}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {downloadedFile ? (
+        <div className="bg-download-confirm" role="status">
+          {t(lang, "history.downloadSaved")} {downloadedFile}
         </div>
       ) : null}
 

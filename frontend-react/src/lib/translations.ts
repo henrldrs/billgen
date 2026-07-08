@@ -195,6 +195,84 @@ const MESSAGES = {
     nl: "Kon het document niet downloaden. Probeer het opnieuw.",
     es: "No se pudo descargar el documento. Inténtelo de nuevo.",
   },
+  "history.downloadSaved": {
+    en: "Saved",
+    fr: "Enregistré :",
+    nl: "Opgeslagen:",
+    es: "Guardado:",
+  },
+  "history.peppolBlocked": {
+    en: "Peppol export blocked — fix the following before exporting:",
+    fr: "Export Peppol bloqué — corrigez les points suivants avant d'exporter :",
+    nl: "Peppol-export geblokkeerd — corrigeer het volgende vóór het exporteren:",
+    es: "Exportación Peppol bloqueada — corrija lo siguiente antes de exportar:",
+  },
+  "peppol.errSupplierName": {
+    en: "Your company name is missing.",
+    fr: "Le nom de votre entreprise est manquant.",
+    nl: "De naam van uw bedrijf ontbreekt.",
+    es: "Falta el nombre de su empresa.",
+  },
+  "peppol.errSupplierAddress": {
+    en: "Your company address is missing.",
+    fr: "L'adresse de votre entreprise est manquante.",
+    nl: "Het adres van uw bedrijf ontbreekt.",
+    es: "Falta la dirección de su empresa.",
+  },
+  "peppol.errSupplierCountry": {
+    en: "Your company country code is invalid.",
+    fr: "Le code pays de votre entreprise est invalide.",
+    nl: "De landcode van uw bedrijf is ongeldig.",
+    es: "El código de país de su empresa no es válido.",
+  },
+  "peppol.errSupplierVat": {
+    en: "Your company VAT number is missing or invalid.",
+    fr: "Le numéro de TVA de votre entreprise est manquant ou invalide.",
+    nl: "Het btw-nummer van uw bedrijf ontbreekt of is ongeldig.",
+    es: "El NIF-IVA de su empresa falta o no es válido.",
+  },
+  "peppol.errSupplierIban": {
+    en: "Your company IBAN is missing or invalid.",
+    fr: "L'IBAN de votre entreprise est manquant ou invalide.",
+    nl: "Het IBAN van uw bedrijf ontbreekt of is ongeldig.",
+    es: "El IBAN de su empresa falta o no es válido.",
+  },
+  "peppol.errSupplierBic": {
+    en: "Your company BIC is invalid.",
+    fr: "Le BIC de votre entreprise est invalide.",
+    nl: "De BIC van uw bedrijf is ongeldig.",
+    es: "El BIC de su empresa no es válido.",
+  },
+  "peppol.errCustomerName": {
+    en: "The client name is missing.",
+    fr: "Le nom du client est manquant.",
+    nl: "De naam van de klant ontbreekt.",
+    es: "Falta el nombre del cliente.",
+  },
+  "peppol.errCustomerAddress": {
+    en: "The client address is missing.",
+    fr: "L'adresse du client est manquante.",
+    nl: "Het adres van de klant ontbreekt.",
+    es: "Falta la dirección del cliente.",
+  },
+  "peppol.errCustomerCountry": {
+    en: "The client country code is invalid.",
+    fr: "Le code pays du client est invalide.",
+    nl: "De landcode van de klant is ongeldig.",
+    es: "El código de país del cliente no es válido.",
+  },
+  "peppol.errCustomerVat": {
+    en: "The client VAT number is invalid.",
+    fr: "Le numéro de TVA du client est invalide.",
+    nl: "Het btw-nummer van de klant is ongeldig.",
+    es: "El NIF-IVA del cliente no es válido.",
+  },
+  "peppol.errCustomerVatB2C": {
+    en: "The client has no VAT number (B2C). Peppol is B2B/B2G only — use the PDF instead.",
+    fr: "Le client n'a pas de numéro de TVA (B2C). Peppol est réservé au B2B/B2G — utilisez le PDF.",
+    nl: "De klant heeft geen btw-nummer (B2C). Peppol is alleen B2B/B2G — gebruik de pdf.",
+    es: "El cliente no tiene NIF-IVA (B2C). Peppol es solo B2B/B2G — use el PDF.",
+  },
   "history.draft": { en: "Draft", fr: "Brouillon", nl: "Concept", es: "Borrador" },
   "history.issue": { en: "Issue", fr: "Émettre", nl: "Uitgeven", es: "Emitir" },
   "history.issueConfirm": {
@@ -405,4 +483,11 @@ export type MessageKey = keyof typeof MESSAGES;
 
 export function t(lang: Lang, key: MessageKey): string {
   return MESSAGES[key][lang] ?? MESSAGES[key].en;
+}
+
+/** Translate a backend Peppol-gate message key (e.g. "errSupplierVat").
+ *  Unknown keys (backend newer than the UI) fall back to the raw key. */
+export function tPeppolError(lang: Lang, messageKey: string): string {
+  const key = `peppol.${messageKey}`;
+  return key in MESSAGES ? t(lang, key as MessageKey) : messageKey;
 }
