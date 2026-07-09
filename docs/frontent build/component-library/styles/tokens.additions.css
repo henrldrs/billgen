@@ -1,0 +1,40 @@
+/* Wrapped in its own :root {} so this file is valid standalone CSS (the preview
+ * @imports it directly). Multiple :root rules in one stylesheet are valid CSS —
+ * to integrate, either append this whole block to the end of
+ * frontend-react/src/styles/tokens.css as-is, or merge the declarations inside
+ * the existing :root {} there; both produce the same result.
+ * Values are derived from the existing --brand-* scales already in that file —
+ * no new raw hex introduced. */
+
+:root {
+  /* Elevation (shadow colors derived from ink, never raw rgba hex) */
+  --bg-shadow-sm: 0 1px 2px color-mix(in srgb, var(--bg-ink) 16%, transparent);
+  --bg-shadow-md: 0 6px 16px color-mix(in srgb, var(--bg-ink) 22%, transparent);
+  --bg-shadow-glow: 0 0 0 4px color-mix(in srgb, var(--bg-accent) 25%, transparent),
+    0 6px 18px color-mix(in srgb, var(--bg-accent) 40%, transparent);
+
+  /* Icon chip bevel — faux-3D "raised chip" gradient + highlight + shadow, per tone */
+  --bg-icon-chip-accent-from: var(--brand-green-400);
+  --bg-icon-chip-accent-to: var(--brand-green-600);
+  --bg-icon-chip-navy-from: var(--brand-slate-600);
+  --bg-icon-chip-navy-to: var(--brand-slate-800);
+  --bg-icon-chip-neutral-from: var(--brand-slate-100);
+  --bg-icon-chip-neutral-to: var(--brand-slate-300);
+  --bg-icon-chip-highlight: color-mix(in srgb, white 55%, transparent);
+  --bg-icon-chip-shadow: color-mix(in srgb, var(--bg-ink) 35%, transparent);
+
+  /* Motion */
+  --bg-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --bg-duration-fast: 120ms;
+  --bg-duration-pop: 200ms;
+
+  /* Topbar (distinct slot from --bg-sidebar-*; defaults to a light header,
+     re-skinnable per app without touching TopNav component code).
+     NOTE: with the sidebar now retired in favor of the topbar (see README),
+     --bg-sidebar-* tokens stay defined for any app that still wants a sidebar,
+     but BillGen's own frontend-saas should stop consuming them once TopNav
+     carries the nav links. */
+  --bg-topbar: var(--bg-surface);
+  --bg-topbar-ink: var(--bg-ink);
+  --bg-topbar-line: var(--bg-line);
+}

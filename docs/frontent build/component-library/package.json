@@ -1,0 +1,23 @@
+{
+  "name": "billgen-component-library",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "description": "Isolated preview/typecheck tooling for the component library staged here. Not part of the real @billgen/ui build — see README.md.",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p .",
+    "preview:dev": "vite --config preview/vite.config.ts",
+    "preview:build": "vite build --config preview/vite.config.ts"
+  },
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "^5.7.0",
+    "vite": "^6.3.0"
+  }
+}

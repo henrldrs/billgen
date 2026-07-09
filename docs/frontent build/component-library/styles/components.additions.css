@@ -1,0 +1,427 @@
+/* Append at the end of frontend-react/src/styles/components.css.
+ * Colors come exclusively from the semantic tokens in tokens.css (plus the
+ * tokens.additions.css block); no raw hex except pure white/black, matching
+ * the existing convention in that file. */
+
+/* ---- icon chip — faux-3D "raised chip" (gradient + inset highlight + drop shadow) ---- */
+.bg-icon-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--bg-radius);
+  box-shadow:
+    inset 0 1px 0 var(--bg-icon-chip-highlight),
+    var(--bg-shadow-sm);
+  transition: box-shadow var(--bg-duration-fast) var(--bg-ease-standard),
+    transform var(--bg-duration-fast) var(--bg-ease-standard);
+}
+.bg-icon-chip--circle {
+  border-radius: 999px;
+}
+.bg-icon-chip--sm {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+.bg-icon-chip--md {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+.bg-icon-chip--lg {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+.bg-icon-chip--neutral {
+  background: linear-gradient(160deg, var(--bg-icon-chip-neutral-from), var(--bg-icon-chip-neutral-to));
+  --bg-icon-ink: var(--bg-ink);
+  --bg-icon-accent: var(--bg-accent);
+}
+.bg-icon-chip--accent {
+  background: linear-gradient(160deg, var(--bg-icon-chip-accent-from), var(--bg-icon-chip-accent-to));
+  --bg-icon-ink: #fff;
+  --bg-icon-accent: #fff;
+}
+.bg-icon-chip--navy {
+  background: linear-gradient(160deg, var(--bg-icon-chip-navy-from), var(--bg-icon-chip-navy-to));
+  --bg-icon-ink: #fff;
+  --bg-icon-accent: var(--brand-green-300);
+}
+.bg-icon-chip--active {
+  box-shadow:
+    inset 0 1px 3px var(--bg-icon-chip-shadow),
+    inset 0 -1px 0 var(--bg-icon-chip-highlight);
+  transform: translateY(1px);
+}
+.bg-icon-chip__icon {
+  display: inline-flex;
+  width: 60%;
+  height: 60%;
+}
+.bg-icon-chip__icon svg {
+  width: 100%;
+  height: 100%;
+  color: var(--bg-icon-ink, var(--bg-ink));
+}
+.bg-icon-chip__icon svg .icon-accent {
+  color: var(--bg-icon-accent, var(--bg-accent));
+}
+.bg-icon-chip__dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--bg-accent);
+  border: 2px solid var(--bg-topbar);
+}
+
+/* ---- home button (logo) ---- */
+.bg-home-button {
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  line-height: 0;
+}
+.bg-home-button:hover .bg-icon-chip {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 0 var(--bg-icon-chip-highlight),
+    var(--bg-shadow-md);
+}
+.bg-home-button:active .bg-icon-chip {
+  transform: translateY(0) scale(0.96);
+  box-shadow:
+    inset 0 1px 3px var(--bg-icon-chip-shadow),
+    inset 0 -1px 0 var(--bg-icon-chip-highlight);
+}
+.bg-home-button:focus-visible .bg-icon-chip {
+  outline: 2px solid var(--bg-accent);
+  outline-offset: 2px;
+}
+
+/* ---- button variants/sizes (merge into the existing .bg-button rules) ---- */
+.bg-button--outline {
+  background: transparent;
+  border-color: var(--bg-line);
+  color: var(--bg-ink);
+}
+.bg-button--outline:hover {
+  background: var(--bg-surface-alt);
+  border-color: var(--bg-accent);
+}
+.bg-button--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--bg-ink);
+}
+.bg-button--ghost:hover {
+  background: var(--bg-surface-alt);
+}
+.bg-button--link {
+  background: none;
+  border-color: transparent;
+  color: var(--bg-accent-ink);
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.bg-button--link:hover {
+  color: var(--bg-accent-strong);
+}
+.bg-button--plain {
+  background: transparent;
+  border-color: transparent;
+  color: var(--bg-ink);
+  padding: 0;
+}
+.bg-button--sm {
+  height: 2rem;
+  padding: 0 0.7rem;
+  font-size: 0.8rem;
+}
+.bg-button--md {
+  height: 2.25rem;
+}
+.bg-button--lg {
+  height: 2.5rem;
+  padding: 0 1.1rem;
+}
+.bg-button--xl {
+  height: 2.75rem;
+  padding: 0 1.3rem;
+  font-size: 0.95rem;
+}
+.bg-button--sm,
+.bg-button--md,
+.bg-button--lg,
+.bg-button--xl {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.bg-button--plain.bg-button--sm,
+.bg-button--plain.bg-button--md,
+.bg-button--plain.bg-button--lg,
+.bg-button--plain.bg-button--xl {
+  padding: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+/* ---- icon button ---- */
+.bg-icon-button {
+  display: inline-flex;
+  position: relative;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  line-height: 0;
+}
+.bg-icon-button .bg-icon-chip {
+  transition: transform var(--bg-duration-fast) var(--bg-ease-standard),
+    box-shadow var(--bg-duration-fast) var(--bg-ease-standard);
+}
+.bg-icon-button:hover .bg-icon-chip {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 var(--bg-icon-chip-highlight),
+    var(--bg-shadow-md);
+}
+.bg-icon-button:active .bg-icon-chip {
+  transform: translateY(0);
+}
+.bg-icon-button:focus-visible .bg-icon-chip {
+  outline: 2px solid var(--bg-accent);
+  outline-offset: 2px;
+}
+
+/* ---- create-bill "+" CTA — grows on hover, shines on click ---- */
+.bg-create-bill {
+  position: relative;
+  overflow: hidden;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+  border: none;
+  background: var(--bg-accent);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--bg-shadow-md);
+  transition: transform var(--bg-duration-pop) var(--bg-ease-standard),
+    box-shadow var(--bg-duration-pop) var(--bg-ease-standard),
+    background var(--bg-duration-fast) var(--bg-ease-standard);
+}
+.bg-create-bill svg {
+  width: 55%;
+  height: 55%;
+}
+.bg-create-bill:hover {
+  transform: scale(1.08);
+  box-shadow: var(--bg-shadow-glow);
+  background: var(--bg-accent-strong);
+}
+.bg-create-bill:active {
+  transform: scale(1.02);
+}
+.bg-create-bill:focus-visible {
+  outline: 2px solid var(--bg-accent-strong);
+  outline-offset: 2px;
+}
+.bg-create-bill::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -60%;
+  width: 40%;
+  height: 200%;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    color-mix(in srgb, white 70%, transparent) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%) rotate(20deg);
+  opacity: 0;
+  pointer-events: none;
+}
+.bg-create-bill.is-shining::after {
+  animation: bg-shine 550ms var(--bg-ease-standard);
+}
+@keyframes bg-shine {
+  0% {
+    transform: translateX(-150%) rotate(20deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(250%) rotate(20deg);
+    opacity: 0;
+  }
+}
+
+/* ---- top navigation header (now carries the primary nav — see README) ---- */
+.bg-topnav {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-topbar);
+  color: var(--bg-topbar-ink);
+  border-bottom: 1px solid var(--bg-topbar-line);
+}
+.bg-topnav__row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0 1.25rem;
+  height: 4rem;
+}
+.bg-topnav__titles {
+  flex: 1;
+  min-width: 0;
+}
+.bg-topnav__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--bg-topbar-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bg-topnav__subtitle {
+  margin: 0.1rem 0 0;
+  font-size: 0.8rem;
+  color: var(--bg-ink-soft);
+}
+.bg-topnav__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.bg-topnav__avatar {
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  line-height: 0;
+}
+.bg-topnav__avatar-initials {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+.bg-topnav__links {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0 1.25rem 0.6rem;
+  overflow-x: auto;
+}
+.bg-topnav__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: none;
+  background: none;
+  border-radius: var(--bg-radius);
+  padding: 0.4rem 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--bg-ink-soft);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--bg-duration-fast) var(--bg-ease-standard),
+    color var(--bg-duration-fast) var(--bg-ease-standard);
+}
+.bg-topnav__link:hover {
+  background: var(--bg-surface-alt);
+  color: var(--bg-ink);
+}
+.bg-topnav__link--active {
+  background: var(--bg-accent-soft);
+  color: var(--bg-accent-ink);
+}
+.bg-topnav__link svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* ---- loading screen — logo printing invoices ---- */
+.bg-loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 3rem 1rem;
+}
+.bg-loading-screen__stage {
+  position: relative;
+  width: 5rem;
+  height: 6rem;
+  display: flex;
+  justify-content: center;
+}
+.bg-loading-screen__mark {
+  position: relative;
+  z-index: 2;
+  animation: bg-loading-pulse 1.6s var(--bg-ease-standard) infinite;
+}
+.bg-loading-screen__sheet {
+  position: absolute;
+  top: 2.1rem;
+  left: 50%;
+  width: 2.1rem;
+  height: 1.3rem;
+  margin-left: -1.05rem;
+  border-radius: 3px;
+  background: linear-gradient(160deg, var(--bg-icon-chip-neutral-from), var(--bg-icon-chip-neutral-to));
+  border: 1px solid var(--bg-line);
+  box-shadow: var(--bg-shadow-sm);
+  opacity: 0;
+  z-index: 1;
+  animation: bg-loading-print 1.8s var(--bg-ease-standard) infinite;
+}
+.bg-loading-screen__label {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--bg-ink-soft);
+}
+@keyframes bg-loading-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+@keyframes bg-loading-print {
+  0% {
+    transform: translateY(-0.4rem);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(2.6rem);
+  }
+  100% {
+    transform: translateY(3.2rem);
+    opacity: 0;
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "component-library-preview",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "cd /d C:\\Users\\hdr_s\\Documents\\business model\\BillGen BETA\\docs\\frontent build\\component-library && npm run preview:dev"
+      ],
+      "port": 5174
+    }
+  ]
+}
