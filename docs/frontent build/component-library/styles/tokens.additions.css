@@ -7,6 +7,14 @@
  * no new raw hex introduced. */
 
 :root {
+  /* Raw brand-scale extensions (layer 1) — lighter status hues that only
+     dark mode consumes; the light theme keeps using the 600/700 anchors.
+     Same Tailwind scales as tokens.base.css (red / amber). */
+  --brand-red-300: #fca5a5;
+  --brand-red-400: #f87171;
+  --brand-amber-300: #fcd34d;
+  --brand-amber-400: #fbbf24;
+
   /* Elevation (shadow colors derived from ink, never raw rgba hex) */
   --bg-shadow-sm: 0 1px 2px color-mix(in srgb, var(--bg-ink) 16%, transparent);
   --bg-shadow-md: 0 6px 16px color-mix(in srgb, var(--bg-ink) 22%, transparent);
@@ -175,4 +183,95 @@
     color-mix(in srgb, var(--bg-topbar) 97%, var(--bg-ink))
   );
   --bg-topbar-translucent: color-mix(in srgb, white 85%, transparent);
+}
+
+/* ==== dark mode (closing pass of the P0 set, 2026-07-10) ===================
+ * One token-layer remap — no component CSS changes, exactly what the
+ * token-only color rule was for. Activate with data-bg-theme="dark" on the
+ * root element (<html data-bg-theme="dark">); apps decide how to set it
+ * (theme switcher is P1). Everything not redefined here inherits the light
+ * value on purpose: the accent scale, button faces, focus ring, motion,
+ * radii, spacing, type — those are theme-independent.
+ *
+ * Two rules of thumb applied throughout:
+ * 1. Shadows can't derive from --bg-ink here (ink is light in dark mode) —
+ *    they rebuild on slate-900/black. Component-level color-mix(--bg-ink …)
+ *    usages are hairlines/hover fills, where flipping to light IS correct.
+ * 2. Hover lightens instead of darkens: --bg-accent-strong goes 400, not 600.
+ * ======================================================================== */
+
+:root[data-bg-theme="dark"] {
+  /* Text */
+  --bg-ink: var(--brand-slate-100);
+  --bg-ink-soft: var(--brand-slate-400);
+
+  /* Surfaces */
+  --bg-surface: var(--brand-slate-800);
+  --bg-surface-alt: var(--brand-slate-900);
+  --bg-line: color-mix(in srgb, var(--brand-slate-400) 25%, transparent);
+
+  /* Brand action — accent anchor stays 500; hover lightens */
+  --bg-accent-strong: var(--brand-green-400);
+  --bg-accent-soft: color-mix(in srgb, var(--brand-green-500) 18%, transparent);
+  --bg-accent-ink: var(--brand-green-300);
+
+  /* Navy — emphasis text must be light; toast/tooltip base stays deep */
+  --bg-navy: var(--brand-slate-300);
+  --bg-navy-strong: var(--brand-slate-900);
+  --bg-navy-soft: color-mix(in srgb, var(--brand-slate-400) 20%, transparent);
+
+  /* Status — lighter hues for text on dark, translucent soft fills */
+  --bg-danger: var(--brand-red-400);
+  --bg-danger-soft: color-mix(in srgb, var(--brand-red-600) 22%, transparent);
+  --bg-success: var(--brand-green-400);
+  --bg-success-soft: color-mix(in srgb, var(--brand-green-500) 16%, transparent);
+  --bg-warn: var(--brand-amber-400);
+  --bg-warn-soft: color-mix(in srgb, var(--brand-amber-400) 16%, transparent);
+
+  /* Elevation — rebuilt on black/slate-900 (see rule 1 above) */
+  --bg-shadow-sm: 0 1px 2px color-mix(in srgb, var(--brand-slate-900) 60%, transparent);
+  --bg-shadow-md: 0 6px 16px color-mix(in srgb, black 55%, transparent);
+  --bg-shadow-card: 0 4px 20px color-mix(in srgb, black 45%, transparent);
+  --bg-shadow-card-hover: 0 12px 34px color-mix(in srgb, black 58%, transparent);
+  --bg-shadow-overlay: 0 24px 60px color-mix(in srgb, black 65%, transparent);
+  --bg-shadow-button-pressed: inset 0 2px 4px color-mix(in srgb, black 50%, transparent);
+  --bg-shadow-raise:
+    0 1px 2px color-mix(in srgb, black 30%, transparent),
+    0 2px 6px color-mix(in srgb, black 25%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 10%, transparent);
+  --bg-shadow-raise-hover:
+    0 4px 10px color-mix(in srgb, black 40%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 10%, transparent);
+
+  /* Glass — slate glass instead of white glass; thinner highlights */
+  --bg-glass-from: color-mix(in srgb, var(--brand-slate-700) 62%, transparent);
+  --bg-glass-to: color-mix(in srgb, var(--brand-slate-800) 42%, transparent);
+  --bg-glass-border: color-mix(in srgb, white 14%, transparent);
+  --bg-glass-highlight: inset 0 0 0 1px color-mix(in srgb, white 7%, transparent);
+  --bg-glass-overlay-from: color-mix(in srgb, var(--brand-slate-800) 92%, transparent);
+  --bg-glass-overlay-to: color-mix(in srgb, var(--brand-slate-900) 78%, transparent);
+  --bg-backdrop-dim: color-mix(in srgb, black 55%, transparent);
+
+  /* Icon chips — neutral tone flips to slate glass; tinted tones keep */
+  --bg-icon-chip-neutral-from: color-mix(in srgb, var(--brand-slate-600) 80%, transparent);
+  --bg-icon-chip-neutral-to: color-mix(in srgb, var(--brand-slate-800) 60%, transparent);
+  --bg-icon-chip-highlight: color-mix(in srgb, white 14%, transparent);
+  --bg-icon-chip-shadow: color-mix(in srgb, black 55%, transparent);
+  --bg-icon-chip-ring: inset 0 0 0 1px color-mix(in srgb, white 14%, transparent);
+  --bg-icon-chip-depth: inset 0 -1px 2px color-mix(in srgb, black 35%, transparent);
+
+  /* Topbar — gradient deepens downward (mix toward black, not light ink) */
+  --bg-topbar-gradient: linear-gradient(
+    180deg,
+    var(--bg-topbar),
+    color-mix(in srgb, var(--bg-topbar) 96%, black)
+  );
+  --bg-topbar-translucent: color-mix(in srgb, var(--brand-slate-900) 80%, transparent);
+
+  /* App backdrop — same three brand glows over the dark base */
+  --bg-app-backdrop:
+    radial-gradient(1100px 700px at 10% -10%, color-mix(in srgb, var(--brand-green-500) 12%, transparent), transparent 60%),
+    radial-gradient(900px 650px at 105% 15%, color-mix(in srgb, var(--brand-slate-500) 18%, transparent), transparent 55%),
+    radial-gradient(800px 600px at 50% 110%, color-mix(in srgb, var(--brand-green-700) 14%, transparent), transparent 60%),
+    var(--bg-surface-alt);
 }

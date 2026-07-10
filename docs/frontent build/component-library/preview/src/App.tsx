@@ -40,13 +40,29 @@ function readHash(): string[] {
   return valid.length > 0 ? valid : NEW_KEYS;
 }
 
+type Theme = "light" | "dark";
+
 export function App() {
   const [lastAction, setLastAction] = useState("(none yet — click / hover things below)");
   const [selected, setSelected] = useState<string[]>(readHash);
+  const [theme, setTheme] = useState<Theme>(
+    () => (window.localStorage.getItem("bg-theme") === "dark" ? "dark" : "light")
+  );
 
   useEffect(() => {
     window.history.replaceState(null, "", `#${selected.join(",")}`);
   }, [selected]);
+
+  /* Dark mode is a token-layer remap keyed off this attribute — the toggle
+   * proves every component flips with zero component-CSS changes. */
+  useEffect(() => {
+    if (theme === "dark") {
+      document.documentElement.dataset.bgTheme = "dark";
+    } else {
+      delete document.documentElement.dataset.bgTheme;
+    }
+    window.localStorage.setItem("bg-theme", theme);
+  }, [theme]);
 
   const toggle = (key: string) =>
     setSelected((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
@@ -55,7 +71,7 @@ export function App() {
 
   const chipStyle = (on: boolean): CSSProperties => ({
     border: on ? "1px solid var(--bg-accent)" : "1px solid var(--bg-line)",
-    background: on ? "var(--bg-accent-soft)" : "color-mix(in srgb, white 60%, transparent)",
+    background: on ? "var(--bg-accent-soft)" : "color-mix(in srgb, var(--bg-surface) 60%, transparent)",
     color: on ? "var(--bg-accent-ink)" : "var(--bg-ink-soft)",
     borderRadius: 999,
     padding: "0.35rem 0.85rem",
@@ -98,6 +114,13 @@ export function App() {
             </button>
           ))}
           <span style={{ marginLeft: "auto", display: "flex", gap: "0.4rem" }}>
+            <button
+              type="button"
+              style={chipStyle(theme === "dark")}
+              onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
+            >
+              {theme === "dark" ? "☀ light" : "☾ dark"}
+            </button>
             <button type="button" style={chipStyle(false)} onClick={() => setSelected(NEW_KEYS)}>
               newest slice
             </button>

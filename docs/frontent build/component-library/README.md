@@ -57,8 +57,17 @@ Slices so far:
    universal-checklist P0 set: sidebar-nav is intentionally retired (topbar
    absorbs it, see below), forward/back is IconButton + Back/ForwardIcon +
    PageHeader's back, and the home/landing screen is a composition of
-   AppShell + cards (demoed in the preview), not a primitive. **Next: the
-   dark-mode token pass, then P1.**
+   AppShell + cards (demoed in the preview), not a primitive.
+9. **Dark mode** (styles only — the closing pass of the P0 set) — one
+   token-layer remap in `tokens.additions.css` under
+   `:root[data-bg-theme="dark"]`; zero component-CSS changes, which is what
+   the token-only color rule was for. Set `data-bg-theme="dark"` on `<html>`
+   to activate (the preview's ☾ chip does exactly that; a real theme
+   switcher is P1). Slate surfaces/glass, lighter status hues (new raw
+   red/amber 300–400 scale entries), shadows rebuilt on black (ink is light
+   in dark, so ink-derived shadows would glow), hover lightens instead of
+   darkens, backdrop keeps the three brand glows. Validated across every
+   batch in the preview. **Next: P1.**
 
 **This folder is not wired into any build.** Nothing here is imported by
 `frontend-react`, `frontend-saas`, or `frontend-electron`. It's isolated
