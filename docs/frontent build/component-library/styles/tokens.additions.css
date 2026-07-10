@@ -13,15 +13,19 @@
   --bg-shadow-glow: 0 0 0 4px color-mix(in srgb, var(--bg-accent) 25%, transparent),
     0 6px 18px color-mix(in srgb, var(--bg-accent) 40%, transparent);
 
-  /* Icon chip bevel — faux-3D "raised chip" gradient + highlight + shadow, per tone */
-  --bg-icon-chip-accent-from: var(--brand-green-400);
-  --bg-icon-chip-accent-to: var(--brand-green-600);
-  --bg-icon-chip-navy-from: var(--brand-slate-600);
-  --bg-icon-chip-navy-to: var(--brand-slate-800);
-  --bg-icon-chip-neutral-from: var(--brand-slate-100);
-  --bg-icon-chip-neutral-to: var(--brand-slate-300);
+  /* Icon chip — tinted glass per tone (slice 4: was opaque faux-3D bevel).
+     Semi-transparent gradient stops; the chip class adds backdrop blur,
+     a 1px inner glass ring, and an inner bottom shade for thickness. */
+  --bg-icon-chip-accent-from: color-mix(in srgb, var(--brand-green-300) 70%, transparent);
+  --bg-icon-chip-accent-to: color-mix(in srgb, var(--brand-green-600) 75%, transparent);
+  --bg-icon-chip-navy-from: color-mix(in srgb, var(--brand-slate-500) 72%, transparent);
+  --bg-icon-chip-navy-to: color-mix(in srgb, var(--brand-slate-800) 82%, transparent);
+  --bg-icon-chip-neutral-from: color-mix(in srgb, white 82%, transparent);
+  --bg-icon-chip-neutral-to: color-mix(in srgb, var(--brand-slate-200) 55%, transparent);
   --bg-icon-chip-highlight: color-mix(in srgb, white 55%, transparent);
   --bg-icon-chip-shadow: color-mix(in srgb, var(--bg-ink) 35%, transparent);
+  --bg-icon-chip-ring: inset 0 0 0 1px color-mix(in srgb, white 45%, transparent);
+  --bg-icon-chip-depth: inset 0 -1px 2px color-mix(in srgb, var(--bg-ink) 14%, transparent);
 
   /* Motion */
   --bg-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
@@ -37,4 +41,77 @@
   --bg-topbar: var(--bg-surface);
   --bg-topbar-ink: var(--bg-ink);
   --bg-topbar-line: var(--bg-line);
+
+  /* ---- premium rendering (slice 3, per Henri's spec 2026-07-09) ---------- */
+
+  /* Typefaces — loaded by fonts.css. Sans for UI, mono for numbers/IDs. */
+  --bg-font-sans: "Satoshi", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --bg-font-mono: "Geist Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+
+  /* Type scale — Title 22–24/600 · Section 16–18/500 · Label 14/500 ·
+     Input 15–16/400 · Helper 12–13/400 */
+  --bg-text-title: 1.45rem;
+  --bg-text-section: 1.06rem;
+  --bg-text-label: 0.875rem;
+  --bg-text-body: 0.95rem;
+  --bg-text-helper: 0.8rem;
+  --bg-weight-title: 600;
+  --bg-weight-label: 500;
+
+  /* Letter spacing — titles −1.5%, body 0, buttons +1% */
+  --bg-tracking-title: -0.015em;
+  --bg-tracking-body: 0em;
+  --bg-tracking-button: 0.01em;
+
+  /* Spacing — fields ~22px apart, inputs ~13px inside, cards ~28px */
+  --bg-space-field: 1.35rem;
+  --bg-pad-input-y: 0.8rem;
+  --bg-pad-input-x: 0.85rem;
+  --bg-pad-card: 1.75rem;
+
+  /* Glass surface — layered transparency; front layer gradient + border +
+     inner highlight, meant to sit over --bg-app-backdrop so the blur reads */
+  --bg-glass-from: color-mix(in srgb, white 78%, transparent);
+  --bg-glass-to: color-mix(in srgb, white 42%, transparent);
+  --bg-glass-border: color-mix(in srgb, white 70%, transparent);
+  --bg-glass-highlight: inset 0 0 0 1px color-mix(in srgb, white 40%, transparent);
+  --bg-shadow-card: 0 4px 20px color-mix(in srgb, var(--bg-ink) 15%, transparent);
+  --bg-shadow-card-hover: 0 12px 34px color-mix(in srgb, var(--bg-ink) 20%, transparent);
+
+  /* Elevation trio (adopted 2026-07-09): 1 = page glass (cards, above) ·
+     2 = overlay glass (modals, menus — more opaque, deeper blur+shadow) ·
+     3 = pressed/inset (--bg-shadow-button-pressed). Never invent a fourth. */
+  --bg-glass-overlay-from: color-mix(in srgb, white 90%, transparent);
+  --bg-glass-overlay-to: color-mix(in srgb, white 68%, transparent);
+  --bg-shadow-overlay: 0 24px 60px color-mix(in srgb, var(--bg-ink) 30%, transparent);
+  --bg-backdrop-dim: color-mix(in srgb, var(--brand-slate-900) 45%, transparent);
+
+  /* Button depth — gradient face, colored outer shadow, inset top highlight */
+  --bg-button-face: linear-gradient(180deg, var(--brand-green-400), var(--brand-green-600));
+  --bg-button-face-hover: linear-gradient(180deg, var(--brand-green-500), var(--brand-green-700));
+  --bg-shadow-button:
+    0 2px 6px color-mix(in srgb, var(--bg-accent) 45%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 40%, transparent);
+  --bg-shadow-button-hover:
+    0 6px 16px color-mix(in srgb, var(--bg-accent) 50%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 40%, transparent);
+  --bg-shadow-button-pressed: inset 0 2px 4px color-mix(in srgb, var(--bg-ink) 30%, transparent);
+  --bg-shadow-raise:
+    0 1px 2px color-mix(in srgb, var(--bg-ink) 10%, transparent),
+    0 2px 6px color-mix(in srgb, var(--bg-ink) 8%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 70%, transparent);
+  --bg-shadow-raise-hover:
+    0 4px 10px color-mix(in srgb, var(--bg-ink) 14%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 70%, transparent);
+
+  /* Focus ring — replaces hard outlines on inputs */
+  --bg-focus-ring: 0 0 0 3px color-mix(in srgb, var(--bg-accent) 22%, transparent);
+
+  /* App backdrop — soft brand-tinted gradients; the "back layer with depth"
+     that makes the glass surfaces read as 3D */
+  --bg-app-backdrop:
+    radial-gradient(1100px 700px at 10% -10%, color-mix(in srgb, var(--bg-accent) 15%, transparent), transparent 60%),
+    radial-gradient(900px 650px at 105% 15%, color-mix(in srgb, var(--bg-navy) 13%, transparent), transparent 55%),
+    radial-gradient(800px 600px at 50% 110%, color-mix(in srgb, var(--brand-green-300) 12%, transparent), transparent 60%),
+    var(--bg-surface-alt);
 }

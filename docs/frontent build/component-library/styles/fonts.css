@@ -1,0 +1,33 @@
+/* Satoshi — BillGen's UI typeface (variable font, weights 300–900).
+ * Source: docs/Satoshi_Complete (Fontshare/ITF license, uploaded by Henri).
+ * To integrate: copy this file + the fonts/ folder next to it into
+ * frontend-react/src/styles/ and import it before tokens.css. The url()s
+ * are relative to this file. Components consume it via --bg-font-sans
+ * (see tokens.additions.css) — never hardcode the family name elsewhere. */
+
+@font-face {
+  font-family: "Satoshi";
+  src: url("./fonts/Satoshi-Variable.woff2") format("woff2");
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Satoshi";
+  src: url("./fonts/Satoshi-VariableItalic.woff2") format("woff2");
+  font-weight: 300 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Geist Mono — numbers & identifiers only (amounts, VAT, invoice/client IDs).
+ * Source: docs/Geist_Mono (Google Fonts, OFL). Variable TTF as uploaded;
+ * converting to woff2 later would cut ~60% of the payload. Consumed via
+ * --bg-font-mono / the .bg-num utility. */
+@font-face {
+  font-family: "Geist Mono";
+  src: url("./fonts/GeistMono-VariableFont_wght.ttf") format("truetype-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}

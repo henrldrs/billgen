@@ -1,4 +1,35 @@
-# Component Library — Isolated Build (nav header + buttons, first slice)
+# Component Library — Isolated Build
+
+Slices so far:
+1. **Nav header + buttons** — LogoMark, HomeButton, Button, IconButton,
+   CreateBillButton, TopNav, LoadingScreen, IconChip + 13 icons.
+2. **Layout + forms** — Card, PageHeader, Field, TextInput, Textarea, Select,
+   Checkbox, RadioGroup, Switch, SearchBar.
+3. **Premium rendering** (no new components, styles only) — 3D button faces
+   (gradient + outer shadow + inset highlight, hover lifts / press sinks),
+   glassmorphism cards (layered transparency + backdrop blur + hover tilt)
+   over a brand-tinted gradient backdrop (`--bg-app-backdrop`), plus a
+   consistent type scale (title/section/label/input/helper), letter-spacing
+   rules (titles −1.5%, body 0, buttons +1%) and roomier spacing (fields
+   ~22px apart, inputs ~13px inside, cards ~28px padding). All of it lives
+   as `--bg-*` tokens in `styles/tokens.additions.css` + the "premium
+   rendering (slice 3)" block in `styles/components.additions.css`.
+4. **Satoshi + Geist Mono + glass icons** (styles only) — `styles/fonts.css` +
+   `styles/fonts/` load Satoshi (variable woff2, 300–900; source:
+   `docs/Satoshi_Complete`, Fontshare license) as the UI face via
+   `--bg-font-sans`, and Geist Mono (variable TTF; source: `docs/Geist_Mono`,
+   OFL) for numbers & identifiers via `--bg-font-mono`: the `.bg-num`
+   utility (amounts, VAT, invoice/client IDs) plus automatic mono +
+   `tabular-nums` on `.bg-totals dd` and `.bg-kpi-card__value`. IconChip tones became tinted glass (semi-transparent
+   gradients + backdrop blur + 1px inner ring + inner bottom shade); static
+   chips have no pointer feedback — hover/press only exists on the clickable
+   wrappers (HomeButton, IconButton). To integrate: copy `fonts.css` + the
+   `fonts/` folder into `frontend-react/src/styles/` and import it before
+   `tokens.css`, then set `font-family: var(--bg-font-sans)` on the app body.
+5. **Feedback & overlays** — Modal (overlay glass: elevation 2 of the adopted
+   trio page-glass / overlay-glass / pressed-inset), ConfirmDialog, Banner
+   (info/success/warn/danger), Toast + ToastStack (dark glass, bottom-right),
+   EmptyState, ErrorState, ProgressBar (determinate + indeterminate sweep).
 
 **This folder is not wired into any build.** Nothing here is imported by
 `frontend-react`, `frontend-saas`, or `frontend-electron`. It's isolated
@@ -42,16 +73,31 @@ component-library/
       IconChip and 13 icon components (DashboardIcon, SettingsUserIcon, HelpIcon,
       PolicyIcon, SupportIcon, BackIcon, ForwardIcon, CompanyIcon, UpgradeIcon,
       NotificationsIcon, LanguageIcon, SearchIcon, PlusIcon) + index.ts barrel
+    Card.tsx                     — bordered container: header/body/footer slots (slice 2)
+    PageHeader.tsx               — back + title/subtitle + primary action row (slice 2)
+    Field.tsx                    — label + hint/error wrapper around any input (slice 2)
+    TextInput.tsx / Textarea.tsx / Select.tsx — text inputs on the existing
+                                   .bg-field__input classes, + invalid state (slice 2)
+    Checkbox.tsx / RadioGroup.tsx — native choice inputs with built-in labels/hints (slice 2)
+    Switch.tsx                   — role="switch" instant boolean, CSS track+thumb (slice 2)
+    SearchBar.tsx                — query input: icon, clear ×, Enter submits (slice 2)
   index.additions.ts           — new export lines to append to src/index.ts
+  open-preview.cmd             — DOUBLE-CLICK THIS to check components yourself:
+                                  installs deps if needed, starts Vite on :5174,
+                                  opens the browser. Close the window to stop.
   preview/                     — standalone Vite+React gallery, see below
 ```
 
 ## Testing components individually
 
-`preview/` is a real, runnable app — a gallery page that imports every
-component from `components/` and renders it live (hoverable, clickable,
-animated), plus a "Last action" strip that updates when you interact with
-anything, so you can confirm handlers actually fire without opening devtools.
+`preview/` is a real, runnable app — a gallery that renders every component
+live (hoverable, clickable, animated), plus a "Last action" strip that
+updates when you interact with anything, so you can confirm handlers
+actually fire without opening devtools.
+
+**Easiest way: double-click `open-preview.cmd`** in this folder — it
+installs dependencies on first run, starts Vite, and opens your browser.
+Or manually:
 
 ```
 cd "docs/frontent build/component-library"
@@ -60,13 +106,13 @@ npm run typecheck    # tsc across components/ + preview/ — currently clean
 npm run preview:dev  # starts Vite on http://localhost:5174
 ```
 
-The gallery covers: `LogoMark` at multiple sizes; `HomeButton` at every size;
-`IconChip` across every tone × size; all 13 ported icons; `Button` across
-every variant and size; `IconButton` with/without the unread dot and across
-tones; `CreateBillButton` (hover to watch it grow, click to watch it shine);
-a fully assembled `TopNav` with sample nav links you can click to move the
-active state (simulating route changes without a router); and a live
-`LoadingScreen`.
+**Batches, not one long page.** The gallery is split into selectable
+batches — toggle chips in the sticky bar (Brand & identity · Icons ·
+Buttons & actions · Navigation · Layout · Forms), with "newest slice" and
+"all" shortcuts. The newest slice is selected by default, and the selection
+persists in the URL hash (e.g. `#layout,forms`), so a reload or a shared
+link keeps it. Each new slice of components must be added as its own batch
+in `preview/src/App.tsx` (gallery files live in `preview/src/galleries/`).
 
 This whole `preview/` folder — including its `node_modules` and
 `package-lock.json` — is disposable scaffolding for testing. It never gets

@@ -425,3 +425,792 @@
     opacity: 0;
   }
 }
+
+/* ---- card — composable content container (header / body / footer) ---- */
+.bg-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--bg-line);
+  border-radius: var(--bg-radius);
+  box-shadow: var(--bg-shadow-sm);
+  overflow: hidden;
+}
+.bg-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--bg-line);
+}
+.bg-card__titles {
+  min-width: 0;
+}
+.bg-card__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--bg-ink);
+}
+.bg-card__subtitle {
+  margin: 0.15rem 0 0;
+  font-size: 0.8rem;
+  color: var(--bg-ink-soft);
+}
+.bg-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+.bg-card__body {
+  padding: 1.25rem;
+}
+.bg-card__body--flush {
+  padding: 0;
+}
+.bg-card__footer {
+  padding: 0.8rem 1.25rem;
+  border-top: 1px solid var(--bg-line);
+  background: var(--bg-surface-alt);
+  font-size: 0.85rem;
+  color: var(--bg-ink-soft);
+}
+
+/* ---- page header — back + title + primary action row ---- */
+.bg-page-header {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+.bg-page-header__titles {
+  flex: 1;
+  min-width: 0;
+}
+.bg-page-header__title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--bg-ink);
+}
+.bg-page-header__subtitle {
+  margin: 0.15rem 0 0;
+  font-size: 0.85rem;
+  color: var(--bg-ink-soft);
+}
+.bg-page-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* ---- field additions — hint, required marker, invalid input state ---- */
+.bg-field__hint {
+  color: var(--bg-ink-soft);
+  font-size: 0.8rem;
+  margin: 0.2rem 0 0;
+}
+.bg-field__error {
+  margin: 0.2rem 0 0;
+}
+.bg-field__required {
+  color: var(--bg-danger);
+}
+.bg-field__input--invalid {
+  border-color: var(--bg-danger);
+}
+.bg-field__input--invalid:focus {
+  outline-color: var(--bg-danger);
+}
+.bg-field__input:disabled {
+  background: var(--bg-surface-alt);
+  color: var(--bg-ink-soft);
+  cursor: not-allowed;
+}
+
+/* ---- choice — shared checkbox/radio row (native input + label + hint) ---- */
+.bg-choice {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--bg-ink);
+}
+.bg-choice__input {
+  accent-color: var(--bg-accent);
+  width: 1rem;
+  height: 1rem;
+  margin: 0.15rem 0 0;
+  cursor: inherit;
+}
+.bg-choice__input:focus-visible {
+  outline: 2px solid var(--bg-accent);
+  outline-offset: 2px;
+}
+.bg-choice__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.bg-choice__hint {
+  font-size: 0.8rem;
+  color: var(--bg-ink-soft);
+}
+.bg-choice--disabled {
+  cursor: not-allowed;
+  color: var(--bg-ink-soft);
+}
+.bg-radio-group {
+  display: flex;
+  gap: 0.6rem;
+}
+.bg-radio-group--column {
+  flex-direction: column;
+}
+.bg-radio-group--row {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+}
+
+/* ---- switch — instant-effect boolean, CSS track + thumb ---- */
+.bg-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--bg-ink);
+}
+.bg-switch__track {
+  position: relative;
+  width: 2.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background: var(--bg-line);
+  transition: background var(--bg-duration-fast) var(--bg-ease-standard);
+  flex-shrink: 0;
+}
+.bg-switch__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: calc(1.25rem - 4px);
+  height: calc(1.25rem - 4px);
+  border-radius: 999px;
+  background: var(--bg-surface);
+  box-shadow: var(--bg-shadow-sm);
+  transition: transform var(--bg-duration-fast) var(--bg-ease-standard);
+}
+.bg-switch--on .bg-switch__track {
+  background: var(--bg-accent);
+}
+.bg-switch--on .bg-switch__thumb {
+  transform: translateX(1rem);
+}
+.bg-switch:focus-visible .bg-switch__track {
+  outline: 2px solid var(--bg-accent);
+  outline-offset: 2px;
+}
+.bg-switch--disabled {
+  cursor: not-allowed;
+  color: var(--bg-ink-soft);
+}
+.bg-switch--disabled .bg-switch__track {
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--bg-line);
+}
+
+/* ---- search bar — leading icon, clear button, Enter submits ---- */
+.bg-searchbar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+  max-width: 22rem;
+}
+.bg-searchbar__icon {
+  position: absolute;
+  left: 0.6rem;
+  display: inline-flex;
+  width: 1rem;
+  height: 1rem;
+  color: var(--bg-ink-soft);
+  pointer-events: none;
+}
+.bg-searchbar__icon svg {
+  width: 100%;
+  height: 100%;
+}
+.bg-searchbar__input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--bg-line);
+  border-radius: 999px;
+  padding: 0.45rem 2rem 0.45rem 2.1rem;
+  font-size: 0.9rem;
+  background: var(--bg-surface);
+  color: var(--bg-ink);
+}
+.bg-searchbar__input:focus {
+  outline: 2px solid var(--bg-accent);
+  outline-offset: 1px;
+}
+.bg-searchbar__input::-webkit-search-cancel-button {
+  display: none;
+}
+.bg-searchbar__clear {
+  position: absolute;
+  right: 0.45rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.15rem 0.35rem;
+  border-radius: 999px;
+  color: var(--bg-ink-soft);
+}
+.bg-searchbar__clear:hover {
+  background: var(--bg-surface-alt);
+  color: var(--bg-ink);
+}
+
+/* ==== premium rendering (slice 3) ========================================
+ * Overrides the flat base styles above and in components.base.css — this
+ * block must stay AFTER them in the cascade. Three moves, per Henri's spec:
+ * 1. depth: gradient button faces + outer shadow + inset highlight, pressed
+ *    state sinks; cards become layered glass over --bg-app-backdrop
+ * 2. type: title/section/label/body/helper scale + letter-spacing rules
+ * 3. spacing: roomier fields, inputs, buttons, and card padding
+ * ======================================================================== */
+
+/* ---- buttons: 3D faces -------------------------------------------------- */
+.bg-button {
+  letter-spacing: var(--bg-tracking-button);
+  transition:
+    transform var(--bg-duration-fast) var(--bg-ease-standard),
+    box-shadow var(--bg-duration-fast) var(--bg-ease-standard),
+    background var(--bg-duration-fast) var(--bg-ease-standard),
+    color var(--bg-duration-fast) var(--bg-ease-standard);
+}
+.bg-button--primary {
+  background: var(--bg-button-face);
+  box-shadow: var(--bg-shadow-button);
+}
+.bg-button--primary:hover {
+  background: var(--bg-button-face-hover);
+  box-shadow: var(--bg-shadow-button-hover);
+  transform: translateY(-1px);
+}
+.bg-button--primary:active {
+  background: var(--bg-button-face-hover);
+  box-shadow: var(--bg-shadow-button-pressed);
+  transform: translateY(1px);
+}
+.bg-button--primary:disabled {
+  background: var(--bg-line);
+  box-shadow: none;
+  transform: none;
+}
+.bg-button--secondary,
+.bg-button--outline,
+.bg-button--danger {
+  box-shadow: var(--bg-shadow-raise);
+}
+.bg-button--secondary:hover,
+.bg-button--outline:hover,
+.bg-button--danger:hover {
+  box-shadow: var(--bg-shadow-raise-hover);
+  transform: translateY(-1px);
+}
+.bg-button--secondary:active,
+.bg-button--outline:active,
+.bg-button--danger:active {
+  box-shadow: var(--bg-shadow-button-pressed);
+  transform: translateY(1px);
+}
+.bg-button--ghost,
+.bg-button--link,
+.bg-button--plain {
+  box-shadow: none;
+}
+
+/* buttons: spacing — ~12px vertical, 20–24px horizontal at md+ */
+.bg-button--sm {
+  height: 2.25rem;
+  padding: 0 1rem;
+}
+.bg-button--md {
+  height: 2.5rem;
+  padding: 0 1.35rem;
+}
+.bg-button--lg {
+  height: 2.75rem;
+  padding: 0 1.5rem;
+  font-size: var(--bg-text-body);
+}
+.bg-button--xl {
+  height: 3rem;
+  padding: 0 1.6rem;
+  font-size: 1rem;
+}
+/* link/plain keep no chrome regardless of the size paddings above */
+.bg-button--link.bg-button--sm,
+.bg-button--link.bg-button--md,
+.bg-button--link.bg-button--lg,
+.bg-button--link.bg-button--xl {
+  height: auto;
+  padding: 0;
+}
+
+/* ---- cards: layered glass ----------------------------------------------- */
+.bg-card {
+  background: linear-gradient(135deg, var(--bg-glass-from), var(--bg-glass-to));
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--bg-glass-border);
+  border-radius: 16px;
+  box-shadow: var(--bg-shadow-card), var(--bg-glass-highlight);
+  transition:
+    transform var(--bg-duration-pop) var(--bg-ease-standard),
+    box-shadow var(--bg-duration-pop) var(--bg-ease-standard);
+}
+.bg-card:hover {
+  transform: perspective(900px) translateY(-2px) rotateX(1deg) rotateY(-0.6deg);
+  box-shadow: var(--bg-shadow-card-hover), var(--bg-glass-highlight);
+}
+@media (prefers-reduced-motion: reduce) {
+  .bg-card:hover {
+    transform: none;
+  }
+}
+.bg-card__header {
+  padding: 1.15rem var(--bg-pad-card);
+  border-bottom-color: color-mix(in srgb, var(--bg-line) 60%, transparent);
+}
+.bg-card__body {
+  padding: var(--bg-pad-card);
+}
+.bg-card__body--flush {
+  padding: 0;
+}
+.bg-card__footer {
+  padding: 0.9rem var(--bg-pad-card);
+  background: color-mix(in srgb, var(--bg-surface-alt) 55%, transparent);
+  border-top-color: color-mix(in srgb, var(--bg-line) 60%, transparent);
+  font-size: var(--bg-text-helper);
+}
+
+/* ---- type scale ---------------------------------------------------------- */
+.bg-page-header__title {
+  font-size: var(--bg-text-title);
+  font-weight: var(--bg-weight-title);
+  letter-spacing: var(--bg-tracking-title);
+}
+.bg-page-header__subtitle {
+  font-size: var(--bg-text-helper);
+  letter-spacing: var(--bg-tracking-body);
+}
+.bg-card__title {
+  font-size: var(--bg-text-section);
+  font-weight: var(--bg-weight-title);
+  letter-spacing: var(--bg-tracking-title);
+}
+.bg-card__subtitle {
+  font-size: var(--bg-text-helper);
+}
+.bg-topnav__title {
+  letter-spacing: var(--bg-tracking-title);
+}
+
+/* ---- fields: type + breathing room --------------------------------------- */
+.bg-field {
+  margin-bottom: var(--bg-space-field);
+}
+.bg-field__label {
+  font-size: var(--bg-text-label);
+  font-weight: var(--bg-weight-label);
+  letter-spacing: var(--bg-tracking-body);
+  margin-bottom: 0.4rem;
+}
+.bg-field__input,
+select.bg-field__input,
+textarea.bg-field__input {
+  padding: var(--bg-pad-input-y) var(--bg-pad-input-x);
+  font-size: var(--bg-text-body);
+  letter-spacing: var(--bg-tracking-body);
+  border-radius: 10px;
+  box-shadow: inset 0 1px 2px color-mix(in srgb, var(--bg-ink) 6%, transparent);
+  transition:
+    border-color var(--bg-duration-fast) var(--bg-ease-standard),
+    box-shadow var(--bg-duration-fast) var(--bg-ease-standard);
+}
+.bg-field__input:focus {
+  outline: none;
+  border-color: var(--bg-accent);
+  box-shadow: var(--bg-focus-ring);
+}
+.bg-field__input--invalid:focus {
+  outline: none;
+  border-color: var(--bg-danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--bg-danger) 20%, transparent);
+}
+.bg-field__hint,
+.bg-field__error {
+  font-size: var(--bg-text-helper);
+  margin-top: 0.3rem;
+}
+.bg-choice {
+  font-size: var(--bg-text-body);
+}
+.bg-choice__hint {
+  font-size: var(--bg-text-helper);
+}
+.bg-switch {
+  font-size: var(--bg-text-body);
+}
+.bg-searchbar__input {
+  padding: 0.7rem 2rem 0.7rem 2.2rem;
+  font-size: var(--bg-text-body);
+  box-shadow: inset 0 1px 2px color-mix(in srgb, var(--bg-ink) 6%, transparent);
+  transition:
+    border-color var(--bg-duration-fast) var(--bg-ease-standard),
+    box-shadow var(--bg-duration-fast) var(--bg-ease-standard);
+}
+.bg-searchbar__input:focus {
+  outline: none;
+  border-color: var(--bg-accent);
+  box-shadow: var(--bg-focus-ring);
+}
+
+/* ==== slice 4: Satoshi typeface + glass icon chips ======================= */
+
+/* Form controls and buttons don't inherit the body font by default — force
+ * them onto --bg-font-sans (set on body by the app / preview shell). */
+.bg-button,
+.bg-field__input,
+.bg-searchbar__input,
+.bg-choice,
+.bg-switch,
+.bg-topnav__link,
+.bg-modal,
+.bg-badge {
+  font-family: inherit;
+}
+
+/* Icon chips become tinted glass. Static chips (icon set, decorations) get
+ * NO pointer feedback — hover/active styling exists only on the clickable
+ * wrappers (.bg-home-button, .bg-icon-button), redefined below so the glass
+ * ring survives their state changes. */
+.bg-icon-chip {
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  box-shadow:
+    var(--bg-icon-chip-ring),
+    inset 0 1px 0 var(--bg-icon-chip-highlight),
+    var(--bg-icon-chip-depth),
+    var(--bg-shadow-sm);
+}
+.bg-home-button:hover .bg-icon-chip,
+.bg-icon-button:hover .bg-icon-chip {
+  box-shadow:
+    var(--bg-icon-chip-ring),
+    inset 0 1px 0 var(--bg-icon-chip-highlight),
+    var(--bg-shadow-md);
+}
+.bg-home-button:active .bg-icon-chip,
+.bg-icon-button:active .bg-icon-chip,
+.bg-icon-chip--active {
+  box-shadow:
+    var(--bg-icon-chip-ring),
+    inset 0 1px 3px var(--bg-icon-chip-shadow),
+    inset 0 -1px 0 var(--bg-icon-chip-highlight);
+}
+/* Avatar initials follow the chip's ink instead of hardcoding white */
+.bg-topnav__avatar-initials {
+  color: var(--bg-icon-ink, #fff);
+}
+
+/* Numbers & identifiers — Geist Mono + tabular figures. Use .bg-num on any
+ * amount, VAT number, invoice/client ID; data surfaces that are inherently
+ * numeric (totals, KPI values) get it automatically. Slightly downsized:
+ * mono runs optically larger than Satoshi at equal px. */
+.bg-num {
+  font-family: var(--bg-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.94em;
+  letter-spacing: var(--bg-tracking-body);
+}
+.bg-totals dd,
+.bg-kpi-card__value {
+  font-family: var(--bg-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==== slice 5: feedback & overlays ======================================= */
+
+/* ---- modal — elevation 2: overlay glass over a dimmed, blurred backdrop -- */
+.bg-modal__backdrop {
+  background: var(--bg-backdrop-dim);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.bg-modal {
+  background: linear-gradient(135deg, var(--bg-glass-overlay-from), var(--bg-glass-overlay-to));
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--bg-glass-border);
+  border-radius: 16px;
+  box-shadow: var(--bg-shadow-overlay), var(--bg-glass-highlight);
+}
+.bg-modal--sm {
+  min-width: 320px;
+  max-width: 420px;
+}
+.bg-modal--md {
+  max-width: 560px;
+}
+.bg-modal--lg {
+  max-width: 760px;
+}
+.bg-modal__header {
+  border-bottom-color: color-mix(in srgb, var(--bg-line) 60%, transparent);
+}
+.bg-modal__title {
+  font-size: var(--bg-text-section);
+  font-weight: var(--bg-weight-title);
+  letter-spacing: var(--bg-tracking-title);
+}
+.bg-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 1rem 1.2rem;
+  border-top: 1px solid color-mix(in srgb, var(--bg-line) 60%, transparent);
+}
+
+/* ---- banner — persistent page-level status, tone dot + text + dismiss ---- */
+.bg-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-size: var(--bg-text-body);
+  border: 1px solid transparent;
+}
+.bg-banner__dot {
+  flex-shrink: 0;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  margin-top: 0.45rem;
+  background: currentColor;
+}
+.bg-banner__text {
+  flex: 1;
+}
+.bg-banner__title {
+  font-weight: 600;
+  margin-right: 0.35rem;
+}
+.bg-banner__dismiss {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0 0.2rem;
+  color: inherit;
+  opacity: 0.6;
+}
+.bg-banner__dismiss:hover {
+  opacity: 1;
+}
+.bg-banner--info {
+  background: var(--bg-navy-soft);
+  color: var(--bg-navy);
+  border-color: color-mix(in srgb, var(--bg-navy) 20%, transparent);
+}
+.bg-banner--success {
+  background: var(--bg-success-soft);
+  color: var(--bg-success);
+  border-color: color-mix(in srgb, var(--bg-success) 25%, transparent);
+}
+.bg-banner--warn {
+  background: var(--bg-warn-soft);
+  color: var(--bg-warn);
+  border-color: color-mix(in srgb, var(--bg-warn) 25%, transparent);
+}
+.bg-banner--danger {
+  background: var(--bg-danger-soft);
+  color: var(--bg-danger);
+  border-color: color-mix(in srgb, var(--bg-danger) 25%, transparent);
+}
+
+/* ---- toast — transient dark glass pill, bottom-right stack ---- */
+.bg-toast-stack {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.6rem;
+  z-index: 90;
+}
+.bg-toast {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: 26rem;
+  padding: 0.7rem 1rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg-navy-strong) 88%, transparent);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid color-mix(in srgb, white 16%, transparent);
+  color: var(--bg-sidebar-ink);
+  font-size: var(--bg-text-body);
+  box-shadow: var(--bg-shadow-md);
+  animation: bg-toast-in var(--bg-duration-pop) var(--bg-ease-standard);
+}
+.bg-toast__dot {
+  flex-shrink: 0;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+}
+.bg-toast--success .bg-toast__dot {
+  background: var(--bg-accent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--bg-accent) 60%, transparent);
+}
+.bg-toast--error .bg-toast__dot {
+  background: var(--bg-danger);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--bg-danger) 60%, transparent);
+}
+.bg-toast--info .bg-toast__dot {
+  background: var(--bg-sidebar-ink-soft);
+}
+.bg-toast__dismiss {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1.05rem;
+  line-height: 1;
+  padding: 0 0.15rem;
+  color: var(--bg-sidebar-ink-soft);
+}
+.bg-toast__dismiss:hover {
+  color: var(--bg-sidebar-ink);
+}
+@keyframes bg-toast-in {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bg-toast {
+    animation: none;
+  }
+}
+
+/* ---- empty / error state — centered, calm ---- */
+.bg-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: var(--bg-ink-soft);
+}
+.bg-state__icon {
+  display: inline-flex;
+  margin-bottom: 1rem;
+}
+.bg-state__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-bottom: 1rem;
+  border-radius: 999px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--bg-danger) 18%, transparent), color-mix(in srgb, var(--bg-danger) 32%, transparent));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow:
+    var(--bg-icon-chip-ring),
+    var(--bg-shadow-sm);
+  color: var(--bg-danger);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+.bg-state__title {
+  margin: 0 0 0.3rem;
+  font-size: var(--bg-text-section);
+  font-weight: var(--bg-weight-title);
+  letter-spacing: var(--bg-tracking-title);
+  color: var(--bg-ink);
+}
+.bg-state__desc {
+  margin: 0 auto 1.1rem;
+  max-width: 28rem;
+  font-size: var(--bg-text-body);
+}
+.bg-state__action {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* ---- progress bar — determinate fill or indeterminate sweep ---- */
+.bg-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.bg-progress__track {
+  flex: 1;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-ink) 8%, transparent);
+  box-shadow: inset 0 1px 2px color-mix(in srgb, var(--bg-ink) 8%, transparent);
+  overflow: hidden;
+}
+.bg-progress__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--brand-green-400), var(--brand-green-600));
+  box-shadow: 0 0 8px color-mix(in srgb, var(--bg-accent) 45%, transparent);
+  transition: width var(--bg-duration-pop) var(--bg-ease-standard);
+}
+.bg-progress--indeterminate .bg-progress__fill {
+  width: 35%;
+  animation: bg-progress-sweep 1.2s var(--bg-ease-standard) infinite;
+}
+@keyframes bg-progress-sweep {
+  from {
+    transform: translateX(-110%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bg-progress--indeterminate .bg-progress__fill {
+    animation-duration: 2.4s;
+  }
+}
+.bg-progress__value {
+  min-width: 2.6rem;
+  text-align: right;
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+}

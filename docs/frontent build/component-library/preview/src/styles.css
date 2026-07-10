@@ -1,5 +1,6 @@
 /* Preview-only composition: base tokens/classes (mirrors of the real
  * frontend-react files) + this build's additions. Not part of any real app. */
+@import "../../styles/fonts.css";
 @import "../../styles/tokens.base.css";
 @import "../../styles/tokens.additions.css";
 @import "../../styles/components.base.css";
@@ -7,7 +8,17 @@
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--bg-font-sans);
   color: var(--bg-ink);
-  background: var(--bg-surface-alt);
+  letter-spacing: var(--bg-tracking-body);
+  -webkit-font-smoothing: antialiased;
+  /* the "back layer with depth" — glass cards blur against this */
+  background: var(--bg-app-backdrop);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+h1 {
+  letter-spacing: var(--bg-tracking-title);
+  font-weight: var(--bg-weight-title);
 }
