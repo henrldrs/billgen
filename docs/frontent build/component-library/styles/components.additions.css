@@ -91,13 +91,16 @@
     var(--bg-shadow-md);
 }
 .bg-home-button:active .bg-icon-chip {
-  transform: translateY(0) scale(0.96);
+  transform: translateY(0) scale(var(--bg-press-scale));
   box-shadow:
     inset 0 1px 3px var(--bg-icon-chip-shadow),
     inset 0 -1px 0 var(--bg-icon-chip-highlight);
 }
+.bg-home-button:focus-visible {
+  outline: none;
+}
 .bg-home-button:focus-visible .bg-icon-chip {
-  outline: 2px solid var(--bg-accent);
+  outline: 3px solid var(--bg-focus-ring-color);
   outline-offset: 2px;
 }
 
@@ -193,8 +196,11 @@
 .bg-icon-button:active .bg-icon-chip {
   transform: translateY(0);
 }
+.bg-icon-button:focus-visible {
+  outline: none;
+}
 .bg-icon-button:focus-visible .bg-icon-chip {
-  outline: 2px solid var(--bg-accent);
+  outline: 3px solid var(--bg-focus-ring-color);
   outline-offset: 2px;
 }
 
@@ -227,10 +233,10 @@
   background: var(--bg-accent-strong);
 }
 .bg-create-bill:active {
-  transform: scale(1.02);
+  transform: scale(var(--bg-press-scale));
 }
 .bg-create-bill:focus-visible {
-  outline: 2px solid var(--bg-accent-strong);
+  outline: 3px solid var(--bg-focus-ring-color);
   outline-offset: 2px;
 }
 .bg-create-bill::after {
@@ -546,7 +552,7 @@
   cursor: inherit;
 }
 .bg-choice__input:focus-visible {
-  outline: 2px solid var(--bg-accent);
+  outline: 3px solid var(--bg-focus-ring-color);
   outline-offset: 2px;
 }
 .bg-choice__text {
@@ -613,8 +619,11 @@
 .bg-switch--on .bg-switch__thumb {
   transform: translateX(1rem);
 }
+.bg-switch:focus-visible {
+  outline: none;
+}
 .bg-switch:focus-visible .bg-switch__track {
-  outline: 2px solid var(--bg-accent);
+  outline: 3px solid var(--bg-focus-ring-color);
   outline-offset: 2px;
 }
 .bg-switch--disabled {
@@ -693,11 +702,12 @@
 /* ---- buttons: 3D faces -------------------------------------------------- */
 .bg-button {
   letter-spacing: var(--bg-tracking-button);
+  /* hover = 120ms ease-out; the press states override to 80ms ease-in (slice 6) */
   transition:
-    transform var(--bg-duration-fast) var(--bg-ease-standard),
-    box-shadow var(--bg-duration-fast) var(--bg-ease-standard),
-    background var(--bg-duration-fast) var(--bg-ease-standard),
-    color var(--bg-duration-fast) var(--bg-ease-standard);
+    transform var(--bg-duration-fast) var(--bg-ease-out),
+    box-shadow var(--bg-duration-fast) var(--bg-ease-out),
+    background var(--bg-duration-fast) var(--bg-ease-out),
+    color var(--bg-duration-fast) var(--bg-ease-out);
 }
 .bg-button--primary {
   background: var(--bg-button-face);
@@ -711,7 +721,7 @@
 .bg-button--primary:active {
   background: var(--bg-button-face-hover);
   box-shadow: var(--bg-shadow-button-pressed);
-  transform: translateY(1px);
+  transform: translateY(1px) scale(var(--bg-press-scale));
 }
 .bg-button--primary:disabled {
   background: var(--bg-line);
@@ -733,7 +743,7 @@
 .bg-button--outline:active,
 .bg-button--danger:active {
   box-shadow: var(--bg-shadow-button-pressed);
-  transform: translateY(1px);
+  transform: translateY(1px) scale(var(--bg-press-scale));
 }
 .bg-button--ghost,
 .bg-button--link,
@@ -775,7 +785,7 @@
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid var(--bg-glass-border);
-  border-radius: 16px;
+  border-radius: var(--bg-radius-surface);
   box-shadow: var(--bg-shadow-card), var(--bg-glass-highlight);
   transition:
     transform var(--bg-duration-pop) var(--bg-ease-standard),
@@ -845,7 +855,7 @@ textarea.bg-field__input {
   padding: var(--bg-pad-input-y) var(--bg-pad-input-x);
   font-size: var(--bg-text-body);
   letter-spacing: var(--bg-tracking-body);
-  border-radius: 10px;
+  border-radius: var(--bg-radius-lg);
   box-shadow: inset 0 1px 2px color-mix(in srgb, var(--bg-ink) 6%, transparent);
   transition:
     border-color var(--bg-duration-fast) var(--bg-ease-standard),
@@ -966,7 +976,7 @@ textarea.bg-field__input {
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid var(--bg-glass-border);
-  border-radius: 16px;
+  border-radius: var(--bg-radius-surface);
   box-shadow: var(--bg-shadow-overlay), var(--bg-glass-highlight);
 }
 .bg-modal--sm {
@@ -1069,7 +1079,7 @@ textarea.bg-field__input {
   gap: 0.6rem;
   max-width: 26rem;
   padding: 0.7rem 1rem;
-  border-radius: 12px;
+  border-radius: var(--bg-radius-xl);
   background: color-mix(in srgb, var(--bg-navy-strong) 88%, transparent);
   backdrop-filter: blur(16px) saturate(160%);
   -webkit-backdrop-filter: blur(16px) saturate(160%);
@@ -1213,4 +1223,438 @@ textarea.bg-field__input {
   text-align: right;
   font-size: var(--bg-text-helper);
   color: var(--bg-ink-soft);
+}
+
+/* ==== slice 6: henrioutai standard compliance ============================
+ * Polish pass only — no new components. Closes the gaps against the
+ * ecosystem design standard (2026-07-10): soft focus rings, radii scale,
+ * 80ms press feedback, per-size button typography (supersedes the +1%
+ * tracking rule), topnav depth + variants, icon opacity, spacing pairs.
+ * ======================================================================== */
+
+/* ---- focus: one soft ring, no default browser outline anywhere ---------- */
+.bg-button:focus-visible,
+.bg-topnav__link:focus-visible,
+.bg-topnav__avatar:focus-visible,
+.bg-searchbar__clear:focus-visible,
+.bg-banner__dismiss:focus-visible,
+.bg-toast__dismiss:focus-visible,
+.bg-modal__close:focus-visible {
+  outline: 3px solid var(--bg-focus-ring-color);
+  outline-offset: 2px;
+}
+
+/* ---- press feedback: 80ms ease-in on the way down (hover stays 120ms
+ * ease-out on the way up); scale is baked into the :active transforms ----- */
+.bg-button:active,
+.bg-create-bill:active,
+.bg-icon-button:active .bg-icon-chip,
+.bg-home-button:active .bg-icon-chip,
+.bg-topnav__avatar:active .bg-icon-chip {
+  transition-duration: var(--bg-duration-press);
+  transition-timing-function: var(--bg-ease-in);
+}
+/* ghost/link/plain have no translate/shadow press — give them the scale */
+.bg-button--ghost:active,
+.bg-button--link:active,
+.bg-button--plain:active {
+  transform: scale(var(--bg-press-scale));
+}
+
+/* ---- buttons: radii scale + spacing pairs + per-size typography ---------
+ * Heights (slice 3) stay authoritative for vertical rhythm — optical, not
+ * mechanical; the py tokens act as the floor if a height is ever removed. */
+.bg-button {
+  font-weight: var(--bg-weight-button);
+}
+.bg-button--sm {
+  border-radius: var(--bg-radius-sm);
+  padding: var(--bg-pad-sm-y) var(--bg-pad-sm-x);
+  letter-spacing: var(--bg-tracking-button-sm);
+}
+.bg-button--md {
+  border-radius: var(--bg-radius-md);
+  padding: var(--bg-pad-md-y) var(--bg-pad-md-x);
+  letter-spacing: var(--bg-tracking-button-md);
+}
+.bg-button--lg {
+  border-radius: var(--bg-radius-lg);
+  padding: var(--bg-pad-lg-y) var(--bg-pad-lg-x);
+  letter-spacing: var(--bg-tracking-button-lg);
+  font-weight: var(--bg-weight-button-strong);
+}
+.bg-button--xl {
+  border-radius: var(--bg-radius-xl);
+  padding: var(--bg-pad-xl-y) var(--bg-pad-xl-x);
+  letter-spacing: var(--bg-tracking-button-xl);
+  font-weight: var(--bg-weight-button-strong);
+}
+/* link/plain stay chromeless regardless of size */
+.bg-button--link.bg-button--sm,
+.bg-button--link.bg-button--md,
+.bg-button--link.bg-button--lg,
+.bg-button--link.bg-button--xl {
+  padding: 0;
+}
+
+/* ---- topnav: depth + variants + item typography -------------------------
+ * Default (solid) gets the 2–4% top→bottom gradient and shadow-sm; the
+ * translucent/glass variants are for scrolling over content. */
+.bg-topnav {
+  background: var(--bg-topbar-gradient);
+  box-shadow: var(--bg-shadow-sm);
+  border-bottom-color: color-mix(in srgb, var(--bg-topbar-line) 80%, transparent);
+}
+.bg-topnav--translucent {
+  background: var(--bg-topbar-translucent);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border-bottom-color: color-mix(in srgb, var(--bg-line) 60%, transparent);
+}
+.bg-topnav--glass {
+  background: linear-gradient(180deg, var(--bg-glass-from), var(--bg-glass-to));
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom-color: var(--bg-glass-border);
+}
+.bg-topnav__row {
+  padding: 0 1.5rem; /* px-24 */
+}
+.bg-topnav__links {
+  padding: 0 1.5rem 0.6rem;
+}
+.bg-topnav__link {
+  font-size: 0.9rem; /* Satoshi Medium 14–15px, tracking −0.3px */
+  font-weight: var(--bg-weight-button);
+  letter-spacing: var(--bg-tracking-button-md);
+  gap: 0.75rem; /* icon gap-12 */
+}
+.bg-topnav__avatar {
+  margin-left: 0.25rem; /* + the 12px actions gap = avatar ml-16 */
+}
+
+/* ---- icons: size tokens + idle opacity on clickable icons only ---------- */
+.bg-topnav__link svg {
+  width: var(--bg-icon-16);
+  height: var(--bg-icon-16);
+}
+.bg-searchbar__icon {
+  width: var(--bg-icon-16);
+  height: var(--bg-icon-16);
+}
+.bg-icon-button .bg-icon-chip__icon,
+.bg-topnav__link svg {
+  opacity: var(--bg-icon-idle-opacity);
+  transition: opacity var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-icon-button:hover .bg-icon-chip__icon,
+.bg-icon-button:focus-visible .bg-icon-chip__icon,
+.bg-topnav__link:hover svg,
+.bg-topnav__link--active svg {
+  opacity: 1;
+}
+
+/* ==== slice 7: data display ==============================================
+ * Table, List, Badge/Tag, Tooltip, Skeleton. Data surfaces stay near-opaque
+ * (glass is chrome-only, per the elevation rules) — depth comes from
+ * hairlines, soft shadows and type, not blur.
+ * ======================================================================== */
+
+/* ---- table: sortable headers, mono numerics, hover rows ------------------ */
+.bg-table-wrap {
+  overflow-x: auto;
+  border-radius: var(--bg-radius-lg);
+}
+/* soften the base header rule: hairline instead of the 2px ink bar */
+.bg-table th {
+  border-bottom: 1px solid color-mix(in srgb, var(--bg-ink) 25%, transparent);
+  font-weight: var(--bg-weight-label);
+  letter-spacing: 0.04em;
+  color: var(--bg-ink-soft);
+  white-space: nowrap;
+}
+.bg-table td {
+  font-size: var(--bg-text-body);
+  border-bottom: 1px solid color-mix(in srgb, var(--bg-line) 70%, transparent);
+}
+.bg-table__th--num,
+.bg-table__cell--num {
+  text-align: right;
+}
+.bg-table__th--sorted {
+  color: var(--bg-ink);
+}
+.bg-table__sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: none;
+  background: none;
+  padding: 0.15rem 0.3rem;
+  margin: -0.15rem -0.3rem;
+  border-radius: var(--bg-radius-sm);
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: color var(--bg-duration-fast) var(--bg-ease-out),
+    background var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-table__th--num .bg-table__sort {
+  flex-direction: row-reverse;
+}
+.bg-table__sort:hover {
+  color: var(--bg-ink);
+  background: color-mix(in srgb, var(--bg-ink) 6%, transparent);
+}
+.bg-table__sort:focus-visible {
+  outline: 3px solid var(--bg-focus-ring-color);
+  outline-offset: 1px;
+}
+.bg-table__caret {
+  width: 0.7rem;
+  height: 0.7rem;
+  flex-shrink: 0;
+}
+.bg-table__row--clickable {
+  cursor: pointer;
+  transition: background var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-table__row--clickable:hover {
+  background: color-mix(in srgb, var(--bg-accent) 6%, transparent);
+}
+.bg-table__empty {
+  text-align: center;
+  color: var(--bg-ink-soft);
+  padding: 2rem 1rem;
+}
+
+/* ---- list: hairline rows, leading chip + two-line text + trailing slot --- */
+.bg-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.bg-list__item + .bg-list__item .bg-list__row {
+  border-top: 1px solid color-mix(in srgb, var(--bg-line) 70%, transparent);
+}
+.bg-list__row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.75rem 0.5rem;
+  text-align: left;
+}
+.bg-list__row--clickable {
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--bg-radius-md);
+  transition: background var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-list__row--clickable:hover {
+  background: color-mix(in srgb, var(--bg-accent) 6%, transparent);
+}
+.bg-list__row--clickable:focus-visible {
+  outline: 3px solid var(--bg-focus-ring-color);
+  outline-offset: -3px;
+}
+.bg-list__leading {
+  flex-shrink: 0;
+  display: inline-flex;
+}
+.bg-list__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.bg-list__primary {
+  font-size: var(--bg-text-body);
+  font-weight: var(--bg-weight-label);
+  color: var(--bg-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bg-list__secondary {
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bg-list__trailing {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ---- badge: tone dot + contrast-aware ring (upgrades the base pill) ------ */
+.bg-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.65rem;
+  font-weight: var(--bg-weight-label);
+  letter-spacing: var(--bg-tracking-button-sm);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 20%, transparent);
+}
+.bg-badge__dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 999px;
+  background: currentColor;
+  flex-shrink: 0;
+}
+/* draft keeps its dashed border from the base styles — drop the ring */
+.bg-badge--draft {
+  box-shadow: none;
+}
+/* generic tones for non-invoice tags */
+.bg-badge--tone-neutral {
+  background: var(--bg-surface-alt);
+  color: var(--bg-ink-soft);
+}
+.bg-badge--tone-info {
+  background: var(--bg-navy-soft);
+  color: var(--bg-navy);
+}
+.bg-badge--tone-success {
+  background: var(--bg-success-soft);
+  color: var(--bg-success);
+}
+.bg-badge--tone-warn {
+  background: var(--bg-warn-soft);
+  color: var(--bg-warn);
+}
+.bg-badge--tone-danger {
+  background: var(--bg-danger-soft);
+  color: var(--bg-danger);
+}
+
+/* ---- tooltip: dark glass pill, fades in on hover/focus ------------------- */
+.bg-tooltip-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.bg-tooltip {
+  position: absolute;
+  z-index: 80;
+  max-width: 16rem;
+  width: max-content;
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--bg-radius-md);
+  background: color-mix(in srgb, var(--bg-navy-strong) 92%, transparent);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  border: 1px solid color-mix(in srgb, white 16%, transparent);
+  color: var(--bg-sidebar-ink);
+  font-size: var(--bg-text-helper);
+  line-height: 1.35;
+  box-shadow: var(--bg-shadow-md);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--bg-duration-fast) var(--bg-ease-out),
+    transform var(--bg-duration-fast) var(--bg-ease-out);
+  transition-delay: 0ms;
+}
+.bg-tooltip--top {
+  bottom: calc(100% + 0.45rem);
+  left: 50%;
+  transform: translate(-50%, 3px);
+}
+.bg-tooltip--bottom {
+  top: calc(100% + 0.45rem);
+  left: 50%;
+  transform: translate(-50%, -3px);
+}
+.bg-tooltip--left {
+  right: calc(100% + 0.45rem);
+  top: 50%;
+  transform: translate(3px, -50%);
+}
+.bg-tooltip--right {
+  left: calc(100% + 0.45rem);
+  top: 50%;
+  transform: translate(-3px, -50%);
+}
+.bg-tooltip-wrap:hover .bg-tooltip,
+.bg-tooltip-wrap:focus-within .bg-tooltip {
+  opacity: 1;
+  transition-delay: 150ms;
+}
+.bg-tooltip-wrap:hover .bg-tooltip--top,
+.bg-tooltip-wrap:focus-within .bg-tooltip--top {
+  transform: translate(-50%, 0);
+}
+.bg-tooltip-wrap:hover .bg-tooltip--bottom,
+.bg-tooltip-wrap:focus-within .bg-tooltip--bottom {
+  transform: translate(-50%, 0);
+}
+.bg-tooltip-wrap:hover .bg-tooltip--left,
+.bg-tooltip-wrap:focus-within .bg-tooltip--left {
+  transform: translate(0, -50%);
+}
+.bg-tooltip-wrap:hover .bg-tooltip--right,
+.bg-tooltip-wrap:focus-within .bg-tooltip--right {
+  transform: translate(0, -50%);
+}
+
+/* ---- skeleton: soft shimmer sweep ---------------------------------------- */
+.bg-skeleton {
+  display: inline-block;
+  border-radius: var(--bg-radius-sm);
+  background: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--bg-ink) 8%, transparent) 40%,
+    color-mix(in srgb, var(--bg-ink) 14%, transparent) 50%,
+    color-mix(in srgb, var(--bg-ink) 8%, transparent) 60%
+  );
+  background-size: 250% 100%;
+  animation: bg-skeleton-sweep 1.4s var(--bg-ease-standard) infinite;
+}
+.bg-skeleton--text {
+  width: 100%;
+  height: 0.85em;
+  border-radius: 999px;
+}
+.bg-skeleton--short {
+  width: 60%;
+}
+.bg-skeleton--block {
+  width: 100%;
+  height: 5rem;
+  border-radius: var(--bg-radius-lg);
+}
+.bg-skeleton--circle {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+}
+.bg-skeleton-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  width: 100%;
+}
+@keyframes bg-skeleton-sweep {
+  from {
+    background-position: 125% 0;
+  }
+  to {
+    background-position: -125% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bg-skeleton {
+    animation-duration: 2.8s;
+  }
 }

@@ -66,6 +66,35 @@ export function NavGallery({ onAction }: GalleryProps) {
           </Button>
         ))}
       </Row>
+
+      <h3 style={{ margin: "2rem 0 0.75rem", fontSize: "0.95rem" }}>
+        Variants — translucent &amp; glass blur what scrolls underneath
+      </h3>
+      {(["translucent", "glass"] as const).map((variant) => (
+        <div
+          key={variant}
+          style={{
+            position: "relative",
+            marginBottom: "1rem",
+            borderRadius: "var(--bg-radius-surface)",
+            overflow: "hidden",
+            border: "1px solid var(--bg-line)",
+            background: "var(--bg-app-backdrop)",
+          }}
+        >
+          <TopNav
+            title="Acme Consulting"
+            subtitle={`variant="${variant}"`}
+            variant={variant}
+            links={links}
+            avatarInitials="HB"
+            onCreateBill={() => onAction(`TopNav (${variant}) create-bill clicked`)}
+          />
+          <div style={{ padding: "1.5rem", color: "var(--bg-ink-soft)", fontSize: "0.9rem" }}>
+            (brand-tinted backdrop behind the header so the blur reads)
+          </div>
+        </div>
+      ))}
     </Section>
   );
 }

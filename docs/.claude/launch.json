@@ -9,6 +9,15 @@
         "cd /d C:\\Users\\hdr_s\\Documents\\business model\\BillGen BETA\\docs\\frontent build\\component-library && npm run preview:dev"
       ],
       "port": 5174
+    },
+    {
+      "name": "component-library-preview-5180",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "cd /d C:\\Users\\hdr_s\\Documents\\business model\\BillGen BETA\\docs\\frontent build\\component-library && npm run preview:dev -- --port 5180 --strictPort"
+      ],
+      "port": 5180
     }
   ]
 }

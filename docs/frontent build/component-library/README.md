@@ -30,6 +30,24 @@ Slices so far:
    trio page-glass / overlay-glass / pressed-inset), ConfirmDialog, Banner
    (info/success/warn/danger), Toast + ToastStack (dark glass, bottom-right),
    EmptyState, ErrorState, ProgressBar (determinate + indeterminate sweep).
+6. **Henrioutai standard compliance** (no new components, styles only; per
+   Henri's ecosystem spec 2026-07-10) — soft focus rings everywhere
+   (`--bg-focus-ring-color`, no browser outlines left), radii token scale
+   sm 6 / md 8 / lg 10 / xl 12 (+ `--bg-radius-surface` 16 for glass) mapped
+   to Button sizes, 80ms ease-in press with `scale(0.98)` on every pressed
+   state, per-size button typography (Satoshi Medium sm/md, Semibold lg/xl,
+   tracking −0.2…−0.5px — **supersedes** the slice-3 "+1%" rule), TopNav
+   depth (shadow-sm + 2–4% gradient) plus `variant="translucent" | "glass"`,
+   icon size tokens 16/20/24 with idle opacity .8 → 1 on hover for clickable
+   icons, and px/py spacing token pairs 12/6 · 16/8 · 20/10 · 24/12 mapped
+   to sizes (button heights stay authoritative for optical vertical rhythm).
+7. **Data display** — Table (sortable header affordance with caret + aria-sort,
+   numeric columns right-aligned in `.bg-num` mono, clickable rows, empty
+   slot), List (leading chip / two-line text / trailing slot), Badge (the
+   five invoice statuses draft/issued/paid/partially_paid/voided with
+   canonical labels + generic tones, tone dot + contrast ring), Tooltip
+   (CSS-only dark glass pill, hover/focus-within, 150ms intent delay),
+   Skeleton (text/block/circle shimmer, aria-hidden).
 
 **This folder is not wired into any build.** Nothing here is imported by
 `frontend-react`, `frontend-saas`, or `frontend-electron`. It's isolated
@@ -81,6 +99,13 @@ component-library/
     Checkbox.tsx / RadioGroup.tsx — native choice inputs with built-in labels/hints (slice 2)
     Switch.tsx                   — role="switch" instant boolean, CSS track+thumb (slice 2)
     SearchBar.tsx                — query input: icon, clear ×, Enter submits (slice 2)
+    Modal.tsx / ConfirmDialog.tsx / Banner.tsx / Toast.tsx — overlays & status (slice 5)
+    EmptyState.tsx / ErrorState.tsx / ProgressBar.tsx — states & progress (slice 5)
+    Table.tsx                    — sortable data table, mono numeric columns (slice 7)
+    List.tsx                     — stacked list: chip + two-line text + trailing (slice 7)
+    Badge.tsx                    — invoice-status + generic-tone tags (slice 7)
+    Tooltip.tsx                  — CSS-only dark glass tooltip (slice 7)
+    Skeleton.tsx                 — shimmer placeholders: text/block/circle (slice 7)
   index.additions.ts           — new export lines to append to src/index.ts
   open-preview.cmd             — DOUBLE-CLICK THIS to check components yourself:
                                   installs deps if needed, starts Vite on :5174,

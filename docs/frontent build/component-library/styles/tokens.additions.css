@@ -58,10 +58,12 @@
   --bg-weight-title: 600;
   --bg-weight-label: 500;
 
-  /* Letter spacing — titles −1.5%, body 0, buttons +1% */
+  /* Letter spacing — titles −1.5%, body 0. Button tracking is negative and
+     per-size since slice 6 (henrioutai standard, supersedes the old +1% rule);
+     --bg-tracking-button keeps the md value as the default for generic pills. */
   --bg-tracking-title: -0.015em;
   --bg-tracking-body: 0em;
-  --bg-tracking-button: 0.01em;
+  --bg-tracking-button: -0.3px;
 
   /* Spacing — fields ~22px apart, inputs ~13px inside, cards ~28px */
   --bg-space-field: 1.35rem;
@@ -114,4 +116,63 @@
     radial-gradient(900px 650px at 105% 15%, color-mix(in srgb, var(--bg-navy) 13%, transparent), transparent 55%),
     radial-gradient(800px 600px at 50% 110%, color-mix(in srgb, var(--brand-green-300) 12%, transparent), transparent 60%),
     var(--bg-surface-alt);
+
+  /* ---- henrioutai standard compliance (slice 6, per Henri's spec 2026-07-10) */
+
+  /* Radii scale — mapped to component sizes (button sm→sm … xl→xl).
+     Glass surfaces (cards, modals) sit above the scale on --bg-radius-surface.
+     Never a default/ad-hoc radius; --bg-radius (8px) stays as the md alias
+     already consumed by the base styles. */
+  --bg-radius-sm: 6px;
+  --bg-radius-md: 8px;
+  --bg-radius-lg: 10px;
+  --bg-radius-xl: 12px;
+  --bg-radius-surface: 16px;
+
+  /* Interaction — hover 120ms ease-out, press 80ms ease-in + scale(0.98) */
+  --bg-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --bg-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --bg-duration-press: 80ms;
+  --bg-press-scale: 0.98;
+
+  /* Focus — soft ring, primary-300 at 40%, always with a 2px offset;
+     no default browser outline anywhere. --bg-focus-ring (box-shadow form,
+     defined above) stays for text inputs where an offset ring would clip. */
+  --bg-focus-ring-color: color-mix(in srgb, var(--brand-green-300) 40%, transparent);
+
+  /* Button typography — Satoshi Medium (sm/md) / Semibold (lg/xl),
+     per-size negative tracking */
+  --bg-weight-button: 500;
+  --bg-weight-button-strong: 600;
+  --bg-tracking-button-sm: -0.2px;
+  --bg-tracking-button-md: -0.3px;
+  --bg-tracking-button-lg: -0.4px;
+  --bg-tracking-button-xl: -0.5px;
+
+  /* Spacing pairs px/py per size. Heights on buttons stay authoritative for
+     the vertical rhythm (optical, not mechanical) — the py tokens are the
+     floor used when content wraps or heights are removed. */
+  --bg-pad-sm-x: 12px;
+  --bg-pad-sm-y: 6px;
+  --bg-pad-md-x: 16px;
+  --bg-pad-md-y: 8px;
+  --bg-pad-lg-x: 20px;
+  --bg-pad-lg-y: 10px;
+  --bg-pad-xl-x: 24px;
+  --bg-pad-xl-y: 12px;
+
+  /* Icons — size tokens + idle opacity (clickable icons rest at .8, hover 1) */
+  --bg-icon-16: 16px;
+  --bg-icon-20: 20px;
+  --bg-icon-24: 24px;
+  --bg-icon-idle-opacity: 0.8;
+
+  /* Topbar depth — 2–4% top→bottom gradient + shadow-sm; translucent/glass
+     variants for TopNav (variant="translucent" | "glass") */
+  --bg-topbar-gradient: linear-gradient(
+    180deg,
+    var(--bg-topbar),
+    color-mix(in srgb, var(--bg-topbar) 97%, var(--bg-ink))
+  );
+  --bg-topbar-translucent: color-mix(in srgb, white 85%, transparent);
 }

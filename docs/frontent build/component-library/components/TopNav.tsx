@@ -32,6 +32,12 @@ export interface TopNavProps {
   onAvatarClick?: () => void;
   notificationCount?: number;
   avatarInitials?: string;
+  /**
+   * Surface treatment: `solid` (default) is the gradient header; `translucent`
+   * and `glass` blur whatever scrolls underneath — use those when the header
+   * floats over page content.
+   */
+  variant?: "solid" | "translucent" | "glass";
   /** Extra controls rendered after the title block, before the action cluster. */
   children?: ReactNode;
   className?: string;
@@ -54,10 +60,17 @@ export function TopNav({
   onAvatarClick,
   notificationCount = 0,
   avatarInitials,
+  variant = "solid",
   children,
   className,
 }: TopNavProps) {
-  const classes = ["bg-topnav", className].filter(Boolean).join(" ");
+  const classes = [
+    "bg-topnav",
+    variant !== "solid" ? `bg-topnav--${variant}` : "",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
   return (
     <header className={classes}>
       <div className="bg-topnav__row">

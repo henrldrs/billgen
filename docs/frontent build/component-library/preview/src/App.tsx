@@ -7,6 +7,7 @@ import { NavGallery } from "./galleries/NavGallery";
 import { LayoutGallery } from "./galleries/LayoutGallery";
 import { FormGallery } from "./galleries/FormGallery";
 import { FeedbackGallery } from "./galleries/FeedbackGallery";
+import { DataGallery } from "./galleries/DataGallery";
 import type { GalleryProps } from "./ui";
 
 interface Batch {
@@ -24,7 +25,8 @@ const BATCHES: Batch[] = [
   { key: "nav", label: "Navigation", Gallery: NavGallery },
   { key: "layout", label: "Layout", Gallery: LayoutGallery },
   { key: "forms", label: "Forms", Gallery: FormGallery },
-  { key: "feedback", label: "Feedback & overlays", isNew: true, Gallery: FeedbackGallery },
+  { key: "feedback", label: "Feedback & overlays", Gallery: FeedbackGallery },
+  { key: "data", label: "Data display", isNew: true, Gallery: DataGallery },
 ];
 
 const NEW_KEYS = BATCHES.filter((b) => b.isNew).map((b) => b.key);
