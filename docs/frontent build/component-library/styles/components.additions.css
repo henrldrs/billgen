@@ -2209,3 +2209,417 @@ textarea.bg-field__input {
 .bg-avatar--sm .bg-avatar__initials {
   font-size: 0.6rem;
 }
+
+/* ==== slice 11: P1 forms ==================================================
+ * Combobox, DatePicker, FileUpload. Popups are overlay glass (elevation 2);
+ * inputs reuse the .bg-field__input look so Field wraps them unchanged.
+ * ======================================================================== */
+
+/* ---- combobox ------------------------------------------------------------- */
+.bg-combobox {
+  position: relative;
+}
+.bg-combobox__input {
+  padding-right: 2.2rem;
+}
+.bg-combobox__caret,
+.bg-combobox__clear {
+  position: absolute;
+  right: 0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bg-ink-soft);
+}
+.bg-combobox__caret {
+  width: var(--bg-icon-16);
+  height: var(--bg-icon-16);
+  pointer-events: none;
+  opacity: var(--bg-icon-idle-opacity);
+}
+.bg-combobox__caret svg {
+  width: 100%;
+  height: 100%;
+}
+.bg-combobox__clear {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1.05rem;
+  line-height: 1;
+  padding: 0.1rem 0.3rem;
+  border-radius: 999px;
+}
+.bg-combobox__clear:hover {
+  color: var(--bg-ink);
+  background: color-mix(in srgb, var(--bg-ink) 8%, transparent);
+}
+.bg-combobox__clear:focus-visible {
+  outline: 3px solid var(--bg-focus-ring-color);
+  outline-offset: 1px;
+}
+.bg-combobox__popup {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  right: 0;
+  z-index: 60;
+  margin: 0;
+  padding: 0.4rem;
+  list-style: none;
+  max-height: 16rem;
+  overflow-y: auto;
+  background: linear-gradient(135deg, var(--bg-glass-overlay-from), var(--bg-glass-overlay-to));
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--bg-glass-border);
+  border-radius: var(--bg-radius-xl);
+  box-shadow: var(--bg-shadow-overlay), var(--bg-glass-highlight);
+  animation: bg-menu-in var(--bg-duration-fast) var(--bg-ease-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  .bg-combobox__popup {
+    animation: none;
+  }
+}
+.bg-combobox__option {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.7rem;
+  border-radius: var(--bg-radius-md);
+  font-size: var(--bg-text-body);
+  color: var(--bg-ink);
+  cursor: pointer;
+}
+.bg-combobox__option--highlighted {
+  background: color-mix(in srgb, var(--bg-accent) 10%, transparent);
+}
+.bg-combobox__option--selected {
+  font-weight: var(--bg-weight-button-strong);
+  color: var(--bg-accent-ink);
+}
+.bg-combobox__option--disabled {
+  color: var(--bg-ink-soft);
+  cursor: not-allowed;
+}
+.bg-combobox__option-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bg-combobox__option-hint {
+  flex-shrink: 0;
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+}
+.bg-combobox__empty {
+  padding: 0.75rem 0.7rem;
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+  text-align: center;
+}
+
+/* ---- date picker ----------------------------------------------------------- */
+.bg-datepicker {
+  position: relative;
+  display: inline-block;
+  min-width: 12rem;
+}
+.bg-datepicker__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+}
+.bg-datepicker__trigger--empty {
+  color: var(--bg-ink-soft);
+}
+.bg-datepicker__trigger:focus-visible {
+  outline: none;
+  border-color: var(--bg-accent);
+  box-shadow: var(--bg-focus-ring);
+}
+.bg-datepicker__icon {
+  display: inline-flex;
+  width: var(--bg-icon-16);
+  height: var(--bg-icon-16);
+  color: var(--bg-ink-soft);
+  opacity: var(--bg-icon-idle-opacity);
+  flex-shrink: 0;
+}
+.bg-datepicker__icon svg {
+  width: 100%;
+  height: 100%;
+}
+.bg-datepicker__popup {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  z-index: 60;
+  width: 17.5rem;
+  padding: 0.75rem;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, var(--bg-glass-overlay-from), var(--bg-glass-overlay-to));
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--bg-glass-border);
+  border-radius: var(--bg-radius-xl);
+  box-shadow: var(--bg-shadow-overlay), var(--bg-glass-highlight);
+  animation: bg-menu-in var(--bg-duration-fast) var(--bg-ease-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  .bg-datepicker__popup {
+    animation: none;
+  }
+}
+.bg-datepicker__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+.bg-datepicker__month {
+  font-size: var(--bg-text-label);
+  font-weight: var(--bg-weight-title);
+  letter-spacing: var(--bg-tracking-title);
+  color: var(--bg-ink);
+  text-transform: capitalize;
+}
+.bg-datepicker__nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  background: none;
+  border-radius: var(--bg-radius-sm);
+  color: var(--bg-ink-soft);
+  cursor: pointer;
+  transition: color var(--bg-duration-fast) var(--bg-ease-out),
+    background var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-datepicker__nav svg {
+  width: 0.7rem;
+  height: 0.7rem;
+}
+.bg-datepicker__nav:hover {
+  color: var(--bg-ink);
+  background: color-mix(in srgb, var(--bg-ink) 6%, transparent);
+}
+.bg-datepicker__nav:focus-visible {
+  outline: 3px solid var(--bg-focus-ring-color);
+  outline-offset: 1px;
+}
+.bg-datepicker__weekdays,
+.bg-datepicker__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.1rem;
+}
+.bg-datepicker__weekdays {
+  margin-bottom: 0.25rem;
+}
+.bg-datepicker__weekdays span {
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: var(--bg-weight-label);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--bg-ink-soft);
+}
+.bg-datepicker__day {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2rem;
+  border: none;
+  background: none;
+  border-radius: 999px;
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink);
+  cursor: pointer;
+  transition: background var(--bg-duration-fast) var(--bg-ease-out),
+    color var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-datepicker__day:hover {
+  background: color-mix(in srgb, var(--bg-accent) 12%, transparent);
+}
+.bg-datepicker__day:focus-visible {
+  outline: 3px solid var(--bg-focus-ring-color);
+  outline-offset: -1px;
+}
+.bg-datepicker__day--today {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bg-accent) 45%, transparent);
+}
+.bg-datepicker__day--selected {
+  background: var(--bg-accent);
+  color: #fff;
+  font-weight: var(--bg-weight-button-strong);
+  box-shadow: var(--bg-shadow-sm);
+}
+.bg-datepicker__day:disabled {
+  color: color-mix(in srgb, var(--bg-ink-soft) 45%, transparent);
+  cursor: not-allowed;
+  background: none;
+}
+.bg-datepicker__footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid color-mix(in srgb, var(--bg-line) 60%, transparent);
+}
+.bg-datepicker__footer-action {
+  border: none;
+  background: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--bg-radius-sm);
+  font-family: inherit;
+  font-size: var(--bg-text-helper);
+  font-weight: var(--bg-weight-label);
+  letter-spacing: var(--bg-tracking-button-sm);
+  color: var(--bg-accent-ink);
+  cursor: pointer;
+  transition: background var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-datepicker__footer-action:hover {
+  background: var(--bg-accent-soft);
+}
+.bg-datepicker__footer-action:focus-visible {
+  outline: 3px solid var(--bg-focus-ring-color);
+  outline-offset: 1px;
+}
+.bg-datepicker__footer-action:disabled {
+  color: var(--bg-ink-soft);
+  cursor: not-allowed;
+  background: none;
+}
+
+/* ---- file upload ----------------------------------------------------------- */
+.bg-upload__zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 1.75rem 1.25rem;
+  border: 1.5px dashed color-mix(in srgb, var(--bg-ink-soft) 45%, transparent);
+  border-radius: var(--bg-radius-lg);
+  background: color-mix(in srgb, var(--bg-surface) 55%, transparent);
+  font-family: inherit;
+  font-size: var(--bg-text-body);
+  color: var(--bg-ink-soft);
+  cursor: pointer;
+  transition: border-color var(--bg-duration-fast) var(--bg-ease-out),
+    background var(--bg-duration-fast) var(--bg-ease-out),
+    color var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-upload__zone:hover,
+.bg-upload--drag .bg-upload__zone {
+  border-color: var(--bg-accent);
+  background: color-mix(in srgb, var(--bg-accent) 7%, transparent);
+  color: var(--bg-ink);
+}
+.bg-upload__zone:focus-visible {
+  outline: 3px solid var(--bg-focus-ring-color);
+  outline-offset: 2px;
+}
+.bg-upload--disabled .bg-upload__zone {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.bg-upload__icon {
+  display: inline-flex;
+  width: var(--bg-icon-24);
+  height: var(--bg-icon-24);
+  color: var(--bg-accent-ink);
+  opacity: var(--bg-icon-idle-opacity);
+}
+.bg-upload__icon svg {
+  width: 100%;
+  height: 100%;
+}
+.bg-upload__zone:hover .bg-upload__icon,
+.bg-upload--drag .bg-upload__icon {
+  opacity: 1;
+}
+.bg-upload__text strong {
+  color: var(--bg-ink);
+  font-weight: var(--bg-weight-button-strong);
+}
+.bg-upload__hint {
+  font-size: var(--bg-text-helper);
+}
+.bg-upload__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.bg-upload__files {
+  list-style: none;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.bg-upload__file {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--bg-line) 90%, transparent);
+  border-radius: var(--bg-radius-md);
+  background: var(--bg-surface);
+  box-shadow: var(--bg-shadow-sm);
+  font-size: var(--bg-text-helper);
+}
+.bg-upload__file-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--bg-ink);
+  font-weight: var(--bg-weight-label);
+}
+.bg-upload__file-size {
+  flex-shrink: 0;
+  color: var(--bg-ink-soft);
+}
+.bg-upload__file-remove {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0.1rem 0.3rem;
+  border-radius: 999px;
+  color: var(--bg-ink-soft);
+  transition: color var(--bg-duration-fast) var(--bg-ease-out),
+    background var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-upload__file-remove:hover {
+  color: var(--bg-danger);
+  background: var(--bg-danger-soft);
+}
+.bg-upload__file-remove:focus-visible {
+  outline: 3px solid var(--bg-focus-ring-color);
+  outline-offset: 1px;
+}

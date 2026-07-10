@@ -52,3 +52,6 @@ export { Tabs, type TabsProps, type TabItem } from "./components/Tabs";
 export { Pagination, type PaginationProps } from "./components/Pagination";
 export { KpiCard, type KpiCardProps, type KpiDelta } from "./components/KpiCard";
 export { Avatar, type AvatarProps } from "./components/Avatar";
+export { Combobox, type ComboboxProps, type ComboboxOption } from "./components/Combobox";
+export { DatePicker, type DatePickerProps } from "./components/DatePicker";
+export { FileUpload, type FileUploadProps } from "./components/FileUpload";

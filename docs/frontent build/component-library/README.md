@@ -73,10 +73,16 @@ Slices so far:
     (windowed numbers with ellipses, mono digits, 1-based), KpiCard
     (premium upgrade of the flat base .bg-kpi-card: 2–4% sheen data
     surface, trend delta with positiveIsGood semantics), Avatar (initials
-    chip or image, sm/md/lg, accent/navy/neutral). Remaining P1 (next
-    batches): combobox, date picker, file upload · drawer/panel, stepper,
+    chip or image, sm/md/lg, accent/navy/neutral).
+11. **P1 forms** — Combobox (searchable closed list: type-to-filter,
+    Up/Down + Enter, aria-activedescendant, × clears, hints per option),
+    DatePicker (overlay-glass month grid, Monday-first per Belgian
+    convention, dd/mm/yyyy display over ISO values, min/max bounds,
+    arrow-key day walking, Today/Clear footer), FileUpload (drag-and-drop +
+    click-to-browse, file chips with size + remove, multiple/accept).
+    Remaining P1 (next batches): drawer/panel, stepper, status timeline,
     command palette · settings shell, theme/language switcher, notification
-    center · kbd, copy button.
+    center, success state · kbd, copy button.
 
 **This folder is not wired into any build.** Nothing here is imported by
 `frontend-react`, `frontend-saas`, or `frontend-electron`. It's isolated
@@ -143,6 +149,9 @@ component-library/
     Pagination.tsx               — windowed page numbers + prev/next (slice 10)
     KpiCard.tsx                  — metric + trend delta, premium data surface (slice 10)
     Avatar.tsx                   — initials chip or image, three tones (slice 10)
+    Combobox.tsx                 — searchable select, keyboard-complete (slice 11)
+    DatePicker.tsx               — calendar popup, Monday-first, ISO in/out (slice 11)
+    FileUpload.tsx               — dropzone + file chips (slice 11)
   index.additions.ts           — new export lines to append to src/index.ts
   open-preview.cmd             — DOUBLE-CLICK THIS to check components yourself:
                                   installs deps if needed, starts Vite on :5174,
