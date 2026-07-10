@@ -1658,3 +1658,212 @@ textarea.bg-field__input {
     animation-duration: 2.8s;
   }
 }
+
+/* ==== slice 8: P0 closure — app shell, menu, account menu =================
+ * The last universal-checklist P0 items. Menu popup is overlay glass
+ * (elevation 2, same layer as Modal); AppShell owns the brand backdrop and
+ * the sticky nav slot.
+ * ======================================================================== */
+
+/* ---- menu: trigger wrapper + overlay-glass popup ------------------------- */
+.bg-menu {
+  position: relative;
+  display: inline-flex;
+}
+/* zero-specificity reset: combining triggerClassName="bg-button …" (or any
+ * other class) with the trigger overrides all of this cleanly */
+:where(.bg-menu__trigger) {
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  line-height: 0;
+  display: inline-flex;
+  border-radius: var(--bg-radius-md);
+}
+.bg-menu__trigger:focus-visible {
+  outline: 3px solid var(--bg-focus-ring-color);
+  outline-offset: 2px;
+}
+.bg-menu__popup {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  z-index: 60;
+  min-width: 13rem;
+  padding: 0.4rem;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, var(--bg-glass-overlay-from), var(--bg-glass-overlay-to));
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--bg-glass-border);
+  border-radius: var(--bg-radius-xl);
+  box-shadow: var(--bg-shadow-overlay), var(--bg-glass-highlight);
+  animation: bg-menu-in var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-menu__popup--start {
+  left: 0;
+}
+.bg-menu__popup--end {
+  right: 0;
+}
+@keyframes bg-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bg-menu__popup {
+    animation: none;
+  }
+}
+.bg-menu__header {
+  padding: 0.55rem 0.7rem 0.6rem;
+  margin-bottom: 0.35rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--bg-line) 60%, transparent);
+}
+.bg-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  box-sizing: border-box;
+  border: none;
+  background: none;
+  padding: 0.5rem 0.7rem;
+  border-radius: var(--bg-radius-md);
+  font-family: inherit;
+  font-size: var(--bg-text-body);
+  font-weight: var(--bg-weight-label);
+  letter-spacing: var(--bg-tracking-button-sm);
+  color: var(--bg-ink);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--bg-duration-fast) var(--bg-ease-out),
+    color var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-menu__item:hover,
+.bg-menu__item:focus-visible {
+  background: color-mix(in srgb, var(--bg-accent) 10%, transparent);
+}
+.bg-menu__item:focus-visible {
+  outline: 3px solid var(--bg-focus-ring-color);
+  outline-offset: -3px;
+}
+.bg-menu__item:active {
+  transform: scale(var(--bg-press-scale));
+  transition-duration: var(--bg-duration-press);
+  transition-timing-function: var(--bg-ease-in);
+}
+.bg-menu__item:disabled {
+  color: var(--bg-ink-soft);
+  cursor: not-allowed;
+  background: none;
+}
+.bg-menu__item--danger {
+  color: var(--bg-danger);
+}
+.bg-menu__item--danger:hover,
+.bg-menu__item--danger:focus-visible {
+  background: var(--bg-danger-soft);
+}
+.bg-menu__icon {
+  display: inline-flex;
+  width: var(--bg-icon-16);
+  height: var(--bg-icon-16);
+  flex-shrink: 0;
+  opacity: var(--bg-icon-idle-opacity);
+  transition: opacity var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-menu__icon svg {
+  width: 100%;
+  height: 100%;
+}
+.bg-menu__item:hover .bg-menu__icon,
+.bg-menu__item:focus-visible .bg-menu__icon {
+  opacity: 1;
+}
+.bg-menu__label {
+  flex: 1;
+  min-width: 0;
+}
+.bg-menu__hint {
+  flex-shrink: 0;
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+}
+.bg-menu__separator {
+  height: 1px;
+  margin: 0.35rem 0.45rem;
+  background: color-mix(in srgb, var(--bg-line) 70%, transparent);
+}
+
+/* ---- account menu: avatar trigger + identity header ---------------------- */
+.bg-account-menu__trigger .bg-icon-chip {
+  transition: transform var(--bg-duration-fast) var(--bg-ease-out),
+    box-shadow var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-account-menu__trigger:hover .bg-icon-chip {
+  transform: translateY(-1px);
+  box-shadow:
+    var(--bg-icon-chip-ring),
+    inset 0 1px 0 var(--bg-icon-chip-highlight),
+    var(--bg-shadow-md);
+}
+.bg-account-menu__trigger:active .bg-icon-chip {
+  transform: scale(var(--bg-press-scale));
+  transition-duration: var(--bg-duration-press);
+  transition-timing-function: var(--bg-ease-in);
+}
+.bg-account-menu__id {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.bg-account-menu__name {
+  font-size: var(--bg-text-body);
+  font-weight: var(--bg-weight-title);
+  letter-spacing: var(--bg-tracking-title);
+  color: var(--bg-ink);
+}
+.bg-account-menu__email {
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+}
+.bg-topnav__account {
+  display: inline-flex;
+  margin-left: 0.25rem; /* matches .bg-topnav__avatar: + actions gap = ml-16 */
+}
+
+/* ---- app shell: backdrop + sticky nav + centered content column ---------- */
+.bg-app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-app-backdrop);
+  color: var(--bg-ink);
+  font-family: var(--bg-font-sans);
+}
+.bg-app-shell__nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+.bg-app-shell__content {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  box-sizing: border-box;
+  flex: 1;
+}
+.bg-app-shell__content--wide {
+  max-width: 1400px;
+}
+.bg-app-shell__content--full {
+  max-width: none;
+}

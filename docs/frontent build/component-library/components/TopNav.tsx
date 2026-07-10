@@ -32,6 +32,8 @@ export interface TopNavProps {
   onAvatarClick?: () => void;
   notificationCount?: number;
   avatarInitials?: string;
+  /** Custom account trigger (e.g. <AccountMenu …>) — replaces avatarInitials. */
+  accountSlot?: ReactNode;
   /**
    * Surface treatment: `solid` (default) is the gradient header; `translucent`
    * and `glass` blur whatever scrolls underneath — use those when the header
@@ -60,6 +62,7 @@ export function TopNav({
   onAvatarClick,
   notificationCount = 0,
   avatarInitials,
+  accountSlot,
   variant = "solid",
   children,
   className,
@@ -95,7 +98,9 @@ export function TopNav({
             <NotificationsIcon />
           </IconButton>
           <CreateBillButton onClick={onCreateBill} />
-          {avatarInitials ? (
+          {accountSlot ? (
+            <div className="bg-topnav__account">{accountSlot}</div>
+          ) : avatarInitials ? (
             <button type="button" className="bg-topnav__avatar" onClick={onAvatarClick} aria-label="Account">
               <IconChip tone="accent" shape="circle" size="md">
                 <span className="bg-topnav__avatar-initials">{avatarInitials}</span>

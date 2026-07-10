@@ -48,6 +48,17 @@ Slices so far:
    canonical labels + generic tones, tone dot + contrast ring), Tooltip
    (CSS-only dark glass pill, hover/focus-within, 150ms intent delay),
    Skeleton (text/block/circle shimmer, aria-hidden).
+8. **P0 closure — app shell & account** — Menu (dropdown primitive: overlay
+   glass, arrow-key focus, Esc/outside-click/select closes, focus returns to
+   trigger; `triggerClassName` composes with bg-button classes), AccountMenu
+   (avatar trigger + identity header + app-supplied entries; drop into
+   TopNav's new `accountSlot` prop), AppShell (brand backdrop + sticky nav
+   slot + centered content column default/wide/full). This closes the
+   universal-checklist P0 set: sidebar-nav is intentionally retired (topbar
+   absorbs it, see below), forward/back is IconButton + Back/ForwardIcon +
+   PageHeader's back, and the home/landing screen is a composition of
+   AppShell + cards (demoed in the preview), not a primitive. **Next: the
+   dark-mode token pass, then P1.**
 
 **This folder is not wired into any build.** Nothing here is imported by
 `frontend-react`, `frontend-saas`, or `frontend-electron`. It's isolated
@@ -106,6 +117,9 @@ component-library/
     Badge.tsx                    — invoice-status + generic-tone tags (slice 7)
     Tooltip.tsx                  — CSS-only dark glass tooltip (slice 7)
     Skeleton.tsx                 — shimmer placeholders: text/block/circle (slice 7)
+    Menu.tsx                     — dropdown primitive, overlay glass + keyboard nav (slice 8)
+    AccountMenu.tsx              — avatar-triggered account dropdown (slice 8)
+    AppShell.tsx                 — outer frame: backdrop + sticky nav + content column (slice 8)
   index.additions.ts           — new export lines to append to src/index.ts
   open-preview.cmd             — DOUBLE-CLICK THIS to check components yourself:
                                   installs deps if needed, starts Vite on :5174,
