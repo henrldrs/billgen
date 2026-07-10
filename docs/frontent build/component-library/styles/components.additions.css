@@ -1867,3 +1867,345 @@ textarea.bg-field__input {
 .bg-app-shell__content--full {
   max-width: none;
 }
+
+/* ==== slice 10: P1 nav & data ============================================
+ * Breadcrumbs, Tabs, Pagination, KpiCard (premium upgrade of the flat base
+ * class), Avatar. Token-only; dark mode inherits for free.
+ * ======================================================================== */
+
+/* ---- breadcrumbs: soft trail, current page carries the weight ------------ */
+.bg-breadcrumbs__list {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0;
+}
+.bg-breadcrumbs__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  font-size: var(--bg-text-helper);
+}
+.bg-breadcrumbs__link {
+  border: none;
+  background: none;
+  padding: 0.15rem 0.35rem;
+  margin: 0;
+  border-radius: var(--bg-radius-sm);
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: var(--bg-weight-label);
+  letter-spacing: var(--bg-tracking-button-sm);
+  color: var(--bg-ink-soft);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color var(--bg-duration-fast) var(--bg-ease-out),
+    background var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-breadcrumbs__link:hover {
+  color: var(--bg-ink);
+  background: color-mix(in srgb, var(--bg-ink) 6%, transparent);
+}
+.bg-breadcrumbs__link:focus-visible {
+  outline: 3px solid var(--bg-focus-ring-color);
+  outline-offset: 1px;
+}
+.bg-breadcrumbs__current {
+  padding: 0.15rem 0.35rem;
+  font-weight: var(--bg-weight-title);
+  letter-spacing: var(--bg-tracking-button-sm);
+  color: var(--bg-ink);
+}
+.bg-breadcrumbs__sep {
+  width: 0.7rem;
+  height: 0.7rem;
+  color: var(--bg-ink-soft);
+  opacity: 0.55;
+  flex-shrink: 0;
+}
+
+/* ---- tabs: underline switcher -------------------------------------------- */
+.bg-tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.25rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--bg-line) 90%, transparent);
+  overflow-x: auto;
+  overflow-y: hidden; /* the -1px underline overhang must not spawn a scrollbar */
+  scrollbar-width: thin;
+}
+.bg-tabs__tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: none;
+  background: none;
+  padding: 0.55rem 0.85rem;
+  margin-bottom: -1px; /* underline sits on the rail */
+  border-bottom: 2px solid transparent;
+  border-radius: var(--bg-radius-sm) var(--bg-radius-sm) 0 0;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: var(--bg-weight-button);
+  letter-spacing: var(--bg-tracking-button-md);
+  color: var(--bg-ink-soft);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--bg-duration-fast) var(--bg-ease-out),
+    background var(--bg-duration-fast) var(--bg-ease-out),
+    border-color var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-tabs__tab:hover {
+  color: var(--bg-ink);
+  background: color-mix(in srgb, var(--bg-ink) 5%, transparent);
+}
+.bg-tabs__tab:focus-visible {
+  outline: 3px solid var(--bg-focus-ring-color);
+  outline-offset: -3px;
+}
+.bg-tabs__tab--active {
+  color: var(--bg-accent-ink);
+  border-bottom-color: var(--bg-accent);
+  font-weight: var(--bg-weight-button-strong);
+}
+.bg-tabs__tab:disabled {
+  color: color-mix(in srgb, var(--bg-ink-soft) 55%, transparent);
+  cursor: not-allowed;
+  background: none;
+}
+.bg-tabs__icon {
+  display: inline-flex;
+  width: var(--bg-icon-16);
+  height: var(--bg-icon-16);
+  opacity: var(--bg-icon-idle-opacity);
+  transition: opacity var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-tabs__icon svg {
+  width: 100%;
+  height: 100%;
+}
+.bg-tabs__tab:hover .bg-tabs__icon,
+.bg-tabs__tab--active .bg-tabs__icon {
+  opacity: 1;
+}
+.bg-tabs__count {
+  font-size: 0.7rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-ink) 8%, transparent);
+  color: inherit;
+}
+.bg-tabs__tab--active .bg-tabs__count {
+  background: var(--bg-accent-soft);
+}
+
+/* ---- pagination: arrows + windowed number row ----------------------------- */
+.bg-pagination {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.bg-pagination__arrow,
+.bg-pagination__page {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.4rem;
+  border: none;
+  background: none;
+  border-radius: var(--bg-radius-sm);
+  font-family: inherit;
+  font-size: var(--bg-text-helper);
+  font-weight: var(--bg-weight-label);
+  color: var(--bg-ink-soft);
+  cursor: pointer;
+  transition: color var(--bg-duration-fast) var(--bg-ease-out),
+    background var(--bg-duration-fast) var(--bg-ease-out),
+    box-shadow var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-pagination__arrow svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+.bg-pagination__arrow:hover:not(:disabled),
+.bg-pagination__page:hover {
+  color: var(--bg-ink);
+  background: color-mix(in srgb, var(--bg-ink) 6%, transparent);
+}
+.bg-pagination__arrow:focus-visible,
+.bg-pagination__page:focus-visible {
+  outline: 3px solid var(--bg-focus-ring-color);
+  outline-offset: 1px;
+}
+.bg-pagination__arrow:active:not(:disabled),
+.bg-pagination__page:active {
+  transform: scale(var(--bg-press-scale));
+  transition-duration: var(--bg-duration-press);
+  transition-timing-function: var(--bg-ease-in);
+}
+.bg-pagination__arrow:disabled {
+  color: color-mix(in srgb, var(--bg-ink-soft) 45%, transparent);
+  cursor: not-allowed;
+}
+.bg-pagination__page--current {
+  color: var(--bg-accent-ink);
+  background: var(--bg-accent-soft);
+  font-weight: var(--bg-weight-button-strong);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bg-accent) 35%, transparent);
+}
+.bg-pagination__gap {
+  min-width: 1.2rem;
+  text-align: center;
+  color: var(--bg-ink-soft);
+  user-select: none;
+}
+
+/* ---- kpi card: premium upgrade of the flat base class --------------------
+ * Data surface (near-opaque): solid surface + 2–4% sheen, no glass blur. */
+.bg-kpi-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  background: linear-gradient(
+    180deg,
+    var(--bg-surface),
+    color-mix(in srgb, var(--bg-surface) 97%, var(--bg-ink))
+  );
+  border: 1px solid color-mix(in srgb, var(--bg-line) 90%, transparent);
+  border-radius: var(--bg-radius-lg);
+  padding: 1rem 1.2rem;
+  box-shadow: var(--bg-shadow-sm);
+  transition: box-shadow var(--bg-duration-fast) var(--bg-ease-out),
+    transform var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-kpi-card:hover {
+  box-shadow: var(--bg-shadow-md);
+  transform: translateY(-1px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .bg-kpi-card:hover {
+    transform: none;
+  }
+}
+.bg-kpi-card__icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  margin-top: 0.1rem;
+}
+.bg-kpi-card__body {
+  min-width: 0;
+  flex: 1;
+}
+.bg-kpi-card__label {
+  font-size: var(--bg-text-helper);
+  font-weight: var(--bg-weight-label);
+  letter-spacing: var(--bg-tracking-body);
+  color: var(--bg-ink-soft);
+  margin-bottom: 0.25rem;
+}
+.bg-kpi-card__row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.bg-kpi-card__value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: var(--bg-tracking-title);
+  color: var(--bg-ink);
+}
+.bg-kpi-card__delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: var(--bg-text-helper);
+  font-weight: var(--bg-weight-button-strong);
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+}
+.bg-kpi-card__delta svg {
+  width: 0.65rem;
+  height: 0.65rem;
+}
+.bg-kpi-card__delta--good {
+  color: var(--bg-success);
+  background: var(--bg-success-soft);
+}
+.bg-kpi-card__delta--bad {
+  color: var(--bg-danger);
+  background: var(--bg-danger-soft);
+}
+.bg-kpi-card__delta--flat {
+  color: var(--bg-ink-soft);
+  background: color-mix(in srgb, var(--bg-ink) 7%, transparent);
+}
+.bg-kpi-card__hint {
+  margin-top: 0.3rem;
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+}
+
+/* ---- avatar: gradient chip or image, Satoshi Semibold initials ----------- */
+.bg-avatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow:
+    var(--bg-icon-chip-ring),
+    inset 0 1px 0 var(--bg-icon-chip-highlight),
+    var(--bg-shadow-sm);
+}
+.bg-avatar--sm {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+.bg-avatar--md {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+.bg-avatar--lg {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+.bg-avatar--accent {
+  background: linear-gradient(160deg, var(--bg-icon-chip-accent-from), var(--bg-icon-chip-accent-to));
+  color: #fff;
+}
+.bg-avatar--navy {
+  background: linear-gradient(160deg, var(--bg-icon-chip-navy-from), var(--bg-icon-chip-navy-to));
+  color: #fff;
+}
+.bg-avatar--neutral {
+  background: linear-gradient(160deg, var(--bg-icon-chip-neutral-from), var(--bg-icon-chip-neutral-to));
+  color: var(--bg-ink);
+}
+.bg-avatar__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.bg-avatar__initials {
+  font-size: 0.72rem;
+  font-weight: var(--bg-weight-button-strong);
+  letter-spacing: var(--bg-tracking-button-md);
+  line-height: 1;
+  user-select: none;
+}
+.bg-avatar--lg .bg-avatar__initials {
+  font-size: 0.85rem;
+}
+.bg-avatar--sm .bg-avatar__initials {
+  font-size: 0.6rem;
+}

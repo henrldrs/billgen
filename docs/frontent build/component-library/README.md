@@ -67,7 +67,16 @@ Slices so far:
    red/amber 300–400 scale entries), shadows rebuilt on black (ink is light
    in dark, so ink-derived shadows would glow), hover lightens instead of
    darkens, backdrop keeps the three brand glows. Validated across every
-   batch in the preview. **Next: P1.**
+   batch in the preview.
+10. **P1 nav & data** — Breadcrumbs (ancestor links + inert current page),
+    Tabs (underline switcher, roving tabindex, counts, icons), Pagination
+    (windowed numbers with ellipses, mono digits, 1-based), KpiCard
+    (premium upgrade of the flat base .bg-kpi-card: 2–4% sheen data
+    surface, trend delta with positiveIsGood semantics), Avatar (initials
+    chip or image, sm/md/lg, accent/navy/neutral). Remaining P1 (next
+    batches): combobox, date picker, file upload · drawer/panel, stepper,
+    command palette · settings shell, theme/language switcher, notification
+    center · kbd, copy button.
 
 **This folder is not wired into any build.** Nothing here is imported by
 `frontend-react`, `frontend-saas`, or `frontend-electron`. It's isolated
@@ -129,6 +138,11 @@ component-library/
     Menu.tsx                     — dropdown primitive, overlay glass + keyboard nav (slice 8)
     AccountMenu.tsx              — avatar-triggered account dropdown (slice 8)
     AppShell.tsx                 — outer frame: backdrop + sticky nav + content column (slice 8)
+    Breadcrumbs.tsx              — path trail, current page inert (slice 10)
+    Tabs.tsx                     — underline section switcher, roving tabindex (slice 10)
+    Pagination.tsx               — windowed page numbers + prev/next (slice 10)
+    KpiCard.tsx                  — metric + trend delta, premium data surface (slice 10)
+    Avatar.tsx                   — initials chip or image, three tones (slice 10)
   index.additions.ts           — new export lines to append to src/index.ts
   open-preview.cmd             — DOUBLE-CLICK THIS to check components yourself:
                                   installs deps if needed, starts Vite on :5174,

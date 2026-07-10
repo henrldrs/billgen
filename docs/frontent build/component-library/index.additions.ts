@@ -47,3 +47,8 @@ export {
 } from "./components/Menu";
 export { AccountMenu, type AccountMenuProps } from "./components/AccountMenu";
 export { AppShell, type AppShellProps } from "./components/AppShell";
+export { Breadcrumbs, type BreadcrumbsProps, type BreadcrumbItem } from "./components/Breadcrumbs";
+export { Tabs, type TabsProps, type TabItem } from "./components/Tabs";
+export { Pagination, type PaginationProps } from "./components/Pagination";
+export { KpiCard, type KpiCardProps, type KpiDelta } from "./components/KpiCard";
+export { Avatar, type AvatarProps } from "./components/Avatar";
