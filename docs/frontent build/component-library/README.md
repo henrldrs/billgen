@@ -1,5 +1,10 @@
 # Component Library — Isolated Build
 
+> **Looking for a specific component?** [COMPONENTS.md](COMPONENTS.md) is the
+> per-component reference: description, file, props, usage example, keyboard
+> behavior — plus the one-page design-language cheat sheet. This README tells
+> the story (slices, decisions, integration steps).
+
 Slices so far:
 1. **Nav header + buttons** — LogoMark, HomeButton, Button, IconButton,
    CreateBillButton, TopNav, LoadingScreen, IconChip + 13 icons.
