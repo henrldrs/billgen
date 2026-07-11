@@ -11,7 +11,7 @@ greenfield.
 
 | Path | Layer | Responsibility |
 |---|---|---|
-| `core/` | 1 — Business | Pure Python. Models, services, rules, repository ports, PDF (WeasyPrint), e-invoicing (UBL 2.1 / EN 16931). No FastAPI, no ORM, no React imports. |
+| `core/` | 1 — Business | Pure Python. Models, services, rules, repository ports, PDF (headless Chromium via Playwright, WeasyPrint fallback), e-invoicing (Peppol BIS 3.0 / UBL 2.1 / EN 16931). No FastAPI, no ORM, no React imports. |
 | `db/` | Persistence | SQLAlchemy 2.x + Alembic. Implements `core/repository` abstract ports. Same code runs on SQLite (desktop) or Postgres (SaaS). |
 | `api/` | 2 — API | FastAPI. HTTP surface, JWT auth, tenant scoping, request/response validation. Delegates every decision to `core/`. |
 | `frontend-react/` | 3 — UI kit | Shared React components, panels, hooks. Published as `@billgen/ui`. Zero business logic. |
@@ -23,19 +23,23 @@ greenfield.
 
 ## Getting started
 
-Phase 0 — skeleton only. No functional code yet.
+Phases 0–9 + 11 are done (multi-tenant API, SaaS + desktop shells, Peppol
+BIS 3.0, PDF, legacy import); Phase 10 (billing) is not started. The full,
+current map — how to run it, test counts, toolchain, known gaps — is
+**`docs/HANDOFF.md`**. Quickest start: double-click **`billgen.bat`**
+(menu: web app / desktop app / run all tests / first-time setup).
 
 ```bash
-# Python side (uv workspace)
-uv sync
-
 # Frontend side (npm workspaces)
 npm install
 
-# Local Postgres + MinIO for SaaS dev
+# Python side: system pip, no venv — exact package list in docs/HANDOFF.md §8
+
+# Local Postgres + MinIO for SaaS dev (optional; SQLite works out of the box)
 docker compose up -d
 ```
 
 ## Architecture decisions
 
-See `docs/ARCHITECTURE/ADR-0001-three-layer.md`.
+See `docs/ARCHITECTURE/ADR-0001-three-layer.md` (three-layer split) and
+`docs/ARCHITECTURE/ADR-0002-invoice-lifecycle.md` (draft → issued lifecycle).

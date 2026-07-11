@@ -12,7 +12,8 @@ Read this instead of re-deriving context.
 |---|---|
 | Location | `C:\Users\hdr_s\Documents\business model\BillGen BETA` |
 | Phases done | 0–9, **11** (domain → rules → DB → services → API → business routers → UI kit → SaaS shell → desktop → legacy import) + **Peppol e-invoicing** (Helger-validated Peppol BIS 3.0 + Belgian elements + pre-export validation gate; `771e903` then switched off UBL.BE). Phase 10 (billing) not yet started. |
-| Tests | **Python 203 passed, 0 skipped** (`python -m pytest tests`); **frontend 36 passed** (`npm run test --workspace @billgen/ui`) |
+| UI library | **Built in isolation, done through P1** — 57 components + 14 icon files over 14 slices in `docs/frontent build/component-library/`: all P0 + all P1 of `docs/UNIVERSAL_COMPONENT_LIBRARY_CHECKLIST.md`, dark mode as one token remap, Satoshi/Geist Mono, batch-selectable preview gallery (`open-preview.cmd`, port 5174), per-component reference in its `COMPONENTS.md`. **Not wired into any app** — integration is a deliberate later phase. See §3 + §9. |
+| Tests | **Python 206 passed, 0 skipped** (`python -m pytest tests`); **frontend 38 passed** (`npm run test --workspace @billgen/ui`) |
 | Git | local only, **not pushed**. One commit + tag per phase (`phase-4` … `phase-9b`); later work (import, polish, peppol) committed on `main` without tags. Branch `main`. |
 | PDF engine | **Headless Chromium via Playwright** (primary, cross-platform incl. Windows/desktop) with **WeasyPrint** as a fallback for the Docker/SaaS image. Setup on a fresh box: `pip install playwright` then `python -m playwright install chromium`. Without any engine, `/pdf` returns a clean 503. Free-tier PDFs carry a subtle "Made with BillGen" footer + logo. |
 | Not a migration | The legacy React/Python apps (`D:\CODING\audit-v2-react-exe`, `myshop-*`) are reference only. Do not edit them. The **approved Peppol reference** is `D:\CODING\FinanceFlow Bill Generator` (the demo) — inventoried in [docs/COMPARISON_demo_vs_new.md](docs/COMPARISON_demo_vs_new.md). |
@@ -36,7 +37,7 @@ portable EXE** it built. Full finding-by-finding scoring is in
   line, and the entire remaining gap is in categories **10 Monetization / 11 Support /
   12 Legal**.
 - **Solved at the root:** localStorage → real DB; gapless numbering (row-locked, no
-  hard-delete); mock dashboard → real KPIs; **zero tests → 185 Py + 33 FE**; deeper
+  hard-delete); mock dashboard → real KPIs; **zero tests → 206 Py + 38 FE**; deeper
   Peppol (multi-rate + Helger-validated BIS 3.0 + structured comm + pre-export gate); plus net-new
   **backend + tested multi-tenancy** the demo never had.
 - **Partly done:** desktop `.exe` (Tauri shell compiles clean, but no signed installer /
@@ -45,9 +46,12 @@ portable EXE** it built. Full finding-by-finding scoring is in
 - **Still open (the whole commercial layer):** EV code-signing, EULA/privacy/legal
   entity, checkout/Merchant-of-Record, product telemetry, support inbox, accountant
   sign-off.
-- **Debts the rebuild carries:** agenda/VAT-reminder feature not ported; UX polish
-  below the demo's glassmorphism; Helger/Access-Point XML validation still pending on
-  both sides; historical invoices deliberately not imported.
+- **Debts the rebuild carries:** agenda/VAT-reminder feature not ported; the live
+  shells still look plainer than the demo (the premium component library that closes
+  this gap is finished, but only in isolation — see the UI-library row in §0);
+  Access-Point round-trip still untested (Helger schematron validation has since
+  **passed** on both BE and non-BE samples); historical invoices deliberately not
+  imported.
 
 ---
 
@@ -177,6 +181,26 @@ the API's OpenAPI schema, so the UI cannot drift from the server contract.
 | `src/lib/api.ts` | `createApi()`, `tokenStore` | Resolves the sidecar port via `invoke('api_base_url')`; falls back to a dev URL outside Tauri. |
 | `src/App.tsx`, `src/DesktopShell.tsx` | boot flow + tab shell | Auto-login via `desktopBootstrap()`, then mounts the 7 kit panels (no login chrome). |
 
+### `docs/frontent build/component-library/` — isolated UI library build (NOT wired in)
+
+The from-scratch premium component set (Henri's drawings + brand tokens; no
+open-source extraction), built outside the live packages **on purpose**:
+
+| Path | Purpose |
+|---|---|
+| `components/*.tsx` (+ `icons/`) | 57 components + IconChip and 13 hand-drawn icons — the exact files that later get copied into `frontend-react/src/components/`. |
+| `styles/tokens.additions.css`, `styles/components.additions.css` | Token-only `--bg-*` / `.bg-*` additions to append to the real `tokens.css` / `components.css`. Dark mode = one token remap under `:root[data-bg-theme="dark"]`, zero component-CSS changes. |
+| `styles/fonts.css` + `fonts/` | Satoshi (UI face) + Geist Mono (numbers & identifiers, the `.bg-num` utility). |
+| `index.additions.ts` | Export lines to append to `frontend-react/src/index.ts`. |
+| `preview/` + `open-preview.cmd` | Batch-selectable live gallery (Vite, port 5174) — double-click the `.cmd`. Disposable scaffolding, never copied anywhere. |
+| `README.md` / `COMPONENTS.md` | Slice-by-slice story + the 7 integration steps / per-component reference (props, usage, keyboard behavior). |
+
+Covers **all P0 + all P1** of `docs/UNIVERSAL_COMPONENT_LIBRARY_CHECKLIST.md`
+(14 slices, commits `9b1e37c` → `622bea0`), henrioutai-standard compliant,
+browser-verified in both themes. Nothing in `frontend-react` / `frontend-saas` /
+`frontend-electron` imports it — the connection steps live in its README and
+happen in a later phase, deliberately.
+
 ---
 
 ## 4. How a request flows (the load-bearing connection)
@@ -246,8 +270,8 @@ Live totals in the builder come from `POST /invoices/preview` (pure calculation,
 
 | Suite | Command | Count |
 |---|---|---|
-| Python (core/api/db/desktop) | `python -m pytest tests` | 203 passed, 0 skipped |
-| Frontend (`@billgen/ui`) | `npm run test --workspace @billgen/ui` | 36 passed |
+| Python (core/api/db/desktop) | `python -m pytest tests` | 206 passed, 0 skipped |
+| Frontend (`@billgen/ui`) | `npm run test --workspace @billgen/ui` | 38 passed |
 
 The real-PDF-bytes test now runs against Chromium (Playwright) instead of being
 skipped. The whole app flow was also **browser-verified** in Phase 8 (signup →
@@ -295,8 +319,15 @@ build`).
 > **Foundation-hardening track:** (1) Peppol → trustworthy ✅ **done** (forms surface
 > gate fields; mixed-rate discount split per category; BE switched to plain BIS;
 > **both non-BE and BE invoices Helger-validated** against OpenPeppol 2026.5).
-> (2) draft→issue split ✅ **done** (ADR-0002 step 1). (3) backup/restore. (4) CI + quality
-> gate. (5) lightweight crash reporting. Audit-vs-now scoring:
+> (2) draft→issue split ✅ **done** (ADR-0002 step 1). The remainder was **surveyed
+> 2026-07-11 (no code changed yet)**; punch list, in order: (3) **boot-time config
+> guards** — refuse a hosted start on the dev `jwt_secret` default in `api/config.py`,
+> warn on permissive CORS. (4) **backup/restore** design + build — the biggest
+> remaining data-safety gap, especially the desktop SQLite. (5) **CI + quality gate**,
+> and decide on a git remote (repo is still local-only). (6) **lightweight crash
+> reporting**. (7) **historical-invoice import design** — an `imported/historical`
+> marker so legacy invoices keep their original reference without consuming the live
+> sequence. Audit-vs-now scoring:
 > [docs/AUDIT_PROGRESS_vs_demo.md](docs/AUDIT_PROGRESS_vs_demo.md).
 
 - **Phase 10** — Stripe billing + plan enforcement (`SubscriptionRow` already
@@ -376,6 +407,16 @@ build`).
       typecheck clean, 33 FE + 185 Py tests green.
     - **Deferred (Group D remainder):** editable `Invoice.buyer_reference`;
       draft→certified labeling discipline in the front ends.
+- **UI component library — DONE (in isolation), not connected.** All P0 + all P1
+  of the universal checklist over 14 slices (`9b1e37c` → `622bea0`); full inventory
+  in §3's component-library section. Hand-written, token-only, browser-verified in
+  both themes; a zip snapshot lives outside version control in `backups/`
+  (gitignored). Deliberately **not wired** into the live front ends — the "never
+  edit frontend-react/frontend-saas" rule holds until integration is decided.
+  **Waiting on Henri:** sketches for the three placeholder icons (Products &
+  services, Import, Activity — flagged in the library's `COMPONENTS.md`), and the
+  go-ahead to lift that rule when integration starts. Remaining beyond P1: P2
+  nice-to-haves + app-specific compositions (invoice line editor, VAT picker).
 - **Next phases discussed, NOT started:**
   - **Automatic Peppol transmission** — send structured XML straight to the buyer
     via an Access Point (Doccle/Billit/Unifiedpost/…): needs an AP account+API,
@@ -426,6 +467,20 @@ build`).
 ## 11. Git — phases and tags
 
 ```
+1d272c4  (no tag)  chore: ignore backups/ (zips live outside version control)
+622bea0  (no tag)  docs: COMPONENTS.md — per-component library reference
+3e3a638…5f2be92   (no tags)  ui: component-library slices 2–14 — 9 commits
+                   (P0 + P1 sets, dark mode, henrioutai pass, preview, fonts)
+9b1e37c  (no tag)  ui: isolated component-library build (slice 1) + docs catchup
+fb711f4  (no tag)  docs: brand tokens, component blueprints, dashboard ref theme
+1987c9c  (no tag)  ui: save dialog + saved confirmation; blocked Peppol exports
+142ade9  (no tag)  ui: move brand tokens + component styles into @billgen/ui
+5b9c93e  (no tag)  pdf: BillGen branding on free tier only, across all templates
+7f2e36f  (no tag)  pdf: fix Chromium engine under uvicorn; draft-safe filenames
+fa17c74  (no tag)  docs: Access Point / Peppol transmission integration notes
+b6ae363  (no tag)  pdf: cross-platform Chromium engine + free-tier branding
+7220359  (no tag)  invoice-lifecycle: draft → issued split (ADR-0002 step 1)
+33664ed  (no tag)  peppol: Helger-validated BIS 3.0 + gate form fields
 771e903  (no tag)  peppol: approved demo localisation + pre-export validation gate
 a9b8dee  (no tag)  polish: mount ImportPanel in the desktop shell
 53f466f  (no tag)  polish: invoice download buttons + import API-schema separation
@@ -442,5 +497,10 @@ cff1e3e  phase-5   FastAPI skeleton, JWT auth, tenant middleware
 b69bbc8  phase-4   monorepo skeleton + CORE domain/rules/DB/services
 ```
 
-Work after `phase-9b` (import, polish, peppol) is committed on `main` **without
-tags**. To return to a tagged checkpoint: `git checkout phase-6` (etc.).
+Work after `phase-9b` (import, polish, peppol, lifecycle, PDF engine, UI library)
+is committed on `main` **without tags**. To return to a tagged checkpoint:
+`git checkout phase-6` (etc.).
+
+Note: `9b1e37c` accidentally deleted `docs/AUDIT_PROGRESS_vs_demo.md` and
+`docs/COMPARISON_demo_vs_new.md` while this document still linked to them; both
+were restored from that commit's parent (2026-07-11).
