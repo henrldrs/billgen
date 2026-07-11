@@ -55,3 +55,16 @@ export { Avatar, type AvatarProps } from "./components/Avatar";
 export { Combobox, type ComboboxProps, type ComboboxOption } from "./components/Combobox";
 export { DatePicker, type DatePickerProps } from "./components/DatePicker";
 export { FileUpload, type FileUploadProps } from "./components/FileUpload";
+export { Drawer, type DrawerProps } from "./components/Drawer";
+export { Stepper, type StepperProps, type StepItem } from "./components/Stepper";
+export {
+  StatusTimeline,
+  type StatusTimelineProps,
+  type TimelineItem,
+  type TimelineStatus,
+} from "./components/StatusTimeline";
+export {
+  CommandPalette,
+  type CommandPaletteProps,
+  type CommandItem,
+} from "./components/CommandPalette";

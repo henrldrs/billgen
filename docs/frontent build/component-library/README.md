@@ -80,9 +80,16 @@ Slices so far:
     convention, dd/mm/yyyy display over ISO values, min/max bounds,
     arrow-key day walking, Today/Clear footer), FileUpload (drag-and-drop +
     click-to-browse, file chips with size + remove, multiple/accept).
-    Remaining P1 (next batches): drawer/panel, stepper, status timeline,
-    command palette · settings shell, theme/language switcher, notification
-    center, success state · kbd, copy button.
+12. **P1 overlays & flow** — Drawer (edge-anchored overlay glass, right/left,
+    md/lg, pinned footer, Esc/backdrop close), Stepper (numbered wizard
+    trail, check on done, accent halo on current, completed steps clickable
+    via onStepClick), StatusTimeline (vertical trail for the Peppol
+    lifecycle: done/current/upcoming/failed, pulsing current dot, mono
+    timestamps), CommandPalette (⌘K overlay: substring filter over
+    label+keywords, sections, ↑↓/↵/Esc, kbd-hint footer; controlled — the
+    app binds the hotkey). `.bg-kbd` ships here; the Kbd component follows
+    in the utility batch. Remaining P1: settings shell, theme/language
+    switcher, notification center, success state · kbd, copy button.
 
 **This folder is not wired into any build.** Nothing here is imported by
 `frontend-react`, `frontend-saas`, or `frontend-electron`. It's isolated
@@ -152,6 +159,10 @@ component-library/
     Combobox.tsx                 — searchable select, keyboard-complete (slice 11)
     DatePicker.tsx               — calendar popup, Monday-first, ISO in/out (slice 11)
     FileUpload.tsx               — dropzone + file chips (slice 11)
+    Drawer.tsx                   — slide-in side panel, overlay glass (slice 12)
+    Stepper.tsx                  — numbered wizard trail (slice 12)
+    StatusTimeline.tsx           — vertical lifecycle trail, Peppol-ready (slice 12)
+    CommandPalette.tsx           — ⌘K search + quick actions (slice 12)
   index.additions.ts           — new export lines to append to src/index.ts
   open-preview.cmd             — DOUBLE-CLICK THIS to check components yourself:
                                   installs deps if needed, starts Vite on :5174,
