@@ -1,4 +1,4 @@
-import { ApiError, Button, Field } from "@billgen/ui";
+import { ApiError, Button, Field, TextInput } from "@billgen/ui";
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -33,22 +33,24 @@ export function LoginPage() {
         <h1 className="text-xl font-bold mb-1">BillGen</h1>
         <p className="text-sm text-gray-500 mb-4">Sign in to your account</p>
         <form onSubmit={handleSubmit}>
-          <Field
-            label="Email"
-            type="email"
-            value={email}
-            required
-            autoComplete="email"
-            onChange={(event) => setEmail(event.target.value)}
-          />
-          <Field
-            label="Password"
-            type="password"
-            value={password}
-            required
-            autoComplete="current-password"
-            onChange={(event) => setPassword(event.target.value)}
-          />
+          <Field label="Email" required>
+            <TextInput
+              type="email"
+              value={email}
+              required
+              autoComplete="email"
+              onChange={(event) => setEmail(event.target.value)}
+            />
+          </Field>
+          <Field label="Password" required>
+            <TextInput
+              type="password"
+              value={password}
+              required
+              autoComplete="current-password"
+              onChange={(event) => setPassword(event.target.value)}
+            />
+          </Field>
           {error ? (
             <div role="alert" className="bg-field__error mb-2">
               {error}

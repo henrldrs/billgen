@@ -1,4 +1,4 @@
-import { ApiError, Button, Field } from "@billgen/ui";
+import { ApiError, Button, Field, TextInput } from "@billgen/ui";
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -42,36 +42,40 @@ export function SignupPage() {
           Free while in beta — no card required.
         </p>
         <form onSubmit={handleSubmit}>
-          <Field
-            label="Your name"
-            value={displayName}
-            required
-            autoComplete="name"
-            onChange={(event) => setDisplayName(event.target.value)}
-          />
-          <Field
-            label="Organization name"
-            value={organizationName}
-            required
-            onChange={(event) => setOrganizationName(event.target.value)}
-          />
-          <Field
-            label="Email"
-            type="email"
-            value={email}
-            required
-            autoComplete="email"
-            onChange={(event) => setEmail(event.target.value)}
-          />
-          <Field
-            label="Password (min. 8 characters)"
-            type="password"
-            value={password}
-            required
-            minLength={8}
-            autoComplete="new-password"
-            onChange={(event) => setPassword(event.target.value)}
-          />
+          <Field label="Your name" required>
+            <TextInput
+              value={displayName}
+              required
+              autoComplete="name"
+              onChange={(event) => setDisplayName(event.target.value)}
+            />
+          </Field>
+          <Field label="Organization name" required>
+            <TextInput
+              value={organizationName}
+              required
+              onChange={(event) => setOrganizationName(event.target.value)}
+            />
+          </Field>
+          <Field label="Email" required>
+            <TextInput
+              type="email"
+              value={email}
+              required
+              autoComplete="email"
+              onChange={(event) => setEmail(event.target.value)}
+            />
+          </Field>
+          <Field label="Password (min. 8 characters)" required>
+            <TextInput
+              type="password"
+              value={password}
+              required
+              minLength={8}
+              autoComplete="new-password"
+              onChange={(event) => setPassword(event.target.value)}
+            />
+          </Field>
           {error ? (
             <div role="alert" className="bg-field__error mb-2">
               {error}

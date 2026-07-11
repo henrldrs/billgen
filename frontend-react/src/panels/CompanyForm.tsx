@@ -2,6 +2,7 @@ import { useId, useState, type FormEvent } from "react";
 
 import { Button } from "../components/Button";
 import { Field } from "../components/Field";
+import { TextInput } from "../components/TextInput";
 import { useCreateCompany } from "../hooks/queries";
 import { t, type Lang } from "../lib/translations";
 import type { CompanyResponse } from "../types";
@@ -60,65 +61,76 @@ export function CompanyForm({ lang = "en", onCreated }: CompanyFormProps) {
         <h1>{t(lang, "company.title")}</h1>
       </header>
       <form onSubmit={handleSubmit}>
-        <Field
-          label={t(lang, "company.name")}
-          value={name}
-          required
-          onChange={(event) => setName(event.target.value)}
-        />
-        <Field
-          label={t(lang, "company.vat")}
-          value={vatNumber}
-          onChange={(event) => setVatNumber(event.target.value)}
-        />
-        <Field
-          label={t(lang, "company.registration")}
-          value={registrationNumber}
-          onChange={(event) => setRegistrationNumber(event.target.value)}
-        />
-        <Field
-          label={t(lang, "company.email")}
-          value={email}
-          type="email"
-          onChange={(event) => setEmail(event.target.value)}
-        />
-        <Field
-          label={t(lang, "company.address")}
-          value={addressLine1}
-          onChange={(event) => setAddressLine1(event.target.value)}
-        />
-        <Field
-          label={t(lang, "company.postalCode")}
-          value={postalCode}
-          onChange={(event) => setPostalCode(event.target.value)}
-        />
-        <Field
-          label={t(lang, "company.city")}
-          value={city}
-          onChange={(event) => setCity(event.target.value)}
-        />
-        <Field
-          label={t(lang, "company.country")}
-          value={countryCode}
-          maxLength={2}
-          onChange={(event) => setCountryCode(event.target.value)}
-        />
-        <Field
-          label={t(lang, "company.iban")}
-          value={iban}
-          onChange={(event) => setIban(event.target.value)}
-        />
-        <Field
-          label={t(lang, "company.bic")}
-          value={bic}
-          onChange={(event) => setBic(event.target.value)}
-        />
-        <Field
-          label={t(lang, "company.prefix")}
-          value={prefix}
-          maxLength={8}
-          onChange={(event) => setPrefix(event.target.value)}
-        />
+        <Field label={t(lang, "company.name")} required>
+          <TextInput
+            value={name}
+            required
+            onChange={(event) => setName(event.target.value)}
+          />
+        </Field>
+        <Field label={t(lang, "company.vat")}>
+          <TextInput
+            value={vatNumber}
+            onChange={(event) => setVatNumber(event.target.value)}
+          />
+        </Field>
+        <Field label={t(lang, "company.registration")}>
+          <TextInput
+            value={registrationNumber}
+            onChange={(event) => setRegistrationNumber(event.target.value)}
+          />
+        </Field>
+        <Field label={t(lang, "company.email")}>
+          <TextInput
+            value={email}
+            type="email"
+            onChange={(event) => setEmail(event.target.value)}
+          />
+        </Field>
+        <Field label={t(lang, "company.address")}>
+          <TextInput
+            value={addressLine1}
+            onChange={(event) => setAddressLine1(event.target.value)}
+          />
+        </Field>
+        <Field label={t(lang, "company.postalCode")}>
+          <TextInput
+            value={postalCode}
+            onChange={(event) => setPostalCode(event.target.value)}
+          />
+        </Field>
+        <Field label={t(lang, "company.city")}>
+          <TextInput
+            value={city}
+            onChange={(event) => setCity(event.target.value)}
+          />
+        </Field>
+        <Field label={t(lang, "company.country")}>
+          <TextInput
+            value={countryCode}
+            maxLength={2}
+            onChange={(event) => setCountryCode(event.target.value)}
+          />
+        </Field>
+        <Field label={t(lang, "company.iban")}>
+          <TextInput
+            value={iban}
+            onChange={(event) => setIban(event.target.value)}
+          />
+        </Field>
+        <Field label={t(lang, "company.bic")}>
+          <TextInput
+            value={bic}
+            onChange={(event) => setBic(event.target.value)}
+          />
+        </Field>
+        <Field label={t(lang, "company.prefix")}>
+          <TextInput
+            value={prefix}
+            maxLength={8}
+            onChange={(event) => setPrefix(event.target.value)}
+          />
+        </Field>
 
         <div className="bg-field">
           <label className="bg-field__label" htmlFor={`${selectIdBase}-lang`}>

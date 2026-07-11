@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 import { Button } from "../components/Button";
 import { EmptyState } from "../components/EmptyState";
 import { Field } from "../components/Field";
+import { TextInput } from "../components/TextInput";
 import { Modal } from "../components/Modal";
 import { Spinner } from "../components/Spinner";
 import { useCreateProduct, useProducts } from "../hooks/queries";
@@ -78,7 +79,7 @@ export function ProductsPanel({ companyId, lang = "en" }: ProductsPanelProps) {
           </tbody>
         </table>
       ) : (
-        <EmptyState message={t(lang, "products.empty")} />
+        <EmptyState title={t(lang, "products.empty")} />
       )}
 
       <Modal
@@ -87,30 +88,34 @@ export function ProductsPanel({ companyId, lang = "en" }: ProductsPanelProps) {
         onClose={() => setFormOpen(false)}
       >
         <form onSubmit={handleSubmit}>
-          <Field
-            label={t(lang, "products.name")}
-            value={name}
-            required
-            onChange={(event) => setName(event.target.value)}
-          />
-          <Field
-            label={t(lang, "products.price")}
-            value={unitPrice}
-            required
-            inputMode="decimal"
-            onChange={(event) => setUnitPrice(event.target.value)}
-          />
-          <Field
-            label={t(lang, "products.category")}
-            value={category}
-            onChange={(event) => setCategory(event.target.value)}
-          />
-          <Field
-            label={t(lang, "products.vatRate")}
-            value={vatRate}
-            inputMode="decimal"
-            onChange={(event) => setVatRate(event.target.value)}
-          />
+          <Field label={t(lang, "products.name")} required>
+            <TextInput
+              value={name}
+              required
+              onChange={(event) => setName(event.target.value)}
+            />
+          </Field>
+          <Field label={t(lang, "products.price")} required>
+            <TextInput
+              value={unitPrice}
+              required
+              inputMode="decimal"
+              onChange={(event) => setUnitPrice(event.target.value)}
+            />
+          </Field>
+          <Field label={t(lang, "products.category")}>
+            <TextInput
+              value={category}
+              onChange={(event) => setCategory(event.target.value)}
+            />
+          </Field>
+          <Field label={t(lang, "products.vatRate")}>
+            <TextInput
+              value={vatRate}
+              inputMode="decimal"
+              onChange={(event) => setVatRate(event.target.value)}
+            />
+          </Field>
           {createProduct.isError ? (
             <div role="alert">{t(lang, "common.error")}</div>
           ) : null}

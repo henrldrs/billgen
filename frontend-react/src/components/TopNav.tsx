@@ -1,0 +1,142 @@
+import type { ReactNode } from "react";
+import { HomeButton } from "./HomeButton";
+import { IconButton } from "./IconButton";
+import { CreateBillButton } from "./CreateBillButton";
+import { IconChip } from "./icons/IconChip";
+import { SearchIcon } from "./icons/SearchIcon";
+import { NotificationsIcon } from "./icons/NotificationsIcon";
+
+export interface TopNavLink {
+  key: string;
+  label: string;
+  /** Optional leading icon — pass one of the icons/ components, sized by CSS. */
+  icon?: ReactNode;
+  active?: boolean;
+  onClick?: () => void;
+  href?: string;
+}
+
+export interface TopNavProps {
+  title: string;
+  subtitle?: string;
+  /**
+   * Primary navigation, rendered as a second row under the title/actions row.
+   * This is what a sidebar would otherwise carry — pass the app's full nav
+   * item list here instead of maintaining a separate sidebar (see README).
+   */
+  links?: TopNavLink[];
+  onNavigateHome?: () => void;
+  onCreateBill?: () => void;
+  onSearchClick?: () => void;
+  onNotificationsClick?: () => void;
+  onAvatarClick?: () => void;
+  notificationCount?: number;
+  avatarInitials?: string;
+  /** Custom account trigger (e.g. <AccountMenu …>) — replaces avatarInitials. */
+  accountSlot?: ReactNode;
+  /**
+   * Surface treatment: `solid` (default) is the gradient header; `translucent`
+   * and `glass` blur whatever scrolls underneath — use those when the header
+   * floats over page content.
+   */
+  variant?: "solid" | "translucent" | "glass";
+  /** Extra controls rendered after the title block, before the action cluster. */
+  children?: ReactNode;
+  className?: string;
+}
+
+/**
+ * Global header: logo/home, page title, primary nav links, search,
+ * notifications, create-bill CTA, account avatar. Presentational only — no
+ * data fetching, no router import. With `links` supplied, this replaces a
+ * separate sidebar rather than sitting alongside one.
+ */
+export function TopNav({
+  title,
+  subtitle,
+  links = [],
+  onNavigateHome,
+  onCreateBill,
+  onSearchClick,
+  onNotificationsClick,
+  onAvatarClick,
+  notificationCount = 0,
+  avatarInitials,
+  accountSlot,
+  variant = "solid",
+  children,
+  className,
+}: TopNavProps) {
+  const classes = [
+    "bg-topnav",
+    variant !== "solid" ? `bg-topnav--${variant}` : "",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  return (
+    <header className={classes}>
+      <div className="bg-topnav__row">
+        <HomeButton onNavigateHome={onNavigateHome} size="md" />
+
+        <div className="bg-topnav__titles">
+          <h1 className="bg-topnav__title">{title}</h1>
+          {subtitle ? <p className="bg-topnav__subtitle">{subtitle}</p> : null}
+        </div>
+
+        {children}
+
+        <div className="bg-topnav__actions">
+          <IconButton aria-label="Search" onClick={onSearchClick}>
+            <SearchIcon />
+          </IconButton>
+          <IconButton
+            aria-label="Notifications"
+            onClick={onNotificationsClick}
+            dot={notificationCount > 0}
+          >
+            <NotificationsIcon />
+          </IconButton>
+          <CreateBillButton onClick={onCreateBill} />
+          {accountSlot ? (
+            <div className="bg-topnav__account">{accountSlot}</div>
+          ) : avatarInitials ? (
+            <button type="button" className="bg-topnav__avatar" onClick={onAvatarClick} aria-label="Account">
+              <IconChip tone="accent" shape="circle" size="md">
+                <span className="bg-topnav__avatar-initials">{avatarInitials}</span>
+              </IconChip>
+            </button>
+          ) : null}
+        </div>
+      </div>
+
+      {links.length > 0 ? (
+        <nav className="bg-topnav__links" aria-label="Primary">
+          {links.map((link) => {
+            const linkClasses = [
+              "bg-topnav__link",
+              link.active ? "bg-topnav__link--active" : "",
+            ]
+              .filter(Boolean)
+              .join(" ");
+            const content = (
+              <>
+                {link.icon}
+                {link.label}
+              </>
+            );
+            return link.href ? (
+              <a key={link.key} href={link.href} className={linkClasses} onClick={link.onClick}>
+                {content}
+              </a>
+            ) : (
+              <button key={link.key} type="button" className={linkClasses} onClick={link.onClick}>
+                {content}
+              </button>
+            );
+          })}
+        </nav>
+      ) : null}
+    </header>
+  );
+}

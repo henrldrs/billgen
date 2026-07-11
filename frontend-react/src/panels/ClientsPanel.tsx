@@ -6,6 +6,7 @@ import { useState, type FormEvent } from "react";
 import { Button } from "../components/Button";
 import { EmptyState } from "../components/EmptyState";
 import { Field } from "../components/Field";
+import { TextInput } from "../components/TextInput";
 import { Modal } from "../components/Modal";
 import { Spinner } from "../components/Spinner";
 import { useClients, useCreateClient } from "../hooks/queries";
@@ -93,7 +94,7 @@ export function ClientsPanel({ companyId, lang = "en" }: ClientsPanelProps) {
           </tbody>
         </table>
       ) : (
-        <EmptyState message={t(lang, "clients.empty")} />
+        <EmptyState title={t(lang, "clients.empty")} />
       )}
 
       <Modal
@@ -102,44 +103,51 @@ export function ClientsPanel({ companyId, lang = "en" }: ClientsPanelProps) {
         onClose={() => setFormOpen(false)}
       >
         <form onSubmit={handleSubmit}>
-          <Field
-            label={t(lang, "clients.name")}
-            value={name}
-            required
-            onChange={(event) => setName(event.target.value)}
-          />
-          <Field
-            label={t(lang, "clients.email")}
-            value={email}
-            type="email"
-            onChange={(event) => setEmail(event.target.value)}
-          />
-          <Field
-            label={t(lang, "clients.vat")}
-            value={vatNumber}
-            onChange={(event) => setVatNumber(event.target.value)}
-          />
-          <Field
-            label={t(lang, "clients.address")}
-            value={addressLine1}
-            onChange={(event) => setAddressLine1(event.target.value)}
-          />
-          <Field
-            label={t(lang, "clients.postalCode")}
-            value={postalCode}
-            onChange={(event) => setPostalCode(event.target.value)}
-          />
-          <Field
-            label={t(lang, "clients.city")}
-            value={city}
-            onChange={(event) => setCity(event.target.value)}
-          />
-          <Field
-            label={t(lang, "clients.country")}
-            value={countryCode}
-            maxLength={2}
-            onChange={(event) => setCountryCode(event.target.value)}
-          />
+          <Field label={t(lang, "clients.name")} required>
+            <TextInput
+              value={name}
+              required
+              onChange={(event) => setName(event.target.value)}
+            />
+          </Field>
+          <Field label={t(lang, "clients.email")}>
+            <TextInput
+              value={email}
+              type="email"
+              onChange={(event) => setEmail(event.target.value)}
+            />
+          </Field>
+          <Field label={t(lang, "clients.vat")}>
+            <TextInput
+              value={vatNumber}
+              onChange={(event) => setVatNumber(event.target.value)}
+            />
+          </Field>
+          <Field label={t(lang, "clients.address")}>
+            <TextInput
+              value={addressLine1}
+              onChange={(event) => setAddressLine1(event.target.value)}
+            />
+          </Field>
+          <Field label={t(lang, "clients.postalCode")}>
+            <TextInput
+              value={postalCode}
+              onChange={(event) => setPostalCode(event.target.value)}
+            />
+          </Field>
+          <Field label={t(lang, "clients.city")}>
+            <TextInput
+              value={city}
+              onChange={(event) => setCity(event.target.value)}
+            />
+          </Field>
+          <Field label={t(lang, "clients.country")}>
+            <TextInput
+              value={countryCode}
+              maxLength={2}
+              onChange={(event) => setCountryCode(event.target.value)}
+            />
+          </Field>
           {createClient.isError ? (
             <div role="alert">{t(lang, "common.error")}</div>
           ) : null}

@@ -7,6 +7,7 @@ import { useId, useState, type FormEvent } from "react";
 import { Button } from "../components/Button";
 import { EmptyState } from "../components/EmptyState";
 import { Field } from "../components/Field";
+import { TextInput } from "../components/TextInput";
 import { Modal } from "../components/Modal";
 import { Spinner } from "../components/Spinner";
 import {
@@ -360,7 +361,7 @@ export function HistoryPanel({ companyId, lang = "en" }: HistoryPanelProps) {
           </tbody>
         </table>
       ) : (
-        <EmptyState message={t(lang, "history.empty")} />
+        <EmptyState title={t(lang, "history.empty")} />
       )}
 
       <Modal
@@ -371,20 +372,22 @@ export function HistoryPanel({ companyId, lang = "en" }: HistoryPanelProps) {
         <form onSubmit={handleActionSubmit}>
           {action?.kind === "payment" ? (
             <>
-              <Field
-                label={t(lang, "history.paymentAmount")}
-                value={amount}
-                required
-                inputMode="decimal"
-                onChange={(event) => setAmount(event.target.value)}
-              />
-              <Field
-                label={t(lang, "history.paymentDate")}
-                value={paidOn}
-                required
-                type="date"
-                onChange={(event) => setPaidOn(event.target.value)}
-              />
+              <Field label={t(lang, "history.paymentAmount")} required>
+                <TextInput
+                  value={amount}
+                  required
+                  inputMode="decimal"
+                  onChange={(event) => setAmount(event.target.value)}
+                />
+              </Field>
+              <Field label={t(lang, "history.paymentDate")} required>
+                <TextInput
+                  value={paidOn}
+                  required
+                  type="date"
+                  onChange={(event) => setPaidOn(event.target.value)}
+                />
+              </Field>
             </>
           ) : isConfirmOnly ? (
             <p>
@@ -399,10 +402,14 @@ export function HistoryPanel({ companyId, lang = "en" }: HistoryPanelProps) {
                 lang,
                 action?.kind === "void" ? "history.voidReason" : "history.creditNoteReason",
               )}
-              value={reason}
               required
-              onChange={(event) => setReason(event.target.value)}
-            />
+            >
+              <TextInput
+                value={reason}
+                required
+                onChange={(event) => setReason(event.target.value)}
+              />
+            </Field>
           )}
           {actionFailed ? <div role="alert">{t(lang, "common.error")}</div> : null}
           <div className="bg-panel__actions">

@@ -34,7 +34,7 @@ export function ActivityPanel({ lang = "en", limit = 50, targetType }: ActivityP
           ))}
         </ul>
       ) : (
-        <EmptyState message={t(lang, "activity.empty")} />
+        <EmptyState title={t(lang, "activity.empty")} />
       )}
     </section>
   );

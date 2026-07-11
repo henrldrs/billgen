@@ -2,12 +2,13 @@
 
 /* Brand tokens + shared component classes live in @billgen/ui — one source
  * of truth for every frontend. App-specific styles only below. */
+@import "@billgen/ui/src/styles/fonts.css";
 @import "@billgen/ui/src/styles/tokens.css";
 @import "@billgen/ui/src/styles/components.css";
 
 body {
   margin: 0;
-  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-family: var(--bg-font-sans, "Segoe UI", system-ui, -apple-system, sans-serif);
   color: var(--bg-ink);
   background: var(--bg-surface-alt);
 }
