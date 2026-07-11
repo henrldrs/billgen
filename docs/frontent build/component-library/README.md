@@ -89,15 +89,26 @@ Slices so far:
     label+keywords, sections, ↑↓/↵/Esc, kbd-hint footer; controlled — the
     app binds the hotkey). `.bg-kbd` ships here; the Kbd component follows
     in the utility batch.
-13. **P1 settings & utility — closes the P1 set** — Segmented (the shared
+13. **P1 settings & utility** — Segmented (the shared
     pick-one primitive), ThemeSwitcher (light/dark over Segmented; app
     flips data-bg-theme), LanguageSwitcher (FR/NL/EN codes in mono),
     SettingsShell (section rail + content; hosts Import data and Activity
     log per the nav decision), NotificationCenter (bell + overlay-glass
     panel, unread halo, mark-all-read), SuccessState (draw-in check,
     .bg-state family), Kbd, CopyButton (clipboard + 1.6s check flip,
-    execCommand fallback). P2 and app-specific compositions (invoice line
-    editor, VAT picker) are the only things left beyond this.
+    execCommand fallback).
+14. **P1 closers — NOW the P1 set is complete** (slice 13 claimed it early;
+    a line-by-line checklist audit found five stragglers) — ContextMenu
+    (right-click positional menu reusing the Menu popup + entries, clamps
+    to the viewport), OrgSwitcher (the company switcher as a real
+    component: avatar + name trigger, listbox with active check and "New
+    company" footer; replaced the raw <select> placeholder in the TopNav
+    demo), HelpBubble (floating support launcher, bottom-LEFT — toasts own
+    bottom-right; HelpIcon finally does its job), ChartWrapper
+    (lib-agnostic frame: title/legend/actions/caption + loading/empty
+    states, data-surface sheen), Divider (plain hr or labeled
+    start/center). P2 and app-specific compositions (invoice line editor,
+    VAT picker) are the only things left beyond this.
 
 **This folder is not wired into any build.** Nothing here is imported by
 `frontend-react`, `frontend-saas`, or `frontend-electron`. It's isolated
@@ -177,6 +188,11 @@ component-library/
     NotificationCenter.tsx       — bell + notification panel (slice 13)
     SuccessState.tsx             — positive outcome, draw-in check (slice 13)
     Kbd.tsx / CopyButton.tsx     — shortcut hint + copy-with-confirmation (slice 13)
+    ContextMenu.tsx              — right-click positional menu (slice 14)
+    OrgSwitcher.tsx              — company/workspace switcher (slice 14)
+    HelpBubble.tsx               — floating support launcher, bottom-left (slice 14)
+    ChartWrapper.tsx             — lib-agnostic chart frame (slice 14)
+    Divider.tsx                  — plain or labeled section break (slice 14)
   index.additions.ts           — new export lines to append to src/index.ts
   open-preview.cmd             — DOUBLE-CLICK THIS to check components yourself:
                                   installs deps if needed, starts Vite on :5174,

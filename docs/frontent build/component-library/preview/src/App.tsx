@@ -13,6 +13,7 @@ import { P1NavDataGallery } from "./galleries/P1NavDataGallery";
 import { P1FormsGallery } from "./galleries/P1FormsGallery";
 import { P1FlowGallery } from "./galleries/P1FlowGallery";
 import { P1SettingsGallery } from "./galleries/P1SettingsGallery";
+import { P1ClosersGallery } from "./galleries/P1ClosersGallery";
 import type { GalleryProps } from "./ui";
 
 interface Batch {
@@ -36,7 +37,8 @@ const BATCHES: Batch[] = [
   { key: "p1nav", label: "P1: nav & KPIs", Gallery: P1NavDataGallery },
   { key: "p1forms", label: "P1: forms", Gallery: P1FormsGallery },
   { key: "p1flow", label: "P1: overlays & flow", Gallery: P1FlowGallery },
-  { key: "p1settings", label: "P1: settings & utility", isNew: true, Gallery: P1SettingsGallery },
+  { key: "p1settings", label: "P1: settings & utility", Gallery: P1SettingsGallery },
+  { key: "p1closers", label: "P1: closers", isNew: true, Gallery: P1ClosersGallery },
 ];
 
 const NEW_KEYS = BATCHES.filter((b) => b.isNew).map((b) => b.key);

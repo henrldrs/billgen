@@ -3450,6 +3450,406 @@ button.bg-stepper__button:focus-visible {
   white-space: nowrap;
 }
 
+/* ==== slice 14: P1 closers =================================================
+ * ContextMenu (reuses .bg-menu__popup/item), OrgSwitcher, HelpBubble,
+ * ChartWrapper, Divider — the last five P1 checklist items.
+ * ======================================================================== */
+
+/* ---- context menu: fixed-position variant of the menu popup ---------------- */
+.bg-context-menu__popup {
+  position: fixed;
+  top: auto;
+  z-index: 70;
+}
+
+/* ---- org switcher: avatar + name trigger, listbox popup --------------------- */
+.bg-org {
+  position: relative;
+  display: inline-flex;
+}
+.bg-org__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  background: none;
+  padding: 0.3rem 0.55rem;
+  border-radius: var(--bg-radius-md);
+  font-family: inherit;
+  cursor: pointer;
+  transition: background var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-org__trigger:hover {
+  background: color-mix(in srgb, var(--bg-ink) 5%, transparent);
+}
+.bg-org__trigger:focus-visible {
+  outline: 3px solid var(--bg-focus-ring-color);
+  outline-offset: 1px;
+}
+.bg-org__trigger:active {
+  transform: scale(var(--bg-press-scale));
+  transition-duration: var(--bg-duration-press);
+  transition-timing-function: var(--bg-ease-in);
+}
+.bg-org__name {
+  font-size: var(--bg-text-label);
+  font-weight: var(--bg-weight-button-strong);
+  letter-spacing: var(--bg-tracking-button-sm);
+  color: var(--bg-ink);
+  white-space: nowrap;
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bg-org__caret {
+  width: 0.7rem;
+  height: 0.7rem;
+  color: var(--bg-ink-soft);
+  opacity: var(--bg-icon-idle-opacity);
+  flex-shrink: 0;
+}
+.bg-org__popup {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  z-index: 60;
+  min-width: 15rem;
+  padding: 0.4rem;
+  background: linear-gradient(135deg, var(--bg-glass-overlay-from), var(--bg-glass-overlay-to));
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--bg-glass-border);
+  border-radius: var(--bg-radius-xl);
+  box-shadow: var(--bg-shadow-overlay), var(--bg-glass-highlight);
+  animation: bg-menu-in var(--bg-duration-fast) var(--bg-ease-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  .bg-org__popup {
+    animation: none;
+  }
+}
+.bg-org__option {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  box-sizing: border-box;
+  border: none;
+  background: none;
+  padding: 0.45rem 0.55rem;
+  border-radius: var(--bg-radius-md);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-org__option:hover {
+  background: color-mix(in srgb, var(--bg-accent) 8%, transparent);
+}
+.bg-org__option:focus-visible {
+  outline: 3px solid var(--bg-focus-ring-color);
+  outline-offset: -3px;
+}
+.bg-org__option--active {
+  background: color-mix(in srgb, var(--bg-accent) 6%, transparent);
+}
+.bg-org__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  min-width: 0;
+  flex: 1;
+}
+.bg-org__option-name {
+  font-size: var(--bg-text-label);
+  font-weight: var(--bg-weight-label);
+  color: var(--bg-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bg-org__option--active .bg-org__option-name {
+  font-weight: var(--bg-weight-button-strong);
+}
+.bg-org__option-detail {
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+}
+.bg-org__check {
+  display: inline-flex;
+  width: 0.85rem;
+  height: 0.85rem;
+  flex-shrink: 0;
+  color: var(--bg-accent-ink);
+}
+.bg-org__check svg {
+  width: 100%;
+  height: 100%;
+}
+.bg-org__create {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  border: none;
+  background: none;
+  padding: 0.5rem 0.55rem;
+  border-radius: var(--bg-radius-md);
+  font-family: inherit;
+  font-size: var(--bg-text-label);
+  font-weight: var(--bg-weight-label);
+  letter-spacing: var(--bg-tracking-button-sm);
+  color: var(--bg-accent-ink);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-org__create:hover {
+  background: var(--bg-accent-soft);
+}
+.bg-org__create:focus-visible {
+  outline: 3px solid var(--bg-focus-ring-color);
+  outline-offset: -3px;
+}
+
+/* ---- help bubble: floating launcher, bottom-left (toasts own bottom-right) -- */
+.bg-help {
+  position: fixed;
+  left: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+.bg-help__launcher {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid var(--bg-glass-border);
+  border-radius: 999px;
+  background: linear-gradient(160deg, var(--bg-icon-chip-navy-from), var(--bg-icon-chip-navy-to));
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  color: #fff;
+  cursor: pointer;
+  box-shadow:
+    var(--bg-icon-chip-ring),
+    inset 0 1px 0 var(--bg-icon-chip-highlight),
+    var(--bg-shadow-md);
+  transition: transform var(--bg-duration-fast) var(--bg-ease-out),
+    box-shadow var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-help__launcher svg {
+  width: 55%;
+  height: 55%;
+}
+.bg-help__launcher .icon-accent {
+  color: var(--brand-green-300);
+}
+.bg-help__launcher:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    var(--bg-icon-chip-ring),
+    inset 0 1px 0 var(--bg-icon-chip-highlight),
+    var(--bg-shadow-glow);
+}
+.bg-help__launcher:active {
+  transform: scale(var(--bg-press-scale));
+  transition-duration: var(--bg-duration-press);
+  transition-timing-function: var(--bg-ease-in);
+}
+.bg-help__launcher:focus-visible {
+  outline: 3px solid var(--bg-focus-ring-color);
+  outline-offset: 2px;
+}
+.bg-help__panel {
+  width: 18rem;
+  padding: 0.9rem 1rem;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, var(--bg-glass-overlay-from), var(--bg-glass-overlay-to));
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--bg-glass-border);
+  border-radius: var(--bg-radius-surface);
+  box-shadow: var(--bg-shadow-overlay), var(--bg-glass-highlight);
+  animation: bg-toast-in var(--bg-duration-pop) var(--bg-ease-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  .bg-help__panel {
+    animation: none;
+  }
+}
+.bg-help__title {
+  font-size: var(--bg-text-label);
+  font-weight: var(--bg-weight-title);
+  letter-spacing: var(--bg-tracking-title);
+  color: var(--bg-ink);
+  margin-bottom: 0.35rem;
+}
+.bg-help__body {
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+  margin-bottom: 0.5rem;
+}
+.bg-help__links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.bg-help__link {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  width: 100%;
+  box-sizing: border-box;
+  border: none;
+  background: none;
+  padding: 0.45rem 0.55rem;
+  margin: 0 -0.55rem;
+  border-radius: var(--bg-radius-md);
+  font-family: inherit;
+  font-size: var(--bg-text-label);
+  font-weight: var(--bg-weight-label);
+  letter-spacing: var(--bg-tracking-button-sm);
+  color: var(--bg-ink);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-help__link:hover {
+  background: color-mix(in srgb, var(--bg-accent) 8%, transparent);
+}
+.bg-help__link:focus-visible {
+  outline: 3px solid var(--bg-focus-ring-color);
+  outline-offset: -3px;
+}
+.bg-help__link-hint {
+  flex-shrink: 0;
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+}
+
+/* ---- chart wrapper: the consistent frame around any chart ------------------- */
+.bg-chart {
+  margin: 0;
+  background: linear-gradient(
+    180deg,
+    var(--bg-surface),
+    color-mix(in srgb, var(--bg-surface) 97%, var(--bg-ink))
+  );
+  border: 1px solid color-mix(in srgb, var(--bg-line) 90%, transparent);
+  border-radius: var(--bg-radius-lg);
+  padding: 1.1rem 1.25rem;
+  box-shadow: var(--bg-shadow-sm);
+}
+.bg-chart__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.6rem;
+}
+.bg-chart__title {
+  font-size: var(--bg-text-section);
+  font-weight: var(--bg-weight-title);
+  letter-spacing: var(--bg-tracking-title);
+  color: var(--bg-ink);
+}
+.bg-chart__subtitle {
+  margin-top: 0.1rem;
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+}
+.bg-chart__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+.bg-chart__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  margin-bottom: 0.75rem;
+}
+.bg-chart__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+}
+.bg-chart__swatch {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 3px;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bg-ink) 12%, transparent);
+}
+.bg-chart__plot {
+  position: relative;
+}
+.bg-chart__plot > svg,
+.bg-chart__plot > canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.bg-chart__empty {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+}
+.bg-chart__caption {
+  margin-top: 0.6rem;
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+}
+
+/* ---- divider: hairline, optionally labeled ---------------------------------- */
+hr.bg-divider {
+  border: none;
+  height: 1px;
+  margin: 1.5rem 0;
+  background: color-mix(in srgb, var(--bg-line) 90%, transparent);
+}
+.bg-divider--labeled {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.5rem 0;
+}
+.bg-divider--labeled::before,
+.bg-divider--labeled::after {
+  content: "";
+  height: 1px;
+  background: color-mix(in srgb, var(--bg-line) 90%, transparent);
+}
+.bg-divider--labeled::after {
+  flex: 1;
+}
+.bg-divider--start::before {
+  flex: 0 0 1rem;
+}
+.bg-divider--center::before {
+  flex: 1;
+}
+.bg-divider__label {
+  flex-shrink: 0;
+  font-size: var(--bg-text-helper);
+  font-weight: var(--bg-weight-label);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--bg-ink-soft);
+}
+
 /* ---- kbd: keyboard-shortcut hint (shipped with the palette in slice 12;
  * the Kbd component wrapper arrived in slice 13) ---- */
 .bg-kbd {

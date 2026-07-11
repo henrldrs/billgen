@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "../../../components/Button";
+import { OrgSwitcher } from "../../../components/OrgSwitcher";
 import { TopNav, type TopNavLink } from "../../../components/TopNav";
 import {
   DashboardIcon,
@@ -26,6 +27,7 @@ const SAMPLE_LINKS: TopNavLink[] = [
 
 export function NavGallery({ onAction }: GalleryProps) {
   const [links, setLinks] = useState(SAMPLE_LINKS);
+  const [org, setOrg] = useState("acme");
 
   return (
     <Section title="TopNav — assembled, links replace a sidebar">
@@ -42,10 +44,18 @@ export function NavGallery({ onAction }: GalleryProps) {
           onNotificationsClick={() => onAction("TopNav notifications clicked")}
           onAvatarClick={() => onAction("TopNav avatar clicked")}
         >
-          <select aria-label="Company" defaultValue="acme" style={{ fontSize: "0.85rem" }}>
-            <option value="acme">Acme Consulting</option>
-            <option value="other">Other Co.</option>
-          </select>
+          <OrgSwitcher
+            orgs={[
+              { key: "acme", name: "Acme Consulting", detail: "BE 0123.456.789" },
+              { key: "other", name: "Other Co.", detail: "BE 0987.654.321" },
+            ]}
+            activeKey={org}
+            onChange={(key) => {
+              setOrg(key);
+              onAction(`OrgSwitcher: ${key}`);
+            }}
+            onCreateNew={() => onAction("OrgSwitcher: new company")}
+          />
         </TopNav>
         <div style={{ padding: "1.5rem", color: "var(--bg-ink-soft)", fontSize: "0.9rem" }}>
           (page content would render here)
