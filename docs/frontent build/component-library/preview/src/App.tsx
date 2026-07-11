@@ -12,6 +12,7 @@ import { ShellGallery } from "./galleries/ShellGallery";
 import { P1NavDataGallery } from "./galleries/P1NavDataGallery";
 import { P1FormsGallery } from "./galleries/P1FormsGallery";
 import { P1FlowGallery } from "./galleries/P1FlowGallery";
+import { P1SettingsGallery } from "./galleries/P1SettingsGallery";
 import type { GalleryProps } from "./ui";
 
 interface Batch {
@@ -34,7 +35,8 @@ const BATCHES: Batch[] = [
   { key: "shell", label: "App shell & account", Gallery: ShellGallery },
   { key: "p1nav", label: "P1: nav & KPIs", Gallery: P1NavDataGallery },
   { key: "p1forms", label: "P1: forms", Gallery: P1FormsGallery },
-  { key: "p1flow", label: "P1: overlays & flow", isNew: true, Gallery: P1FlowGallery },
+  { key: "p1flow", label: "P1: overlays & flow", Gallery: P1FlowGallery },
+  { key: "p1settings", label: "P1: settings & utility", isNew: true, Gallery: P1SettingsGallery },
 ];
 
 const NEW_KEYS = BATCHES.filter((b) => b.isNew).map((b) => b.key);
@@ -58,6 +60,14 @@ export function App() {
   useEffect(() => {
     window.history.replaceState(null, "", `#${selected.join(",")}`);
   }, [selected]);
+
+  /* Galleries can drive the theme too (the ThemeSwitcher demo does) —
+   * they dispatch "bg-theme-change" so this chip stays in sync. */
+  useEffect(() => {
+    const onThemeEvent = (e: Event) => setTheme((e as CustomEvent<Theme>).detail);
+    window.addEventListener("bg-theme-change", onThemeEvent);
+    return () => window.removeEventListener("bg-theme-change", onThemeEvent);
+  }, []);
 
   /* Dark mode is a token-layer remap keyed off this attribute — the toggle
    * proves every component flips with zero component-CSS changes. */

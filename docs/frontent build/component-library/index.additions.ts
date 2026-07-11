@@ -68,3 +68,23 @@ export {
   type CommandPaletteProps,
   type CommandItem,
 } from "./components/CommandPalette";
+export { Segmented, type SegmentedProps, type SegmentedOption } from "./components/Segmented";
+export { ThemeSwitcher, type ThemeSwitcherProps, type ThemeValue } from "./components/ThemeSwitcher";
+export {
+  LanguageSwitcher,
+  type LanguageSwitcherProps,
+  type LanguageOption,
+} from "./components/LanguageSwitcher";
+export {
+  SettingsShell,
+  type SettingsShellProps,
+  type SettingsSection,
+} from "./components/SettingsShell";
+export {
+  NotificationCenter,
+  type NotificationCenterProps,
+  type NotificationItem,
+} from "./components/NotificationCenter";
+export { SuccessState, type SuccessStateProps } from "./components/SuccessState";
+export { Kbd, type KbdProps } from "./components/Kbd";
+export { CopyButton, type CopyButtonProps } from "./components/CopyButton";

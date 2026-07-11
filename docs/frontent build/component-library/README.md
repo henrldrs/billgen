@@ -88,8 +88,16 @@ Slices so far:
     timestamps), CommandPalette (⌘K overlay: substring filter over
     label+keywords, sections, ↑↓/↵/Esc, kbd-hint footer; controlled — the
     app binds the hotkey). `.bg-kbd` ships here; the Kbd component follows
-    in the utility batch. Remaining P1: settings shell, theme/language
-    switcher, notification center, success state · kbd, copy button.
+    in the utility batch.
+13. **P1 settings & utility — closes the P1 set** — Segmented (the shared
+    pick-one primitive), ThemeSwitcher (light/dark over Segmented; app
+    flips data-bg-theme), LanguageSwitcher (FR/NL/EN codes in mono),
+    SettingsShell (section rail + content; hosts Import data and Activity
+    log per the nav decision), NotificationCenter (bell + overlay-glass
+    panel, unread halo, mark-all-read), SuccessState (draw-in check,
+    .bg-state family), Kbd, CopyButton (clipboard + 1.6s check flip,
+    execCommand fallback). P2 and app-specific compositions (invoice line
+    editor, VAT picker) are the only things left beyond this.
 
 **This folder is not wired into any build.** Nothing here is imported by
 `frontend-react`, `frontend-saas`, or `frontend-electron`. It's isolated
@@ -163,6 +171,12 @@ component-library/
     Stepper.tsx                  — numbered wizard trail (slice 12)
     StatusTimeline.tsx           — vertical lifecycle trail, Peppol-ready (slice 12)
     CommandPalette.tsx           — ⌘K search + quick actions (slice 12)
+    Segmented.tsx                — pick-one strip, shared primitive (slice 13)
+    ThemeSwitcher.tsx / LanguageSwitcher.tsx — Segmented wrappers (slice 13)
+    SettingsShell.tsx            — settings rail + content layout (slice 13)
+    NotificationCenter.tsx       — bell + notification panel (slice 13)
+    SuccessState.tsx             — positive outcome, draw-in check (slice 13)
+    Kbd.tsx / CopyButton.tsx     — shortcut hint + copy-with-confirmation (slice 13)
   index.additions.ts           — new export lines to append to src/index.ts
   open-preview.cmd             — DOUBLE-CLICK THIS to check components yourself:
                                   installs deps if needed, starts Vite on :5174,

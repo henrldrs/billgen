@@ -3058,8 +3058,400 @@ button.bg-stepper__button:focus-visible {
   color: var(--bg-ink-soft);
 }
 
-/* ---- kbd: keyboard-shortcut hint (shared; Kbd component lands in the
- * utility batch) ---- */
+/* ==== slice 13: P1 settings & utility =====================================
+ * Segmented (+ Theme/LanguageSwitcher), SettingsShell, NotificationCenter,
+ * SuccessState, Kbd, CopyButton. Closes the P1 set.
+ * ======================================================================== */
+
+/* ---- segmented control ------------------------------------------------------ */
+.bg-segmented {
+  display: inline-flex;
+  gap: 0.2rem;
+  padding: 0.2rem;
+  border-radius: var(--bg-radius-lg);
+  background: color-mix(in srgb, var(--bg-ink) 6%, transparent);
+  box-shadow: inset 0 1px 2px color-mix(in srgb, var(--bg-ink) 8%, transparent);
+}
+.bg-segmented__option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: none;
+  background: none;
+  padding: 0.35rem 0.8rem;
+  border-radius: var(--bg-radius-md);
+  font-family: inherit;
+  font-size: var(--bg-text-helper);
+  font-weight: var(--bg-weight-button);
+  letter-spacing: var(--bg-tracking-button-sm);
+  color: var(--bg-ink-soft);
+  cursor: pointer;
+  transition: color var(--bg-duration-fast) var(--bg-ease-out),
+    background var(--bg-duration-fast) var(--bg-ease-out),
+    box-shadow var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-segmented--sm .bg-segmented__option {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.72rem;
+}
+.bg-segmented__option:hover {
+  color: var(--bg-ink);
+}
+.bg-segmented__option:focus-visible {
+  outline: 3px solid var(--bg-focus-ring-color);
+  outline-offset: 1px;
+}
+.bg-segmented__option:active {
+  transform: scale(var(--bg-press-scale));
+  transition-duration: var(--bg-duration-press);
+  transition-timing-function: var(--bg-ease-in);
+}
+.bg-segmented__option--active {
+  background: var(--bg-surface);
+  color: var(--bg-ink);
+  font-weight: var(--bg-weight-button-strong);
+  box-shadow: var(--bg-shadow-sm), inset 0 1px 0 color-mix(in srgb, white 30%, transparent);
+}
+.bg-segmented__option:disabled {
+  cursor: not-allowed;
+  color: color-mix(in srgb, var(--bg-ink-soft) 55%, transparent);
+}
+.bg-segmented__icon {
+  display: inline-flex;
+  width: 0.85rem;
+  height: 0.85rem;
+  opacity: var(--bg-icon-idle-opacity);
+}
+.bg-segmented__icon svg {
+  width: 100%;
+  height: 100%;
+}
+.bg-segmented__option--active .bg-segmented__icon,
+.bg-segmented__option:hover .bg-segmented__icon {
+  opacity: 1;
+}
+
+/* ---- settings shell: section rail + content --------------------------------- */
+.bg-settings {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+.bg-settings__rail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex-shrink: 0;
+  width: 14rem;
+}
+.bg-settings__section {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  width: 100%;
+  box-sizing: border-box;
+  border: none;
+  background: none;
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--bg-radius-md);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-settings__section:hover {
+  background: color-mix(in srgb, var(--bg-ink) 5%, transparent);
+}
+.bg-settings__section:focus-visible {
+  outline: 3px solid var(--bg-focus-ring-color);
+  outline-offset: -3px;
+}
+.bg-settings__section--active {
+  background: var(--bg-accent-soft);
+}
+.bg-settings__icon {
+  display: inline-flex;
+  width: var(--bg-icon-16);
+  height: var(--bg-icon-16);
+  margin-top: 0.1rem;
+  flex-shrink: 0;
+  color: var(--bg-ink-soft);
+  opacity: var(--bg-icon-idle-opacity);
+}
+.bg-settings__icon svg {
+  width: 100%;
+  height: 100%;
+}
+.bg-settings__section--active .bg-settings__icon {
+  color: var(--bg-accent-ink);
+  opacity: 1;
+}
+.bg-settings__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  min-width: 0;
+}
+.bg-settings__label {
+  font-size: var(--bg-text-label);
+  font-weight: var(--bg-weight-label);
+  letter-spacing: var(--bg-tracking-button-sm);
+  color: var(--bg-ink);
+}
+.bg-settings__section--active .bg-settings__label {
+  color: var(--bg-accent-ink);
+  font-weight: var(--bg-weight-button-strong);
+}
+.bg-settings__desc {
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+}
+.bg-settings__content {
+  flex: 1;
+  min-width: 0;
+}
+@media (max-width: 640px) {
+  .bg-settings {
+    flex-direction: column;
+  }
+  .bg-settings__rail {
+    width: 100%;
+  }
+}
+
+/* ---- notification center ----------------------------------------------------- */
+.bg-notifs {
+  position: relative;
+  display: inline-flex;
+}
+.bg-notifs__panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: 60;
+  width: 22rem;
+  max-width: 90vw;
+  max-height: 24rem;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, var(--bg-glass-overlay-from), var(--bg-glass-overlay-to));
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--bg-glass-border);
+  border-radius: var(--bg-radius-xl);
+  box-shadow: var(--bg-shadow-overlay), var(--bg-glass-highlight);
+  animation: bg-menu-in var(--bg-duration-fast) var(--bg-ease-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  .bg-notifs__panel {
+    animation: none;
+  }
+}
+.bg-notifs__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--bg-line) 60%, transparent);
+  flex-shrink: 0;
+}
+.bg-notifs__title {
+  font-size: var(--bg-text-label);
+  font-weight: var(--bg-weight-title);
+  letter-spacing: var(--bg-tracking-title);
+  color: var(--bg-ink);
+}
+.bg-notifs__mark-read {
+  border: none;
+  background: none;
+  padding: 0.2rem 0.45rem;
+  border-radius: var(--bg-radius-sm);
+  font-family: inherit;
+  font-size: var(--bg-text-helper);
+  font-weight: var(--bg-weight-label);
+  color: var(--bg-accent-ink);
+  cursor: pointer;
+  transition: background var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-notifs__mark-read:hover {
+  background: var(--bg-accent-soft);
+}
+.bg-notifs__mark-read:focus-visible {
+  outline: 3px solid var(--bg-focus-ring-color);
+  outline-offset: 1px;
+}
+.bg-notifs__list {
+  list-style: none;
+  margin: 0;
+  padding: 0.35rem;
+  overflow-y: auto;
+}
+.bg-notifs__item {
+  display: flex;
+  gap: 0.6rem;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.6rem 0.55rem;
+  border: none;
+  background: none;
+  border-radius: var(--bg-radius-md);
+  font-family: inherit;
+  text-align: left;
+  color: inherit;
+}
+.bg-notifs__item--clickable {
+  cursor: pointer;
+  transition: background var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-notifs__item--clickable:hover {
+  background: color-mix(in srgb, var(--bg-accent) 8%, transparent);
+}
+.bg-notifs__item--clickable:focus-visible {
+  outline: 3px solid var(--bg-focus-ring-color);
+  outline-offset: -3px;
+}
+.bg-notifs__dot {
+  flex-shrink: 0;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-top: 0.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-ink) 15%, transparent);
+}
+.bg-notifs__dot--success {
+  background: var(--bg-success);
+}
+.bg-notifs__dot--danger {
+  background: var(--bg-danger);
+}
+.bg-notifs__dot--unread {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--bg-accent) 18%, transparent);
+}
+.bg-notifs__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 1;
+}
+.bg-notifs__item-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+.bg-notifs__item-title {
+  font-size: var(--bg-text-label);
+  font-weight: var(--bg-weight-label);
+  color: var(--bg-ink);
+  min-width: 0;
+}
+.bg-notifs__item-title--unread {
+  font-weight: var(--bg-weight-button-strong);
+}
+.bg-notifs__time {
+  flex-shrink: 0;
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+}
+.bg-notifs__item-desc {
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+}
+.bg-notifs__empty {
+  padding: 1.75rem 1rem;
+  text-align: center;
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+}
+
+/* ---- success state: draw-in check --------------------------------------------- */
+.bg-state__mark--success {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--bg-accent) 16%, transparent),
+    color-mix(in srgb, var(--bg-accent) 30%, transparent)
+  );
+  color: var(--bg-success);
+}
+.bg-state__mark--success svg {
+  width: 65%;
+  height: 65%;
+}
+.bg-state__success-ring {
+  stroke-dasharray: 63;
+  stroke-dashoffset: 0;
+  animation: bg-success-draw 500ms var(--bg-ease-out) backwards;
+}
+.bg-state__success-check {
+  stroke-dasharray: 15;
+  stroke-dashoffset: 0;
+  animation: bg-success-draw 350ms var(--bg-ease-out) 250ms backwards;
+}
+@keyframes bg-success-draw {
+  from {
+    stroke-dashoffset: 63;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bg-state__success-ring,
+  .bg-state__success-check {
+    animation: none;
+  }
+}
+
+/* ---- copy button: icon flips to check ------------------------------------------ */
+.bg-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border: none;
+  background: none;
+  border-radius: var(--bg-radius-sm);
+  color: var(--bg-ink-soft);
+  cursor: pointer;
+  vertical-align: middle;
+  transition: color var(--bg-duration-fast) var(--bg-ease-out),
+    background var(--bg-duration-fast) var(--bg-ease-out);
+}
+.bg-copy svg {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+.bg-copy:hover {
+  color: var(--bg-ink);
+  background: color-mix(in srgb, var(--bg-ink) 7%, transparent);
+}
+.bg-copy:focus-visible {
+  outline: 3px solid var(--bg-focus-ring-color);
+  outline-offset: 1px;
+}
+.bg-copy:active {
+  transform: scale(var(--bg-press-scale));
+  transition-duration: var(--bg-duration-press);
+  transition-timing-function: var(--bg-ease-in);
+}
+.bg-copy--copied {
+  color: var(--bg-success);
+  background: var(--bg-success-soft);
+}
+.bg-copy__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---- kbd: keyboard-shortcut hint (shipped with the palette in slice 12;
+ * the Kbd component wrapper arrived in slice 13) ---- */
 .bg-kbd {
   display: inline-block;
   min-width: 1.15rem;
