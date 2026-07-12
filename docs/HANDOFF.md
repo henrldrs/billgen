@@ -12,7 +12,7 @@ Read this instead of re-deriving context.
 |---|---|
 | Location | `C:\Users\hdr_s\Documents\business model\BillGen BETA` |
 | Phases done | 0–9, **11** (domain → rules → DB → services → API → business routers → UI kit → SaaS shell → desktop → legacy import) + **Peppol e-invoicing** (Helger-validated Peppol BIS 3.0 + Belgian elements + pre-export validation gate; `771e903` then switched off UBL.BE). Phase 10 (billing) not yet started. |
-| UI library | **Merged into the live `@billgen/ui` and driving the SaaS shell** (Henri approved integration 2026-07-11; commits `5bd7e79` + `0386c09`). 57 components + 14 icon files, all P0 + P1 of `docs/UNIVERSAL_COMPONENT_LIBRARY_CHECKLIST.md`, dark mode as one token remap (persisted, pre-paint), Satoshi/Geist Mono. The SaaS shell now runs TopNav-only nav (sidebar deleted), OrgSwitcher, AccountMenu, ⌘K palette, SettingsShell (hosting Import + Activity + theme). `docs/frontent build/component-library/` stays as the archived record + preview gallery (`open-preview.cmd`, port 5174); reference in its `COMPONENTS.md`. The desktop (Tauri) shell runs the same TopNav/settings layout (`c09f0f7`, typecheck+build verified; Tauri window not relaunched). See §3 + §9. |
+| UI library | **Its own package `@henrioutai/ui`** (`henrioutai-ui/`, extracted `5a81cfd`) — the design system (58 components + 14 icons + tokens/CSS/fonts), token-only, business-free, **public-ready** (MIT). `@billgen/ui` (frontend-react) keeps the business half (API client, generated types, hooks, panels) and re-exports the design system, so `import { Button } from "@billgen/ui"` still works. Both shells run TopNav-only nav (sidebar deleted), OrgSwitcher, AccountMenu, ⌘K palette, SettingsShell (Import + Backup + Activity + theme). Dark mode = one token remap, persisted pre-paint. Dep graph: `@henrioutai/ui` (leaf) ← `@billgen/ui` ← shells. `docs/frontent build/component-library/` is the archived record + preview gallery. Desktop (Tauri) shell same layout (`c09f0f7`; Tauri window not relaunched). See §3 + §9. |
 | Tests | **Python 219 passed, 0 skipped** (`python -m pytest tests`); **frontend 38 passed** (`npm run test --workspace @billgen/ui`) |
 | Git | local only, **not pushed** — no remote yet (Henri setting up a private GitHub; this is the top safety-net gap). One commit + tag per phase (`phase-4` … `phase-9b`); later work committed on `main` without tags. CI workflow (`.github/workflows/ci.yml`) is written and waiting for that remote. Branch `main`. |
 | PDF engine | **Headless Chromium via Playwright** (primary, cross-platform incl. Windows/desktop) with **WeasyPrint** as a fallback for the Docker/SaaS image. Setup on a fresh box: `pip install playwright` then `python -m playwright install chromium`. Without any engine, `/pdf` returns a clean 503. Free-tier PDFs carry a subtle "Made with BillGen" footer + logo. |
@@ -148,17 +148,29 @@ the API's OpenAPI schema, so the UI cannot drift from the server contract.
 | `desktop/bootstrap.py` | `run()`, `find_free_port()`, `prepare_database()`, `configure_environment()`, `load_or_create_secret()` | The sidecar entrypoint (`python -m desktop.bootstrap`): migrate-on-boot, pick port, print `BILLGEN_SIDECAR port=N`, serve uvicorn. |
 | `desktop/licensing.py` | `verify_license()`, `sign_license()`, `check_license()`, `generate_keypair()`, `LicenseInfo`, `LicenseError` | Ed25519 offline license verification. |
 
-### `frontend-react/` — `@billgen/ui` shared kit (no business logic, no localStorage)
+### `henrioutai-ui/` — `@henrioutai/ui`, the design system (public-ready, business-free)
+
+Extracted from `@billgen/ui` (`5a81cfd`) so it can go public (MIT) while the
+BillGen engine stays private. Depends only on React. This is the source of
+truth for every component; `@billgen/ui` re-exports it.
+
+| Path | Purpose |
+|---|---|
+| `src/components/` (+ `icons/`) | 58 components + 14 icons. Token-only (`var(--bg-*)`), no data layer, no `t()`. Consumed at source (`main` → `src/index.ts`); npm-publish wants a `dist` build (README). |
+| `src/styles/` | `tokens.css` (the remap layer), `components.css` (the `.bg-*` classes), `fonts.css` + `fonts/` (Satoshi, Geist Mono). Dark mode = `:root[data-bg-theme="dark"]`. Shells import these via `@henrioutai/ui/styles/*`. |
+| `src/index.ts`, `package.json`, `README.md`, `LICENSE` | Public API + publish-shaped package metadata. |
+
+### `frontend-react/` — `@billgen/ui`: BillGen business UI (consumes `@henrioutai/ui`)
 
 | Path | Key names | Purpose |
 |---|---|---|
 | `src/lib/apiClient.ts` | `ApiClient`, `MemoryTokenStore`, `TokenStore`, `ApiError` | Typed HTTP client. **Pluggable token storage** (kit never touches localStorage). One refresh+retry on 401 → `onAuthLost`. `desktopBootstrap()` for the desktop app. |
 | `src/types/api.d.ts` | generated | From the API's `openapi.json`. Regenerate: `npm run generate:api` in `frontend-react/`. |
 | `src/providers/BillGenProvider.tsx` | `BillGenProvider`, `useApi` | React Query + ApiClient context. |
-| `src/hooks/queries.ts` | `useClients`, `useInvoices`, `useInvoicePreview`, `useCreateInvoice`, `useVoidInvoice`, `useIssueCreditNote`, `useRecordPayment`, `useKpi`, `useRevenue`, `useActivity`, `useCompanies`, `useProducts`, … | Server-state hooks with cache invalidation. |
+| `src/hooks/queries.ts` | `useClients`, `useInvoices`, `useInvoicePreview`, `useCreateInvoice`, `useVoidInvoice`, `useIssueCreditNote`, `useRecordPayment`, `useKpi`, `useRevenue`, `useActivity`, `useCompanies`, `useProducts`, `useBackupExport`, `useBackupRestore`, … | Server-state hooks with cache invalidation. |
 | `src/hooks/useAuth.tsx` | `AuthProvider`, `useAuth` | In-memory session (the SaaS shell adds persistence on top). |
-| `src/components/` | `Button`, `Field`, `Modal`, `Spinner`, `EmptyState` | Semantic `bg-*` classNames; styled by the app shells. |
-| `src/panels/` | `ClientsPanel`, `ProductsPanel`, `InvoiceBuilderPanel`, `HistoryPanel`, `DashboardPanel`, `ActivityPanel`, `CompanyForm`, `ImportPanel` | Dumb panels: data via hooks, `t()` for i18n, no math. `ImportPanel` = file picker → preview → confirm for legacy backups. |
+| `src/index.ts` | — | Re-exports the design system (`export * from "@henrioutai/ui"`) + the business surface, so `import { Button, InvoiceBuilderPanel } from "@billgen/ui"` still resolves. |
+| `src/panels/` | `ClientsPanel`, `ProductsPanel`, `InvoiceBuilderPanel`, `HistoryPanel`, `DashboardPanel`, `ActivityPanel`, `CompanyForm`, `ImportPanel`, `BackupPanel` | Dumb panels: data via hooks, `t()` for i18n, no math; import components from `@henrioutai/ui`. |
 | `src/lib/format.ts` | `formatMoney`, `formatDate`, `monthName` | Display-only (Intl). **Not** the legally binding server formatting. |
 
 ### `frontend-saas/` — public web app
@@ -339,6 +351,14 @@ build`).
 > the sidecar, Phase 12) → **web deploy** (Dockerfile + Postgres + TLS; the API does
 > not yet serve the SPA — needs a static host or a `StaticFiles` mount). No Dockerfile
 > exists yet; `infra/*` is still empty scaffolding.
+> **Repo topology (decided 2026-07-12):** BillGen stays **one private monorepo**
+> (engine + api + db + apps — tightly coupled via the generated OpenAPI types, the
+> workspace-linked UI, and the engine-at-runtime desktop sidecar). The **design
+> system `@henrioutai/ui` is public** — already carved into `henrioutai-ui/` as a
+> standalone package (`5a81cfd`); extracting it to its own public repo later is a
+> `git subtree`/`filter-repo` split, and npm-publishing to outside consumers wants a
+> `dist` build step. **Blocked on:** no git remote yet (Henri setting up a private
+> GitHub; then push the monorepo, and the public library repo).
 
 - **Phase 10** — Stripe billing + plan enforcement (`SubscriptionRow` already
   exists), email (Postmark), VIES VAT check.
@@ -430,6 +450,9 @@ build`).
   Activity + theme — typecheck + vite build verified, Tauri window not relaunched
   (Rust compile; do a runtime pass next desktop session). `docs/frontent build/
   component-library/` is now the archived record, not the source.
+  Then the design system was **extracted into its own package `@henrioutai/ui`**
+  (`5a81cfd`, `henrioutai-ui/`) so it can be published (MIT) while BillGen stays
+  private — see the repo-map entry. `@billgen/ui` now consumes + re-exports it.
   **Still open:** Henri's sketches for the three placeholder icons (Products &
   services, Import, Activity); a notification source for the bell (chrome-only
   today); P2 nice-to-haves + app-specific compositions (invoice line editor,
