@@ -1,4 +1,4 @@
-import { ApiClient, BillGenProvider, Spinner } from "@billgen/ui";
+import { ApiClient, BillGenProvider, ErrorState, LoadingScreen } from "@billgen/ui";
 import { useEffect, useState } from "react";
 
 import { DesktopShell } from "./DesktopShell";
@@ -36,7 +36,7 @@ export function App() {
   if (boot.status === "connecting") {
     return (
       <div style={{ display: "grid", placeItems: "center", minHeight: "100vh" }}>
-        <Spinner label="Starting BillGen…" />
+        <LoadingScreen label="Starting BillGen…" />
       </div>
     );
   }
@@ -44,13 +44,10 @@ export function App() {
   if (boot.status === "error") {
     return (
       <div style={{ display: "grid", placeItems: "center", minHeight: "100vh" }}>
-        <div role="alert" style={{ maxWidth: 420, textAlign: "center" }}>
-          <h1 style={{ fontSize: "1.2rem" }}>Could not start BillGen</h1>
-          <p style={{ color: "#b42318" }}>{boot.message}</p>
-          <p style={{ color: "#4b5a6b", fontSize: "0.9rem" }}>
-            The local service did not respond. Try relaunching the app.
-          </p>
-        </div>
+        <ErrorState
+          title="Could not start BillGen"
+          description={`${boot.message} — the local service did not respond. Try relaunching the app.`}
+        />
       </div>
     );
   }
