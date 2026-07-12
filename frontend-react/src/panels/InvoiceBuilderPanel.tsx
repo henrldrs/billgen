@@ -4,8 +4,7 @@
 
 import { useEffect, useId, useMemo, useState } from "react";
 
-import { Button } from "../components/Button";
-import { Spinner } from "../components/Spinner";
+import { Button, Spinner } from "@henrioutai/ui";
 import { useClients, useCreateInvoice, useInvoicePreview } from "../hooks/queries";
 import { formatMoney } from "../lib/format";
 import { t, type Lang } from "../lib/translations";

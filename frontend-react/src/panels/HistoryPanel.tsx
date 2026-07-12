@@ -4,12 +4,7 @@
 
 import { useId, useState, type FormEvent } from "react";
 
-import { Button } from "../components/Button";
-import { EmptyState } from "../components/EmptyState";
-import { Field } from "../components/Field";
-import { TextInput } from "../components/TextInput";
-import { Modal } from "../components/Modal";
-import { Spinner } from "../components/Spinner";
+import { Button, EmptyState, Field, Modal, Spinner, TextInput } from "@henrioutai/ui";
 import {
   useDeleteInvoice,
   useInvoices,

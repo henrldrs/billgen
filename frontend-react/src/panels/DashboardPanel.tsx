@@ -1,4 +1,4 @@
-import { Spinner } from "../components/Spinner";
+import { Spinner } from "@henrioutai/ui";
 import { useKpi, useRevenue } from "../hooks/queries";
 import { formatMoney, monthName } from "../lib/format";
 import { t, type Lang } from "../lib/translations";

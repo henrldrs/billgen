@@ -1,8 +1,6 @@
 import { useId, useState, type FormEvent } from "react";
 
-import { Button } from "../components/Button";
-import { Field } from "../components/Field";
-import { TextInput } from "../components/TextInput";
+import { Button, Field, TextInput } from "@henrioutai/ui";
 import { useCreateCompany } from "../hooks/queries";
 import { t, type Lang } from "../lib/translations";
 import type { CompanyResponse } from "../types";

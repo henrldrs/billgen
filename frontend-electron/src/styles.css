@@ -2,9 +2,9 @@
 
 /* Brand tokens + shared component classes live in @billgen/ui — one source
  * of truth for every frontend. App-specific styles only below. */
-@import "@billgen/ui/src/styles/fonts.css";
-@import "@billgen/ui/src/styles/tokens.css";
-@import "@billgen/ui/src/styles/components.css";
+@import "@henrioutai/ui/styles/fonts.css";
+@import "@henrioutai/ui/styles/tokens.css";
+@import "@henrioutai/ui/styles/components.css";
 
 body {
   margin: 0;

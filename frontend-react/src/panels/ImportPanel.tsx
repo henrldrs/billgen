@@ -4,8 +4,7 @@
 
 import { useState } from "react";
 
-import { Button } from "../components/Button";
-import { Spinner } from "../components/Spinner";
+import { Button, Spinner } from "@henrioutai/ui";
 import { useImportCommit, useImportPreview } from "../hooks/queries";
 import { t, type Lang } from "../lib/translations";
 import type { ImportEntityCounts, ImportReport } from "../types";

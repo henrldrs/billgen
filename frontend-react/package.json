@@ -16,6 +16,7 @@
     "react-dom": "^19.0.0"
   },
   "dependencies": {
+    "@henrioutai/ui": "*",
     "@tanstack/react-query": "^5.62.0"
   },
   "devDependencies": {

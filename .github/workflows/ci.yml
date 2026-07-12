@@ -49,6 +49,9 @@ jobs:
       - name: Install workspaces
         run: npm ci
 
+      - name: Typecheck @henrioutai/ui
+        run: npm run -w @henrioutai/ui typecheck
+
       - name: Typecheck @billgen/ui
         run: npm run -w @billgen/ui typecheck
 

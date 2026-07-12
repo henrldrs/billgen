@@ -6,9 +6,7 @@
 
 import { useState } from "react";
 
-import { Button } from "../components/Button";
-import { ConfirmDialog } from "../components/ConfirmDialog";
-import { Spinner } from "../components/Spinner";
+import { Button, ConfirmDialog, Spinner } from "@henrioutai/ui";
 import { useBackupExport, useBackupRestore } from "../hooks/queries";
 import { ApiError } from "../lib/apiClient";
 import { t, type Lang } from "../lib/translations";

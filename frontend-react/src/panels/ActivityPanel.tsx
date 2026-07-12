@@ -1,5 +1,4 @@
-import { EmptyState } from "../components/EmptyState";
-import { Spinner } from "../components/Spinner";
+import { EmptyState, Spinner } from "@henrioutai/ui";
 import { useActivity } from "../hooks/queries";
 import { t, type Lang } from "../lib/translations";
 
