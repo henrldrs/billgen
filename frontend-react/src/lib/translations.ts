@@ -477,6 +477,78 @@ const MESSAGES = {
     nl: "Dat bestand is geen geldige JSON.",
     es: "Ese archivo no es un JSON válido.",
   },
+  "backup.title": {
+    en: "Backup",
+    fr: "Sauvegarde",
+    nl: "Back-up",
+    es: "Copia de seguridad",
+  },
+  "backup.intro": {
+    en: "Download everything in this organization — companies, clients, products, invoices, payments, the activity log and the invoice counters — as one file you can restore later.",
+    fr: "Téléchargez tout le contenu de cette organisation — entreprises, clients, produits, factures, paiements, journal d'activité et compteurs de factures — dans un fichier restaurable.",
+    nl: "Download alles in deze organisatie — bedrijven, klanten, producten, facturen, betalingen, activiteitenlog en factuurtellers — als één later te herstellen bestand.",
+    es: "Descargue todo el contenido de esta organización — empresas, clientes, productos, facturas, pagos, registro de actividad y contadores de facturas — en un archivo restaurable.",
+  },
+  "backup.download": {
+    en: "Download backup",
+    fr: "Télécharger la sauvegarde",
+    nl: "Back-up downloaden",
+    es: "Descargar copia",
+  },
+  "backup.restoreHeading": {
+    en: "Restore",
+    fr: "Restaurer",
+    nl: "Herstellen",
+    es: "Restaurar",
+  },
+  "backup.restoreIntro": {
+    en: "Restore a backup into this organization. Only possible while the organization is still empty — restoring never merges into existing data.",
+    fr: "Restaurez une sauvegarde dans cette organisation. Possible uniquement tant que l'organisation est vide — la restauration ne fusionne jamais avec des données existantes.",
+    nl: "Herstel een back-up in deze organisatie. Kan alleen zolang de organisatie leeg is — herstellen voegt nooit samen met bestaande gegevens.",
+    es: "Restaure una copia en esta organización. Solo es posible mientras la organización esté vacía — la restauración nunca se combina con datos existentes.",
+  },
+  "backup.choose": {
+    en: "Choose backup file",
+    fr: "Choisir le fichier",
+    nl: "Kies back-upbestand",
+    es: "Elegir archivo",
+  },
+  "backup.restore": {
+    en: "Restore this backup",
+    fr: "Restaurer cette sauvegarde",
+    nl: "Deze back-up herstellen",
+    es: "Restaurar esta copia",
+  },
+  "backup.confirmTitle": {
+    en: "Restore backup?",
+    fr: "Restaurer la sauvegarde ?",
+    nl: "Back-up herstellen?",
+    es: "¿Restaurar la copia?",
+  },
+  "backup.confirmBody": {
+    en: "This writes the backup's companies, invoices, and history into this organization. It cannot be undone from the app.",
+    fr: "Les entreprises, factures et l'historique de la sauvegarde seront écrits dans cette organisation. Irréversible depuis l'application.",
+    nl: "De bedrijven, facturen en geschiedenis uit de back-up worden in deze organisatie geschreven. Kan niet ongedaan worden gemaakt vanuit de app.",
+    es: "Las empresas, facturas e historial de la copia se escribirán en esta organización. No se puede deshacer desde la aplicación.",
+  },
+  "backup.done": {
+    en: "Backup restored",
+    fr: "Sauvegarde restaurée",
+    nl: "Back-up hersteld",
+    es: "Copia restaurada",
+  },
+  "backup.restored": {
+    en: "restored",
+    fr: "restauré(s)",
+    nl: "hersteld",
+    es: "restaurado(s)",
+  },
+  "backup.badFile": {
+    en: "That file is not valid JSON.",
+    fr: "Ce fichier n'est pas un JSON valide.",
+    nl: "Dat bestand is geen geldige JSON.",
+    es: "Ese archivo no es un JSON válido.",
+  },
 } as const;
 
 export type MessageKey = keyof typeof MESSAGES;

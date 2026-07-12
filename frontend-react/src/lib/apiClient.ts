@@ -39,6 +39,19 @@ import type {
   UserMeResponse,
 } from "../types";
 
+/** Runtime shape of POST /backup/restore's response. Hand-typed: the backup
+ *  endpoints aren't in the generated api.d.ts yet — replace on regeneration. */
+export interface RestoreReport {
+  companies: number;
+  clients: number;
+  products: number;
+  invoices: number;
+  credit_notes: number;
+  payments: number;
+  sequences: number;
+  audit_entries: number;
+}
+
 export interface Tokens {
   access_token: string;
   refresh_token: string;
@@ -378,6 +391,20 @@ export class ApiClient {
   /** Import a legacy backup into the current org. Idempotent (dedup by name). */
   commitLegacyImport(backup: unknown): Promise<ImportReport> {
     return this.request("POST", "/imports/legacy/commit", backup);
+  }
+
+  // ---- backup (ADR-0003) ---------------------------------------------------------
+
+  /** The whole organization as a restorable JSON document (never includes
+   *  users/credentials). Writes one export_backup audit entry server-side. */
+  exportBackup(): Promise<unknown> {
+    return this.request("GET", "/backup/export");
+  }
+
+  /** Disaster recovery: restore a backup into the current (empty) org.
+   *  409 if the org already has companies or the file isn't a valid backup. */
+  restoreBackup(backup: unknown): Promise<RestoreReport> {
+    return this.request("POST", "/backup/restore", backup);
   }
 
   // ---- reports & activity ------------------------------------------------------

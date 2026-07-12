@@ -20,6 +20,7 @@ from .middleware import RateLimitMiddleware, TenantBindingMiddleware
 from .routers import (
     activity,
     auth,
+    backup,
     clients,
     companies,
     credit_notes,
@@ -148,6 +149,7 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
     app.include_router(payments.router)
     app.include_router(reports.router)
     app.include_router(activity.router)
+    app.include_router(backup.router)
     return app
 
 

@@ -17,3 +17,14 @@ class SequenceRepository(ABC):
         """Allocate the next value (1-based) for a scope, atomically within the
         surrounding transaction. Callers MUST persist whatever consumes the value
         in the same transaction, or the series would gap on rollback."""
+
+    @abstractmethod
+    def snapshot(self, company_id: UUID) -> dict[str, int]:
+        """Current counter value per scope for one company — read-only, for the
+        organization backup (ADR-0003)."""
+
+    @abstractmethod
+    def restore_value(self, company_id: UUID, scope: str, value: int) -> None:
+        """Write a counter back during a backup restore (ADR-0003). Never lowers
+        an existing counter — rewinding a live gapless series could mint
+        duplicate invoice numbers."""

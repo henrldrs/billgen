@@ -1,4 +1,5 @@
 from .activity_service import ActivityService
+from .backup_service import BackupService, RestoreReport
 from .client_service import ClientService
 from .company_service import CompanyService
 from .credit_note_service import CreditNoteService
@@ -19,6 +20,7 @@ from .reporting_service import KpiSummary, ReportingService, effective_status
 
 __all__ = [
     "ActivityService",
+    "BackupService",
     "BusinessRuleError",
     "ClientService",
     "CompanyService",
@@ -35,5 +37,6 @@ __all__ = [
     "PeppolValidationError",
     "ProductService",
     "ReportingService",
+    "RestoreReport",
     "effective_status",
 ]

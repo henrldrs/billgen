@@ -9,6 +9,8 @@
 import {
   ActivityPanel,
   AppShell as Shell,
+  BackIcon,
+  BackupPanel,
   ClientsPanel,
   CommandPalette,
   CompanyForm,
@@ -48,7 +50,7 @@ type Tab =
   | "invoices"
   | "settings";
 
-type SettingsSection = "company" | "import" | "activity" | "preferences";
+type SettingsSection = "company" | "import" | "backup" | "activity" | "preferences";
 
 function isLang(value: string): value is Lang {
   return ["en", "fr", "nl", "es"].includes(value);
@@ -154,6 +156,7 @@ export function DesktopShell() {
   const settingsSections = [
     { key: "company", label: t(lang, "company.title"), icon: <CompanyIcon /> },
     { key: "import", label: t(lang, "import.title"), icon: <ForwardIcon /> },
+    { key: "backup", label: t(lang, "backup.title"), icon: <BackIcon /> },
     { key: "activity", label: t(lang, "activity.title"), icon: <SearchIcon /> },
     { key: "preferences", label: "Preferences", icon: <PolicyIcon /> },
   ];
@@ -221,6 +224,8 @@ export function DesktopShell() {
             </div>
           ) : settingsSection === "import" ? (
             <ImportPanel lang={lang} />
+          ) : settingsSection === "backup" ? (
+            <BackupPanel lang={lang} />
           ) : settingsSection === "activity" ? (
             <ActivityPanel lang={lang} />
           ) : (

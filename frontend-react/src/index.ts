@@ -7,6 +7,7 @@ export {
   ApiError,
   MemoryTokenStore,
   type ApiClientOptions,
+  type RestoreReport,
   type Tokens,
   type TokenStore,
 } from "./lib/apiClient";
@@ -120,6 +121,7 @@ export { Divider, type DividerProps } from "./components/Divider";
 
 // Panels
 export { ActivityPanel } from "./panels/ActivityPanel";
+export { BackupPanel } from "./panels/BackupPanel";
 export { ClientsPanel } from "./panels/ClientsPanel";
 export { CompanyForm } from "./panels/CompanyForm";
 export { DashboardPanel } from "./panels/DashboardPanel";

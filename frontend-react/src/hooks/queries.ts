@@ -263,3 +263,22 @@ export function useImportCommit() {
     },
   });
 }
+
+// ---- backup (ADR-0003) -----------------------------------------------------------
+
+export function useBackupExport() {
+  const api = useApi();
+  return useMutation({
+    mutationFn: () => api.exportBackup(),
+  });
+}
+
+export function useBackupRestore() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (backup: unknown) => api.restoreBackup(backup),
+    // A restore repopulates the whole organization — everything is stale.
+    onSuccess: () => void queryClient.invalidateQueries(),
+  });
+}

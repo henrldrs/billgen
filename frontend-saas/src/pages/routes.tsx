@@ -3,6 +3,8 @@
 
 import {
   ActivityPanel,
+  BackIcon,
+  BackupPanel,
   ClientsPanel,
   CompanyForm,
   CompanyIcon,
@@ -69,6 +71,7 @@ export function SettingsRoute() {
   const sections = [
     { key: "company", label: t(lang, "company.title"), icon: <CompanyIcon /> },
     { key: "import", label: t(lang, "import.title"), icon: <ForwardIcon /> },
+    { key: "backup", label: t(lang, "backup.title"), icon: <BackIcon /> },
     { key: "activity", label: t(lang, "activity.title"), icon: <SearchIcon /> },
     { key: "preferences", label: "Preferences", icon: <PolicyIcon /> },
   ];
@@ -103,6 +106,8 @@ export function SettingsRoute() {
         </div>
       ) : active === "import" ? (
         <ImportPanel lang={lang} />
+      ) : active === "backup" ? (
+        <BackupPanel lang={lang} />
       ) : active === "activity" ? (
         <ActivityPanel lang={lang} />
       ) : (

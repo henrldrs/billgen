@@ -16,6 +16,8 @@ class AuditAction(str, Enum):
     PAY = "pay"
     EXPORT_PDF = "export_pdf"
     EXPORT_PEPPOL = "export_peppol"
+    EXPORT_BACKUP = "export_backup"
+    RESTORE = "restore"
     DELETE = "delete"
     LOGIN = "login"
     LOGOUT = "logout"

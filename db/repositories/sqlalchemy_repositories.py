@@ -357,6 +357,36 @@ class SqlAlchemySequenceRepository(SequenceRepository):
         self._s.flush()
         return row.value
 
+    def snapshot(self, company_id: UUID) -> dict[str, int]:
+        rows = self._s.execute(
+            select(SequenceRow).where(
+                SequenceRow.organization_id == current_organization_id(),
+                SequenceRow.company_id == company_id,
+            )
+        ).scalars()
+        return {row.scope: row.value for row in rows}
+
+    def restore_value(self, company_id: UUID, scope: str, value: int) -> None:
+        org_id = current_organization_id()
+        row = self._s.execute(
+            select(SequenceRow)
+            .where(
+                SequenceRow.organization_id == org_id,
+                SequenceRow.company_id == company_id,
+                SequenceRow.scope == scope,
+            )
+            .with_for_update()
+        ).scalar_one_or_none()
+        if row is None:
+            row = SequenceRow(
+                organization_id=org_id, company_id=company_id, scope=scope, value=value
+            )
+            self._s.add(row)
+        else:
+            # Never rewind a live gapless series (ADR-0003 last-line guard).
+            row.value = max(row.value, value)
+        self._s.flush()
+
 
 class SqlAlchemyAuditLogRepository(AuditLogRepository):
     def __init__(self, session: Session) -> None:
