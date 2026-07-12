@@ -12,7 +12,7 @@ Read this instead of re-deriving context.
 |---|---|
 | Location | `C:\Users\hdr_s\Documents\business model\BillGen BETA` |
 | Phases done | 0–9, **11** (domain → rules → DB → services → API → business routers → UI kit → SaaS shell → desktop → legacy import) + **Peppol e-invoicing** (Helger-validated Peppol BIS 3.0 + Belgian elements + pre-export validation gate; `771e903` then switched off UBL.BE). Phase 10 (billing) not yet started. |
-| UI library | **Merged into the live `@billgen/ui` and driving the SaaS shell** (Henri approved integration 2026-07-11; commits `5bd7e79` + `0386c09`). 57 components + 14 icon files, all P0 + P1 of `docs/UNIVERSAL_COMPONENT_LIBRARY_CHECKLIST.md`, dark mode as one token remap (persisted, pre-paint), Satoshi/Geist Mono. The SaaS shell now runs TopNav-only nav (sidebar deleted), OrgSwitcher, AccountMenu, ⌘K palette, SettingsShell (hosting Import + Activity + theme). `docs/frontent build/component-library/` stays as the archived record + preview gallery (`open-preview.cmd`, port 5174); reference in its `COMPONENTS.md`. **Desktop (Tauri) shell not yet reworked.** See §3 + §9. |
+| UI library | **Merged into the live `@billgen/ui` and driving the SaaS shell** (Henri approved integration 2026-07-11; commits `5bd7e79` + `0386c09`). 57 components + 14 icon files, all P0 + P1 of `docs/UNIVERSAL_COMPONENT_LIBRARY_CHECKLIST.md`, dark mode as one token remap (persisted, pre-paint), Satoshi/Geist Mono. The SaaS shell now runs TopNav-only nav (sidebar deleted), OrgSwitcher, AccountMenu, ⌘K palette, SettingsShell (hosting Import + Activity + theme). `docs/frontent build/component-library/` stays as the archived record + preview gallery (`open-preview.cmd`, port 5174); reference in its `COMPONENTS.md`. The desktop (Tauri) shell runs the same TopNav/settings layout (`c09f0f7`, typecheck+build verified; Tauri window not relaunched). See §3 + §9. |
 | Tests | **Python 206 passed, 0 skipped** (`python -m pytest tests`); **frontend 38 passed** (`npm run test --workspace @billgen/ui`) |
 | Git | local only, **not pushed**. One commit + tag per phase (`phase-4` … `phase-9b`); later work (import, polish, peppol) committed on `main` without tags. Branch `main`. |
 | PDF engine | **Headless Chromium via Playwright** (primary, cross-platform incl. Windows/desktop) with **WeasyPrint** as a fallback for the Docker/SaaS image. Setup on a fresh box: `pip install playwright` then `python -m playwright install chromium`. Without any engine, `/pdf` returns a clean 503. Free-tier PDFs carry a subtle "Made with BillGen" footer + logo. |
@@ -358,9 +358,9 @@ build`).
     (e.g. an `imported/historical` marker).
   - `ImportPanel` is mounted in **both** the SaaS shell and the desktop shell
     (`frontend-electron` — `.bg-import*` styles mirrored into its `styles.css`;
-    typecheck-verified, Tauri build not re-run). Note: the desktop shell shows
-    `companies[0]` with no company switcher, so importing a *new* company there
-    isn't reachable in the UI yet — a desktop company-selector is a separate gap.
+    typecheck-verified, Tauri build not re-run). ~~The desktop shell showed
+    `companies[0]` with no company switcher~~ — **fixed** by the `c09f0f7` shell
+    rework: OrgSwitcher now switches companies on desktop too.
   - CSV path (per-entity CSV → the same `ImportService`) if a user has data
     outside the BillGen app.
 - **Peppol e-invoicing hardening — DONE (`771e903`).** Ported the *approved* demo
@@ -414,12 +414,15 @@ build`).
   fallback) and the SaaS shell was rebuilt on it (`0386c09`: TopNav-only nav per the
   nav decision, OrgSwitcher, AccountMenu, ⌘K CommandPalette, SettingsShell hosting
   Import + Activity + theme preferences, dark mode persisted pre-paint). Browser-
-  verified both themes against the live API; 38/38 FE tests. `docs/frontent build/
+  verified both themes against the live API; 38/38 FE tests. The desktop (Tauri)
+  shell got the same rework (`c09f0f7`): TopNav-only nav over tab state, OrgSwitcher
+  (which **closes the old companies[0]-no-switcher gap**), settings hosting Import +
+  Activity + theme — typecheck + vite build verified, Tauri window not relaunched
+  (Rust compile; do a runtime pass next desktop session). `docs/frontent build/
   component-library/` is now the archived record, not the source.
-  **Still open:** desktop (Tauri) shell rework on the same components (would also fix
-  its missing company switcher); Henri's sketches for the three placeholder icons
-  (Products & services, Import, Activity); a notification source for the bell (chrome-
-  only today); P2 nice-to-haves + app-specific compositions (invoice line editor,
+  **Still open:** Henri's sketches for the three placeholder icons (Products &
+  services, Import, Activity); a notification source for the bell (chrome-only
+  today); P2 nice-to-haves + app-specific compositions (invoice line editor,
   VAT picker).
 - **Next phases discussed, NOT started:**
   - **Automatic Peppol transmission** — send structured XML straight to the buyer
