@@ -13,8 +13,8 @@ Read this instead of re-deriving context.
 | Location | `C:\Users\hdr_s\Documents\business model\BillGen BETA` |
 | Phases done | 0–9, **11** (domain → rules → DB → services → API → business routers → UI kit → SaaS shell → desktop → legacy import) + **Peppol e-invoicing** (Helger-validated Peppol BIS 3.0 + Belgian elements + pre-export validation gate; `771e903` then switched off UBL.BE). Phase 10 (billing) not yet started. |
 | UI library | **Merged into the live `@billgen/ui` and driving the SaaS shell** (Henri approved integration 2026-07-11; commits `5bd7e79` + `0386c09`). 57 components + 14 icon files, all P0 + P1 of `docs/UNIVERSAL_COMPONENT_LIBRARY_CHECKLIST.md`, dark mode as one token remap (persisted, pre-paint), Satoshi/Geist Mono. The SaaS shell now runs TopNav-only nav (sidebar deleted), OrgSwitcher, AccountMenu, ⌘K palette, SettingsShell (hosting Import + Activity + theme). `docs/frontent build/component-library/` stays as the archived record + preview gallery (`open-preview.cmd`, port 5174); reference in its `COMPONENTS.md`. The desktop (Tauri) shell runs the same TopNav/settings layout (`c09f0f7`, typecheck+build verified; Tauri window not relaunched). See §3 + §9. |
-| Tests | **Python 206 passed, 0 skipped** (`python -m pytest tests`); **frontend 38 passed** (`npm run test --workspace @billgen/ui`) |
-| Git | local only, **not pushed**. One commit + tag per phase (`phase-4` … `phase-9b`); later work (import, polish, peppol) committed on `main` without tags. Branch `main`. |
+| Tests | **Python 219 passed, 0 skipped** (`python -m pytest tests`); **frontend 38 passed** (`npm run test --workspace @billgen/ui`) |
+| Git | local only, **not pushed** — no remote yet (Henri setting up a private GitHub; this is the top safety-net gap). One commit + tag per phase (`phase-4` … `phase-9b`); later work committed on `main` without tags. CI workflow (`.github/workflows/ci.yml`) is written and waiting for that remote. Branch `main`. |
 | PDF engine | **Headless Chromium via Playwright** (primary, cross-platform incl. Windows/desktop) with **WeasyPrint** as a fallback for the Docker/SaaS image. Setup on a fresh box: `pip install playwright` then `python -m playwright install chromium`. Without any engine, `/pdf` returns a clean 503. Free-tier PDFs carry a subtle "Made with BillGen" footer + logo. |
 | Not a migration | The legacy React/Python apps (`D:\CODING\audit-v2-react-exe`, `myshop-*`) are reference only. Do not edit them. The **approved Peppol reference** is `D:\CODING\FinanceFlow Bill Generator` (the demo) — inventoried in [docs/COMPARISON_demo_vs_new.md](docs/COMPARISON_demo_vs_new.md). |
 | Audit progress | The demo was formally audited (`D:\CODING\audit-v2-react-exe`, Apr 2026). How this rebuild answers those findings is scored in [docs/AUDIT_PROGRESS_vs_demo.md](docs/AUDIT_PROGRESS_vs_demo.md) — see §0.1 below. |
@@ -319,16 +319,26 @@ build`).
 > **Foundation-hardening track:** (1) Peppol → trustworthy ✅ **done** (forms surface
 > gate fields; mixed-rate discount split per category; BE switched to plain BIS;
 > **both non-BE and BE invoices Helger-validated** against OpenPeppol 2026.5).
-> (2) draft→issue split ✅ **done** (ADR-0002 step 1). The remainder was **surveyed
-> 2026-07-11 (no code changed yet)**; punch list, in order: (3) **boot-time config
-> guards** — refuse a hosted start on the dev `jwt_secret` default in `api/config.py`,
-> warn on permissive CORS. (4) **backup/restore** design + build — the biggest
-> remaining data-safety gap, especially the desktop SQLite. (5) **CI + quality gate**,
-> and decide on a git remote (repo is still local-only). (6) **lightweight crash
-> reporting**. (7) **historical-invoice import design** — an `imported/historical`
-> marker so legacy invoices keep their original reference without consuming the live
-> sequence. Audit-vs-now scoring:
+> (2) draft→issue split ✅ **done** (ADR-0002 step 1). (3) **boot-time config
+> guards** ✅ **done** (`64415f1`) — `api/config.py` `validate_for_boot()`: a
+> `ENVIRONMENT=production` start refuses the dev `jwt_secret` / a <32-byte secret /
+> `desktop_mode`, and warns on wildcard-or-localhost CORS and SQLite; dev stays
+> permissive. (4) **backup/restore** ✅ **done** (`66a0baa`, ADR-0003) — org-scoped
+> JSON export + restore-into-empty-org, sequence counters preserved, UI in both
+> shells' settings. Remaining, in order: (5) **CI + quality gate** — workflow written
+> and committed (`.github/workflows/ci.yml`, `64415f1`), **inert until a GitHub remote
+> exists** (Henri is setting that up; repo is still local-only — this is the top
+> safety-net gap now). (6) **lightweight crash reporting**. (7) **historical-invoice
+> import design** — an `imported/historical` marker so legacy invoices keep their
+> original reference without consuming the live sequence. Audit-vs-now scoring:
 > [docs/AUDIT_PROGRESS_vs_demo.md](docs/AUDIT_PROGRESS_vs_demo.md).
+>
+> **Deployment path (decided 2026-07-12):** SaaS runs on a **cloud VPS** (the
+> workstation is the build/deploy origin only, never the host); sequence is **safety
+> net first** (git remote + CI + backup ✅) → **desktop installer** (PyInstaller-freeze
+> the sidecar, Phase 12) → **web deploy** (Dockerfile + Postgres + TLS; the API does
+> not yet serve the SPA — needs a static host or a `StaticFiles` mount). No Dockerfile
+> exists yet; `infra/*` is still empty scaffolding.
 
 - **Phase 10** — Stripe billing + plan enforcement (`SubscriptionRow` already
   exists), email (Postmark), VIES VAT check.
