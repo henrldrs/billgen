@@ -1,4 +1,4 @@
-import { BillGenProvider, Spinner } from "@billgen/ui";
+import { BillGenProvider, LoadingScreen } from "@billgen/ui";
 import type { ReactNode } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
@@ -7,11 +7,9 @@ import { api } from "./lib/api";
 import { AppShell } from "./pages/AppShell";
 import { LoginPage } from "./pages/LoginPage";
 import {
-  ActivityRoute,
   ClientsRoute,
   DashboardRoute,
   HistoryRoute,
-  ImportRoute,
   InvoiceBuilderRoute,
   ProductsRoute,
   SettingsRoute,
@@ -20,7 +18,7 @@ import { SignupPage } from "./pages/SignupPage";
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { status } = useSession();
-  if (status === "loading") return <Spinner label="Loading…" />;
+  if (status === "loading") return <LoadingScreen />;
   if (status === "anonymous") return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
@@ -46,8 +44,16 @@ export function App() {
               <Route path="products" element={<ProductsRoute />} />
               <Route path="invoices/new" element={<InvoiceBuilderRoute />} />
               <Route path="invoices" element={<HistoryRoute />} />
-              <Route path="activity" element={<ActivityRoute />} />
-              <Route path="import" element={<ImportRoute />} />
+              {/* Import & Activity moved into settings (nav decision 2026-07-10);
+                  old URLs keep working via redirects. */}
+              <Route
+                path="activity"
+                element={<Navigate to="/app/settings?section=activity" replace />}
+              />
+              <Route
+                path="import"
+                element={<Navigate to="/app/settings?section=import" replace />}
+              />
               <Route path="settings" element={<SettingsRoute />} />
             </Route>
             <Route path="*" element={<Navigate to="/app" replace />} />

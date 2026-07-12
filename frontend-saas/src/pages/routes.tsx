@@ -5,15 +5,23 @@ import {
   ActivityPanel,
   ClientsPanel,
   CompanyForm,
+  CompanyIcon,
   DashboardPanel,
+  ForwardIcon,
   HistoryPanel,
   ImportPanel,
   InvoiceBuilderPanel,
+  PolicyIcon,
   ProductsPanel,
+  SearchIcon,
+  SettingsShell,
+  ThemeSwitcher,
+  t,
   useCompanies,
 } from "@billgen/ui";
-import { useNavigate, useOutletContext } from "react-router-dom";
+import { useNavigate, useOutletContext, useSearchParams } from "react-router-dom";
 
+import { useTheme } from "../lib/theme";
 import type { ShellContext } from "./AppShell";
 
 export function DashboardRoute() {
@@ -48,35 +56,64 @@ export function HistoryRoute() {
   return <HistoryPanel companyId={companyId} lang={lang} />;
 }
 
-export function ActivityRoute() {
-  const { lang } = useOutletContext<ShellContext>();
-  return <ActivityPanel lang={lang} />;
-}
-
-export function ImportRoute() {
-  const { lang } = useOutletContext<ShellContext>();
-  return <ImportPanel lang={lang} />;
-}
-
+/** Company details hosts Import data + Activity log (settings-level pages per
+ *  Henri's nav decision), plus theme preferences. The active section rides in
+ *  ?section= so /app/import and /app/activity can redirect here losslessly.
+ *  ForwardIcon/SearchIcon in the rail are stand-ins pending Henri's sketches. */
 export function SettingsRoute() {
   const { lang } = useOutletContext<ShellContext>();
   const { data: companies } = useCompanies();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [theme, setTheme] = useTheme();
+
+  const sections = [
+    { key: "company", label: t(lang, "company.title"), icon: <CompanyIcon /> },
+    { key: "import", label: t(lang, "import.title"), icon: <ForwardIcon /> },
+    { key: "activity", label: t(lang, "activity.title"), icon: <SearchIcon /> },
+    { key: "preferences", label: "Preferences", icon: <PolicyIcon /> },
+  ];
+  const active = sections.some((s) => s.key === searchParams.get("section"))
+    ? (searchParams.get("section") as string)
+    : "company";
+
   return (
-    <div>
-      {companies && companies.length > 0 ? (
+    <SettingsShell
+      sections={sections}
+      activeKey={active}
+      onSectionChange={(key) =>
+        setSearchParams(key === "company" ? {} : { section: key })
+      }
+    >
+      {active === "company" ? (
+        <div>
+          {companies && companies.length > 0 ? (
+            <section className="bg-panel">
+              <h1 className="text-lg font-semibold mb-3">Companies</h1>
+              <ul className="list-disc pl-5 text-sm">
+                {companies.map((company) => (
+                  <li key={company.id}>
+                    {company.name}
+                    {company.vat_number ? ` — ${company.vat_number}` : ""}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+          <CompanyForm lang={lang} />
+        </div>
+      ) : active === "import" ? (
+        <ImportPanel lang={lang} />
+      ) : active === "activity" ? (
+        <ActivityPanel lang={lang} />
+      ) : (
         <section className="bg-panel">
-          <h1 className="text-lg font-semibold mb-3">Companies</h1>
-          <ul className="list-disc pl-5 text-sm">
-            {companies.map((company) => (
-              <li key={company.id}>
-                {company.name}
-                {company.vat_number ? ` — ${company.vat_number}` : ""}
-              </li>
-            ))}
-          </ul>
+          <h1 className="text-lg font-semibold mb-3">Preferences</h1>
+          <div className="bg-field">
+            <span className="bg-field__label">Theme</span>
+            <ThemeSwitcher theme={theme} onChange={setTheme} />
+          </div>
         </section>
-      ) : null}
-      <CompanyForm lang={lang} />
-    </div>
+      )}
+    </SettingsShell>
   );
 }

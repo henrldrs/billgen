@@ -1,16 +1,36 @@
-/** Authenticated shell: sidebar nav, company selector, first-run onboarding.
- *  Panels receive the selected companyId via router outlet context. */
+/** Authenticated shell: TopNav carries the primary nav (the sidebar is gone),
+ *  company switcher, account menu, Ctrl/⌘K command palette, first-run
+ *  onboarding. Panels receive the selected companyId via router outlet context.
+ *
+ *  Nav structure per Henri's decision (2026-07-10): Dashboard · Clients ·
+ *  Products & services · Invoices · Company details — nothing else. The "+"
+ *  CreateBillButton is the one and only creation entry; Import data and
+ *  Activity log live inside Company details (see SettingsRoute). */
 
 import {
+  AccountMenu,
+  AppShell as Shell,
+  CommandPalette,
   CompanyForm,
-  Spinner,
+  CompanyIcon,
+  DashboardIcon,
+  LoadingScreen,
+  OrgSwitcher,
+  PlusIcon,
+  PolicyIcon,
+  SettingsUserIcon,
+  TopNav,
+  UpgradeIcon,
   t,
   useCompanies,
+  type CommandItem,
   type CompanyResponse,
   type Lang,
+  type MenuEntry,
+  type TopNavLink,
 } from "@billgen/ui";
 import { useEffect, useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import { useSession } from "../auth/session";
 
@@ -23,11 +43,20 @@ function isLang(value: string): value is Lang {
   return ["en", "fr", "nl", "es"].includes(value);
 }
 
+function initialsOf(name: string | undefined, email: string | undefined): string {
+  const source = (name?.trim() || email || "?").trim();
+  const words = source.split(/\s+/).filter(Boolean);
+  if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
+  return source.slice(0, 2).toUpperCase();
+}
+
 export function AppShell() {
   const { user, logout } = useSession();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { data: companies, isLoading } = useCompanies();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
   // Pin the active company once the list loads. Without this, refetches (e.g.
   // after an import adds a company) fall back to companies[0] and yank the user
@@ -38,21 +67,33 @@ export function AppShell() {
     }
   }, [companies, selectedId]);
 
-  if (isLoading) return <Spinner label="Loading…" />;
+  // Ctrl/⌘K toggles the command palette (CommandPalette is controlled).
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setPaletteOpen((open) => !open);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  if (isLoading) return <LoadingScreen />;
 
   // First run: no company yet -> onboarding. useCreateCompany invalidates the
   // companies query, so the shell re-renders into the app automatically.
   if (!companies || companies.length === 0) {
     return (
-      <main className="min-h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-lg">
+      <Shell>
+        <div className="max-w-lg mx-auto pt-10">
           <h1 className="text-xl font-bold mb-4">Welcome to BillGen 👋</h1>
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm mb-4">
             Set up the company you invoice from. You can add more later.
           </p>
           <CompanyForm />
         </div>
-      </main>
+      </Shell>
     );
   }
 
@@ -62,78 +103,104 @@ export function AppShell() {
     ? company.default_language
     : "en";
 
-  const links = [
-    { to: "/app", label: t(lang, "dashboard.title"), end: true },
-    { to: "/app/clients", label: t(lang, "clients.title") },
-    { to: "/app/products", label: t(lang, "products.title") },
-    { to: "/app/invoices/new", label: t(lang, "invoice.title") },
-    { to: "/app/invoices", label: t(lang, "history.title") },
-    { to: "/app/activity", label: t(lang, "activity.title") },
-    { to: "/app/import", label: t(lang, "import.title") },
-    { to: "/app/settings", label: t(lang, "company.title") },
+  // UpgradeIcon on Products & services is a stand-in until Henri draws the
+  // real icon (same for the settings-rail icons in SettingsRoute).
+  const navItems = [
+    { key: "dashboard", to: "/app", end: true, label: t(lang, "dashboard.title"), icon: <DashboardIcon /> },
+    { key: "clients", to: "/app/clients", end: false, label: t(lang, "clients.title"), icon: <SettingsUserIcon /> },
+    { key: "products", to: "/app/products", end: false, label: t(lang, "products.title"), icon: <UpgradeIcon /> },
+    { key: "invoices", to: "/app/invoices", end: false, label: t(lang, "history.title"), icon: <PolicyIcon /> },
+    { key: "settings", to: "/app/settings", end: false, label: t(lang, "company.title"), icon: <CompanyIcon /> },
+  ];
+
+  const links: TopNavLink[] = navItems.map((item) => ({
+    key: item.key,
+    label: item.label,
+    icon: item.icon,
+    active: item.end ? pathname === item.to : pathname.startsWith(item.to),
+    onClick: () => navigate(item.to),
+  }));
+
+  const commands: CommandItem[] = [
+    {
+      key: "new-invoice",
+      label: t(lang, "invoice.title"),
+      icon: <PlusIcon />,
+      section: "Create",
+      keywords: "new invoice bill create",
+      onRun: () => {
+        setPaletteOpen(false);
+        navigate("/app/invoices/new");
+      },
+    },
+    ...navItems.map((item) => ({
+      key: item.key,
+      label: item.label,
+      icon: item.icon,
+      section: "Go to",
+      onRun: () => {
+        setPaletteOpen(false);
+        navigate(item.to);
+      },
+    })),
+  ];
+
+  const accountItems: MenuEntry[] = [
+    {
+      key: "settings",
+      label: t(lang, "company.title"),
+      icon: <CompanyIcon />,
+      onSelect: () => navigate("/app/settings"),
+    },
+    { type: "separator", key: "sep" },
+    {
+      key: "logout",
+      label: "Log out",
+      danger: true,
+      onSelect: () => {
+        void logout().then(() => navigate("/login"));
+      },
+    },
   ];
 
   return (
-    <div className="min-h-screen flex">
-      <aside className="w-60 shrink-0 bg-white border-r border-gray-200 flex flex-col">
-        <div className="px-4 py-4 font-bold text-lg border-b border-gray-200">
-          BillGen
-        </div>
-        <nav className="flex-1 px-2 py-3 space-y-1">
-          {links.map((link) => (
-            <NavLink
-              key={link.to}
-              to={link.to}
-              end={link.end}
-              className={({ isActive }) =>
-                `block rounded px-3 py-2 text-sm ${
-                  isActive
-                    ? "bg-blue-50 text-blue-800 font-semibold"
-                    : "text-gray-700 hover:bg-gray-50"
-                }`
-              }
-            >
-              {link.label}
-            </NavLink>
-          ))}
-        </nav>
-        <div className="px-4 py-3 border-t border-gray-200 text-sm">
-          <div className="font-medium truncate">{user?.displayName}</div>
-          <div className="text-gray-500 truncate">{user?.email}</div>
-          <button
-            type="button"
-            className="mt-2 text-blue-700 underline"
-            onClick={() => {
-              void logout().then(() => navigate("/login"));
-            }}
-          >
-            Log out
-          </button>
-        </div>
-      </aside>
-
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
-          <div className="font-semibold">{company.name}</div>
-          {companies.length > 1 ? (
-            <select
-              aria-label="Company"
-              className="bg-field__input max-w-56"
-              value={company.id}
-              onChange={(event) => setSelectedId(event.target.value)}
-            >
-              {companies.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          ) : null}
-        </header>
-        <main className="flex-1 p-6 overflow-auto">
-          <Outlet context={{ companyId: company.id, lang } satisfies ShellContext} />
-        </main>
-      </div>
-    </div>
+    <Shell
+      width="wide"
+      nav={
+        <TopNav
+          title={company.name}
+          links={links}
+          onNavigateHome={() => navigate("/app")}
+          onCreateBill={() => navigate("/app/invoices/new")}
+          onSearchClick={() => setPaletteOpen(true)}
+          accountSlot={
+            <AccountMenu
+              name={user?.displayName ?? "Account"}
+              email={user?.email}
+              initials={initialsOf(user?.displayName, user?.email)}
+              items={accountItems}
+            />
+          }
+        >
+          <OrgSwitcher
+            orgs={companies.map((c) => ({
+              key: c.id,
+              name: c.name,
+              detail: c.vat_number ?? undefined,
+            }))}
+            activeKey={company.id}
+            onChange={setSelectedId}
+            onCreateNew={() => navigate("/app/settings?section=company")}
+          />
+        </TopNav>
+      }
+    >
+      <Outlet context={{ companyId: company.id, lang } satisfies ShellContext} />
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        commands={commands}
+      />
+    </Shell>
   );
 }
