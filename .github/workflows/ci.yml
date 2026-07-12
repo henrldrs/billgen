@@ -1,0 +1,68 @@
+# BillGen CI — quality gate on every push/PR.
+# Sits ready while the repo is local-only; activates the moment it's pushed
+# to GitHub. Mirrors what billgen.bat option 3 runs locally, plus typechecks.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  python:
+    name: Python tests (core / api / db / desktop)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install fastapi uvicorn pyjwt argon2-cffi pydantic-settings \
+            sqlalchemy alembic jinja2 httpx structlog cryptography \
+            pytest pytest-asyncio playwright Pillow
+
+      # The real-PDF-bytes test renders through headless Chromium.
+      - name: Install Chromium for the PDF engine
+        run: python -m playwright install --with-deps chromium
+
+      - name: Run pytest
+        run: python -m pytest tests -q
+
+  frontend:
+    name: Frontend typecheck + tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install workspaces
+        run: npm ci
+
+      - name: Typecheck @billgen/ui
+        run: npm run -w @billgen/ui typecheck
+
+      - name: Typecheck frontend-saas
+        run: npm run -w frontend-saas typecheck
+
+      - name: Typecheck frontend-electron
+        run: npm run -w frontend-electron typecheck
+
+      - name: Run @billgen/ui tests
+        run: npm run test --workspace @billgen/ui
+
+      - name: Build the SaaS bundle
+        run: npm run -w frontend-saas build
+
+      - name: Build the desktop frontend bundle
+        run: npm run -w frontend-electron build

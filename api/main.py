@@ -14,7 +14,7 @@ from db.engine import make_engine
 from db.repositories import SqlAlchemyUnitOfWork
 from db.session import make_session_factory
 
-from .config import Settings, get_settings
+from .config import Settings, get_settings, validate_for_boot
 from .logging_config import configure_logging
 from .middleware import RateLimitMiddleware, TenantBindingMiddleware
 from .routers import (
@@ -42,6 +42,11 @@ _access_log = structlog.get_logger("api.access")
 def create_app(settings: Settings | None = None, engine: Engine | None = None) -> FastAPI:
     settings = settings or get_settings()
     configure_logging()
+
+    # Refuses to boot on fatal hosted misconfig (dev JWT secret, desktop_mode…);
+    # anything survivable is logged as a warning.
+    for warning in validate_for_boot(settings):
+        structlog.get_logger("api.boot").warning("config", detail=warning)
 
     owns_engine = engine is None
     engine = engine or make_engine(settings.database_url)
