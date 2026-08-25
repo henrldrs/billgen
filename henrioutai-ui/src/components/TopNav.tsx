@@ -1,10 +1,22 @@
 import type { ReactNode } from "react";
 import { HomeButton } from "./HomeButton";
+import { Menu, type MenuEntry } from "./Menu";
 import { IconButton } from "./IconButton";
 import { CreateBillButton } from "./CreateBillButton";
 import { IconChip } from "./icons/IconChip";
 import { SearchIcon } from "./icons/SearchIcon";
 import { NotificationsIcon } from "./icons/NotificationsIcon";
+
+/** One sub-page inside a primary nav item's popup. */
+export interface TopNavSubItem {
+  key: string;
+  label: ReactNode;
+  icon?: ReactNode;
+  /** Right-aligned slot — a count, or a marker for unfinished destinations. */
+  hint?: ReactNode;
+  disabled?: boolean;
+  onSelect?: () => void;
+}
 
 export interface TopNavLink {
   key: string;
@@ -15,6 +27,13 @@ export interface TopNavLink {
   active?: boolean;
   onClick?: () => void;
   href?: string;
+  /**
+   * Sub-pages of this section. When present the link becomes a popup trigger
+   * instead of a plain button, so the whole section is reachable in one hop
+   * without a sidebar. Put the section's own landing page in the list too —
+   * the trigger opens the menu rather than navigating.
+   */
+  items?: TopNavSubItem[];
 }
 
 export interface TopNavProps {
@@ -126,6 +145,25 @@ export function TopNav({
                 {link.label}
               </>
             );
+            if (link.items?.length) {
+              const entries: MenuEntry[] = link.items.map((item) => ({
+                key: item.key,
+                label: item.label,
+                icon: item.icon,
+                hint: item.hint,
+                disabled: item.disabled,
+                onSelect: item.onSelect,
+              }));
+              return (
+                <Menu
+                  key={link.key}
+                  trigger={content}
+                  triggerClassName={linkClasses}
+                  items={entries}
+                  align="start"
+                />
+              );
+            }
             return link.href ? (
               <a key={link.key} href={link.href} className={linkClasses} onClick={link.onClick}>
                 {content}

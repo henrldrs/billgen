@@ -134,19 +134,47 @@ export function AppShell() {
   const primary: IaSection[] = saasIa.filter((section) => section.primary);
   const toHref = (path: string | undefined) => `/app${path ? `/${path}` : ""}`;
 
+  // Top bar carries the primary sections; each one opens a popup listing its
+  // sub-pages (Henri's decision 2026-08-25, closing BGEN-BRAND-02 — top bar
+  // with a popup list per sub-page, no sidebar). Dashboard has no sub-pages
+  // worth a menu, so it stays a plain link.
   const links: TopNavLink[] = primary.map((section) => {
     const to = toHref(section.path);
+    const label = (
+      <>
+        {section.key === "dashboard" ? t(lang, "dashboard.title") : section.label}
+        <ScaffoldNavDot status={section.status} />
+      </>
+    );
+    const active = section.path === "" ? pathname === "/app" : pathname.startsWith(to);
+    const subPages = (section.children ?? []).filter((child) => child.path !== undefined);
+
+    if (subPages.length === 0) {
+      return { key: section.key, label, icon: sectionIcon[section.key], active, onClick: () => navigate(to) };
+    }
+
     return {
       key: section.key,
-      label: (
-        <>
-          {section.key === "dashboard" ? t(lang, "dashboard.title") : section.label}
-          <ScaffoldNavDot status={section.status} />
-        </>
-      ),
+      label,
       icon: sectionIcon[section.key],
-      active: section.path === "" ? pathname === "/app" : pathname.startsWith(to),
-      onClick: () => navigate(to),
+      active,
+      items: [
+        // The section's own landing page: the trigger opens the menu rather
+        // than navigating, so without this the overview is unreachable.
+        {
+          key: `${section.key}:overview`,
+          label: `${section.label} overview`,
+          onSelect: () => navigate(to),
+        },
+        ...subPages.map((child) => ({
+          key: child.key,
+          label: child.label,
+          // The same marker the nav uses, so an unfinished destination is
+          // legible before you click it rather than after.
+          hint: <ScaffoldNavDot status={child.status} />,
+          onSelect: () => navigate(toHref(child.path)),
+        })),
+      ],
     };
   });
 

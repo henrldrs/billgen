@@ -688,7 +688,25 @@ would silently rebrand BillGen.**
 | `--bg-font-mono` | Geist Mono | Geist Mono | agree |
 | Radii, motion, spacing, glass | — | identical | agree |
 
-### BGEN-BRAND-02 — navigation model
+### BGEN-BRAND-02 — navigation model — **DECIDED 2026-08-25: top bar with popups**
+
+**Resolved.** No sidebar. The top bar carries the primary sections, and each one
+opens a **popup list of its sub-pages** — so the whole 15-section IA is reachable
+in one hop without giving up horizontal space. Applies to both the SaaS and
+Windows shells.
+
+Two implementation notes that are easy to get wrong:
+
+- `.bg-topnav__links` had `overflow-x: auto`, and `Menu` renders no portal, so
+  every popup was clipped at the nav's edge. The row now wraps instead. Guarded
+  by a test that asserts the CSS rule directly, because a clipped popup still
+  renders in the DOM and jsdom never applies the stylesheet.
+- The trigger opens the menu rather than navigating, so each popup carries an
+  explicit "<section> overview" entry. Without it the section landing page is
+  unreachable.
+
+The original analysis follows.
+
 
 Sidebar (reference: 11 destinations, 2 groups, count badges) versus TopNav-only
 (current: 5 destinations). The earlier decision deleted the sidebar; the

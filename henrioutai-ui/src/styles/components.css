@@ -735,7 +735,12 @@ textarea.bg-field__input {
   align-items: center;
   gap: 0.25rem;
   padding: 0 1.25rem 0.6rem;
-  overflow-x: auto;
+  /* Wraps rather than scrolls. `overflow-x: auto` here used to clip the
+   * sub-page popups off every nav item, because Menu positions its popup
+   * absolutely and renders no portal. Wrapping also degrades better on a
+   * narrow screen than a scroll region with no visible affordance. */
+  flex-wrap: wrap;
+  row-gap: 0.15rem;
 }
 .bg-topnav__link {
   display: inline-flex;
