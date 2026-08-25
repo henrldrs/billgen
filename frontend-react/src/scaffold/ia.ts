@@ -32,6 +32,19 @@ export type BackendStatus = "wired" | "partial" | "none";
 /** Which of the six roadmap layers a node belongs to (see docs/ROADMAP_IA.md). */
 export type Layer = "L1" | "L2" | "L3" | "L4" | "L5" | "L6";
 
+/**
+ * Which frontend can actually render a node.
+ *
+ * BillGen ships more than one frontend over the same backend, and a few areas
+ * only exist on one of them: offline sync, printer selection and auto-update
+ * are meaningless in a browser tab, because they need Tauri APIs and a local
+ * filesystem. Marking them `desktop` keeps them in the single source of truth
+ * while stopping the SaaS router from mounting screens it can never satisfy.
+ *
+ * Defaults to `both` when omitted, which is correct for the vast majority.
+ */
+export type Surface = "both" | "saas" | "desktop";
+
 export interface IaNode {
   key: string;
   label: string;
@@ -45,6 +58,8 @@ export interface IaNode {
   missing?: string[];
   /** Why it is partial, or what the scaffold is standing in for. */
   note?: string;
+  /** Which frontend can render this. Defaults to "both". */
+  surface?: Surface;
   children?: IaNode[];
 }
 
@@ -1261,7 +1276,12 @@ export const IA: IaSection[] = [
     path: "desktop",
     status: "partial",
     layer: "L5",
-    note: "Only reachable in the Tauri shell; shown here so the surface is not forgotten.",
+    // surface:"desktop" — these screens need Tauri APIs and a local filesystem,
+    // so the SaaS router must not mount them (it did until 2026-08-25, which put
+    // five permanently-unreachable pages in the web app). frontend-electron
+    // consumes them via routableNodes("desktop").
+    surface: "desktop",
+    note: "Desktop-only surface: requires the Tauri shell. Excluded from the SaaS router.",
     children: [
       {
         key: "desktop.connection",
@@ -1319,13 +1339,34 @@ export function flattenIa(nodes: IaNode[] = IA): IaNode[] {
   return nodes.flatMap((node) => [node, ...flattenIa(node.children ?? [])]);
 }
 
-/** Every node that owns a route, keyed by path. */
-export function routableNodes(): IaNode[] {
-  return flattenIa().filter((node) => node.path !== undefined);
+/** Does this node render on the given frontend? A node with no `surface` is
+ *  shared; a scoped node renders only on its own surface. */
+export function onSurface(node: IaNode, surface: Surface): boolean {
+  const nodeSurface = node.surface ?? "both";
+  return nodeSurface === "both" || surface === "both" || nodeSurface === surface;
 }
 
-export function findByPath(path: string): IaNode | undefined {
-  return routableNodes().find((node) => node.path === path);
+/** Sections visible to one frontend, children filtered to match. */
+export function iaFor(surface: Surface): IaSection[] {
+  return IA.filter((section) => onSurface(section, surface)).map((section) => ({
+    ...section,
+    children: section.children.filter((child) => onSurface(child, surface)),
+  }));
+}
+
+/**
+ * Every node that owns a route on the given surface.
+ *
+ * Defaults to "saas" rather than "both" deliberately: the web router is the
+ * caller that must never over-mount, so the safe value is the restrictive one.
+ * Pass "desktop" from the Tauri shell, or "both" for reporting.
+ */
+export function routableNodes(surface: Surface = "saas"): IaNode[] {
+  return flattenIa(iaFor(surface)).filter((node) => node.path !== undefined);
+}
+
+export function findByPath(path: string, surface: Surface = "both"): IaNode | undefined {
+  return routableNodes(surface).find((node) => node.path === path);
 }
 
 export interface IaCoverage {
@@ -1337,7 +1378,8 @@ export interface IaCoverage {
   percent: number;
 }
 
-/** Coverage over LEAF nodes only — sections would otherwise be double-counted. */
+/** Coverage over LEAF nodes only — sections would otherwise be double-counted.
+ *  Pass `iaFor("saas")` to measure just the web product. */
 export function coverage(nodes: IaNode[] = IA): IaCoverage {
   const leaves = flattenIa(nodes).filter((node) => !node.children?.length);
   const wired = leaves.filter((n) => n.status === "wired").length;

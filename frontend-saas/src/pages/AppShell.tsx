@@ -18,7 +18,7 @@ import {
   CompanyForm,
   CompanyIcon,
   DashboardIcon,
-  IA,
+  iaFor,
   LoadingScreen,
   OrgSwitcher,
   PlusIcon,
@@ -128,7 +128,10 @@ export function AppShell() {
     reports: <DashboardIcon />,
   };
 
-  const primary: IaSection[] = IA.filter((section) => section.primary);
+  // Surface-scoped: desktop-only areas (offline sync, printing, auto-update)
+  // must never appear in the web nav — the browser cannot render them.
+  const saasIa: IaSection[] = iaFor("saas");
+  const primary: IaSection[] = saasIa.filter((section) => section.primary);
   const toHref = (path: string | undefined) => `/app${path ? `/${path}` : ""}`;
 
   const links: TopNavLink[] = primary.map((section) => {
@@ -162,7 +165,7 @@ export function AppShell() {
         navigate("/app/sales/invoices/new");
       },
     },
-    ...IA.flatMap((section) =>
+    ...saasIa.flatMap((section) =>
       [section, ...(section.children ?? [])]
         .filter((node) => node.path !== undefined)
         .map((node) => ({
@@ -183,7 +186,7 @@ export function AppShell() {
   ];
 
   // Sections that are not in the primary bar hang off the account menu.
-  const secondary = IA.filter((section) => !section.primary);
+  const secondary = saasIa.filter((section) => !section.primary);
 
   const accountItems: MenuEntry[] = [
     ...secondary.map((section) => ({

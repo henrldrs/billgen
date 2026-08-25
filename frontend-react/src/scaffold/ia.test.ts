@@ -5,7 +5,7 @@
 
 import { expect, test } from "vitest";
 
-import { IA, coverage, flattenIa, missingEndpoints, routableNodes } from "./ia";
+import { IA, coverage, flattenIa, iaFor, missingEndpoints, routableNodes } from "./ia";
 
 test("every node key is unique", () => {
   const keys = flattenIa().map((node) => node.key);
@@ -16,18 +16,36 @@ test("every node key is unique", () => {
 test("every route path is unique", () => {
   // The invoice status tabs deliberately share one screen, but each still owns
   // a distinct path — two nodes claiming the same path would shadow each other.
-  const paths = routableNodes().map((node) => node.path);
+  const paths = routableNodes("both").map((node) => node.path);
   const duplicates = paths.filter((path, index) => paths.indexOf(path) !== index);
   expect(duplicates).toEqual([]);
 });
 
+test("desktop-only areas never reach the SaaS router", () => {
+  // Regression guard: the desktop section (offline sync, printing, auto-update)
+  // needs Tauri APIs and a local filesystem. It was mounted in the web app until
+  // 2026-08-25, which shipped five permanently-unreachable pages.
+  const saasPaths = routableNodes("saas").map((node) => node.path);
+  expect(saasPaths.filter((path) => path?.startsWith("desktop"))).toEqual([]);
+});
+
+test("the desktop surface still owns its own routes", () => {
+  const desktopPaths = routableNodes("desktop").map((node) => node.path);
+  expect(desktopPaths).toContain("desktop");
+  expect(desktopPaths.filter((path) => path?.startsWith("desktop/")).length).toBeGreaterThan(0);
+});
+
+test("scoping a surface never invents nodes", () => {
+  expect(iaFor("saas").length + 1).toBe(iaFor("both").length);
+});
+
 test("only the dashboard owns the index route", () => {
-  const roots = routableNodes().filter((node) => node.path === "");
+  const roots = routableNodes("both").filter((node) => node.path === "");
   expect(roots.map((node) => node.key)).toEqual(["dashboard"]);
 });
 
 test("paths are relative — never absolute or trailing-slashed", () => {
-  for (const node of routableNodes()) {
+  for (const node of routableNodes("both")) {
     expect(node.path?.startsWith("/")).toBe(false);
     expect(node.path?.endsWith("/")).toBe(false);
   }

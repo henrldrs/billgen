@@ -1176,7 +1176,57 @@ textarea.bg-field__input {
   font-size: var(--bg-text-helper);
 }
 
+/* ---- panels: the app-screen container ------------------------------------
+ * .bg-panel is what every BillGen screen actually renders inside, and it was
+ * left behind when .bg-card was rebuilt as layered glass (it kept a flat white
+ * face, an 8px radius and NO shadow). Bringing it onto the same surface
+ * treatment is the single change that lifts every screen at once — see
+ * docs/ROADMAP_IA.md §7 item 1.
+ *
+ * It stays a distinct class rather than an alias: Card is composable
+ * (header/body/footer slots) while .bg-panel is a plain container, so the two
+ * keep different padding models. Only the SURFACE is shared. */
+.bg-panel {
+  background: linear-gradient(135deg, var(--bg-glass-from), var(--bg-glass-to));
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--bg-glass-border);
+  border-radius: var(--bg-radius-surface);
+  box-shadow: var(--bg-shadow-card), var(--bg-glass-highlight);
+  padding: var(--bg-pad-card);
+  margin-bottom: 1.25rem;
+}
+/* No hover transform here: a page-level container is not a hoverable object,
+   and tilting the whole screen on mouse-move would be absurd. */
+
+.bg-panel__header {
+  margin-bottom: 1.15rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--bg-line) 60%, transparent);
+}
+
 /* ---- type scale ---------------------------------------------------------- */
+
+/* L6-02: these headings previously set font-size and nothing else. Tailwind's
+ * preflight resets headings to `font-weight: inherit`, so every page title in
+ * the product rendered at weight 400 and every <h2> was pixel-identical to body
+ * copy. Size ALONE is not a hierarchy. */
+.bg-panel__header h1 {
+  font-size: var(--bg-text-title);
+  font-weight: var(--bg-weight-title);
+  letter-spacing: var(--bg-tracking-title);
+  line-height: 1.25;
+}
+.bg-panel h2 {
+  font-size: var(--bg-text-section);
+  font-weight: var(--bg-weight-title);
+  letter-spacing: var(--bg-tracking-title);
+  margin: 1.75rem 0 0.6rem;
+}
+.bg-panel h2:first-of-type {
+  margin-top: 0.5rem;
+}
+
 .bg-page-header__title {
   font-size: var(--bg-text-title);
   font-weight: var(--bg-weight-title);

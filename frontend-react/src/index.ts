@@ -33,13 +33,16 @@ export {
   coverage,
   findByPath,
   flattenIa,
+  iaFor,
   missingEndpoints,
+  onSurface,
   routableNodes,
   type BackendStatus,
   type IaCoverage,
   type IaNode,
   type IaSection,
   type Layer,
+  type Surface,
 } from "./scaffold/ia";
 
 // Scaffold kit — deliberately unstyled placeholders for unwired surface.
@@ -61,6 +64,7 @@ export { ActivityPanel } from "./panels/ActivityPanel";
 export { BackupPanel } from "./panels/BackupPanel";
 export { ClientsPanel } from "./panels/ClientsPanel";
 export { CompanyForm } from "./panels/CompanyForm";
+export { CreditNotesPanel } from "./panels/CreditNotesPanel";
 export { DashboardPanel } from "./panels/DashboardPanel";
 export { HistoryPanel } from "./panels/HistoryPanel";
 export { ImportPanel } from "./panels/ImportPanel";

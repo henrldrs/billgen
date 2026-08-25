@@ -17,6 +17,7 @@ import {
   Card,
   ClientsPanel,
   CompanyForm,
+  CreditNotesPanel,
   DashboardPanel,
   HistoryPanel,
   IA,
@@ -295,6 +296,21 @@ const BUILT: Record<string, Screen> = {
   "sales/invoices/partially_paid": InvoicesScreen,
   "sales/invoices/overdue": InvoicesScreen,
   "sales/invoices/voided": InvoicesScreen,
+
+  // sales — credit notes: backend was complete long before this screen existed
+  "sales/credit-notes": ({ node, companyId, lang }) => {
+    const navigate = useNavigate();
+    return (
+      <>
+        <PageHeader title={node.label} />
+        <CreditNotesPanel
+          companyId={companyId}
+          lang={lang}
+          onGoToInvoices={() => navigate("/app/sales/invoices")}
+        />
+      </>
+    );
+  },
 
   // customers & catalog
   "customers/clients": ({ companyId, lang }) => (

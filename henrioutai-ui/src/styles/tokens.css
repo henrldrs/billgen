@@ -184,8 +184,15 @@
   --bg-shadow-overlay: 0 24px 60px color-mix(in srgb, var(--bg-ink) 30%, transparent);
   --bg-backdrop-dim: color-mix(in srgb, var(--brand-slate-900) 45%, transparent);
 
-  /* Button depth — gradient face, colored outer shadow, inset top highlight */
-  --bg-button-face: linear-gradient(180deg, var(--brand-green-400), var(--brand-green-600));
+  /* Button depth — gradient face, colored outer shadow, inset top highlight.
+   *
+   * Face darkened 400→600 to 600→800 (2026-08-25, L6-03). The old face put
+   * white 14.4px/500 label text on emerald-400→600: measured 1.92:1 at the top
+   * stop, 2.54:1 mid, 3.77:1 at the bottom, against the 4.5:1 WCAG AA needs for
+   * normal text. The hue is unchanged — only the lightness moved — so this is
+   * an accessibility fix, not a rebrand. Hover LIGHTENS now (500→700) rather
+   * than darkening, because the rest state is already near the dark end. */
+  --bg-button-face: linear-gradient(180deg, var(--brand-green-600), var(--brand-green-800));
   --bg-button-face-hover: linear-gradient(180deg, var(--brand-green-500), var(--brand-green-700));
   --bg-shadow-button:
     0 2px 6px color-mix(in srgb, var(--bg-accent) 45%, transparent),

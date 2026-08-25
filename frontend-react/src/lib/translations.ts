@@ -156,6 +156,37 @@ const MESSAGES = {
     nl: "Reden voor annulering",
     es: "Motivo de anulación",
   },
+  "creditNotes.title": {
+    en: "Credit notes",
+    fr: "Notes de crédit",
+    nl: "Creditnota's",
+    es: "Notas de crédito",
+  },
+  "creditNotes.empty": {
+    en: "No credit notes yet",
+    fr: "Aucune note de crédit pour le moment",
+    nl: "Nog geen creditnota's",
+    es: "Todavía no hay notas de crédito",
+  },
+  "creditNotes.emptyHint": {
+    en: "A credit note corrects an invoice that has already been issued. Create one from the invoice you need to correct.",
+    fr: "Une note de crédit corrige une facture déjà émise. Créez-la depuis la facture à corriger.",
+    nl: "Een creditnota corrigeert een reeds uitgegeven factuur. Maak er een aan vanuit de te corrigeren factuur.",
+    es: "Una nota de crédito corrige una factura ya emitida. Créela desde la factura que necesita corregir.",
+  },
+  "creditNotes.goToInvoices": {
+    en: "Go to invoices",
+    fr: "Aller aux factures",
+    nl: "Naar facturen",
+    es: "Ir a las facturas",
+  },
+  "creditNotes.reason": { en: "Reason", fr: "Motif", nl: "Reden", es: "Motivo" },
+  "creditNotes.correctsInvoice": {
+    en: "Corrects invoice",
+    fr: "Corrige la facture",
+    nl: "Corrigeert factuur",
+    es: "Corrige la factura",
+  },
   "history.creditNote": {
     en: "Credit note",
     fr: "Note de crédit",
