@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useId } from "react";
 import type { ReactNode } from "react";
 
 export interface ModalProps {
@@ -18,6 +18,11 @@ export interface ModalProps {
  * glass (stronger blur + shadow than cards) over a dimmed, blurred backdrop.
  */
 export function Modal({ open, onClose, title, children, footer, size = "md", className }: ModalProps) {
+  // Binds the visible title as the dialog's accessible name — without it a
+  // screen reader announces only "dialog", and two stacked dialogs are
+  // indistinguishable.
+  const titleId = useId();
+
   useEffect(() => {
     if (!open || !onClose) return;
     const onKey = (e: KeyboardEvent) => {
@@ -31,9 +36,17 @@ export function Modal({ open, onClose, title, children, footer, size = "md", cla
   const classes = ["bg-modal", `bg-modal--${size}`, className].filter(Boolean).join(" ");
   return (
     <div className="bg-modal__backdrop" onClick={onClose}>
-      <div role="dialog" aria-modal="true" className={classes} onClick={(e) => e.stopPropagation()}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className={classes}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="bg-modal__header">
-          <h2 className="bg-modal__title">{title}</h2>
+          <h2 className="bg-modal__title" id={titleId}>
+            {title}
+          </h2>
           {onClose ? (
             <button type="button" className="bg-modal__close" aria-label="Close" onClick={onClose}>
               ×

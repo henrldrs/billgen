@@ -4,7 +4,20 @@
 
 import { useId, useState, type FormEvent } from "react";
 
-import { Button, EmptyState, Field, Modal, Spinner, TextInput } from "@henrioutai/ui";
+import {
+  Badge,
+  Button,
+  CopyButton,
+  Divider,
+  Drawer,
+  EmptyState,
+  Field,
+  Modal,
+  Spinner,
+  Table,
+  TextInput,
+  type TableColumn,
+} from "@henrioutai/ui";
 import {
   useDeleteInvoice,
   useInvoices,
@@ -17,6 +30,7 @@ import { ApiError } from "../lib/apiClient";
 import { formatDate, formatMoney } from "../lib/format";
 import { t, tPeppolError, type Lang } from "../lib/translations";
 import { useApi } from "../providers/BillGenProvider";
+import type { InvoiceResponse } from "../types";
 
 /** Minimal typing for the File System Access API save dialog. */
 type SaveFilePicker = (options: {
@@ -169,6 +183,38 @@ export function HistoryPanel({ companyId, lang = "en", status }: HistoryPanelPro
     }
   };
 
+  // The drawer is addressed by id rather than by holding the invoice object, so
+  // it re-reads from the refreshed list after a mutation instead of showing a
+  // stale copy of the row that was clicked.
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = invoices?.find((invoice) => invoice.id === selectedId);
+
+  const columns: TableColumn<InvoiceResponse>[] = [
+    {
+      key: "reference",
+      label: t(lang, "history.reference"),
+      render: (invoice) => (
+        <span className="bg-num">{invoice.reference ?? t(lang, "history.draft")}</span>
+      ),
+    },
+    {
+      key: "issue_date",
+      label: t(lang, "history.date"),
+      render: (invoice) => formatDate(invoice.issue_date, lang),
+    },
+    {
+      key: "total_ttc",
+      label: t(lang, "history.total"),
+      numeric: true,
+      render: (invoice) => formatMoney(invoice.total_ttc, invoice.currency, lang),
+    },
+    {
+      key: "status",
+      label: t(lang, "history.status"),
+      render: (invoice) => <Badge status={invoice.status as never} />,
+    },
+  ];
+
   if (isLoading) return <Spinner label={t(lang, "common.loading")} />;
   if (isError) return <div role="alert">{t(lang, "common.error")}</div>;
 
@@ -234,140 +280,140 @@ export function HistoryPanel({ companyId, lang = "en", status }: HistoryPanelPro
         </div>
       ) : null}
 
-      {invoices && invoices.length > 0 ? (
-        <table className="bg-table">
-          <thead>
-            <tr>
-              <th>{t(lang, "history.reference")}</th>
-              <th>{t(lang, "history.date")}</th>
-              <th>{t(lang, "history.total")}</th>
-              <th>{t(lang, "history.status")}</th>
-              <th>{t(lang, "history.actions")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {invoices.map((invoice) => (
-              <tr key={invoice.id}>
-                <td>
-                  {invoice.reference ?? (
-                    <em className="bg-muted">{t(lang, "history.draft")}</em>
-                  )}
-                </td>
-                <td>{formatDate(invoice.issue_date, lang)}</td>
-                <td>{formatMoney(invoice.total_ttc, invoice.currency, lang)}</td>
-                <td>
-                  <span className={`bg-badge bg-badge--${invoice.status}`}>
-                    {invoice.status}
-                  </span>
-                </td>
-                <td>
-                  {invoice.status === "draft" ? (
-                    // A draft has no gapless number: it can be issued (finalized)
-                    // or freely deleted. The only export is the watermarked PDF.
-                    <>
-                      <Button
-                        variant="secondary"
-                        disabled={downloading === `${invoice.id}:pdf`}
-                        onClick={() =>
-                          void download("pdf", invoice.id, `draft-${invoice.id}`)
-                        }
-                      >
-                        {t(lang, "history.downloadPdf")}
-                      </Button>
-                      <Button
-                        onClick={() =>
-                          setAction({
-                            kind: "issue",
-                            invoiceId: invoice.id,
-                            reference: t(lang, "history.draft"),
-                          })
-                        }
-                      >
-                        {t(lang, "history.issue")}
-                      </Button>
-                      <Button
-                        variant="danger"
-                        onClick={() =>
-                          setAction({
-                            kind: "delete",
-                            invoiceId: invoice.id,
-                            reference: t(lang, "history.draft"),
-                          })
-                        }
-                      >
-                        {t(lang, "history.delete")}
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        variant="secondary"
-                        disabled={downloading === `${invoice.id}:pdf`}
-                        onClick={() =>
-                          void download("pdf", invoice.id, invoice.reference ?? invoice.id)
-                        }
-                      >
-                        {t(lang, "history.downloadPdf")}
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        disabled={downloading === `${invoice.id}:xml`}
-                        onClick={() =>
-                          void download("xml", invoice.id, invoice.reference ?? invoice.id)
-                        }
-                      >
-                        {t(lang, "history.downloadXml")}
-                      </Button>
-                      {invoice.status !== "voided" ? (
-                        <>
-                          <Button
-                            variant="secondary"
-                            onClick={() =>
-                              setAction({
-                                kind: "payment",
-                                invoiceId: invoice.id,
-                                reference: invoice.reference ?? invoice.id,
-                              })
-                            }
-                          >
-                            {t(lang, "history.payment")}
-                          </Button>
-                          <Button
-                            variant="secondary"
-                            onClick={() =>
-                              setAction({
-                                kind: "credit_note",
-                                invoiceId: invoice.id,
-                                reference: invoice.reference ?? invoice.id,
-                              })
-                            }
-                          >
-                            {t(lang, "history.creditNote")}
-                          </Button>
-                          <Button
-                            variant="danger"
-                            onClick={() =>
-                              setAction({
-                                kind: "void",
-                                invoiceId: invoice.id,
-                                reference: invoice.reference ?? invoice.id,
-                              })
-                            }
-                          >
-                            {t(lang, "history.void")}
-                          </Button>
-                        </>
-                      ) : null}
-                    </>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <EmptyState title={t(lang, "history.empty")} />
-      )}
+      <Table
+        columns={columns}
+        rows={invoices ?? []}
+        rowKey={(invoice) => invoice.id}
+        onRowClick={(invoice) => setSelectedId(invoice.id)}
+        empty={<EmptyState title={t(lang, "history.empty")} />}
+      />
+
+      {/* N3 — the record inspector. Every action except the single most common
+          one (download PDF) lives here rather than in the row: a row that ends
+          in five equal-weight buttons makes none of them readable, and Menu
+          cannot be used inside Table because .bg-table-wrap clips it. */}
+      <Drawer
+        open={selected !== undefined}
+        onClose={() => setSelectedId(null)}
+        title={selected ? (selected.reference ?? t(lang, "history.draft")) : ""}
+        size="lg"
+        footer={
+          selected ? (
+            <>
+              <Button
+                variant="secondary"
+                disabled={downloading === `${selected.id}:pdf`}
+                onClick={() =>
+                  void download("pdf", selected.id, selected.reference ?? `draft-${selected.id}`)
+                }
+              >
+                {t(lang, "history.downloadPdf")}
+              </Button>
+              {selected.status === "draft" ? (
+                <>
+                  <Button
+                    variant="danger"
+                    onClick={() =>
+                      setAction({
+                        kind: "delete",
+                        invoiceId: selected.id,
+                        reference: t(lang, "history.draft"),
+                      })
+                    }
+                  >
+                    {t(lang, "history.delete")}
+                  </Button>
+                  <Button
+                    onClick={() =>
+                      setAction({
+                        kind: "issue",
+                        invoiceId: selected.id,
+                        reference: t(lang, "history.draft"),
+                      })
+                    }
+                  >
+                    {t(lang, "history.issue")}
+                  </Button>
+                </>
+              ) : null}
+            </>
+          ) : null
+        }
+      >
+        {selected ? (
+          <>
+            <dl className="bg-totals">
+              <dt>{t(lang, "history.status")}</dt>
+              <dd><Badge status={selected.status as never} /></dd>
+              <dt>{t(lang, "history.date")}</dt>
+              <dd>{formatDate(selected.issue_date, lang)}</dd>
+              <dt>{t(lang, "history.total")}</dt>
+              <dd>{formatMoney(selected.total_ttc, selected.currency, lang)}</dd>
+            </dl>
+
+            {selected.reference ? (
+              <p>
+                <span className="bg-num">{selected.reference}</span>{" "}
+                <CopyButton value={selected.reference} label={t(lang, "history.reference")} />
+              </p>
+            ) : null}
+
+            <Divider />
+
+            {/* Issued invoices only: a draft has no gapless number, so it can
+                neither be exported to Peppol nor corrected by a credit note. */}
+            {selected.status !== "draft" && selected.status !== "voided" ? (
+              <div className="bg-panel__actions">
+                <Button
+                  variant="secondary"
+                  disabled={downloading === `${selected.id}:xml`}
+                  onClick={() =>
+                    void download("xml", selected.id, selected.reference ?? selected.id)
+                  }
+                >
+                  {t(lang, "history.downloadXml")}
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() =>
+                    setAction({
+                      kind: "payment",
+                      invoiceId: selected.id,
+                      reference: selected.reference ?? selected.id,
+                    })
+                  }
+                >
+                  {t(lang, "history.payment")}
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() =>
+                    setAction({
+                      kind: "credit_note",
+                      invoiceId: selected.id,
+                      reference: selected.reference ?? selected.id,
+                    })
+                  }
+                >
+                  {t(lang, "history.creditNote")}
+                </Button>
+                <Button
+                  variant="danger"
+                  onClick={() =>
+                    setAction({
+                      kind: "void",
+                      invoiceId: selected.id,
+                      reference: selected.reference ?? selected.id,
+                    })
+                  }
+                >
+                  {t(lang, "history.void")}
+                </Button>
+              </div>
+            ) : null}
+          </>
+        ) : null}
+      </Drawer>
 
       <Modal
         open={action !== null}

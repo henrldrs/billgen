@@ -8,6 +8,20 @@ import { HistoryPanel } from "./HistoryPanel";
 
 const server = setupServer();
 
+/**
+ * Actions moved out of the table row and into the N3 record inspector (a row
+ * ending in five equal-weight buttons made none of them readable). Every action
+ * test therefore opens the drawer first by clicking the row.
+ */
+async function openInvoice(user: ReturnType<typeof userEvent.setup>, reference: string) {
+  const table = await screen.findByRole("table");
+  // A draft shows "Draft" in both the reference cell and the status Badge, so
+  // match the row rather than a cell and click that.
+  const row = within(table).getAllByText(reference)[0].closest("tr");
+  await user.click(row as HTMLElement);
+  return within(await screen.findByRole("dialog", { name: reference }));
+}
+
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
@@ -25,7 +39,7 @@ test("renders invoices with status badges", async () => {
   renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
   const table = within(await screen.findByRole("table"));
   expect(table.getByText("ACME-BC07012026")).toBeInTheDocument();
-  expect(table.getByText("paid")).toBeInTheDocument(); // scoped: "paid" is also a filter option
+  expect(table.getByText("Paid")).toBeInTheDocument(); // Badge renders the canonical label
   expect(table.getAllByText("€1,512.50")).toHaveLength(2);
 });
 
@@ -45,8 +59,9 @@ test("voiding an invoice asks for a reason and refreshes the list", async () => 
   renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
   const user = userEvent.setup();
 
-  await user.click(await screen.findByRole("button", { name: "Void" }));
-  const dialog = await screen.findByRole("dialog");
+  const drawer = await openInvoice(user, "ACME-BC07012026");
+  await user.click(drawer.getByRole("button", { name: "Void" }));
+  const dialog = await screen.findByRole("dialog", { name: /Void/ });
   await user.type(
     within(dialog).getByLabelText("Reason for voiding"),
     "duplicate entry",
@@ -54,8 +69,8 @@ test("voiding an invoice asks for a reason and refreshes the list", async () => 
   await user.click(within(dialog).getByRole("button", { name: "Record" }));
 
   const table = within(await screen.findByRole("table"));
-  expect(await table.findByText("voided")).toBeInTheDocument();
-  // voided invoices lose their action buttons
+  expect(await table.findByText("Voided")).toBeInTheDocument();
+  // voided invoices lose their correction actions
   expect(screen.queryByRole("button", { name: "Void" })).not.toBeInTheDocument();
 });
 
@@ -86,7 +101,8 @@ test("downloads an invoice PDF (read-only re-render, no mutation)", async () => 
   renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
   const user = userEvent.setup();
 
-  await user.click(await screen.findByRole("button", { name: "Download PDF" }));
+  const pdfDrawer = await openInvoice(user, "ACME-BC07012026");
+  await user.click(pdfDrawer.getByRole("button", { name: "Download PDF" }));
 
   await waitFor(() => expect(clickSpy).toHaveBeenCalled());
   expect(createUrl).toHaveBeenCalledWith(expect.any(Blob));
@@ -117,10 +133,12 @@ test("shows a confirmation once the PDF is saved", async () => {
   renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
   const user = userEvent.setup();
 
-  await user.click(await screen.findByRole("button", { name: "Download PDF" }));
+  const savedDrawer = await openInvoice(user, "ACME-BC07012026");
+  await user.click(savedDrawer.getByRole("button", { name: "Download PDF" }));
 
-  const status = await screen.findByRole("status");
-  expect(status).toHaveTextContent("Saved ACME-BC07012026.pdf");
+  // CopyButton in the drawer owns a role="status" live region too, so match the
+  // save confirmation by its text rather than by role.
+  expect(await screen.findByText(/Saved ACME-BC07012026\.pdf/)).toBeInTheDocument();
 
   clickSpy.mockRestore();
 });
@@ -147,7 +165,8 @@ test("a blocked Peppol export lists the offending fields", async () => {
   renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
   const user = userEvent.setup();
 
-  await user.click(await screen.findByRole("button", { name: "Peppol XML" }));
+  const xmlDrawer = await openInvoice(user, "ACME-BC07012026");
+  await user.click(xmlDrawer.getByRole("button", { name: "Peppol XML" }));
 
   const alert = await screen.findByRole("alert");
   expect(alert).toHaveTextContent(
@@ -161,17 +180,26 @@ function draftRecord(id = "inv-1") {
   return invoiceRecord(id, null, { status: "draft", sequence_global: null });
 }
 
-test("a draft shows a Draft badge and placeholder with Issue/Delete actions", async () => {
+test("a draft shows a Draft placeholder and badge, with its actions in the drawer", async () => {
   server.use(http.get(`${BASE}/invoices`, () => HttpResponse.json([draftRecord()])));
 
   renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
+  const user = userEvent.setup();
   const table = within(await screen.findByRole("table"));
 
-  expect(table.getByText("Draft")).toBeInTheDocument(); // reference placeholder
-  expect(table.getByText("draft")).toBeInTheDocument(); // status badge
-  expect(screen.getByRole("button", { name: "Issue" })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
-  // A draft has no gapless number yet, so no void / credit-note / XML actions.
+  // "Draft" appears twice on the row: once as the reference placeholder (a
+  // draft has no gapless number yet) and once as the status badge.
+  expect(table.getAllByText("Draft")).toHaveLength(2);
+
+  // Actions live in the record inspector, not the row.
+  expect(screen.queryByRole("button", { name: "Issue" })).not.toBeInTheDocument();
+
+  const drawer = await openInvoice(user, "Draft");
+  expect(drawer.getByRole("button", { name: "Issue" })).toBeInTheDocument();
+  expect(drawer.getByRole("button", { name: "Delete" })).toBeInTheDocument();
+  expect(drawer.getByRole("button", { name: "Download PDF" })).toBeInTheDocument();
+
+  // Still no gapless number, so no void / credit-note / Peppol actions anywhere.
   expect(screen.queryByRole("button", { name: "Void" })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Credit note" })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Peppol XML" })).not.toBeInTheDocument();
@@ -194,12 +222,14 @@ test("issuing a draft confirms then assigns a number", async () => {
   renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
   const user = userEvent.setup();
 
-  await user.click(await screen.findByRole("button", { name: "Issue" }));
-  const dialog = await screen.findByRole("dialog");
+  const issueDrawer = await openInvoice(user, "Draft");
+  await user.click(issueDrawer.getByRole("button", { name: "Issue" }));
+  // The drawer stays open behind the confirm modal, so scope to the modal.
+  const dialog = await screen.findByRole("dialog", { name: /Issue/ });
   await user.click(within(dialog).getByRole("button", { name: "Confirm" }));
 
   const table = within(await screen.findByRole("table"));
-  expect(await table.findByText("issued")).toBeInTheDocument();
+  expect(await table.findByText("Issued")).toBeInTheDocument();
   expect(table.getByText("ACME-BC07012026")).toBeInTheDocument();
   expect(issueBody).toEqual({}); // no date overrides sent
 });
@@ -219,8 +249,9 @@ test("deleting a draft confirms then removes it", async () => {
   renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
   const user = userEvent.setup();
 
-  await user.click(await screen.findByRole("button", { name: "Delete" }));
-  const dialog = await screen.findByRole("dialog");
+  const deleteDrawer = await openInvoice(user, "Draft");
+  await user.click(deleteDrawer.getByRole("button", { name: "Delete" }));
+  const dialog = await screen.findByRole("dialog", { name: /Delete/ });
   await user.click(within(dialog).getByRole("button", { name: "Confirm" }));
 
   expect(await screen.findByText("No invoices yet.")).toBeInTheDocument();
@@ -252,12 +283,13 @@ test("recording a payment posts amount and date", async () => {
   renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
   const user = userEvent.setup();
 
-  await user.click(await screen.findByRole("button", { name: "Payment" }));
-  const dialog = await screen.findByRole("dialog");
+  const payDrawer = await openInvoice(user, "ACME-BC07012026");
+  await user.click(payDrawer.getByRole("button", { name: "Payment" }));
+  const dialog = await screen.findByRole("dialog", { name: /Payment/ });
   await user.type(within(dialog).getByLabelText("Amount"), "500.00");
   await user.type(within(dialog).getByLabelText("Payment date"), "2026-07-20");
   await user.click(within(dialog).getByRole("button", { name: "Record" }));
 
   const table = within(await screen.findByRole("table"));
-  expect(await table.findByText("partially_paid")).toBeInTheDocument();
+  expect(await table.findByText("Partially paid")).toBeInTheDocument();
 });

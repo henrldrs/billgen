@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useId } from "react";
 import type { ReactNode } from "react";
 
 export interface DrawerProps {
@@ -29,6 +29,11 @@ export function Drawer({
   size = "md",
   className,
 }: DrawerProps) {
+  // A dialog with no accessible name is announced as just "dialog". Binding the
+  // visible title is the whole fix, and it also lets two open dialogs (a drawer
+  // with a modal over it) be told apart.
+  const titleId = useId();
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -49,9 +54,17 @@ export function Drawer({
     .join(" ");
   return (
     <div className="bg-drawer__backdrop" onClick={onClose}>
-      <div role="dialog" aria-modal="true" className={classes} onClick={(e) => e.stopPropagation()}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className={classes}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="bg-drawer__header">
-          <h2 className="bg-drawer__title">{title}</h2>
+          <h2 className="bg-drawer__title" id={titleId}>
+            {title}
+          </h2>
           <button type="button" className="bg-modal__close" aria-label="Close" onClick={onClose}>
             ×
           </button>
