@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 453 453" width="453" height="453">
+  <rect width="453" height="453" rx="101.0" fill="#1F2937"/>
+  <g transform="translate(111.00 77.01) scale(0.66)">
+  <!--
+    The BillGen mark: an invoice page whose right edge forms a B, with a folded
+    top-right corner and a euro sign in the body.
+
+    Hand-authored geometry (2026-08-25), replacing the auto-trace in
+    docs/frontent build/logo_refractor/. Every curve is exact:
+      - page corners      r=26 on the stroke centreline
+      - lower B bowl      circle, centre (213,330) r=103
+      - euro ring         circle, centre (129,334) r=38
+    Proportions measured from billgen_icon_transparent_master.png, so this
+    drops into the 350x453 viewBox the old mark used with no layout change.
+
+    Colours are the canonical tokens from docs/BRAND_TOKENS.md (slate-700 /
+    emerald-500), not the source PNG's raw hex.
+  -->
+  <g fill="none" stroke="#FFFFFF" stroke-width="25" stroke-linecap="round" stroke-linejoin="round">
+    <!-- page: top edge, left edge, bottom edge, then up around the lower B bowl
+         and left along the B's waist -->
+    <path d="M 178 32 L 59 32 A 26 26 0 0 0 33 58 L 33 395 A 26 26 0 0 0 59 421 L 261 421 A 103 103 0 0 0 261 239 L 173 239" />
+    <!-- upper B bowl: down from the fold, hooking left into the waist -->
+    <path d="M 274 138 C 279 153 279 183 273 201 C 267 219 254 239 240 239" />
+  </g>
+
+  <!-- the two ruled lines of the invoice -->
+  <g fill="#FFFFFF">
+    <rect x="78" y="142" width="87" height="18" rx="9" />
+    <rect x="78" y="188" width="87" height="18" rx="9" />
+  </g>
+
+  <!-- folded corner, drawn over the page so the top edge reads as cut -->
+  <path fill="#34D399" d="M 188 20 L 278 131 L 188 131 Z" />
+
+  <!-- euro sign -->
+  <g fill="none" stroke="#34D399" stroke-linecap="round">
+    <path stroke-width="12" d="M 140 298 A 38 38 0 1 0 140 370" />
+    <path stroke-width="9" d="M 82 326 L 126 326" />
+    <path stroke-width="9" d="M 82 342 L 122 342" />
+  </g>
+</g>
+</svg>

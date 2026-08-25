@@ -109,7 +109,7 @@ the API's OpenAPI schema, so the UI cannot drift from the server contract.
 | `core/repository/` | abstract `*Repository` ports + `UnitOfWork`; `sequence_repo` (`INVOICE_SERIES`, `CREDIT_NOTE_SERIES`, `monthly_bucket()`) | Storage-agnostic interfaces. No `org_id` params — read from context. No invoice hard-delete; audit log is append-only. |
 | `core/services/` | `InvoiceService`, `CreditNoteService`, `PaymentService`, `Company/Client/Product/Organization/Activity/ReportingService`, `PdfService`, `PeppolService`, `ImportService`; `peppol_validation.validate_peppol_parties()`; `errors.py` (`NotFoundError`, `BusinessRuleError`, `PeppolValidationError`, `FieldError`); `_audit.record()`; `numbering_service` | **Use-cases.** Each opens one `UnitOfWork`, does the work, writes an audit entry, commits once. `PeppolService` runs the party-validation gate before building XML. |
 | `core/imports/` | `parse_backup()`, `map_company/map_client/map_product`, `ImportReport`, `MappingError`, `APP_NAME` | Pure legacy-import layer: parses a `FinanceFlow BillGen` backup (`{app, keys}` with `billgen-*` localStorage keys) and maps its records onto domain models. No framework, no I/O. |
-| `core/pdf/` | `registry` (`TEMPLATES`, `get_template`), `renderer` (`render_html`, `html_to_pdf`, `PdfEngineUnavailableError`), `context` (`build_invoice_context`, `branded`), `templates/*.html.j2`, `assets/billgen_logo.png` | Server-side PDF via Jinja2 → **headless Chromium (Playwright), WeasyPrint fallback**. 4 templates: fr_standard, fr_detailed, nl_minimal, credit_note. Draft PDFs are watermarked; free-tier PDFs carry a "Made with BillGen" footer + embedded logo (`branded` flag = seam for paid-tier removal). |
+| `core/pdf/` | `registry` (`TEMPLATES`, `get_template`), `renderer` (`render_html`, `html_to_pdf`, `PdfEngineUnavailableError`), `context` (`build_invoice_context`, `branded`), `templates/*.html.j2`, `assets/billgen_logo.png` (generated — see `assets/brand/`) | Server-side PDF via Jinja2 → **headless Chromium (Playwright), WeasyPrint fallback**. 4 templates: fr_standard, fr_detailed, nl_minimal, credit_note. Draft PDFs are watermarked; free-tier PDFs carry a "Made with BillGen" footer + the embedded **mark** (not the text lockup) at 16px (`branded` flag = seam for paid-tier removal). |
 | `core/einvoicing/` | `ubl_builder.build_invoice_ubl()`, `ubl_validator.validate_invoice_ubl()` | **Standard Peppol BIS Billing 3.0** / UBL 2.1 XML (stdlib ElementTree), Helger-validated (2026.5). BE sellers additionally carry the Belgian elements BIS accepts — EndpointIDs, OGM-VCS structured communication (`PaymentID`), KBO legal id, party contact — layered over the EN 16931 multi-rate/discount engine. (The older UBL.BE profile/markers/BTCC were dropped — see §9.) |
 | `core/utils/` | `money.format_amount()`, `dates.format_date()`, `jsonsafe.json_safe()` | Formatting + audit-log JSON safety (Decimal→str). |
 
@@ -189,9 +189,43 @@ truth for every component; `@billgen/ui` re-exports it.
 |---|---|---|
 | `src-tauri/src/main.rs` | `spawn_sidecar()`, `api_base_url` command, `SidecarState` | Rust shell: spawns `python -m desktop.bootstrap`, reads the port line, drains stdout, waits, kills sidecar on exit. |
 | `src-tauri/tauri.conf.json` | — | Window, scoped CSP (allows localhost API), NSIS bundle, icons. |
+| `src-tauri/icons/`, `public/favicon.*` | — | Generated from `assets/brand/billgen-mark.svg`; never hand-edit. Were a generic blue placeholder until `2026-08-25`. |
 | `src-tauri/capabilities/default.json` | — | `core:default` for the `main` window. |
 | `src/lib/api.ts` | `createApi()`, `tokenStore` | Resolves the sidecar port via `invoke('api_base_url')`; falls back to a dev URL outside Tauri. |
 | `src/App.tsx`, `src/DesktopShell.tsx` | boot flow + tab shell | Auto-login via `desktopBootstrap()`, then mounts the 7 kit panels (no login chrome). |
+
+### `assets/brand/` — the mark, and everything rendered from it
+
+`billgen-mark.svg` is the **single source of truth** for the BillGen mark
+(the invoice page whose right edge forms a B). Hand-authored geometry, not a
+trace: page corners are r=26 on the stroke centreline, the lower bowl is a
+circle (centre 213,330 r=103), the euro ring is a circle (centre 129,334 r=38).
+
+`python scripts/generate_brand_assets.py` renders **every** raster from it via
+Playwright's Chromium (already a PDF dependency) — 25 files:
+
+| Output | What it is |
+|---|---|
+| `core/pdf/assets/billgen_logo.png` | free-tier PDF footer, **mark only**, transparent, 256px tall |
+| `frontend-electron/src-tauri/icons/*` | desktop + Windows Store icons, `.ico`, `.icns` |
+| `frontend-electron/src-tauri/icon-source.png` | 1024px tile, so a future `tauri icon` run starts from the real mark |
+| `frontend-{saas,electron}/public/favicon.{svg,ico}`, `apple-touch-icon.png` | browser tabs |
+
+Two colourways, both generated: **on light** (canonical `#334155` / `#10B981`)
+for paper and in-app, and **on an ink tile** (`#1F2937` ground, white outline,
+emerald-400 accent) for app icons and favicons — navy-on-transparent vanishes
+against dark taskbars and browser chrome.
+
+The web copy of the geometry lives in `henrioutai-ui/src/components/LogoMark.tsx`,
+which paints the same paths with `var(--bg-navy)` / `var(--bg-accent)` so the
+mark retints with the token layer. **Edit the geometry in both** — the SVG for
+rasters, the TSX for the web — and re-run the script.
+
+> `docs/frontent build/logo_refractor/` is the **superseded** auto-trace that
+> this replaced (wobbly strokes, misshapen bowl). Kept as a record; do not
+> re-trace from it. The only asset there still worth anything is
+> `billgen_icon_transparent_master.png`, the clean 350x453 crop of the original
+> that the current geometry was measured against.
 
 ### `docs/frontent build/component-library/` — isolated UI library build (NOT wired in)
 

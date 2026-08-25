@@ -1,0 +1,1918 @@
+billgen---enterprise-invoicing-&-financial-saas.zip
+Archive zip
+You are an expert UI/UX systems auditor. Analyze the entire frontend design I will provide and produce a complete, exhaustive inventory of every element in the interface. Your goal is to enumerate ALL structural, visual, interactive, and semantic components used in the frontend.
+
+Break down the UI/UX into the following categories and list every item you find:
+
+1. GLOBAL SYSTEM
+   - Design tokens (colors, spacing, typography, radii, shadows)
+   - Token palettes (primary, secondary, semantic, neutral, gradients)
+   - Component palettes (UI kits, reusable blocks, atomic components)
+   - Grid systems, layout rules, spacing rules
+   - Breakpoints and responsive behaviors
+
+2. FOUNDATIONAL COMPONENTS
+   - Buttons (all variants, states, sizes)
+   - Inputs (text fields, selects, dropdowns, toggles, sliders)
+   - Cards (all types, sizes, states)
+   - Panels, sheets, drawers, modals
+   - Navigation elements (topbar, sidebar, breadcrumbs, tabs)
+   - Icons and icon sets
+   - Avatars, badges, chips, tags
+   - Typography styles (headings, body, captions)
+
+3. COMPLEX COMPONENTS
+   - Tables, data grids, lists, repeaters
+   - Charts, graphs, visualizations
+   - Trees, explorers, inspectors
+   - Forms and validation systems
+   - Wizards, steppers, multi‑stage flows
+   - Search bars, filters, sorters
+
+4. STRUCTURAL ELEMENTS
+   - Page templates
+   - Layout containers
+   - Sections, zones, regions
+   - Reusable patterns
+   - Interaction patterns (hover, focus, active, disabled)
+   - Animation rules and transitions
+
+5. LIBRARIES & FRAMEWORKS
+   - UI libraries (Material, Chakra, Tailwind, custom)
+   - Icon libraries
+   - Chart libraries
+   - State management libraries
+   - Routing libraries
+   - Any other external dependencies
+
+6. BRANDING & IDENTITY
+   - Logo variants
+   - Brand shapes or motifs
+   - Illustration styles
+   - Micro‑interactions that express brand identity
+
+7. ANYTHING ELSE
+   - Any component, pattern, or asset not listed above
+   - Any inferred missing components
+   - Any inconsistencies or duplications
+   - Any unused or partially implemented elements
+
+OUTPUT FORMAT:
+- Use a hierarchical tree structure.
+- Under each category, enumerate every component individually.
+- Do not summarize. Do not compress. List EVERYTHING.
+- If something appears multiple times, list each instance.
+- If something is missing but implied, flag it.
+
+Your final output must be a complete UI/UX component inventory suitable for comparing the design against a demo implementation.
+
+BillGen — Complete Frontend UI/UX Component Inventory
+
+Audit scope: the uploaded BillGen Enterprise Invoicing & Financial SaaS frontend repository, including React components, CSS tokens, component styles, application shell, navigation, all implemented feature views, modals/drawers, and declared dependencies.
+
+Audit method: component/file inventory + JSX usage inspection + design-token/style inspection + application composition inspection. This is therefore an implementation-level UI inventory, not merely a visual screenshot inventory.
+
+1. GLOBAL SYSTEM
+1.1 Design-token system
+Brand blue palette
+brand-blue-50 — #eff6ff
+brand-blue-100 — #dbeafe
+brand-blue-200 — #bfdbfe
+brand-blue-300 — #93c5fd
+brand-blue-400 — #60a5fa
+brand-blue-500 — #2563eb
+brand-blue-600 — #1d4ed8
+brand-blue-700 — #1e40af
+brand-blue-800 — #1e3a8a
+brand-blue-900 — #172554
+Slate / neutral palette
+brand-slate-50 — #f8fafc
+brand-slate-100 — #f1f5f9
+brand-slate-200 — #e2e8f0
+brand-slate-300 — #cbd5e1
+brand-slate-400 — #94a3b8
+brand-slate-500 — #64748b
+brand-slate-600 — #475569
+brand-slate-700 — #334155
+brand-slate-800 — #1e293b
+brand-slate-900 — #111827
+brand-slate-950 — #0b0f19
+Semantic palettes
+Emerald:
+#10b981
+#059669
+Red:
+#fef2f2
+#fee2e2
+#fca5a5
+#f87171
+#ef4444
+#dc2626
+#b91c1c
+Amber:
+#fffbeb
+#fef3c7
+#fcd34d
+#fbbf24
+#f59e0b
+#b45309
+Orange:
+#fff7ed
+#ffedd5
+#fed7aa
+#ea580c
+#c2410c
+#7c2d12
+Application semantic colors
+Ink
+Soft ink
+Surface
+Alternate surface
+Line
+Accent
+Strong accent
+Soft accent
+Accent ink
+Navy
+Strong navy
+Soft navy
+Sidebar
+Sidebar text
+Sidebar secondary text
+Sidebar active
+Sidebar divider
+Danger
+Danger soft
+Success
+Success soft
+Warning
+Warning soft
+Topbar
+Topbar text
+Topbar divider
+Radii
+sm — 6px
+md — 8px
+default — 12px
+lg — 12px
+xl — 14px
+surface — 16px
+circular / pill — 999px
+Shadows
+Small elevation
+Medium elevation
+Accent glow
+Card elevation
+Card hover elevation
+Overlay elevation
+Button elevation
+Button hover elevation
+Button pressed inset
+Raised control elevation
+Raised-control hover elevation
+Focus ring
+Glass effects
+Glass gradient start
+Glass gradient end
+Glass border
+Glass highlight
+Glass overlay gradient
+Backdrop dim
+Backdrop blur
+Saturation enhancement
+Button depth
+Primary face gradient
+Primary hover gradient
+Primary shadow
+Primary hover shadow
+Primary pressed shadow
+Raised surface shadow
+Raised hover shadow
+Motion tokens
+Standard easing
+Ease-out
+Ease-in
+Fast duration — 120ms
+Pop duration — 200ms
+Press duration — 80ms
+Press scale — 0.98
+Typography
+Primary font:
+Plus Jakarta Sans
+system fallback
+Segoe UI
+Roboto
+Monospace:
+Geist Mono
+ui-monospace
+Cascadia Mono
+Title size
+Section size
+Label size
+Body size
+Helper size
+Title weight
+Label weight
+Button weight
+Strong button weight
+Tracking tokens for title/body/button variants
+Spacing
+Field spacing
+Input vertical padding
+Input horizontal padding
+Card padding
+Small horizontal/vertical padding
+Medium horizontal/vertical padding
+Large horizontal/vertical padding
+XL horizontal/vertical padding
+Icon sizing
+16px
+20px
+24px
+Idle opacity
+1.2 Surface system
+Main application background
+White content surface
+Alternate gray content surface
+Dark sidebar surface
+Dark topbar variant
+Card surface
+Panel surface
+Glass surface
+Glass overlay
+Modal surface
+Drawer surface
+Dark-theme surface
+Dark-theme alternate surface
+1.3 Theme system
+Light theme
+White topbar
+Light gray application canvas
+White cards
+Dark text
+Royal-blue accent
+Dark navy sidebar
+Dark theme
+Slate application canvas
+Slate cards
+Light text
+Blue accent
+Dark navy sidebar
+Dark overlays
+Dark shadows
+Dark glass surfaces
+Theme interaction
+Theme toggle
+Light mode
+Dark mode
+Theme persistence/state
+Icon switching:
+sun
+moon
+1.4 Responsive system
+Desktop
+Sidebar visible
+Top navigation
+Large content canvas
+Max-width content container
+Multi-column layouts
+Medium
+Sidebar remains available
+Main content contracts
+Grid layouts collapse progressively
+Mobile
+Desktop sidebar hidden
+Fixed bottom navigation appears
+Content gains bottom padding
+Topbar search contracts
+Desktop quick action hides
+User identity text hides
+Main content becomes single-column
+Modals/forms use narrower layouts
+Explicit breakpoints observed
+sm
+md
+Tailwind responsive utilities
+Desktop sidebar breakpoint: md
+Mobile bottom navigation breakpoint: < md
+Responsive concerns
+Mobile navigation only exposes:
+Home
+Invoices
+New invoice
+Customers
+Settings
+Quotes, credit notes, recurring, catalog, accounting, documents and reports are not directly represented in mobile navigation.
+No evidence of a dedicated mobile information architecture for the full SaaS.
+2. FOUNDATIONAL COMPONENTS
+2.1 Buttons
+Base Button
+Primary
+Secondary
+Outline
+Ghost
+Danger
+Link
+Plain
+Button sizes
+Small
+Medium
+Large
+XL
+Button states
+Default
+Hover
+Active
+Disabled
+Focus through global focus styling
+Primary button
+Blue gradient
+White text
+Shadow
+Hover elevation
+Pressed inset
+Vertical translation
+Secondary button
+Surface background
+Border
+Dark text
+Raised shadow
+Hover elevation
+Outline button
+Transparent background
+Border
+Accent hover border
+Ghost button
+Transparent
+Accent-tinted hover background
+Danger button
+Danger border
+Danger text
+Danger-soft hover background
+Link button
+Underline
+Accent text
+Hover color change
+Plain button
+No border
+No shadow
+No padding
+Specialized buttons
+CreateBillButton
+HomeButton
+IconButton
+Topbar "Nouvelle facture"
+Mobile floating new-invoice button
+Sidebar collapse button
+Table action buttons
+Modal footer actions
+Drawer actions
+Confirm/revoke buttons
+2.2 Icon buttons
+Generic icon button
+Notification button
+Theme button
+Sidebar collapse button
+Search trigger
+Account trigger
+Copy button
+Help trigger
+Menu trigger
+Back button
+Icon button states
+Default
+Hover
+Active
+Disabled where applicable
+Notification pulse
+2.3 Icon system
+Dedicated icons
+Search
+Notifications
+Plus
+Help
+Back
+Icon aggregate
+Icons.tsx
+Lucide
+lucide-react
+Custom icon container
+IconChip
+IconChip variants
+Neutral
+Accent
+Navy
+IconChip shapes
+Rounded
+Circle
+IconChip sizes
+Small
+Medium
+Large
+IconChip states
+Default
+Active
+Decorative status dot
+2.4 Logo / brand mark
+LogoMark
+Sidebar letter-mark "B"
+BillGen wordmark
+Topbar brand name
+"Peppol 2026 Ready" brand/status label
+Logo contexts
+Sidebar expanded
+Sidebar collapsed
+Brand header
+Application identity
+2.5 Cards
+Generic Card
+KPI Card
+Dashboard cards
+Reports cards
+Settings cards
+Accounting cards
+Catalog cards
+Customer cards
+Invoice cards
+Quote cards
+Recurring invoice cards
+Document cards
+Card structures
+Header
+Title
+Subtitle
+Content
+Footer
+Footer action zone
+Card states
+Normal
+Hover/elevated where applicable
+Semantic-colored content cards
+Dark theme
+Light theme
+2.6 KPI cards
+
+Each KPI card contains:
+
+Label
+Main numeric/value display
+Delta
+Delta direction
+Positive/negative semantics
+Hint
+Icon
+Numeric typography
+Currency formatting
+
+Dashboard KPI instances:
+
+Total facturé
+Encaissé
+En attente
+En retard
+
+Reports KPI instances:
+
+Total Facturé TTC
+Taux d'Encaissement
+DSO Moyen
+TVA Collectée
+2.7 Badges
+Generic tones
+Neutral
+Info
+Success
+Warning
+Danger
+Accent
+Status badges
+Brouillon
+Émise
+Envoyée
+Délivrée
+Consultée
+Payée
+Paiement partiel
+En retard
+Annulée
+Avoir émis
+Actif
+En pause
+Accepté
+Refusé
+Facturé
+Badge anatomy
+Dot
+Label
+Badge usage
+Invoice status
+Quote status
+Credit-note status
+Recurring status
+Peppol operational status
+2.8 Banners
+Info banner
+Warning banner
+Success banner
+Danger banner
+Dismissible banner
+Title
+Description/content
+Dismiss action
+
+Instances:
+
+Dashboard alerts
+Accounting warnings
+Settings notifications
+Onboarding information
+2.9 Inputs
+Text input
+Standard text
+Email
+Number
+Invalid state
+Placeholder
+Controlled value
+Textarea
+Multiline input
+Configurable rows
+Invalid state
+Legal-text input
+Notes input
+Select
+Standard select
+Placeholder
+Options
+Invalid state
+Checkbox
+Checkbox control
+Label
+Hint
+Checked/unchecked
+Radio group
+Radio options
+Group label
+Selection state
+Switch
+On/off control
+Active/inactive state
+Combobox
+Searchable selection
+Invoice/customer/service selection
+Date picker
+Date selection
+Date range/individual date usage
+Invoice date
+Due date
+File upload
+File selection
+Upload area
+File interaction
+2.10 Field system
+
+Each field can contain:
+
+Label
+Required marker
+Input
+Hint
+Error
+HTML for binding
+Validation presentation
+2.11 Search
+Global search trigger
+SearchBar component
+Search icon
+Search input
+Placeholder
+Enter-to-submit
+Escape-to-clear
+Command shortcut indicator
+⌘K
+Search invoices
+Search clients
+Search quotes
+Search services
+2.12 Segmented controls
+Generic segmented control
+Language selector
+Theme selector
+Other configurable segmented options
+
+Language:
+
+FR
+NL
+EN
+2.13 Navigation
+Top navigation
+Search
+New invoice
+Theme switch
+Notifications
+Company identity
+BCE/TVA number
+Avatar
+Profile trigger
+Sidebar
+Main navigation
+Dashboard
+Factures
+Devis
+Notes de crédit
+Abonnements récurrents
+Clients & Contacts
+Catalogue & Tarifs
+Documents & Pièces
+Configuration navigation
+Comptabilité & TVA 2026
+Rapports & Statistiques
+Paramètres & Peppol
+Sidebar mechanics
+Expanded
+Collapsed
+Active item
+Item badges
+Section labels
+Section dividers
+Collapse/expand control
+Mobile navigation
+Accueil
+Factures
+New invoice floating action
+Clients
+Réglages
+2.14 Menus
+Generic dropdown menu
+Account menu
+Organization switcher
+Menu item
+Disabled menu item
+Menu alignment
+Header item inside account menu
+2.15 Avatar system
+Avatar
+Initials avatar
+Image/avatar URL support
+Small/medium/large sizing
+Account avatar
+Topbar avatar
+Account-menu avatar
+2.16 Feedback components
+Toast
+Toast container
+Empty state
+Error state
+Success state
+Skeleton
+Progress bar
+Status timeline
+Banner
+2.17 Modal / overlay primitives
+Modal
+Drawer
+Confirm dialog
+Backdrop
+Modal title
+Modal body
+Modal footer
+Drawer header
+Drawer content
+Drawer actions
+Overlay shadow
+Overlay dimming
+2.18 Utility components
+Divider
+Kbd
+CopyButton
+Pagination
+HelpBubble
+CommandPalette
+3. COMPLEX COMPONENTS
+3.1 Dashboard
+Dashboard header
+Dashboard title
+Subtitle
+Action area
+KPI region
+Four KPI cards
+Financial summary
+Revenue visualization
+Chart wrapper
+Invoice status summary
+Invoice statuses
+Status badges
+Status counts
+Outstanding / collection information
+Progress indicators
+Invoice data
+Dashboard tables
+Recent invoices
+Invoice rows
+Customer information
+Amount
+Status
+Dates
+Actions
+Dashboard alerts
+Banner
+3.2 Invoice management
+Invoice list page
+Page heading
+Search bar
+Tabs
+Table
+Table sorting
+Pagination
+New invoice button
+Invoice status badges
+Invoice rows
+Invoice selection
+Invoice drawer trigger
+Invoice table
+Invoice number
+Customer
+Date
+Due date
+Amount
+Status
+Actions
+Invoice drawer
+Drawer shell
+Invoice identity
+Invoice status badge
+Invoice metadata
+Customer information
+Invoice amounts
+VAT information
+Payment information
+Invoice dates
+Copyable information
+Text fields
+Status timeline
+Divider sections
+Action buttons
+Confirm dialog
+Close action
+Create invoice modal
+Modal
+Customer combobox
+Invoice date picker
+Due-date picker
+Invoice number
+Reference
+Invoice item section
+Product/service selection
+Quantity
+Unit price
+VAT
+Description
+Notes
+Terms/legal text
+Totals
+Create/save action
+Cancel action
+3.3 Quotes
+Quotes page
+Quote table
+Quote number
+Customer
+Date
+Expiration
+Amount
+Status
+Status badge
+Create quote action
+Quote modal
+Customer selection
+Fields
+Text inputs
+Select controls
+Quote actions
+3.4 Credit notes
+Credit-note page
+Credit-note table
+Credit-note number
+Customer
+Original invoice relationship
+Date
+Amount
+Status
+Badge
+Actions
+3.5 Recurring invoices
+Recurring-invoice page
+Recurring table
+Customer
+Schedule
+Frequency
+Amount
+Status
+Active badge
+Paused badge
+Create recurring invoice modal
+Frequency select
+Customer select
+Amount
+Name/reference
+Action buttons
+3.6 Customers
+Customer list
+Customer page
+Search bar
+Customer table
+Customer rows
+Customer name
+Email
+Company information
+Invoice totals
+Status
+Actions
+Customer creation/edit modal
+Customer name
+Company
+BCE/TVA
+Email
+Phone
+Address
+Notes
+Text fields
+Textarea
+Save/cancel actions
+Customer drawer
+Customer identity
+Contact information
+Billing information
+Invoice history
+Financial summary
+Dividers
+Actions
+3.7 Catalog
+Catalog page
+Product/service table
+Product/service name
+Type
+Description
+Unit price
+VAT
+Status
+Badge
+Create item action
+Edit action
+Catalog modal
+Name field
+Description field
+Price field
+VAT select
+Status select
+Save/cancel actions
+3.8 Accounting
+Accounting page
+Export area
+Accounting export controls
+Period selection
+Format selection
+Export action
+Informational banner
+Accounting cards
+VAT-related information
+Belgian accounting context
+Export controls
+3.9 Documents
+Documents page
+Document table
+Document item
+Filename
+Type
+Related entity
+Date
+Status
+Upload action
+File-upload control
+Document modal
+Search/filter fields
+Type selector
+3.10 Reports
+KPI analytics
+Total invoiced
+Collection rate
+DSO
+VAT collected
+Customer concentration
+Customer list
+Amount
+Percentage
+Progress bar per customer
+Aging balance
+Not due
+1–30 days late
+
+30 days late
+
+Semantic green state
+Semantic amber state
+Semantic red state
+Amount
+Explanation text
+3.11 Settings
+Settings shell
+Sidebar
+Settings sections
+Settings navigation items
+Active setting
+Setting icons
+Optional badges
+Organisation & Parameters
+Legal identity
+Invoicing preferences
+Peppol
+Team
+Security & Subscription
+Security
+Billing
+GDPR/privacy
+System status
+Company settings
+Legal company name
+BCE/TVA number
+IBAN
+BIC/SWIFT
+Registered address
+Legal email
+Phone
+Save action
+Invoicing preferences
+Invoice numbering prefix
+Next sequential number
+Legal clauses
+Retention-of-title clause
+Payment delay language
+Save preferences action
+Peppol
+Peppol connection status
+Certified access point state
+SMP identifier
+Operational badge
+UBL Invoice format
+BIS Billing 3.0
+EN 16931 information
+Belgian 2026 context
+Team management
+Team table
+Member
+Email
+Role
+Status
+Administrator
+Accountant
+Manager
+Reader
+Active
+Pending invitation
+Invite member modal
+Invite name
+Invite email
+Role selection
+Invitation action
+Security
+Active sessions table
+Device/browser
+IP address
+Location
+Last activity
+Current-session indicator
+Disconnect session action
+Security settings
+Billing/subscription
+Subscription settings
+Billing information
+Plan information
+Payment information
+Subscription-related controls
+GDPR/privacy
+Privacy settings
+GDPR section
+Privacy controls
+Data-related settings
+System status
+Infrastructure services
+Operational indicator
+30-day uptime
+Response latency
+Animated operational dot
+3.12 Onboarding
+Onboarding modal
+Welcome/information banner
+Step structure
+Action buttons
+Progress/step content
+Close action
+First-use guidance
+3.13 Tables
+Generic table primitive
+Table header
+Table body
+Table row
+Table cell
+Column configuration
+Custom render functions
+Table features
+Sort
+Pagination
+Row actions
+Status badges
+Numeric alignment
+Monospace values
+Responsive table handling
+Table instances
+Dashboard invoice table
+Invoice table
+Quote table
+Credit-note table
+Recurring table
+Customer table
+Catalog table
+Documents table
+Settings sessions table
+Settings team table
+Settings system-status table
+3.14 Timeline
+StatusTimeline
+Timeline container
+Timeline event
+Event status
+Event date/time
+Event description
+Sequential history
+
+Primary usage:
+
+Invoice lifecycle
+3.15 Progress
+Generic progress bar
+KPI-related progress
+Customer concentration progress
+Storage usage progress
+Report progress
+Storage widget
+Used amount
+Total capacity
+Percentage
+Peppol status
+Progress indicator
+3.16 Stepper
+Step list
+Current step
+Completed step
+Clickable step
+Step labels
+3.17 Command palette
+Global command/search overlay
+Keyboard shortcut
+Search interaction
+Command result area
+Close action
+Ctrl/Cmd + K
+3.18 Notification center
+Notification drawer
+Notification list
+Unread count
+Notification status
+Notification items
+Read/unread state
+Close drawer
+3.19 Pagination
+Previous
+Next
+Page numbers / current page
+Page state
+Navigation controls
+4. STRUCTURAL ELEMENTS
+4.1 Application shell
+BillGen Application
+├── Top Navigation
+├── Main Layout
+│   ├── Desktop Sidebar
+│   │   ├── Brand
+│   │   ├── Main Navigation
+│   │   ├── Configuration Navigation
+│   │   └── Storage Widget
+│   ├── Mobile Bottom Navigation
+│   └── Main Content
+└── Global Overlays
+    ├── Invoice Drawer
+    ├── Customer Drawer
+    ├── Create Invoice Modal
+    ├── Notification Drawer
+    ├── Command Palette
+    ├── Onboarding Modal
+    └── Toast Container
+4.2 Topbar structure
+Topbar
+├── Global Search
+│   ├── Search icon
+│   ├── Search placeholder
+│   └── ⌘K hint
+├── New Invoice
+├── Theme Switch
+├── Notifications
+│   └── Unread indicator
+└── Company/Profile
+    ├── Company name
+    ├── BCE/TVA
+    └── Avatar
+4.3 Sidebar structure
+Sidebar
+├── Brand Header
+│   ├── B logo
+│   ├── BillGen
+│   └── Collapse control
+├── Menu Principal
+│   ├── Dashboard
+│   ├── Factures
+│   ├── Devis
+│   ├── Notes de crédit
+│   ├── Abonnements récurrents
+│   ├── Clients & Contacts
+│   ├── Catalogue & Tarifs
+│   └── Documents & Pièces
+├── Configuration & Fiscalité
+│   ├── Comptabilité & TVA
+│   ├── Rapports
+│   └── Paramètres
+└── Storage Widget
+4.4 Page template
+
+Common pattern:
+
+Page
+├── Page title
+├── Subtitle / description
+├── Primary actions
+├── Filters/search
+├── Content card(s)
+├── Table/list/analytics
+└── Secondary actions
+4.5 Drawer pattern
+Drawer
+├── Backdrop
+├── Header
+│   ├── Title
+│   └── Close
+├── Content
+├── Sections
+│   ├── Metadata
+│   ├── Information
+│   ├── Financials
+│   └── History
+└── Actions
+
+Used for:
+
+Invoice inspector
+Customer inspector
+Notifications
+4.6 Modal pattern
+Modal
+├── Backdrop
+├── Modal surface
+│   ├── Header
+│   │   ├── Title
+│   │   └── Close
+│   ├── Body
+│   └── Footer
+│       ├── Cancel
+│       └── Confirm/save
+
+Used for:
+
+Create invoice
+Create quote
+Create recurring invoice
+Create customer
+Create catalog item
+Document action
+Team invitation
+Onboarding
+Confirm dialog
+4.7 Interaction states
+Buttons
+Default
+Hover
+Active
+Disabled
+Navigation
+Default
+Hover
+Active
+Collapsed
+Inputs
+Default
+Focus
+Invalid
+Disabled where supported
+Badges
+Semantic states
+Tables
+Row interaction
+Sorting
+Pagination
+Overlays
+Open
+Closed
+Backdrop active
+Notifications
+Read
+Unread
+Sidebar
+Expanded
+Collapsed
+4.8 Animation system
+Fast transitions
+Ease-out
+Ease-in
+Button hover lift
+Button press compression
+Icon-chip transitions
+Shadow transitions
+Color transitions
+Sidebar width transition
+Notification pulse
+Peppol status pulse
+Operational service pulse
+Mobile floating action elevation
+Modal/drawer transitions
+Hover opacity transitions
+4.9 Scroll system
+Browser viewport scroll
+Main content scroll
+Sidebar internal scroll
+6px scrollbar
+Transparent scrollbar track
+Semi-transparent thumb
+Hover-darkened thumb
+5. LIBRARIES & FRAMEWORKS
+5.1 Framework
+React 19.0.1
+React DOM 19.0.1
+TypeScript 5.8.x
+Vite 6.2.x
+5.2 CSS/UI
+Tailwind CSS 4.1.x
+@tailwindcss/vite
+Custom BillGen component CSS
+Custom CSS design-token layer
+Utility classes
+CSS variables
+CSS color-mix()
+CSS gradients
+CSS backdrop filters
+UI architecture
+Tailwind
++
+BillGen Design Tokens
++
+BillGen Custom Component CSS
++
+React component primitives
+
+There is no Material UI, Chakra UI, Ant Design, Bootstrap or shadcn/ui dependency declared.
+
+5.3 Icons
+lucide-react
+Custom SVG icon components
+Emoji-based UI icons
+
+Emoji usage includes:
+
+🏠
+📄
+👥
+⚙️
+🔄
+🧰
+📁
+🇧🇪
+📊
+🏛️
+🛡️
+💳
+🔒
+🟢
+📈/financial-style emoji
+🎯
+⏱️
+🏦
+
+This creates a hybrid icon language:
+
+Lucide
+custom SVG
+emoji
+
+That is an important design-system inconsistency.
+
+5.4 Animation
+motion 12.23.x
+CSS transitions
+CSS transforms
+CSS animation
+animate-pulse
+5.5 Effects
+canvas-confetti
+Confetti dependency is present for celebratory micro-interactions.
+5.6 Google AI
+@google/genai
+
+This is a dependency even though the core visible frontend inventory does not establish a major AI UI subsystem.
+
+5.7 Application/runtime dependencies
+Express
+dotenv
+TypeScript
+esbuild
+autoprefixer
+tsx
+5.8 State management
+
+No dedicated Redux/Zustand/MobX-style state library.
+
+State is implemented through:
+
+React useState
+React useEffect
+BillGenContext
+useBillGen()
+5.9 Routing
+
+No React Router dependency is declared.
+
+Navigation is implemented through:
+
+activeNav
+conditional rendering
+application state
+
+Therefore the current application behaves as an in-app view switcher rather than a conventional URL-routed SPA.
+
+6. BRANDING & IDENTITY
+6.1 Brand identity
+BillGen name
+Blue primary accent
+Dark navy/slate sidebar
+Geometric visual language
+Rounded geometric surfaces
+Precision-oriented typography
+Data-centric visual hierarchy
+"Geometric Balance" design-token concept
+6.2 Brand colors
+
+Primary:
+
+Royal blue #2563EB
+
+Supporting:
+
+Navy
+Slate
+Emerald
+Amber
+Red
+Orange
+6.3 Brand motifs
+Geometric rounded rectangles
+Layered shadows
+Gradient buttons
+Glass-like icon chips
+Circular avatars
+Blue accent states
+Dark navigation rail
+Financial-data density
+6.4 Brand micro-interactions
+Button lift
+Button compression
+Accent shadow glow
+Icon-chip depth
+Notification pulse
+Peppol status pulse
+Hover color transition
+Sidebar expansion/collapse
+Floating mobile action button
+Command palette shortcut
+6.5 Brand/status messaging
+Peppol 2026 Ready
+Peppol OK
+Peppol Connecté
+Point d'accès Peppol Actif & Certifié
+Opérationnel
+
+These form a recurring Belgian/Peppol compliance identity layer.
+
+7. ANYTHING ELSE
+7.1 Implemented feature/page inventory
+BillGen
+├── Dashboard
+├── Sales / Invoices
+│   ├── Invoice List
+│   ├── Invoice Inspector
+│   └── Create Invoice
+├── Quotes
+├── Credit Notes
+├── Recurring Invoices
+├── Customers
+│   ├── Customer List
+│   └── Customer Inspector
+├── Catalog
+├── Accounting & VAT
+├── Documents
+├── Reports
+└── Settings
+    ├── Company
+    ├── Invoicing
+    ├── Peppol
+    ├── Team
+    ├── Security
+    ├── Billing
+    ├── GDPR
+    └── System Status
+7.2 Global interaction inventory
+Global search
+Keyboard search shortcut
+New invoice shortcut/action
+Notification drawer
+Account/profile navigation
+Theme switching
+Sidebar collapse
+Mobile navigation
+Invoice inspection
+Customer inspection
+Invoice creation
+Customer creation
+Quote creation
+Recurring invoice creation
+Catalog item creation
+Document upload
+Team invitation
+Session revocation
+Data export
+Pagination
+Sorting
+Filtering/search
+Copy-to-clipboard
+Confirmation dialogs
+Toast feedback
+Onboarding
+7.3 Semantic data representations
+Financial numbers
+Currency
+Percentage
+Days
+VAT
+DSO
+Storage GB
+Uptime
+Latency
+Status representations
+Badge
+Colored text
+Colored dot
+Progress bar
+Pulsing dot
+Timeline
+Identifiers
+BCE/TVA
+IBAN
+BIC/SWIFT
+SMP identifier
+Invoice number
+IP address
+Device/browser
+Numeric presentation
+Monospace font for identifiers
+bg-num
+Currency localization:
+fr-BE
+EUR
+7.4 Accessibility-oriented elements
+
+Present:
+
+aria-label on several controls
+semantic buttons
+form labels
+input for relationships
+keyboard shortcut
+keyboard Escape handling
+Enter submission
+status dots with aria-hidden
+textual labels alongside icons
+
+Potentially incomplete:
+
+Comprehensive ARIA patterns for drawers
+Modal focus trapping
+Focus restoration
+Full keyboard navigation
+Screen-reader announcements for toast state
+Table accessibility semantics
+Command palette accessibility
+Mobile navigation accessibility consistency
+Icon-only controls consistently carrying accessible names
+7.5 Data/visual language duplication
+
+The repository currently has multiple parallel styling systems:
+
+Tailwind utility classes
+        +
+BillGen CSS component classes
+        +
+BillGen CSS variables
+        +
+hardcoded Tailwind colors
+        +
+emoji icons
+        +
+Lucide icons
+        +
+custom SVG icons
+
+Examples of hardcoded styling coexist with tokens:
+
+bg-[#F3F4F6]
+bg-[#111827]
+bg-blue-600
+bg-slate-900
+text-slate-*
+border-slate-*
+
+This means the token system is not yet the single source of truth.
+
+7.6 Inconsistencies detected
+Token inconsistencies
+
+Referenced tokens include:
+
+--bg-muted
+--bg-border
+--bg-card
+--bg-text
+--bg-text-secondary
+--bg-app-shell
+
+while the inspected token set primarily defines:
+
+--bg-ink
+--bg-line
+--bg-surface
+--bg-surface-alt
+
+These should be reconciled into one canonical semantic-token vocabulary.
+
+Undefined/possibly stale brand token
+
+The component CSS references:
+
+--brand-green-300
+
+while the inspected brand palette contains emerald tokens rather than that exact green token.
+
+This should be audited.
+
+Icon-language inconsistency
+
+The application simultaneously uses:
+
+Lucide
+custom SVG
+emoji
+
+For an enterprise SaaS, this creates three visual grammars.
+
+Navigation duplication
+
+There are effectively two sidebar systems:
+
+SidebarNav
+inline sidebar implementation inside App.tsx
+
+There is also:
+
+TopNav
+mobile navigation implemented directly inside App.tsx
+
+This indicates partial component-system abstraction.
+
+Application-shell duplication
+
+There is a reusable:
+
+AppShell
+
+but the actual main application shell is constructed directly inside:
+
+App.tsx
+
+Therefore AppShell appears to be a reusable architectural component that is not the primary shell implementation.
+
+Settings-shell abstraction
+
+SettingsShell is comparatively well abstracted:
+
+SettingsShell
+├── section
+├── item
+├── icon
+├── badge
+├── active state
+└── content
+
+This is one of the stronger examples of reusable information architecture.
+
+7.7 Components present in the UI library but not clearly represented as major application instances
+
+The repository contains primitives for:
+
+Avatar
+Checkbox
+RadioGroup
+Switch
+Segmented
+ThemeSwitcher
+LanguageSwitcher
+AccountMenu
+OrgSwitcher
+HelpBubble
+List
+EmptyState
+ErrorState
+SuccessState
+Skeleton
+Stepper
+HomeButton
+CreateBillButton
+AppShell
+
+Some appear to be infrastructure/components prepared for broader usage rather than strongly integrated into the current main product flow.
+
+This is important when comparing the design against a demo: the component library is broader than the visible product surface.
+
+7.8 Partial / implied enterprise components
+
+The architecture strongly implies several enterprise SaaS components that are not fully represented as dedicated first-class frontend areas:
+
+Organization switcher
+Account menu
+Subscription management
+Billing portal
+GDPR controls
+Security/session management
+Team management
+System status
+Peppol status
+Data export
+Document management
+Command palette
+Global search
+Notification center
+Onboarding
+
+The presence of corresponding primitives/components indicates these were considered architecturally, even where their implementation may still be limited.
+
+7.9 Missing or weakly represented areas for a "100% complete" SaaS frontend
+
+These are not necessarily absent from the repository's business logic, but they are not sufficiently represented as distinct frontend systems in the inspected UI architecture.
+
+Enterprise SaaS Completeness Gaps
+├── Authentication
+│   ├── Login
+│   ├── Logout
+│   ├── Registration
+│   ├── Password reset
+│   ├── Email verification
+│   └── MFA / 2FA
+│
+├── Organization
+│   ├── Organization switcher
+│   ├── Organization creation
+│   ├── Multi-company management
+│   └── Organization deletion
+│
+├── Roles & permissions
+│   ├── Permission matrix
+│   ├── Role editor
+│   ├── Custom roles
+│   └── Permission denial states
+│
+├── Subscription
+│   ├── Plan comparison
+│   ├── Upgrade
+│   ├── Downgrade
+│   ├── Usage
+│   ├── Invoices from BillGen
+│   ├── Payment method
+│   └── Cancellation
+│
+├── Data lifecycle
+│   ├── Backup
+│   ├── Restore
+│   ├── Import
+│   ├── Export
+│   ├── Archive
+│   └── Permanent deletion
+│
+├── GDPR
+│   ├── Privacy center
+│   ├── Data export request
+│   ├── Data deletion request
+│   ├── Consent management
+│   ├── Cookie preferences
+│   └── Data retention
+│
+├── Legal
+│   ├── Terms
+│   ├── Privacy policy
+│   ├── Cookie policy
+│   ├── Legal notice
+│   └── DPA
+│
+├── Audit
+│   ├── Audit log
+│   ├── User activity
+│   ├── Security events
+│   └── Data changes
+│
+├── Help
+│   ├── Documentation
+│   ├── Support tickets
+│   ├── Contact support
+│   └── Contextual help
+│
+└── System
+    ├── Maintenance mode
+    ├── Service incidents
+    ├── Status history
+    └── Release notes
+7.10 Current component architecture tree
+@billgen/ui
+│
+├── Brand
+│   ├── LogoMark
+│   └── IconChip
+│
+├── Navigation
+│   ├── TopNav
+│   ├── SidebarNav
+│   ├── HomeButton
+│   ├── AppShell
+│   ├── SettingsShell
+│   ├── Menu
+│   ├── AccountMenu
+│   └── OrgSwitcher
+│
+├── Actions
+│   ├── Button
+│   ├── IconButton
+│   ├── CreateBillButton
+│   ├── CopyButton
+│   └── HomeButton
+│
+├── Data display
+│   ├── Card
+│   ├── KpiCard
+│   ├── Badge
+│   ├── Table
+│   ├── List
+│   ├── Pagination
+│   ├── ChartWrapper
+│   ├── ProgressBar
+│   ├── StatusTimeline
+│   ├── Avatar
+│   └── Divider
+│
+├── Forms
+│   ├── Field
+│   ├── TextInput
+│   ├── Textarea
+│   ├── Select
+│   ├── Checkbox
+│   ├── RadioGroup
+│   ├── Switch
+│   ├── Combobox
+│   ├── DatePicker
+│   ├── FileUpload
+│   ├── SearchBar
+│   └── Segmented
+│
+├── Feedback
+│   ├── Banner
+│   ├── Toast
+│   ├── EmptyState
+│   ├── ErrorState
+│   ├── SuccessState
+│   ├── Skeleton
+│   └── NotificationCenter
+│
+├── Overlays
+│   ├── Modal
+│   ├── Drawer
+│   ├── ConfirmDialog
+│   ├── CommandPalette
+│   └── HelpBubble
+│
+├── Preferences
+│   ├── ThemeSwitcher
+│   └── LanguageSwitcher
+│
+├── Progress / navigation
+│   ├── Stepper
+│   └── Kbd
+│
+└── Icons
+    ├── SearchIcon
+    ├── NotificationsIcon
+    ├── PlusIcon
+    ├── HelpIcon
+    ├── BackIcon
+    └── Icons
+7.11 Product information architecture
+DASHBOARD
+│
+├── SALES
+│   ├── Invoices
+│   ├── Quotes
+│   ├── Credit Notes
+│   └── Recurring Invoices
+│
+├── CRM
+│   └── Customers & Contacts
+│
+├── CATALOG
+│   └── Products & Services
+│
+├── DOCUMENTS
+│   └── Documents & Attachments
+│
+├── ACCOUNTING
+│   └── Accounting & VAT
+│
+├── ANALYTICS
+│   └── Reports & Statistics
+│
+└── ADMINISTRATION
+    ├── Company
+    ├── Invoicing
+    ├── Peppol
+    ├── Team
+    ├── Security
+    ├── Billing
+    ├── GDPR
+    └── System Status
+7.12 Final audit classification
+BillGen Frontend
+│
+├── DESIGN SYSTEM
+│   ├── Token system                 ██████████
+│   ├── Color system                 ██████████
+│   ├── Typography                   ████████░░
+│   ├── Spacing                      ████████░░
+│   ├── Motion                       ████████░░
+│   └── Accessibility system         ██████░░░░
+│
+├── COMPONENT SYSTEM
+│   ├── Atomic components            ██████████
+│   ├── Form components              ██████████
+│   ├── Data components              █████████░
+│   ├── Overlay components           █████████░
+│   ├── Navigation                   █████████░
+│   └── Feedback                     █████████░
+│
+├── PRODUCT UI
+│   ├── Invoicing                    ██████████
+│   ├── Customers                    ██████████
+│   ├── Catalog                      █████████░
+│   ├── Quotes                       ████████░░
+│   ├── Credit notes                 ███████░░░
+│   ├── Recurring                    ████████░░
+│   ├── Documents                    ███████░░░
+│   ├── Accounting                   ███████░░░
+│   ├── Reports                      ████████░░
+│   └── Settings                     █████████░
+│
+├── ENTERPRISE
+│   ├── Team                         ███████░░░
+│   ├── Security                     ███████░░░
+│   ├── GDPR                         ██████░░░░
+│   ├── Billing                      ██████░░░░
+│   ├── Permissions                  ████░░░░░░
+│   ├── Audit log                    ██░░░░░░░░
+│   └── Authentication               ██░░░░░░░░
+│
+└── CROSS-PLATFORM
+    ├── Desktop                      ██████████
+    ├── Tablet                       ███████░░░
+    └── Mobile                       █████░░░░░
+
+Most important architectural conclusion: the uploaded frontend is already substantially more than a simple invoice-generator UI. It has a recognizable enterprise SaaS design system + invoicing domain model + administration layer + financial analytics layer. However, the implementation currently mixes a mature reusable component library with page-level Tailwind implementations, emoji/custom/Lucide iconography, multiple token vocabularies, and several enterprise areas that are represented structurally but not yet at the depth expected from a fully finished SaaS.
+
+This inventory is therefore suitable as a baseline master component tree for comparing BillGen's current frontend against the demo and identifying missing/duplicated UI pieces.
