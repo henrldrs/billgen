@@ -72,7 +72,10 @@ class PdfService:
                 action=AuditAction.EXPORT_PDF,
                 target_type="invoice",
                 target_id=invoice.id,
-                after={"reference": invoice.reference, "template": template_id or invoice.pdf_template},
+                after={
+                    "reference": invoice.reference,
+                    "template": template_id or invoice.pdf_template,
+                },
                 actor_user_id=actor_user_id,
             )
             uow.commit()

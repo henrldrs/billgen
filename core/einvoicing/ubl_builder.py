@@ -150,7 +150,9 @@ def _allocated_line_nets(invoice: Invoice) -> tuple[list[Decimal], Decimal]:
     return [n - doc_allowance * (n / total_pre) for n in nets_pre], doc_allowance
 
 
-def build_invoice_ubl(invoice: Invoice, company: Company, client: Client) -> str:
+def build_invoice_ubl(  # noqa: PLR0912, PLR0915 — linear UBL document assembly
+    invoice: Invoice, company: Company, client: Client
+) -> str:
     cur = invoice.currency
     # A BE seller adds the Belgian elements BIS accepts (structured comm, KBO id).
     is_be = company.country_code.upper() == "BE"

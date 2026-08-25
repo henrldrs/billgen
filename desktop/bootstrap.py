@@ -69,7 +69,7 @@ def run(port: int | None = None) -> None:  # pragma: no cover - process entrypoi
     # marker line for the shell, flushed before the server blocks the process
     print(f"BILLGEN_SIDECAR port={chosen}", flush=True)
 
-    import uvicorn  # deferred: import after env is configured
+    import uvicorn  # noqa: PLC0415 — deferred: import after env is configured
 
     uvicorn.run("api.main:app", host="127.0.0.1", port=chosen, log_level="info")
 

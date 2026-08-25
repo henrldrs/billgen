@@ -1,0 +1,38 @@
+# BillGen — TLS termination, static SPA, API reverse proxy (ADR-0004).
+# DOMAIN and ACME_EMAIL come from the environment (see .env.prod.example).
+
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode gzip zstd
+
+	# handle_path strips the /api prefix, so /api/invoices reaches the API as
+	# /invoices. The API's routes are mounted at the root and are unaware of
+	# the prefix — which is why the SPA is built with VITE_API_URL=/api.
+	handle_path /api/* {
+		reverse_proxy api:8000
+	}
+
+	handle {
+		root * /srv
+		# SPA history routing: every unmatched path resolves to index.html so
+		# react-router owns /app/*, /login, etc. on a hard refresh.
+		try_files {path} /index.html
+		file_server
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}

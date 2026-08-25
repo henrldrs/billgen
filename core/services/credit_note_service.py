@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from uuid import UUID
 
 from ..models import AuditAction, CreditNote, CreditNoteLine, InvoiceStatus
@@ -72,7 +72,7 @@ class CreditNoteService:
             voided = invoice.model_copy(
                 update={
                     "status": InvoiceStatus.VOIDED,
-                    "voided_at": datetime.now(timezone.utc),
+                    "voided_at": datetime.now(UTC),
                     "voided_reason": reason,
                     "voided_by_credit_note_id": saved.id,
                 }

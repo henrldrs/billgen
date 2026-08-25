@@ -7,7 +7,7 @@ Verifies:
     - `extra = "forbid"` on DomainModel prevents unknown fields (schema drift guard).
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import uuid4
 
@@ -26,8 +26,8 @@ from core.models import (
     DiscountType,
     Invoice,
     InvoiceStatus,
-    OrgMembership,
     Organization,
+    OrgMembership,
     Payment,
     PaymentMethod,
     PlanTier,
@@ -38,7 +38,6 @@ from core.models import (
     VATCategory,
     VATRate,
 )
-
 
 ORG_ID = uuid4()
 USER_ID = uuid4()
@@ -222,7 +221,7 @@ def test_audit_log_entry():
     )
     assert entry.action is AuditAction.CREATE
     assert isinstance(entry.timestamp, datetime)
-    assert entry.timestamp.tzinfo == timezone.utc
+    assert entry.timestamp.tzinfo == UTC
 
 
 def test_extra_fields_are_forbidden():

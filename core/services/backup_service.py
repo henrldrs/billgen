@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -115,7 +115,7 @@ class BackupService:
             payload: dict[str, Any] = {
                 "format": BACKUP_FORMAT,
                 "schema_version": SCHEMA_VERSION,
-                "created_at": datetime.now(timezone.utc).isoformat(),
+                "created_at": datetime.now(UTC).isoformat(),
                 "organization": {
                     "id": str(org_id),
                     "name": organization.name if organization else None,

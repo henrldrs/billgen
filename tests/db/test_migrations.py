@@ -1,6 +1,5 @@
 """Phase 3 exit criterion — alembic upgrade head / downgrade base round-trips clean."""
 
-import os
 from pathlib import Path
 
 import pytest
@@ -52,14 +51,14 @@ def test_upgrade_downgrade_roundtrip(alembic_config):
 
     command.upgrade(cfg, "head")
     after_upgrade = _tables(db_path)
-    assert EXPECTED_TABLES <= after_upgrade
+    assert after_upgrade >= EXPECTED_TABLES
 
     command.downgrade(cfg, "base")
     after_downgrade = _tables(db_path)
     assert after_downgrade & EXPECTED_TABLES == set()
 
     command.upgrade(cfg, "head")
-    assert EXPECTED_TABLES <= _tables(db_path)
+    assert _tables(db_path) >= EXPECTED_TABLES
 
 
 def test_every_business_table_has_organization_id(alembic_config):

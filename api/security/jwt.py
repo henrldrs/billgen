@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -29,7 +29,7 @@ class JwtCodec:
         return int(self._access_ttl.total_seconds())
 
     def issue_access(self, user_id: UUID, org_id: UUID, role: str) -> str:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         return jwt.encode(
             {
                 "sub": str(user_id),
@@ -46,7 +46,7 @@ class JwtCodec:
 
     def issue_refresh(self, user_id: UUID, org_id: UUID) -> tuple[str, UUID, datetime]:
         """Returns (token, jti, expires_at); the jti is persisted for revocation."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         jti = uuid4()
         expires_at = now + self._refresh_ttl
         token = jwt.encode(

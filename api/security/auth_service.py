@@ -5,7 +5,7 @@ This is API-layer infrastructure, not domain: it composes ORM rows directly
 Business use-cases stay in core.services."""
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import select
@@ -51,7 +51,7 @@ class LoginResult:
 
 def _as_utc(dt: datetime) -> datetime:
     """SQLite returns naive datetimes; they were stored as UTC."""
-    return dt if dt.tzinfo is not None else dt.replace(tzinfo=timezone.utc)
+    return dt if dt.tzinfo is not None else dt.replace(tzinfo=UTC)
 
 
 class AuthService:
@@ -181,7 +181,7 @@ class AuthService:
 
         with self._session_factory() as session:
             row = session.get(RefreshTokenRow, jti)
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             if row is None or row.revoked_at is not None or _as_utc(row.expires_at) < now:
                 raise InvalidTokenError("Refresh token is revoked or expired")
 
@@ -200,7 +200,7 @@ class AuthService:
         with self._session_factory() as session:
             row = session.get(RefreshTokenRow, jti)
             if row is not None and row.revoked_at is None:
-                row.revoked_at = datetime.now(timezone.utc)
+                row.revoked_at = datetime.now(UTC)
                 session.add(
                     AuditLogRow(
                         organization_id=row.organization_id,

@@ -13,7 +13,48 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "N", "SIM", "PL"]
-ignore = ["PLR0913"]
+ignore = [
+  "PLR0913",
+  # UP042 wants `class InvoiceStatus(str, Enum)` rewritten to StrEnum. Ruff
+  # itself classes this fix as unsafe, and it is: (str, Enum) renders as
+  # "InvoiceStatus.DRAFT" under str()/f-string, StrEnum renders as "draft".
+  # These enums reach PDFs, UBL XML and the audit trail, so a silent change in
+  # how a status stringifies is a legally-visible change. Deliberate.
+  "UP042",
+  # PLR2004 in source flags real domain constants (VAT digit counts, month
+  # bounds, sequence ranges, the 32-byte HS256 floor). Naming them would be a
+  # genuine readability win, but it means editing core/rules/numbering.py and
+  # identifiers.py — the gapless-numbering and checksum code — for zero
+  # behaviour change. Not worth the risk on the road to a deploy; revisit as
+  # its own reviewed change.
+  "PLR2004",
+]
+
+# FastAPI's whole dependency-injection contract is a call in an argument
+# default (`user_id: str = Depends(current_user_id)`). B008 flags every router
+# signature in api/ as a bug; they are the framework's documented idiom, not
+# mutable-default hazards. Ruff needs to be told these calls are immutable.
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = [
+  "fastapi.Depends",
+  "fastapi.Query",
+  "fastapi.Path",
+  "fastapi.Body",
+  "fastapi.Header",
+  "fastapi.Form",
+  "fastapi.File",
+  "fastapi.Security",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# N802: test names encode domain literals ("…_returns_XX" — XX is the initials
+# fallback), and lowercasing them would lose that.
+# PLC0415: function-local imports in tests are scoping, not lazy-loading —
+# they keep a fixture's import next to the assertion that needs it.
+"tests/**" = ["N802", "PLC0415"]
+# Alembic-generated revisions: machine-written, and their long sa.Column lines
+# are regenerated on every autogenerate, so hand-wrapping them is churn.
+"db/migrations/versions/*" = ["E501"]
 
 [tool.mypy]
 python_version = "3.11"

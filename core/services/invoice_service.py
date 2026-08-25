@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from uuid import UUID
 
 from ..models import (
@@ -228,7 +228,7 @@ class InvoiceService:
             voided = invoice.model_copy(
                 update={
                     "status": InvoiceStatus.VOIDED,
-                    "voided_at": datetime.now(timezone.utc),
+                    "voided_at": datetime.now(UTC),
                     "voided_reason": reason,
                 }
             )

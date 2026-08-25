@@ -152,12 +152,11 @@ def test_gate_blocks_b2c_customer(env):
 
 def test_gate_blocks_invalid_supplier_iban(env):
     """A malformed supplier IBAN blocks export with a field error."""
-    with organization_context(env.org.id):
-        with env.uow_factory() as uow:
-            company = uow.companies.get(env.company.id)
-            company.iban = "BE00000000000000"  # fails mod-97
-            uow.companies.update(company)
-            uow.commit()
+    with organization_context(env.org.id), env.uow_factory() as uow:
+        company = uow.companies.get(env.company.id)
+        company.iban = "BE00000000000000"  # fails mod-97
+        uow.companies.update(company)
+        uow.commit()
     invoice = _issue_invoice(env)
     with pytest.raises(PeppolValidationError) as exc:
         PeppolService(env.uow_factory).generate_invoice_xml(invoice.id)

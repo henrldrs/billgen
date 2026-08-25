@@ -7,7 +7,7 @@ from uuid import UUID
 from pydantic import BaseModel
 
 
-def json_safe(obj: Any) -> Any:
+def json_safe(obj: Any) -> Any:  # noqa: PLR0911 — one return per type is the dispatch
     """Recursively convert a value into something json.dumps can handle.
 
     Used at the audit-log boundary: Decimal -> str (no float drift in the

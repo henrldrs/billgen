@@ -1,39 +1,77 @@
-# BillGen CI — quality gate on every push/PR.
-# Sits ready while the repo is local-only; activates the moment it's pushed
-# to GitHub. Mirrors what billgen.bat option 3 runs locally, plus typechecks.
+# BillGen CI — quality gate on every push/PR (ADR-0004).
+#
+# Still inert until the repo has a GitHub remote. Nothing here has ever
+# executed: treat the first run as the experiment it is, not as a regression.
 
 name: CI
 
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
+
+env:
+  # Must match the uv that wrote uv.lock and the pin in the Dockerfile.
+  UV_VERSION: "0.11.29"
 
 jobs:
   python:
-    name: Python tests (core / api / db / desktop)
+    # SQLite is what a workstation runs. Postgres is what production runs, and
+    # the gapless-numbering row lock (.with_for_update()) only means something
+    # on the latter — see conftest.py. Neither engine alone is the gate.
+    name: Python (${{ matrix.engine }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - engine: sqlite
+            test_database_url: ""
+          - engine: postgres
+            test_database_url: postgresql+psycopg://billgen:billgen@localhost:5432/billgen
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: billgen
+          POSTGRES_PASSWORD: billgen
+          POSTGRES_DB: billgen
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U billgen"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: "3.14"
-          cache: pip
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install fastapi uvicorn pyjwt argon2-cffi pydantic-settings \
-            sqlalchemy alembic jinja2 httpx structlog cryptography \
-            pytest pytest-asyncio playwright Pillow
+      # --all-packages pulls every workspace member (billgen-core/db/api) plus
+      # the root's dev group. A bare `uv sync` installs nothing here: the root
+      # `billgen` project declares no dependencies of its own.
+      - name: Install (frozen)
+        run: uv sync --frozen --all-packages
 
       # The real-PDF-bytes test renders through headless Chromium.
       - name: Install Chromium for the PDF engine
-        run: python -m playwright install --with-deps chromium
+        run: uv run playwright install --with-deps chromium
 
-      - name: Run pytest
-        run: python -m pytest tests -q
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Test
+        env:
+          TEST_DATABASE_URL: ${{ matrix.test_database_url }}
+        run: uv run pytest tests -q
 
   frontend:
     name: Frontend typecheck + tests
@@ -69,3 +107,78 @@ jobs:
 
       - name: Build the desktop frontend bundle
         run: npm run -w frontend-electron build
+
+  image:
+    # Builds both targets on every PR so a broken Dockerfile fails here rather
+    # than during a deploy. Push happens only on a v* tag.
+    name: Docker image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: api
+          push: ${{ startsWith(github.ref, 'refs/tags/v') }}
+          tags: ghcr.io/${{ github.repository_owner }}/billgen-api:${{ github.ref_name }}
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,scope=api,mode=max
+
+      - name: Build web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: web
+          push: ${{ startsWith(github.ref, 'refs/tags/v') }}
+          tags: ghcr.io/${{ github.repository_owner }}/billgen-web:${{ github.ref_name }}
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
+
+  audit:
+    # Reporting, not a gate. A gate here fails the build the day someone else
+    # publishes a CVE in a transitive dependency — unrelated to the change under
+    # test, and it would block a hotfix deploy exactly when one is needed. Read
+    # it, act on it deliberately. (ADR-0004 listed audits as gates; this is a
+    # deliberate deviation, recorded there.)
+    name: Dependency audit (advisory)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+
+      # --all-packages is required, not decoration: without it the export walks
+      # only the root project, which declares no dependencies, and writes a
+      # header-only file. pip-audit would then audit nothing and pass — a green
+      # check that proves the opposite of what it claims.
+      - name: Audit Python dependencies
+        run: |
+          uv export --frozen --no-dev --all-packages --no-emit-workspace \
+            --format requirements-txt -o requirements.audit.txt
+          uvx pip-audit -r requirements.audit.txt
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Audit npm dependencies
+        run: npm audit --audit-level=high

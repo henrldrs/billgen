@@ -1,0 +1,73 @@
+# BillGen — production stack (ADR-0004).
+#
+#   docker compose -f infra/docker/docker-compose.prod.yml up -d
+#
+# Run it from the REPO ROOT: the build context below is the repo root, and the
+# env_file path is resolved relative to this file.
+#
+# Postgres is deliberately absent — ADR-0004 puts it off-box and managed, so
+# DATABASE_URL points at an external host. Redis is equally absent, and that is
+# deliberate too: nothing in the code speaks Redis yet, and a container no code
+# connects to is exactly the mistake docker-compose.yml already makes with
+# MinIO. It arrives with the code that uses it, not before.
+
+services:
+  # One-shot schema upgrade. The API waits for this to exit 0, so migrations
+  # never race a booting worker (ADR-0004 decision 6). This is the opposite of
+  # desktop/bootstrap.py, which migrates in-process because it is a single
+  # local process with no concurrency to lose to.
+  migrate:
+    image: ghcr.io/${GHCR_OWNER}/billgen-api:${BILLGEN_TAG:-latest}
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      target: api
+    env_file: .env.prod
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+
+  api:
+    image: ghcr.io/${GHCR_OWNER}/billgen-api:${BILLGEN_TAG:-latest}
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      target: api
+    env_file: .env.prod
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    # Not published to the host: Caddy is the only ingress. The API is reachable
+    # solely over the internal compose network.
+    expose:
+      - "8000"
+    security_opt:
+      - no-new-privileges:true
+
+  web:
+    image: ghcr.io/${GHCR_OWNER}/billgen-web:${BILLGEN_TAG:-latest}
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      target: web
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+    depends_on:
+      - api
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  # ACME certificates and keys. Losing this volume means re-issuing certs and
+  # burning Let's Encrypt rate limit — back it up or accept the reissue.
+  caddy_data:
+  caddy_config:

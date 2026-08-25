@@ -3,16 +3,14 @@ import pytest
 
 from api.config import Settings
 from api.main import create_app
-from db.engine import make_engine
-from db.models import Base
+from conftest import TEST_DATABASE_URL, dispose_test_engine, make_test_engine
 
 
 @pytest.fixture()
 async def client():
-    engine = make_engine("sqlite://")
-    Base.metadata.create_all(engine)
+    engine = make_test_engine()
     settings = Settings(
-        database_url="sqlite://",
+        database_url=TEST_DATABASE_URL,
         jwt_secret="test-secret-0123456789abcdef-0123456789",
         jwt_access_ttl_min=15,
         jwt_refresh_ttl_days=30,
@@ -21,7 +19,7 @@ async def client():
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as c:
         yield c
-    engine.dispose()
+    dispose_test_engine(engine)
 
 
 async def signup(

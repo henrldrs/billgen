@@ -4,11 +4,10 @@ from types import SimpleNamespace
 
 import pytest
 
+from conftest import dispose_test_engine, make_test_engine
 from core.models import Client, Company, InvoiceLine, Organization, VATRate
 from core.services import InvoiceService
 from core.tenancy import organization_context
-from db.engine import make_engine
-from db.models import Base
 from db.repositories import SqlAlchemyUnitOfWork
 from db.session import make_session_factory
 
@@ -19,8 +18,7 @@ ISSUE_DATE = date(2026, 7, 4)
 def env():
     """Seeded org + company + two clients, with the org context bound for the
     duration of the test."""
-    engine = make_engine("sqlite://")
-    Base.metadata.create_all(engine)
+    engine = make_test_engine()
     session_factory = make_session_factory(engine)
 
     def uow_factory() -> SqlAlchemyUnitOfWork:
@@ -71,7 +69,7 @@ def env():
             client2=client2,
         )
 
-    engine.dispose()
+    dispose_test_engine(engine)
 
 
 def issue_invoice(uow_factory, *, issue_date=ISSUE_DATE, lines=None, **kwargs):

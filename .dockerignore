@@ -1,0 +1,43 @@
+# Keep the build context small and free of host state (ADR-0004).
+.git
+.github
+node_modules
+**/node_modules
+
+# Host-local state: dev SQLite DB, Playwright browser cache, Peppol samples.
+# The image installs its own Chromium to /ms-playwright.
+var
+backups
+
+# Build output — the image builds its own.
+dist
+**/dist
+build
+frontend-electron/src-tauri/target
+frontend-electron/src-tauri/gen
+frontend-electron/release
+
+# Python caches / local envs
+**/__pycache__
+**/*.pyc
+.venv
+venv
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.coverage
+htmlcov
+
+# Secrets and local config must never enter an image layer.
+.env
+.env.*
+!.env.example
+infra/docker/.env.prod
+
+# Not needed at runtime; excluded so docs edits don't bust the build cache.
+docs
+tests
+conftest.py
+billgen.bat
+README.md
+HANDOFF.md

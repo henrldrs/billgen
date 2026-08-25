@@ -9,7 +9,6 @@ from core.services import BusinessRuleError, InvoiceService, NotFoundError
 
 from .conftest import ISSUE_DATE, make_lines
 
-
 # ---- create_draft -----------------------------------------------------------
 
 

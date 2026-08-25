@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from core.models import Client, Company, Organization, Product
+from core.models import Client, Company, Product
 from core.services import (
     ActivityService,
     ClientService,
