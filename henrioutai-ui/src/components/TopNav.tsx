@@ -8,7 +8,8 @@ import { NotificationsIcon } from "./icons/NotificationsIcon";
 
 export interface TopNavLink {
   key: string;
-  label: string;
+  /** Rendered as-is, so a link may carry a trailing marker beside its text. */
+  label: ReactNode;
   /** Optional leading icon — pass one of the icons/ components, sized by CSS. */
   icon?: ReactNode;
   active?: boolean;

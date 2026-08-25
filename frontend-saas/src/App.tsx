@@ -7,12 +7,10 @@ import { api } from "./lib/api";
 import { AppShell } from "./pages/AppShell";
 import { LoginPage } from "./pages/LoginPage";
 import {
-  ClientsRoute,
-  DashboardRoute,
-  HistoryRoute,
+  ClientDetailRoute,
   InvoiceBuilderRoute,
-  ProductsRoute,
-  SettingsRoute,
+  InvoiceDetailRoute,
+  buildAppRoutes,
 } from "./pages/routes";
 import { SignupPage } from "./pages/SignupPage";
 
@@ -39,22 +37,21 @@ export function App() {
                 </RequireAuth>
               }
             >
-              <Route index element={<DashboardRoute />} />
-              <Route path="clients" element={<ClientsRoute />} />
-              <Route path="products" element={<ProductsRoute />} />
-              <Route path="invoices/new" element={<InvoiceBuilderRoute />} />
-              <Route path="invoices" element={<HistoryRoute />} />
-              {/* Import & Activity moved into settings (nav decision 2026-07-10);
-                  old URLs keep working via redirects. */}
-              <Route
-                path="activity"
-                element={<Navigate to="/app/settings?section=activity" replace />}
-              />
-              <Route
-                path="import"
-                element={<Navigate to="/app/settings?section=import" replace />}
-              />
-              <Route path="settings" element={<SettingsRoute />} />
+              {/* Every IA node with a path, generated — see pages/routes.tsx. */}
+              {buildAppRoutes()}
+
+              {/* Actions and detail views: not destinations in the IA tree. */}
+              <Route path="sales/invoices/new" element={<InvoiceBuilderRoute />} />
+              <Route path="sales/invoices/id/:invoiceId" element={<InvoiceDetailRoute />} />
+              <Route path="customers/clients/:clientId" element={<ClientDetailRoute />} />
+
+              {/* Pre-IA URLs keep working. */}
+              <Route path="invoices/new" element={<Navigate to="/app/sales/invoices/new" replace />} />
+              <Route path="invoices" element={<Navigate to="/app/sales/invoices" replace />} />
+              <Route path="clients" element={<Navigate to="/app/customers/clients" replace />} />
+              <Route path="products" element={<Navigate to="/app/catalog/products" replace />} />
+              <Route path="import" element={<Navigate to="/app/settings/import" replace />} />
+              <Route path="activity" element={<Navigate to="/app/activity/audit" replace />} />
             </Route>
             <Route path="*" element={<Navigate to="/app" replace />} />
           </Routes>

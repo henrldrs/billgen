@@ -6,6 +6,12 @@
 @import "@henrioutai/ui/styles/tokens.css";
 @import "@henrioutai/ui/styles/components.css";
 
+/* Scaffold kit — the deliberately-ugly placeholder layer for product surface
+ * that has no backend yet. All @import rules must precede any style rule, so
+ * this belongs here rather than at the end of the file.
+ * When this import can be deleted, the app is finished. */
+@import "@billgen/ui/src/scaffold/scaffold.css";
+
 body {
   margin: 0;
   font-family: var(--bg-font-sans, "Segoe UI", system-ui, -apple-system, sans-serif);

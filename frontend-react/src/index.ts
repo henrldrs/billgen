@@ -26,6 +26,36 @@ export * from "./hooks/queries";
 // working; the source of truth is @henrioutai/ui.
 export * from "@henrioutai/ui";
 
+// Information architecture — the single source of truth for nav, routes and
+// which parts of the product actually have a server behind them.
+export {
+  IA,
+  coverage,
+  findByPath,
+  flattenIa,
+  missingEndpoints,
+  routableNodes,
+  type BackendStatus,
+  type IaCoverage,
+  type IaNode,
+  type IaSection,
+  type Layer,
+} from "./scaffold/ia";
+
+// Scaffold kit — deliberately unstyled placeholders for unwired surface.
+// Never use these for a feature that works; that is what @henrioutai/ui is for.
+export {
+  ScaffoldBadge,
+  ScaffoldButton,
+  ScaffoldField,
+  ScaffoldHeading,
+  ScaffoldMeter,
+  ScaffoldNavDot,
+  ScaffoldNote,
+  ScaffoldPage,
+  ScaffoldTable,
+} from "./scaffold/Scaffold";
+
 // Panels — BillGen business UI (data via hooks, no math here).
 export { ActivityPanel } from "./panels/ActivityPanel";
 export { BackupPanel } from "./panels/BackupPanel";

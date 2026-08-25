@@ -1,0 +1,289 @@
+/* BillGen scaffold kit — the deliberately unfinished layer.
+ *
+ * Everything here is styled to look WRONG next to @henrioutai/ui: Times New
+ * Roman, square 2px borders, zero radius, no gradients, no glass, no motion,
+ * Win95 button faces. That is the point. A screen wearing these styles is
+ * announcing "there is no backend behind me", and no amount of squinting
+ * should let it pass for shipped work.
+ *
+ * Rules for this file:
+ *  1. It must NEVER use a --bg-* design token. Raw hex only. If scaffold
+ *     styling ever drifts toward the brand, the signal is lost.
+ *  2. Nothing here is reusable in production. Deleting a .sk-* usage is how
+ *     you know a feature got built.
+ *  3. Prefix is .sk- so a single grep tells you how much app is still fake:
+ *       grep -rc "sk-" frontend-saas/src frontend-react/src
+ *     (avoid glob stars in this comment — a stray star-slash would end it)
+ */
+
+/* ---- the unwired page ---------------------------------------------------- */
+
+.sk-page {
+  font-family: "Times New Roman", Times, serif;
+  color: #000;
+  background: #fff;
+  border: 2px solid #000;
+  border-radius: 0;
+  padding: 0;
+  margin-bottom: 24px;
+}
+
+.sk-page__banner {
+  background: #ffff00;
+  border-bottom: 2px solid #000;
+  padding: 8px 12px;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.sk-page__banner--partial {
+  background: #ffcc00;
+}
+
+/* Backend is ready and only the screen is missing — the cheapest work on the
+ * board, so it reads as an invitation rather than a blockage. */
+.sk-page__banner--ready {
+  background: #00cc66;
+}
+
+.sk-page__body {
+  padding: 16px 20px 24px;
+}
+
+.sk-page__title {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 32px;
+  font-weight: bold;
+  margin: 0 0 4px;
+  letter-spacing: 0;
+}
+
+.sk-page__path {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 12px;
+  color: #666;
+  margin: 0 0 16px;
+}
+
+/* ---- the endpoint ledger ------------------------------------------------- */
+
+.sk-endpoints {
+  border: 2px solid #000;
+  margin: 16px 0;
+}
+
+.sk-endpoints__head {
+  background: #000;
+  color: #fff;
+  padding: 4px 8px;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.sk-endpoints__list {
+  margin: 0;
+  padding: 8px 8px 8px 28px;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.sk-endpoints__list li::marker {
+  content: "× ";
+  font-weight: bold;
+}
+
+.sk-endpoints--have .sk-endpoints__list li::marker {
+  content: "✓ ";
+}
+
+.sk-endpoints--have .sk-endpoints__head {
+  background: #006600;
+}
+
+/* ---- dead controls ------------------------------------------------------- */
+
+/* A control that is visibly inert: no hover, no press, no pointer. It looks
+ * like a Windows 95 button that someone forgot to connect, because it is. */
+.sk-button {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 14px;
+  color: #000;
+  background: #c0c0c0;
+  border: 2px outset #dfdfdf;
+  border-radius: 0;
+  padding: 4px 14px;
+  margin: 0 6px 6px 0;
+  cursor: not-allowed;
+  /* no transition, no :hover, no :active — the deadness IS the feedback */
+}
+
+.sk-button::after {
+  content: " ⃠";
+  font-family: "Courier New", Courier, monospace;
+  font-size: 11px;
+}
+
+.sk-button:focus-visible {
+  outline: 3px solid #ff00ff;
+  outline-offset: 1px;
+}
+
+.sk-input,
+.sk-select,
+.sk-textarea {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 13px;
+  color: #000;
+  background: #fff;
+  border: 2px inset #dfdfdf;
+  border-radius: 0;
+  padding: 3px 5px;
+  width: 100%;
+  box-sizing: border-box;
+  cursor: not-allowed;
+}
+
+.sk-field {
+  margin-bottom: 12px;
+  max-width: 420px;
+}
+
+.sk-field__label {
+  display: block;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+/* ---- raw table ----------------------------------------------------------- */
+
+.sk-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 14px;
+  margin: 12px 0;
+}
+
+.sk-table th,
+.sk-table td {
+  border: 1px solid #000;
+  padding: 4px 8px;
+  text-align: left;
+}
+
+.sk-table th {
+  background: #c0c0c0;
+  font-weight: bold;
+}
+
+.sk-table td {
+  color: #777;
+  font-style: italic;
+}
+
+/* ---- inline status badge (used inside real, wired screens too) ----------- */
+
+.sk-badge {
+  display: inline-block;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 10px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border: 2px solid #000;
+  border-radius: 0;
+  padding: 1px 5px;
+  vertical-align: middle;
+  background: #ffff00;
+  color: #000;
+}
+
+.sk-badge--partial {
+  background: #ffcc00;
+}
+
+.sk-badge--none {
+  background: #ff3300;
+  color: #fff;
+}
+
+.sk-badge--ready {
+  background: #00cc66;
+}
+
+/* ---- nav marker: an unwired destination in an otherwise real nav --------- */
+
+.sk-navdot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-left: 5px;
+  background: #ff3300;
+  border: 1px solid #000;
+  border-radius: 0;
+  vertical-align: middle;
+}
+
+.sk-navdot--partial {
+  background: #ffcc00;
+}
+
+/* ---- section heading inside a scaffold page ------------------------------ */
+
+.sk-h2 {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 20px;
+  font-weight: bold;
+  margin: 20px 0 6px;
+  border-bottom: 1px solid #000;
+}
+
+.sk-note {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 8px 0;
+  max-width: 70ch;
+}
+
+.sk-hr {
+  border: none;
+  border-top: 2px solid #000;
+  margin: 20px 0;
+}
+
+/* ---- coverage meter (Explore / roadmap screens) -------------------------- */
+
+.sk-meter {
+  display: block;
+  width: 100%;
+  max-width: 340px;
+  height: 18px;
+  border: 2px solid #000;
+  border-radius: 0;
+  background: #fff;
+  margin: 4px 0 10px;
+  overflow: hidden;
+}
+
+.sk-meter__fill {
+  height: 100%;
+  background: repeating-linear-gradient(
+    45deg,
+    #000,
+    #000 4px,
+    #666 4px,
+    #666 8px
+  );
+}
+
+/* Scaffold pages ignore dark mode on purpose: a screen that does not react to
+ * the theme switch is one more signal that it is not really part of the app. */

@@ -65,6 +65,13 @@ async function saveBlob(blob: Blob, filename: string): Promise<boolean> {
 export interface HistoryPanelProps {
   companyId: string;
   lang?: Lang;
+  /**
+   * Lock the list to one invoice status. Supplied by the /sales/invoices/:status
+   * routes, where the tab itself IS the filter — the in-panel dropdown is hidden
+   * so there are never two competing controls for the same thing. Mount with a
+   * `key` of the status so switching tabs remounts with the new seed.
+   */
+  status?: string;
 }
 
 type ActionKind = "void" | "credit_note" | "payment" | "issue" | "delete";
@@ -77,9 +84,10 @@ interface PendingAction {
 
 const STATUS_FILTERS = ["", "draft", "issued", "partially_paid", "paid", "voided"] as const;
 
-export function HistoryPanel({ companyId, lang = "en" }: HistoryPanelProps) {
+export function HistoryPanel({ companyId, lang = "en", status }: HistoryPanelProps) {
   const filterSelectId = useId();
-  const [statusFilter, setStatusFilter] = useState("");
+  const routeFiltered = status !== undefined;
+  const [statusFilter, setStatusFilter] = useState(status ?? "");
   const { data: invoices, isLoading, isError } = useInvoices({
     companyId,
     status: statusFilter || undefined,
@@ -182,23 +190,25 @@ export function HistoryPanel({ companyId, lang = "en" }: HistoryPanelProps) {
     <section className="bg-panel" aria-label={t(lang, "history.title")}>
       <header className="bg-panel__header">
         <h1>{t(lang, "history.title")}</h1>
-        <div className="bg-field">
-          <label className="bg-field__label" htmlFor={filterSelectId}>
-            {t(lang, "history.status")}
-          </label>
-          <select
-            id={filterSelectId}
-            className="bg-field__input"
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-          >
-            {STATUS_FILTERS.map((status) => (
-              <option key={status} value={status}>
-                {status === "" ? t(lang, "history.all") : status}
-              </option>
-            ))}
-          </select>
-        </div>
+        {routeFiltered ? null : (
+          <div className="bg-field">
+            <label className="bg-field__label" htmlFor={filterSelectId}>
+              {t(lang, "history.status")}
+            </label>
+            <select
+              id={filterSelectId}
+              className="bg-field__input"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+            >
+              {STATUS_FILTERS.map((option) => (
+                <option key={option} value={option}>
+                  {option === "" ? t(lang, "history.all") : option}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </header>
 
       {downloadFailed ? (

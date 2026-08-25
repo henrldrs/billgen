@@ -2,10 +2,14 @@
  *  company switcher, account menu, Ctrl/⌘K command palette, first-run
  *  onboarding. Panels receive the selected companyId via router outlet context.
  *
- *  Nav structure per Henri's decision (2026-07-10): Dashboard · Clients ·
- *  Products & services · Invoices · Company details — nothing else. The "+"
- *  CreateBillButton is the one and only creation entry; Import data and
- *  Activity log live inside Company details (see SettingsRoute). */
+ *  Nav is generated from the information architecture (scaffold/ia.ts): the
+ *  sections flagged `primary` become the top-level links, everything else is
+ *  reachable through those sections, the account menu or the ⌘K palette. The
+ *  "+" CreateBillButton remains the one and only creation entry.
+ *
+ *  Links pointing at areas without a complete backend carry a ScaffoldNavDot —
+ *  a small square marker, amber for partial and red for unwired — so the state
+ *  of the product is legible from the nav bar itself. */
 
 import {
   AccountMenu,
@@ -14,22 +18,26 @@ import {
   CompanyForm,
   CompanyIcon,
   DashboardIcon,
+  IA,
   LoadingScreen,
   OrgSwitcher,
   PlusIcon,
   PolicyIcon,
+  ScaffoldNavDot,
   SettingsUserIcon,
   TopNav,
   UpgradeIcon,
   t,
   useCompanies,
+  type BackendStatus,
   type CommandItem,
   type CompanyResponse,
+  type IaSection,
   type Lang,
   type MenuEntry,
   type TopNavLink,
 } from "@billgen/ui";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import { useSession } from "../auth/session";
@@ -38,6 +46,13 @@ export interface ShellContext {
   companyId: string;
   lang: Lang;
 }
+
+/** Palette-safe status marker (see the label comment in `commands`). */
+const STATUS_SUFFIX: Record<BackendStatus, string> = {
+  wired: "",
+  partial: " · partial",
+  none: " · no backend",
+};
 
 function isLang(value: string): value is Lang {
   return ["en", "fr", "nl", "es"].includes(value);
@@ -103,56 +118,81 @@ export function AppShell() {
     ? company.default_language
     : "en";
 
-  // UpgradeIcon on Products & services is a stand-in until Henri draws the
-  // real icon (same for the settings-rail icons in SettingsRoute).
-  const navItems = [
-    { key: "dashboard", to: "/app", end: true, label: t(lang, "dashboard.title"), icon: <DashboardIcon /> },
-    { key: "clients", to: "/app/clients", end: false, label: t(lang, "clients.title"), icon: <SettingsUserIcon /> },
-    { key: "products", to: "/app/products", end: false, label: t(lang, "products.title"), icon: <UpgradeIcon /> },
-    { key: "invoices", to: "/app/invoices", end: false, label: t(lang, "history.title"), icon: <PolicyIcon /> },
-    { key: "settings", to: "/app/settings", end: false, label: t(lang, "company.title"), icon: <CompanyIcon /> },
-  ];
+  // Icons are stand-ins until Henri draws the real set; the mapping lives here
+  // rather than in ia.ts so the IA stays free of presentation concerns.
+  const sectionIcon: Record<string, ReactNode> = {
+    dashboard: <DashboardIcon />,
+    sales: <PolicyIcon />,
+    customers: <SettingsUserIcon />,
+    catalog: <UpgradeIcon />,
+    reports: <DashboardIcon />,
+  };
 
-  const links: TopNavLink[] = navItems.map((item) => ({
-    key: item.key,
-    label: item.label,
-    icon: item.icon,
-    active: item.end ? pathname === item.to : pathname.startsWith(item.to),
-    onClick: () => navigate(item.to),
-  }));
+  const primary: IaSection[] = IA.filter((section) => section.primary);
+  const toHref = (path: string | undefined) => `/app${path ? `/${path}` : ""}`;
 
+  const links: TopNavLink[] = primary.map((section) => {
+    const to = toHref(section.path);
+    return {
+      key: section.key,
+      label: (
+        <>
+          {section.key === "dashboard" ? t(lang, "dashboard.title") : section.label}
+          <ScaffoldNavDot status={section.status} />
+        </>
+      ),
+      icon: sectionIcon[section.key],
+      active: section.path === "" ? pathname === "/app" : pathname.startsWith(to),
+      onClick: () => navigate(to),
+    };
+  });
+
+  // The palette indexes the WHOLE architecture, not just the five primary
+  // sections — it is the only way to reach Billing, Legal, Help and the rest
+  // in one hop, and it doubles as a map of what still has no backend.
   const commands: CommandItem[] = [
     {
       key: "new-invoice",
       label: t(lang, "invoice.title"),
       icon: <PlusIcon />,
       section: "Create",
-      keywords: "new invoice bill create",
+      keywords: "new invoice bill create facture",
       onRun: () => {
         setPaletteOpen(false);
-        navigate("/app/invoices/new");
+        navigate("/app/sales/invoices/new");
       },
     },
-    ...navItems.map((item) => ({
-      key: item.key,
-      label: item.label,
-      icon: item.icon,
-      section: "Go to",
-      onRun: () => {
-        setPaletteOpen(false);
-        navigate(item.to);
-      },
-    })),
+    ...IA.flatMap((section) =>
+      [section, ...(section.children ?? [])]
+        .filter((node) => node.path !== undefined)
+        .map((node) => ({
+          key: `${section.key}:${node.key}`,
+          // CommandPalette interpolates label into its substring filter, so this
+          // stays a plain string — the status rides along as searchable text
+          // ("partial", "no backend") rather than as a marker node.
+          label: `${node.label}${STATUS_SUFFIX[node.status]}`,
+          icon: sectionIcon[section.key],
+          section: section === node ? "Go to" : section.label,
+          keywords: `${section.label} ${node.label} ${node.path ?? ""} ${node.status}`,
+          onRun: () => {
+            setPaletteOpen(false);
+            navigate(toHref(node.path));
+          },
+        })),
+    ),
   ];
 
+  // Sections that are not in the primary bar hang off the account menu.
+  const secondary = IA.filter((section) => !section.primary);
+
   const accountItems: MenuEntry[] = [
-    {
-      key: "settings",
-      label: t(lang, "company.title"),
-      icon: <CompanyIcon />,
-      onSelect: () => navigate("/app/settings"),
-    },
-    { type: "separator", key: "sep" },
+    ...secondary.map((section) => ({
+      key: section.key,
+      label: section.label,
+      icon: section.key === "company" ? <CompanyIcon /> : undefined,
+      onSelect: () => navigate(toHref(section.path)),
+    })),
+    { type: "separator" as const, key: "sep" },
     {
       key: "logout",
       label: "Log out",
@@ -171,7 +211,7 @@ export function AppShell() {
           title={company.name}
           links={links}
           onNavigateHome={() => navigate("/app")}
-          onCreateBill={() => navigate("/app/invoices/new")}
+          onCreateBill={() => navigate("/app/sales/invoices/new")}
           onSearchClick={() => setPaletteOpen(true)}
           accountSlot={
             <AccountMenu
@@ -190,7 +230,7 @@ export function AppShell() {
             }))}
             activeKey={company.id}
             onChange={setSelectedId}
-            onCreateNew={() => navigate("/app/settings?section=company")}
+            onCreateNew={() => navigate("/app/company/profile")}
           />
         </TopNav>
       }
