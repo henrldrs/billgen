@@ -92,7 +92,7 @@ export function DesktopShell() {
       <Shell>
         <div style={{ maxWidth: 560, margin: "2.5rem auto 0" }}>
           <h1 style={{ fontSize: "1.4rem", marginBottom: "1rem" }}>
-            Welcome to BillGen 👋
+            Welcome to BillGen
           </h1>
           <p style={{ marginBottom: "1rem" }}>
             Set up the company you invoice from to get started.

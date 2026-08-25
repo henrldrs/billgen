@@ -292,7 +292,7 @@ footer{
 <nav class="rail">
   <div class="brand">
     <p class="brand__name"><span class="brand__dot"></span>BillGen</p>
-    <p class="brand__sub">System Architecture · v0.6</p>
+    <p class="brand__sub">System Architecture · v0.7</p>
   </div>
 
   <p class="rail__group">Assessment</p>
@@ -594,7 +594,7 @@ footer{
         <tr><td><code>--bg-font-sans</code></td><td>Satoshi</td><td>Plus Jakarta Sans</td><td><span class="chip c-done">Satoshi wins</span></td></tr>
         <tr><td><code>--bg-font-mono</code></td><td>Geist Mono</td><td>Geist Mono</td><td><span class="chip c-done">agree</span></td></tr>
         <tr><td>Radii, motion, spacing, glass</td><td>identical</td><td>identical</td><td><span class="chip c-done">agree</span></td></tr>
-        <tr><td>Icon language</td><td>14 custom SVG</td><td>SVG + lucide-react + emoji</td><td><span class="chip c-gap">3 grammars</span></td></tr>
+        <tr><td>Icon language</td><td>13 custom SVG, one grammar</td><td>SVG + lucide-react + emoji</td><td><span class="chip c-done">custom wins</span></td></tr>
       </tbody>
     </table>
   </div>
@@ -906,7 +906,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
         <tr><td class="id">BGEN-BIZ-01</td><td>Subscription</td><td><span class="chip c-gap">gap</span></td><td class="ev">B4. No plan, metering, MoR, or checkout.</td></tr>
         <tr><td class="id">BGEN-BRAND-01</td><td>Accent &amp; typeface</td><td><span class="chip c-done">decided</span></td><td class="ev">tokens.css is the standard — emerald + Satoshi stay, reference re-skin rejected. Enforced by a build-failing guard test; 4 off-token violations fixed.</td></tr>
         <tr><td class="id">BGEN-BRAND-02</td><td>Navigation model</td><td><span class="chip c-done">decided</span></td><td class="ev">Top bar with a popup list per section — no sidebar. Shipped: <code>TopNavLink.items</code> renders a Menu; nav row wraps so popups are not clipped.</td></tr>
-        <tr><td class="id">BGEN-BRAND-03</td><td>Icon language</td><td><span class="chip c-partial">decision</span></td><td class="ev">Reference mixes custom SVG + lucide + emoji. Pick one grammar.</td></tr>
+        <tr><td class="id">BGEN-BRAND-03</td><td>Icon language</td><td><span class="chip c-done">decided</span></td><td class="ev">One custom SVG grammar: 24x24, 2px stroke, round caps, currentColor, 4 interaction states as tokens. No lucide alongside, no emoji. Enforced by a guard test that also trips on an icon-library dependency.</td></tr>
         <tr><td class="id">BGEN-OPS-01</td><td>Remote &amp; CI</td><td><span class="chip c-partial">partial</span></td><td class="ev">CI workflow written; repo still local-only, never pushed.</td></tr>
         <tr><td class="id">BGEN-OPS-02</td><td>Test stability</td><td><span class="chip c-partial">partial</span></td><td class="ev">Frontend suite flakes at the default 5s timeout under load; passes at 30s.</td></tr>
       </tbody>
@@ -1096,12 +1096,12 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
   </div>
 
   <div class="sprint">
-    <div class="sprint__h"><span class="sprint__n">STEP 5</span><span class="sprint__t">Settle the three open decisions</span></div>
-    <p>These are cheap now and expensive later, because everything built afterward inherits them:</p>
+    <div class="sprint__h"><span class="sprint__n">STEP 5</span><span class="sprint__t">The three brand decisions — all settled</span></div>
+    <p>All three are closed, each enforced by a guard test rather than a convention, because everything built afterward inherits them:</p>
     <ul class="task">
       <li class="done"><b>BGEN-BRAND-01</b> — decided: tokens.css is the standard, emerald + Satoshi stay</li>
       <li class="done"><b>BGEN-BRAND-02</b> — decided: top bar with a popup list per section, no sidebar</li>
-      <li><b>BGEN-BRAND-03</b> — one icon grammar: custom SVG, lucide, or emoji. Not three.</li>
+      <li class="done"><b>BGEN-BRAND-03</b> — decided: one custom SVG grammar, enforced by a guard test</li>
     </ul>
   </div>
 

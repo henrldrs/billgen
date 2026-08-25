@@ -61,6 +61,30 @@ or `.bg-*` rules in an app** — change the package files instead.
    stops being Satoshi, or if any Tailwind colour utility or raw hex appears
    in app or component source.
 
+0b. **One icon grammar** (decided 2026-08-25, `BGEN-BRAND-03`). Every icon on
+   every surface — SaaS, Windows, Mobile — obeys the same rules:
+
+   | Axis | Rule |
+   |---|---|
+   | Geometry | 24x24 grid, no exceptions |
+   | Stroke | 2px, one weight only. No thin/medium/bold mixing |
+   | Corners | round caps **and** joins throughout |
+   | Colour | `currentColor` only, `fill="none"`. Never a literal, never decorative colour |
+   | Idle | `--bg-icon-idle-opacity` (.8) |
+   | Hover | `--bg-icon-hover-opacity` (1) |
+   | Active | full opacity + the `.icon-accent` sub-paths take the brand colour |
+   | Disabled | `--bg-icon-disabled-opacity` (.4) — unavailable must still be readable |
+
+   **One source: BillGen's own SVG set.** `lucide-react` is acceptable only as a
+   *wholesale* replacement, never alongside. **Emoji are never UI** — they render
+   differently per platform, ignore the colour tokens, and cannot take a hover or
+   disabled state. The Studio AI reference mixes all three grammars; that is the
+   "Frankenstein effect" this rule exists to prevent.
+
+   Enforced by `frontend-react/src/scaffold/icons.test.ts`, which also fails if an
+   icon library is added as a dependency. Scaffold (`.sk-*`) is exempt — it is
+   deliberately off-brand.
+
 1. **Components use semantic tokens only.** No raw hex, no `--brand-*`
    references in component CSS/TSX. If a component needs a color that has no
    semantic slot, add the slot to `tokens.css` first.

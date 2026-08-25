@@ -716,7 +716,24 @@ badges are real signal.
 `SidebarNav` already exists in the library with `category` and `badge` props, so
 the component cost of switching is close to zero. This is a product call.
 
-### BGEN-BRAND-03 — icon language
+### BGEN-BRAND-03 — icon language — **DECIDED 2026-08-25: one custom SVG grammar**
+
+**Resolved.** BillGen keeps its own SVG set as the single icon language: 24x24
+grid, 2px stroke, round caps and joins, `currentColor` only, `fill="none"`, and a
+four-state interaction grammar (idle .8 / hover 1 / active accent / disabled .4)
+defined as tokens rather than per component.
+
+`lucide-react` is acceptable only as a *wholesale* replacement, never alongside.
+Emoji are never UI.
+
+The audit found the set already ~90% compliant. Two real violations, both fixed:
+`PlusIcon` carried a 2.5px stroke where everything else is 2px, and two shells
+still had a `👋` in the first-run heading. Full rules in `docs/BRAND_TOKENS.md`
+rule 0b; enforced by `frontend-react/src/scaffold/icons.test.ts`, which also
+trips if an icon library is added as a dependency.
+
+The original analysis follows.
+
 
 The reference mixes three grammars: custom SVG, `lucide-react`, and emoji.
 BillGen currently has one (14 custom SVG icons). Pick one — adopting lucide is

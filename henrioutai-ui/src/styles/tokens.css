@@ -264,11 +264,28 @@
   --bg-pad-xl-x: 24px;
   --bg-pad-xl-y: 12px;
 
-  /* Icons — size tokens + idle opacity (clickable icons rest at .8, hover 1) */
+  /* ---- icon grammar (BGEN-BRAND-03, 2026-08-25) -------------------------
+   * One icon language across every surface. The rules the SVGs themselves
+   * must follow — 24x24 grid, 2px stroke, round caps and joins, currentColor,
+   * fill:none, no decorative colour — are enforced by the guard test in
+   * frontend-react/src/scaffold/icons.test.ts. The tokens below carry the half
+   * that is CSS: sizing and the interaction states.
+   *
+   * Interaction grammar, identical on every frontend:
+   *   idle      .8 opacity   — present but recessive
+   *   hover     1            — full strength
+   *   active    1 + accent   — the .icon-accent sub-paths take the brand colour
+   *   disabled  .4           — legible as unavailable, not invisible
+   *
+   * Colour never comes from the icon: every path is currentColor, so an icon
+   * inherits the tone of whatever it sits in. That is what stops a nav icon and
+   * a table icon drifting apart. */
   --bg-icon-16: 16px;
   --bg-icon-20: 20px;
   --bg-icon-24: 24px;
   --bg-icon-idle-opacity: 0.8;
+  --bg-icon-hover-opacity: 1;
+  --bg-icon-disabled-opacity: 0.4;
 
   /* Topbar depth — 2–4% top→bottom gradient + shadow-sm; translucent/glass
      variants for TopNav (variant="translucent" | "glass") */

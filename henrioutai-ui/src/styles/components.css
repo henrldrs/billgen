@@ -1814,7 +1814,24 @@ textarea.bg-field__input {
 .bg-icon-button:focus-visible .bg-icon-chip__icon,
 .bg-topnav__link:hover svg,
 .bg-topnav__link--active svg {
-  opacity: 1;
+  opacity: var(--bg-icon-hover-opacity);
+}
+
+/* Disabled — the fourth interaction state of the icon grammar (BGEN-BRAND-03).
+ * One rule for every icon-bearing control, so a disabled icon reads the same
+ * whether it sits in the nav, a menu, a tab or a button. .4 rather than lower:
+ * an unavailable action still has to be readable, otherwise the user cannot
+ * tell WHICH action is unavailable. */
+:where(
+  .bg-icon-button,
+  .bg-topnav__link,
+  .bg-menu__item,
+  .bg-tabs__tab,
+  .bg-button,
+  .bg-settings__section
+):disabled svg,
+:where(.bg-menu__item, .bg-tabs__tab)[aria-disabled="true"] svg {
+  opacity: var(--bg-icon-disabled-opacity);
 }
 
 /* ==== slice 7: data display ==============================================

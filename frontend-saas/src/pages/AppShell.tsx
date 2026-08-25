@@ -102,7 +102,7 @@ export function AppShell() {
     return (
       <Shell>
         <div className="max-w-lg mx-auto pt-10">
-          <h1 className="text-xl font-bold mb-4">Welcome to BillGen 👋</h1>
+          <h1 className="bg-auth-page__brand">Welcome to BillGen</h1>
           <p className="text-sm mb-4">
             Set up the company you invoice from. You can add more later.
           </p>
