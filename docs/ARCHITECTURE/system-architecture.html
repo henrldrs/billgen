@@ -292,7 +292,7 @@ footer{
 <nav class="rail">
   <div class="brand">
     <p class="brand__name"><span class="brand__dot"></span>BillGen</p>
-    <p class="brand__sub">System Architecture · v0.3</p>
+    <p class="brand__sub">System Architecture · v0.4</p>
   </div>
 
   <p class="rail__group">Assessment</p>
@@ -344,7 +344,7 @@ footer{
     <div class="stat">
       <p class="stat__k">Library components</p>
       <p class="stat__v">72</p>
-      <p class="stat__n">30 mounted · 31 never rendered</p>
+      <p class="stat__n">35 mounted · 26 never rendered</p>
     </div>
   </div>
 
@@ -515,13 +515,13 @@ footer{
 
   <div class="grid g3">
     <div class="stat"><p class="stat__k">In the library</p><p class="stat__v">72</p><p class="stat__n">58 components + 14 icons</p></div>
-    <div class="stat"><p class="stat__k">Mounted by an app</p><p class="stat__v" style="color:var(--done)">30</p><p class="stat__n">SaaS 26 · Electron 17</p></div>
-    <div class="stat"><p class="stat__k">Never rendered</p><p class="stat__v" style="color:var(--gap)">31</p><p class="stat__n">built, tested, unused</p></div>
+    <div class="stat"><p class="stat__k">Mounted by an app</p><p class="stat__v" style="color:var(--done)">35</p><p class="stat__n">was 30 · +Table, Drawer, Pagination, CopyButton, Divider</p></div>
+    <div class="stat"><p class="stat__k">Never rendered</p><p class="stat__v" style="color:var(--gap)">26</p><p class="stat__n">was 31</p></div>
     <div class="stat"><p class="stat__k">Proven by reference</p><p class="stat__v" style="color:var(--ref)">40</p><p class="stat__n">of which 26 unused here</p></div>
   </div>
 
   <div class="note">
-    <p><strong>Answering the direct question:</strong> yes — the library was checked. <strong>31 components have never been rendered by any frontend</strong>, and a further 11 appear only inside other library components (<code>Avatar</code>, <code>IconButton</code>, <code>Menu</code>, <code>LogoMark</code>, <code>Segmented</code>, <code>Skeleton</code>, <code>HomeButton</code>, <code>CreateBillButton</code>, <code>IconChip</code>, <code>HelpIcon</code>, <code>NotificationsIcon</code>) — used, but never chosen by an app.</p>
+    <p><strong>Answering the direct question:</strong> yes — the library was checked. <strong>26 components have never been rendered by any frontend</strong> (down from 31), and a further 11 appear only inside other library components (<code>Avatar</code>, <code>IconButton</code>, <code>Menu</code>, <code>LogoMark</code>, <code>Segmented</code>, <code>Skeleton</code>, <code>HomeButton</code>, <code>CreateBillButton</code>, <code>IconChip</code>, <code>HelpIcon</code>, <code>NotificationsIcon</code>) — used, but never chosen by an app.</p>
   </div>
 
   <h3>The 31 never-rendered components</h3>
@@ -531,25 +531,25 @@ footer{
     <table>
       <thead><tr><th>Component</th><th>Kind</th><th>Ref</th><th>Where it belongs</th></tr></thead>
       <tbody>
-        <tr><td><code>Table</code></td><td>Data</td><td><span class="chip c-ref">ref</span></td><td class="ev">All 6 list screens. Brings the <code>.bg-table-wrap</code> overflow container the raw tables lack — the current tables cannot scroll on mobile.</td></tr>
-        <tr><td><code>Drawer</code></td><td>Overlay</td><td><span class="chip c-ref">ref</span></td><td class="ev">Invoice inspector, customer inspector. The N3 navigation depth.</td></tr>
+        <tr><td><code>Table</code></td><td>Data</td><td><span class="chip c-done">shipped</span></td><td class="ev">Mounted on invoices and credit notes; brings the <code>.bg-table-wrap</code> overflow container. Remaining: clients, products, import, dashboard.</td></tr>
+        <tr><td><code>Drawer</code></td><td>Overlay</td><td><span class="chip c-done">shipped</span></td><td class="ev">Invoice inspector built — the N3 depth. Customer inspector still to do.</td></tr>
         <tr><td><code>StatusTimeline</code></td><td>Data</td><td><span class="chip c-ref">ref</span></td><td class="ev">Invoice lifecycle inside the drawer. Blocked on <code>GET /activity?target_id</code> for full history; created/issued/paid work today.</td></tr>
         <tr><td><code>KpiCard</code></td><td>Data</td><td><span class="chip c-ref">ref</span></td><td class="ev">Dashboard and Reports. Carries delta, direction and hint that the current hand-rolled KPI markup drops.</td></tr>
         <tr><td><code>ChartWrapper</code></td><td>Data</td><td><span class="chip c-ref">ref</span></td><td class="ev">Revenue graph. Dashboard currently renders revenue as a <em>table</em>.</td></tr>
-        <tr><td><code>Menu</code> / <code>ContextMenu</code></td><td>Overlay</td><td><span class="chip c-ref">ref</span></td><td class="ev">Row overflow actions — the fix for five buttons per invoice row.</td></tr>
+        <tr><td><code>Menu</code> / <code>ContextMenu</code></td><td>Overlay</td><td><span class="chip c-gap">blocked</span></td><td class="ev">Cannot be used for row overflow: <code>Menu</code> renders no portal, so <code>.bg-table-wrap</code>'s <code>overflow-x</code> clips it. Action soup was solved with the Drawer instead. Still wanted for non-table menus.</td></tr>
         <tr><td><code>Select</code></td><td>Form</td><td><span class="chip c-ref">ref</span></td><td class="ev">Every form currently uses a raw <code>&lt;select class="bg-field__input"&gt;</code>.</td></tr>
         <tr><td><code>Combobox</code></td><td>Form</td><td><span class="chip c-ref">ref</span></td><td class="ev">Client picker on the invoice builder; product picker on lines.</td></tr>
         <tr><td><code>DatePicker</code></td><td>Form</td><td><span class="chip c-ref">ref</span></td><td class="ev">Invoice date, due date, report period.</td></tr>
         <tr><td><code>Textarea</code></td><td>Form</td><td><span class="chip c-ref">ref</span></td><td class="ev">Invoice notes, legal clauses, client notes.</td></tr>
         <tr><td><code>Banner</code></td><td>Feedback</td><td><span class="chip c-ref">ref</span></td><td class="ev">Dashboard alerts, Peppol validation failures, accounting warnings.</td></tr>
         <tr><td><code>Toast</code></td><td>Feedback</td><td><span class="chip c-none">—</span></td><td class="ev">Every mutation currently gives no transient confirmation.</td></tr>
-        <tr><td><code>Pagination</code></td><td>Data</td><td><span class="chip c-ref">ref</span></td><td class="ev">All lists render every row with no paging.</td></tr>
+        <tr><td><code>Pagination</code></td><td>Data</td><td><span class="chip c-done">shipped</span></td><td class="ev">Mounted on credit notes. Remaining lists still render every row.</td></tr>
         <tr><td><code>SearchBar</code></td><td>Form</td><td><span class="chip c-ref">ref</span></td><td class="ev">Per-list search. Distinct from the ⌘K palette, which navigates pages only.</td></tr>
         <tr><td><code>ProgressBar</code></td><td>Data</td><td><span class="chip c-ref">ref</span></td><td class="ev">Customer concentration, aging balance, storage, plan usage.</td></tr>
         <tr><td><code>NotificationCenter</code></td><td>Feedback</td><td><span class="chip c-ref">ref</span></td><td class="ev">Built since the UI phase; has never had a data source.</td></tr>
         <tr><td><code>FileUpload</code></td><td>Form</td><td><span class="chip c-ref">ref</span></td><td class="ev">Documents, logo upload, CSV import. Blocked on blob storage (B2).</td></tr>
         <tr><td><code>Switch</code> · <code>Checkbox</code> · <code>RadioGroup</code></td><td>Form</td><td><span class="chip c-partial">1 of 3</span></td><td class="ev">Notification preferences, cookie categories, export selection.</td></tr>
-        <tr><td><code>CopyButton</code> · <code>Kbd</code> · <code>Divider</code></td><td>Utility</td><td><span class="chip c-ref">ref</span></td><td class="ev">Drawer identifiers (VAT, IBAN, SMP), shortcut hints, section rules.</td></tr>
+        <tr><td><code>CopyButton</code> · <code>Divider</code></td><td>Utility</td><td><span class="chip c-done">shipped</span></td><td class="ev">Both mounted in the invoice drawer. <code>Kbd</code> still unused (shortcut hints).</td></tr>
         <tr><td><code>Stepper</code></td><td>Navigation</td><td><span class="chip c-none">—</span></td><td class="ev">The nine-step onboarding wizard.</td></tr>
         <tr><td><code>Breadcrumbs</code></td><td>Navigation</td><td><span class="chip c-none">—</span></td><td class="ev">N3 depth — returning from a record to its filtered list.</td></tr>
         <tr><td><code>Skeleton</code></td><td>Feedback</td><td><span class="chip c-none">—</span></td><td class="ev">Every load currently shows a centred spinner.</td></tr>
@@ -569,8 +569,8 @@ footer{
         <tr><td>Bottom nav (mobile)</td><td><span class="chip c-gap">missing</span></td><td><span class="chip c-none">n/a</span></td><td><span class="chip c-plan">required</span></td><td><span class="chip c-done">used</span></td></tr>
         <tr><td>Section tabs — <code>Tabs</code></td><td><span class="chip c-done">used</span></td><td><span class="chip c-gap">missing</span></td><td><span class="chip c-plan">planned</span></td><td><span class="chip c-done">used</span></td></tr>
         <tr><td>Settings rail — <code>SettingsShell</code></td><td><span class="chip c-done">used</span></td><td><span class="chip c-gap">missing</span></td><td><span class="chip c-plan">planned</span></td><td><span class="chip c-done">used</span></td></tr>
-        <tr><td>Record inspector — <code>Drawer</code></td><td><span class="chip c-gap">defined only</span></td><td><span class="chip c-gap">defined only</span></td><td><span class="chip c-plan">sheet variant</span></td><td><span class="chip c-done">used</span></td></tr>
-        <tr><td>Data — <code>Table</code>, <code>Pagination</code></td><td><span class="chip c-gap">defined only</span></td><td><span class="chip c-gap">defined only</span></td><td><span class="chip c-plan">card list</span></td><td><span class="chip c-done">used</span></td></tr>
+        <tr><td>Record inspector — <code>Drawer</code></td><td><span class="chip c-done">used</span></td><td><span class="chip c-gap">defined only</span></td><td><span class="chip c-plan">sheet variant</span></td><td><span class="chip c-done">used</span></td></tr>
+        <tr><td>Data — <code>Table</code>, <code>Pagination</code></td><td><span class="chip c-done">used</span></td><td><span class="chip c-gap">defined only</span></td><td><span class="chip c-plan">card list</span></td><td><span class="chip c-done">used</span></td></tr>
         <tr><td>Charts — <code>ChartWrapper</code></td><td><span class="chip c-gap">defined only</span></td><td><span class="chip c-gap">defined only</span></td><td><span class="chip c-plan">planned</span></td><td><span class="chip c-done">used</span></td></tr>
         <tr><td>Forms — <code>Select</code>, <code>Combobox</code>, <code>DatePicker</code></td><td><span class="chip c-gap">defined only</span></td><td><span class="chip c-gap">defined only</span></td><td><span class="chip c-plan">native</span></td><td><span class="chip c-done">used</span></td></tr>
         <tr><td>Feedback — <code>Toast</code>, <code>Banner</code>, <code>Skeleton</code></td><td><span class="chip c-gap">defined only</span></td><td><span class="chip c-gap">defined only</span></td><td><span class="chip c-plan">planned</span></td><td><span class="chip c-partial">banner only</span></td></tr>
@@ -789,9 +789,11 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
       <li><b>api</b> — <code>GET /activity?target_id</code> · per-record timeline becomes possible</li>
       <li><b>api</b> — <code>GET /products?status&amp;billing_type</code> · Catalog Services + Archived</li>
       <li><b>api</b> — <code>GET /vat-rates</code>, <code>GET /pdf-templates</code> · expose existing Python constants</li>
-      <li><b>saas</b> — mount <code>Table</code> + <code>Pagination</code> on all 6 lists</li>
-      <li><b>saas</b> — build the credit-note screen · backend already complete</li>
-      <li><b>ui</b> — fix primary-button contrast to 500→700 · currently fails WCAG AA</li>
+      <li class="done"><b>saas</b> — <code>Table</code> on invoices + credit notes; 4 lists remain</li>
+      <li class="done"><b>saas</b> — credit-note screen built · backend was already complete</li>
+      <li class="done"><b>ui</b> — primary-button contrast fixed (600→800, 4.58:1 behind the label)</li>
+      <li class="done"><b>saas</b> — invoice record inspector (N3) · killed the five-button row</li>
+      <li class="done"><b>ia</b> — desktop areas removed from the SaaS router (<code>surface</code> field)</li>
     </ul>
   </div>
 
@@ -885,11 +887,11 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
         <tr><td class="id">BGEN-INFRA-02</td><td>Blob storage</td><td><span class="chip c-gap">gap</span></td><td class="ev">B2. Blocks Documents (7), branding, attachments.</td></tr>
         <tr><td class="id">BGEN-INFRA-03</td><td>Job runner</td><td><span class="chip c-gap">gap</span></td><td class="ev">Needed by recurring invoices, reminders, scheduled backup.</td></tr>
         <tr><td class="id">BGEN-SAAS-01</td><td>IA routing</td><td><span class="chip c-done">done</span></td><td class="ev">All 114 areas routed; generated from <code>ia.ts</code>; unwired surface visibly scaffolded.</td></tr>
-        <tr><td class="id">BGEN-SAAS-02</td><td>Component adoption</td><td><span class="chip c-gap">gap</span></td><td class="ev">31 of 72 components never rendered. See §03.</td></tr>
-        <tr><td class="id">BGEN-SAAS-03</td><td>Record inspector (N3)</td><td><span class="chip c-gap">gap</span></td><td class="ev"><code>Drawer</code> defined, never mounted. Reference proves the pattern.</td></tr>
+        <tr><td class="id">BGEN-SAAS-02</td><td>Component adoption</td><td><span class="chip c-partial">partial</span></td><td class="ev">26 of 72 never rendered, down from 31. See §03.</td></tr>
+        <tr><td class="id">BGEN-SAAS-03</td><td>Record inspector (N3)</td><td><span class="chip c-partial">partial</span></td><td class="ev">Invoice inspector shipped; client 360 inspector still to build.</td></tr>
         <tr><td class="id">BGEN-SAAS-04</td><td>Primary nav model</td><td><span class="chip c-partial">partial</span></td><td class="ev">TopNav carries 5 of 15 sections. Sidebar decision open — <code>BGEN-BRAND-02</code>.</td></tr>
         <tr><td class="id">BGEN-SAAS-05</td><td>Responsive</td><td><span class="chip c-gap">gap</span></td><td class="ev">One <code>max-width</code> query in 4,227 CSS lines. TopNav row cannot wrap or scroll.</td></tr>
-        <tr><td class="id">BGEN-DESK-01</td><td>Desktop IA separation</td><td><span class="chip c-gap">gap</span></td><td class="ev">Desktop nodes wrongly live in the SaaS IA. Needs its own tree + shell consumption.</td></tr>
+        <tr><td class="id">BGEN-DESK-01</td><td>Desktop IA separation</td><td><span class="chip c-done">done</span></td><td class="ev">Explicit <code>surface</code> field; <code>routableNodes()</code> defaults to "saas". Two regression tests. Tauri shell still to consume <code>routableNodes("desktop")</code>.</td></tr>
         <tr><td class="id">BGEN-DESK-02</td><td>Offline sync</td><td><span class="chip c-gap">gap</span></td><td class="ev">Local SQLite only; no protocol, conflict resolution, or outbox.</td></tr>
         <tr><td class="id">BGEN-DESK-03</td><td>Signed installer</td><td><span class="chip c-gap">gap</span></td><td class="ev">EV code-signing, Tauri updater, crash reporting. Phase 12.</td></tr>
         <tr><td class="id">BGEN-MOB-01</td><td>Mobile surface</td><td><span class="chip c-gap">gap</span></td><td class="ev">No directory. Needs bottom-tab nav, card lists instead of tables, sheet instead of drawer.</td></tr>
@@ -924,12 +926,12 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
     <table>
       <thead><tr><th class="id">ID</th><th>Item</th><th>Measured defect</th><th>Fix</th></tr></thead>
       <tbody>
-        <tr><td class="id">L6-01</td><td>Panel vs card</td><td class="ev"><code>.bg-panel</code>: flat white, 8px radius, <strong>no shadow</strong>. <code>.bg-card</code>: glass, 16px, layered shadow, <code>blur(20px)</code>. Every content screen uses the former.</td><td class="ev">Give <code>.bg-panel</code> the same pass, or render panels in <code>Card</code>. One change, every screen.</td></tr>
-        <tr><td class="id">L6-02</td><td>Heading hierarchy</td><td class="ev">Panel <code>h1</code> = 18.4px/<strong>weight 400</strong>; <code>h2</code> = 16px/400 — identical to body copy. Rule sets size but not weight; Tailwind preflight resets headings to inherit.</td><td class="ev">Add weight + tracking, or mount <code>PageHeader</code> (spec'd 22–24px/600).</td></tr>
-        <tr><td class="id">L6-03</td><td>Button contrast</td><td class="ev">White 14.4px/500 on emerald gradient: <strong>1.92:1</strong> top, 2.54:1 mid, 3.77:1 bottom. AA needs 4.5:1.</td><td class="ev">Shift face to 500→700 · 5.9:1, depth preserved.</td></tr>
+        <tr><td class="id">L6-01</td><td>Panel vs card <span class="chip c-done">done</span></td><td class="ev">Was: flat white, 8px radius, <strong>no shadow</strong>, while <code>.bg-card</code> was glass at 16px.</td><td class="ev">Shipped — <code>.bg-panel</code> now shares the glass surface, 16px radius, card shadow and <code>--bg-pad-card</code>. Stays a distinct class: only the surface is shared, not the padding model.</td></tr>
+        <tr><td class="id">L6-02</td><td>Heading hierarchy <span class="chip c-done">done</span></td><td class="ev">Was: <code>h1</code> 18.4px/<strong>w400</strong>, <code>h2</code> 16px/w400 — identical to body copy, because the rule set size but not weight and Tailwind preflight resets headings to inherit.</td><td class="ev">Shipped — measured now: <code>h1</code> 23.2px/w600/−0.348px, <code>h2</code> 16.96px/w600/−0.254px, body unchanged.</td></tr>
+        <tr><td class="id">L6-03</td><td>Button contrast <span class="chip c-done">done</span></td><td class="ev">Was: white 14.4px/500 on emerald-400→600 — <strong>1.92:1</strong> top, 2.54:1 mid, 3.77:1 bottom, against AA's 4.5:1.</td><td class="ev">Shipped — face darkened to 600→800, hover lightened to 500→700. Measured behind the glyph band: <strong>4.58:1</strong> top edge, 6.10:1 bottom. Hue unchanged, so not a rebrand.</td></tr>
         <tr><td class="id">L6-04</td><td>Auth screens</td><td class="ev">Login/signup render outside <code>AppShell</code>, so <code>--bg-app-backdrop</code> never applies. Use <code>text-blue-700</code> (no blue in brand) and <code>text-gray-500</code> instead of tokens.</td><td class="ev">Move inside shell; tokenise; mount <code>LogoMark</code>.</td></tr>
-        <tr><td class="id">L6-05</td><td>Responsive</td><td class="ev">One <code>max-width</code> query in 4,227 lines. <code>.bg-topnav__row</code> is a fixed 4rem flex row, no wrap or scroll. Six tables lack <code>.bg-table-wrap</code>.</td><td class="ev">Mobile pass on TopNav; mount <code>Table</code> for free overflow.</td></tr>
-        <tr><td class="id">L6-06</td><td>Action soup</td><td class="ev">Up to five equal-weight buttons per invoice row.</td><td class="ev">One primary + <code>Menu</code> overflow; rest into the <code>Drawer</code>.</td></tr>
+        <tr><td class="id">L6-05</td><td>Responsive <span class="chip c-partial">partial</span></td><td class="ev">One <code>max-width</code> query in 4,227 lines. <code>.bg-topnav__row</code> is still a fixed 4rem flex row with no wrap or scroll.</td><td class="ev">Invoices and credit notes now scroll via <code>Table</code>; four lists still raw. TopNav mobile pass outstanding.</td></tr>
+        <tr><td class="id">L6-06</td><td>Action soup <span class="chip c-done">done</span></td><td class="ev">Was: up to five equal-weight buttons per invoice row.</td><td class="ev">Shipped — actions moved into the record inspector. <code>Menu</code> was ruled out: no portal, so <code>.bg-table-wrap</code> would clip it.</td></tr>
         <tr><td class="id">L6-07</td><td>Empty states</td><td class="ev">New account shows a row of zeroes. <code>EmptyState</code> used in 4 places.</td><td class="ev">First-run state on every list and KPI that invites an action.</td></tr>
         <tr><td class="id">L6-08</td><td>Loading states</td><td class="ev">Every load is a centred spinner. <code>Skeleton</code> never rendered.</td><td class="ev">Skeleton rows matching the table shape.</td></tr>
         <tr><td class="id">L6-09</td><td>Localization</td><td class="ev">FR/NL/EN/ES exist in <code>translations.ts</code>; language follows the company and cannot be changed after creation.</td><td class="ev">Mount <code>LanguageSwitcher</code>; add per-user preference.</td></tr>
