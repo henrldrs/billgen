@@ -199,6 +199,55 @@ textarea.bg-field__input {
   color: var(--bg-ink-soft);
 }
 
+/* Inline text link. The system had no such style, so call sites reached for a
+ * raw Tailwind colour (text-blue-700 — a hue that is not in the palette at all)
+ * and the auth screens shipped off-brand. Accent-ink is the token that is
+ * legible as TEXT on white; --bg-accent itself is decorative-only at ~2.6:1. */
+.bg-link {
+  color: var(--bg-accent-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  border-radius: 2px;
+}
+.bg-link:hover {
+  text-decoration-thickness: 2px;
+}
+.bg-link:focus-visible {
+  outline: 2px solid var(--bg-focus-ring-color);
+  outline-offset: 2px;
+}
+
+/* Centred single-card page: sign in, sign up, and anything else that renders
+ * outside the app shell. It carries --bg-app-backdrop itself, so the glass
+ * panel it wraps has the same ground to blur against as the rest of the app. */
+.bg-auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: var(--bg-app-backdrop);
+  color: var(--bg-ink);
+  font-family: var(--bg-font-sans);
+}
+.bg-auth-page__card {
+  width: 100%;
+  max-width: 24rem;
+}
+.bg-auth-page__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.35rem;
+}
+.bg-auth-page__brand h1 {
+  font-size: var(--bg-text-title);
+  font-weight: var(--bg-weight-title);
+  letter-spacing: var(--bg-tracking-title);
+  margin: 0;
+}
+
 .bg-spinner {
   display: flex;
   align-items: center;

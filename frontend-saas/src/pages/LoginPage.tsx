@@ -1,4 +1,4 @@
-import { ApiError, Button, Field, TextInput } from "@billgen/ui";
+import { ApiError, Button, Field, LogoMark, TextInput } from "@billgen/ui";
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -28,10 +28,13 @@ export function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-4">
-      <div className="bg-panel w-full max-w-sm">
-        <h1 className="text-xl font-bold mb-1">BillGen</h1>
-        <p className="text-sm text-gray-500 mb-4">Sign in to your account</p>
+    <main className="bg-auth-page">
+      <div className="bg-panel bg-auth-page__card">
+        <div className="bg-auth-page__brand">
+          <LogoMark size={26} />
+          <h1>BillGen</h1>
+        </div>
+        <p className="bg-muted mb-4">Sign in to your account</p>
         <form onSubmit={handleSubmit}>
           <Field label="Email" required>
             <TextInput
@@ -60,8 +63,8 @@ export function LoginPage() {
             Sign in
           </Button>
         </form>
-        <p className="text-sm mt-4">
-          No account yet? <Link to="/signup" className="text-blue-700 underline">Create one</Link>
+        <p className="bg-muted mt-4">
+          No account yet? <Link to="/signup" className="bg-link">Create one</Link>
         </p>
       </div>
     </main>

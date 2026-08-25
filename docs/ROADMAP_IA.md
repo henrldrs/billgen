@@ -656,7 +656,21 @@ application has ever *chosen* one.
 
 Everything built after these inherits them.
 
-### BGEN-BRAND-01 — accent and typeface
+### BGEN-BRAND-01 — accent and typeface — **DECIDED 2026-08-25: tokens.css is the standard**
+
+**Resolved.** The reference re-skin is rejected; emerald `#10B981` and Satoshi
+remain canonical, and `tokens.css` is the single authority for palette and
+type. The reference contributes layout and component patterns only.
+
+Enforced by `frontend-react/src/scaffold/tokens.test.ts`, which fails if the
+accent stops being emerald, the sans face stops being Satoshi, or any Tailwind
+colour utility or raw hex reaches app or component source. The four violations
+that existed (`text-blue-700` and `text-gray-500` on the auth screens) are
+fixed; a new `.bg-link` fills the gap that caused them — the system had no
+inline text-link style, so call sites reached for a raw Tailwind blue.
+
+The original analysis follows.
+
 
 The reference kept `--brand-emerald-500` in the palette but repointed
 `--bg-accent` at `--brand-blue-500` `#2563EB`, and swapped `--bg-font-sans` from

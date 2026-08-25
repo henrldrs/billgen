@@ -48,6 +48,19 @@ or `.bg-*` rules in an app** — change the package files instead.
 
 ## Rules
 
+0. **`tokens.css` is the standard** (confirmed 2026-08-25, decision
+   `BGEN-BRAND-01`). The Studio AI reference frontend
+   (`docs/billgen---enterprise-invoicing-&-financial-saas.zip`) repointed
+   `--bg-accent` at `--brand-blue-500` `#2563EB` and swapped `--bg-font-sans`
+   from Satoshi to Plus Jakarta Sans. That re-skin is **rejected**: emerald
+   `#10B981` and Satoshi remain canonical. The reference is a source of
+   layout and component patterns only, never of palette or type.
+
+   This is enforced, not just documented — `frontend-react/src/scaffold/tokens.test.ts`
+   fails the build if `--bg-accent` stops being emerald, if the sans face
+   stops being Satoshi, or if any Tailwind colour utility or raw hex appears
+   in app or component source.
+
 1. **Components use semantic tokens only.** No raw hex, no `--brand-*`
    references in component CSS/TSX. If a component needs a color that has no
    semantic slot, add the slot to `tokens.css` first.

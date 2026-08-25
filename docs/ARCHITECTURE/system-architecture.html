@@ -292,7 +292,7 @@ footer{
 <nav class="rail">
   <div class="brand">
     <p class="brand__name"><span class="brand__dot"></span>BillGen</p>
-    <p class="brand__sub">System Architecture · v0.4</p>
+    <p class="brand__sub">System Architecture · v0.5</p>
   </div>
 
   <p class="rail__group">Assessment</p>
@@ -581,17 +581,17 @@ footer{
   </div>
 
   <h3>Token divergence — a decision, not a bug</h3>
-  <div class="note note--stop">
-    <p><strong>The reference re-skinned the brand.</strong> It kept <code>--brand-emerald-500</code> in the palette but repointed <code>--bg-accent</code> at <code>--brand-blue-500</code> <code>#2563EB</code>, and swapped <code>--bg-font-sans</code> from Satoshi to Plus Jakarta Sans.</p>
-    <p>This is the token architecture working exactly as designed — a re-skin touched only the semantic layer. But it directly contradicts <code>docs/BRAND_TOKENS.md</code>, which fixes emerald <code>#10B981</code> as the canonical accent. <strong>Adopting the reference wholesale would silently rebrand BillGen.</strong> Tracked as <code>BGEN-BRAND-01</code>; this document is deliberately set in emerald, not blue, pending that call.</p>
+  <div class="note">
+    <p><strong>Decided 2026-08-25 — <code>tokens.css</code> is the standard.</strong> The reference kept <code>--brand-emerald-500</code> in the palette but repointed <code>--bg-accent</code> at <code>--brand-blue-500</code> <code>#2563EB</code>, and swapped Satoshi for Plus Jakarta Sans. That re-skin is <strong>rejected</strong>: emerald <code>#10B981</code> and Satoshi remain canonical, and the reference contributes layout and component patterns only — never palette or type.</p>
+    <p>Enforced rather than documented: <code>frontend-react/src/scaffold/tokens.test.ts</code> fails the build if the accent stops being emerald, the sans face stops being Satoshi, or any Tailwind colour utility or raw hex reaches app or component source. The four violations that existed — <code>text-blue-700</code> and <code>text-gray-500</code> on the auth screens — are fixed.</p>
   </div>
 
   <div class="tw">
     <table>
       <thead><tr><th>Token</th><th>BillGen canonical</th><th>Studio AI reference</th><th>Verdict</th></tr></thead>
       <tbody>
-        <tr><td><code>--bg-accent</code></td><td>emerald <code>#10B981</code></td><td>blue <code>#2563EB</code></td><td><span class="chip c-gap">conflict</span></td></tr>
-        <tr><td><code>--bg-font-sans</code></td><td>Satoshi</td><td>Plus Jakarta Sans</td><td><span class="chip c-gap">conflict</span></td></tr>
+        <tr><td><code>--bg-accent</code></td><td>emerald <code>#10B981</code></td><td>blue <code>#2563EB</code></td><td><span class="chip c-done">emerald wins</span></td></tr>
+        <tr><td><code>--bg-font-sans</code></td><td>Satoshi</td><td>Plus Jakarta Sans</td><td><span class="chip c-done">Satoshi wins</span></td></tr>
         <tr><td><code>--bg-font-mono</code></td><td>Geist Mono</td><td>Geist Mono</td><td><span class="chip c-done">agree</span></td></tr>
         <tr><td>Radii, motion, spacing, glass</td><td>identical</td><td>identical</td><td><span class="chip c-done">agree</span></td></tr>
         <tr><td>Icon language</td><td>14 custom SVG</td><td>SVG + lucide-react + emoji</td><td><span class="chip c-gap">3 grammars</span></td></tr>
@@ -904,7 +904,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
         <tr><td class="id">BGEN-PLAT-02</td><td>Banking</td><td><span class="chip c-gap">gap</span></td><td class="ev">No CODA/PSD2 link or reconciliation.</td></tr>
         <tr><td class="id">BGEN-PLAT-03</td><td>API &amp; webhooks</td><td><span class="chip c-gap">gap</span></td><td class="ev">No API keys, no delivery with retries.</td></tr>
         <tr><td class="id">BGEN-BIZ-01</td><td>Subscription</td><td><span class="chip c-gap">gap</span></td><td class="ev">B4. No plan, metering, MoR, or checkout.</td></tr>
-        <tr><td class="id">BGEN-BRAND-01</td><td>Accent &amp; typeface</td><td><span class="chip c-partial">decision</span></td><td class="ev">Reference re-skins emerald→blue and Satoshi→Plus Jakarta. Contradicts BRAND_TOKENS.md.</td></tr>
+        <tr><td class="id">BGEN-BRAND-01</td><td>Accent &amp; typeface</td><td><span class="chip c-done">decided</span></td><td class="ev">tokens.css is the standard — emerald + Satoshi stay, reference re-skin rejected. Enforced by a build-failing guard test; 4 off-token violations fixed.</td></tr>
         <tr><td class="id">BGEN-BRAND-02</td><td>Navigation model</td><td><span class="chip c-partial">decision</span></td><td class="ev">Sidebar (reference, 11 items) vs TopNav-only (current, 5 items).</td></tr>
         <tr><td class="id">BGEN-BRAND-03</td><td>Icon language</td><td><span class="chip c-partial">decision</span></td><td class="ev">Reference mixes custom SVG + lucide + emoji. Pick one grammar.</td></tr>
         <tr><td class="id">BGEN-OPS-01</td><td>Remote &amp; CI</td><td><span class="chip c-partial">partial</span></td><td class="ev">CI workflow written; repo still local-only, never pushed.</td></tr>
@@ -929,7 +929,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
         <tr><td class="id">L6-01</td><td>Panel vs card <span class="chip c-done">done</span></td><td class="ev">Was: flat white, 8px radius, <strong>no shadow</strong>, while <code>.bg-card</code> was glass at 16px.</td><td class="ev">Shipped — <code>.bg-panel</code> now shares the glass surface, 16px radius, card shadow and <code>--bg-pad-card</code>. Stays a distinct class: only the surface is shared, not the padding model.</td></tr>
         <tr><td class="id">L6-02</td><td>Heading hierarchy <span class="chip c-done">done</span></td><td class="ev">Was: <code>h1</code> 18.4px/<strong>w400</strong>, <code>h2</code> 16px/w400 — identical to body copy, because the rule set size but not weight and Tailwind preflight resets headings to inherit.</td><td class="ev">Shipped — measured now: <code>h1</code> 23.2px/w600/−0.348px, <code>h2</code> 16.96px/w600/−0.254px, body unchanged.</td></tr>
         <tr><td class="id">L6-03</td><td>Button contrast <span class="chip c-done">done</span></td><td class="ev">Was: white 14.4px/500 on emerald-400→600 — <strong>1.92:1</strong> top, 2.54:1 mid, 3.77:1 bottom, against AA's 4.5:1.</td><td class="ev">Shipped — face darkened to 600→800, hover lightened to 500→700. Measured behind the glyph band: <strong>4.58:1</strong> top edge, 6.10:1 bottom. Hue unchanged, so not a rebrand.</td></tr>
-        <tr><td class="id">L6-04</td><td>Auth screens</td><td class="ev">Login/signup render outside <code>AppShell</code>, so <code>--bg-app-backdrop</code> never applies. Use <code>text-blue-700</code> (no blue in brand) and <code>text-gray-500</code> instead of tokens.</td><td class="ev">Move inside shell; tokenise; mount <code>LogoMark</code>.</td></tr>
+        <tr><td class="id">L6-04</td><td>Auth screens <span class="chip c-done">done</span></td><td class="ev">Was: rendered outside <code>AppShell</code> so <code>--bg-app-backdrop</code> never applied, plus <code>text-blue-700</code> (a hue absent from the palette) and <code>text-gray-500</code>.</td><td class="ev">Shipped — new <code>.bg-auth-page</code> carries the backdrop, <code>LogoMark</code> replaces the bare wordmark, and the new <code>.bg-link</code> renders at emerald-700, measured <strong>5.48:1</strong>.</td></tr>
         <tr><td class="id">L6-05</td><td>Responsive <span class="chip c-partial">partial</span></td><td class="ev">One <code>max-width</code> query in 4,227 lines. <code>.bg-topnav__row</code> is still a fixed 4rem flex row with no wrap or scroll.</td><td class="ev">Invoices and credit notes now scroll via <code>Table</code>; four lists still raw. TopNav mobile pass outstanding.</td></tr>
         <tr><td class="id">L6-06</td><td>Action soup <span class="chip c-done">done</span></td><td class="ev">Was: up to five equal-weight buttons per invoice row.</td><td class="ev">Shipped — actions moved into the record inspector. <code>Menu</code> was ruled out: no portal, so <code>.bg-table-wrap</code> would clip it.</td></tr>
         <tr><td class="id">L6-07</td><td>Empty states</td><td class="ev">New account shows a row of zeroes. <code>EmptyState</code> used in 4 places.</td><td class="ev">First-run state on every list and KPI that invites an action.</td></tr>
@@ -1099,7 +1099,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
     <div class="sprint__h"><span class="sprint__n">STEP 5</span><span class="sprint__t">Settle the three open decisions</span></div>
     <p>These are cheap now and expensive later, because everything built afterward inherits them:</p>
     <ul class="task">
-      <li><b>BGEN-BRAND-01</b> — emerald or blue? Satoshi or Plus Jakarta? See <a href="#components">§03</a></li>
+      <li class="done"><b>BGEN-BRAND-01</b> — decided: tokens.css is the standard, emerald + Satoshi stay</li>
       <li><b>BGEN-BRAND-02</b> — sidebar (11 destinations, reference) or TopNav-only (5, current)?</li>
       <li><b>BGEN-BRAND-03</b> — one icon grammar: custom SVG, lucide, or emoji. Not three.</li>
     </ul>
