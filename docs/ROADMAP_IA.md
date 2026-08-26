@@ -458,9 +458,15 @@ Named "Explore" rather than "Research": it is the app's internal search engine.
 - **Backup & restore** *(wired)*, **Appearance** *(wired — correctly needs no
   endpoint)*.
 - **Account** *(partial)* — `GET /users/me` is readable and not editable.
-- **Users & permissions** *(none)* — `OrgMembership` exists in `core/models`,
-  is not exposed, and carries no role enum. Roles needed: owner, administrator,
-  accountant, employee, viewer.
+- **Users & permissions** *(none)* — `OrgMembership` exists in `core/models`
+  and **does** carry a role enum (`Role = owner | admin | member | viewer`,
+  `core/models/user.py`); the JWT carries it and `api/deps.py` exposes
+  `current_role`. It is read in exactly one place — `/users/me`, to display it.
+  **Nothing enforces it: a `viewer` can void an invoice today.** The gap is
+  enforcement and a screen, not a model. Note `roles_permissions` is Business+
+  in the entitlement matrix, so the enforcement must itself be tier-gated. Also
+  blocked on **B1** for invitations — signup always creates a *new* org, so
+  every org currently has exactly one member.
 - **Security** *(none)* — password change, TOTP, session list and revocation,
   login history. Refresh tokens exist server-side but are not listable or
   individually revocable. A security score is a good framing device but it must

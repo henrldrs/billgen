@@ -94,6 +94,14 @@ async def test_plans_publishes_the_whole_matrix(client):
     assert tiers["business"]["features"]["multi_company"] is True
     assert tiers["starter"]["features"]["multi_company"] is False
 
+    # Every tier must be distinguishable from the one below it, or the upgrade
+    # ladder has a rung that sells nothing. Business Pro's rung is the
+    # administration surface for several people on one bill.
+    assert tiers["business_pro"]["features"]["team_administration"] is True
+    assert tiers["business"]["features"]["team_administration"] is False
+    assert tiers["business_pro"]["features"]["vat_report"] == "consolidated"
+    assert tiers["business"]["features"]["vat_report"] == "advanced"
+
 
 # ── quotas refuse creation ─────────────────────────────────────────────────
 

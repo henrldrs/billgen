@@ -114,6 +114,7 @@ FEATURES: dict[PlanTier, dict[str, bool | str]] = {
         "multi_company": False,
         "company_level_settings": False,
         "roles_permissions": False,
+        "team_administration": False,
         "priority_support": False,
     },
     PlanTier.STARTER: {
@@ -139,6 +140,7 @@ FEATURES: dict[PlanTier, dict[str, bool | str]] = {
         "multi_company": False,
         "company_level_settings": False,
         "roles_permissions": False,
+        "team_administration": False,
         "priority_support": False,
     },
     PlanTier.BUSINESS: {
@@ -164,6 +166,9 @@ FEATURES: dict[PlanTier, dict[str, bool | str]] = {
         "multi_company": True,
         "company_level_settings": True,
         "roles_permissions": True,
+        # Business has seats and roles, but stays a single-owner workspace: the
+        # administration surface is Business Pro's.
+        "team_administration": False,
         "priority_support": True,
     },
     PlanTier.BUSINESS_PRO: {
@@ -179,7 +184,10 @@ FEATURES: dict[PlanTier, dict[str, bool | str]] = {
         "pdf_templates_premium": True,
         "pdf_customization": "custom",
         "peppol_export": True,
-        "vat_report": "advanced",
+        # Not "advanced" like Business: the top tier's VAT story is the
+        # consolidated, multi-company view the billing owner sees across every
+        # entity under their subscription.
+        "vat_report": "consolidated",
         "dashboard": "advanced",
         "search": "advanced",
         "audit_history": "full",
@@ -189,6 +197,12 @@ FEATURES: dict[PlanTier, dict[str, bool | str]] = {
         "multi_company": True,
         "company_level_settings": True,
         "roles_permissions": "advanced",
+        # What the top tier actually is: one bill covering several people,
+        # instead of each of them holding their own subscription. The billing
+        # owner gets an administration surface — seats, per-entity usage,
+        # consolidated reporting — that a single-user plan has no use for.
+        # The shell that renders it is unbuilt; see docs/NEXT_SESSION.md.
+        "team_administration": True,
         "priority_support": "priority",
     },
 }
