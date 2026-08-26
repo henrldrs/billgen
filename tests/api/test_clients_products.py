@@ -64,6 +64,51 @@ async def test_product_crud(client):
     assert len(listed.json()) == 1
 
 
+async def _make_product(client, headers, company_id, name, **overrides):
+    payload = {"company_id": company_id, "name": name, "unit_price": "100.00"}
+    payload.update(overrides)
+    response = await client.post("/products", json=payload, headers=headers)
+    assert response.status_code == 201, response.text
+    return response.json()
+
+
+async def test_products_filter_by_status_and_billing_type(client):
+    """Catalog's Services and Archived views were fetching everything and
+    filtering in the browser."""
+    headers = bearer(await signup(client))
+    company = await create_company(client, headers)
+
+    await _make_product(client, headers, company["id"], "Hour", billing_type="hourly")
+    await _make_product(client, headers, company["id"], "Retainer", billing_type="recurring")
+    await _make_product(
+        client, headers, company["id"], "Old package", status="archived", billing_type="fixed"
+    )
+
+    async def names(**params):
+        response = await client.get(
+            "/products", params={"company_id": company["id"], **params}, headers=headers
+        )
+        assert response.status_code == 200, response.text
+        return sorted(p["name"] for p in response.json())
+
+    assert await names() == ["Hour", "Old package", "Retainer"]
+    assert await names(status="active") == ["Hour", "Retainer"]
+    assert await names(status="archived") == ["Old package"]
+    assert await names(billing_type="hourly") == ["Hour"]
+    assert await names(status="active", billing_type="recurring") == ["Retainer"]
+    assert await names(status="archived", billing_type="hourly") == []
+
+
+async def test_products_reject_an_unknown_filter_value(client):
+    headers = bearer(await signup(client))
+    company = await create_company(client, headers)
+
+    response = await client.get(
+        "/products", params={"company_id": company["id"], "status": "retired"}, headers=headers
+    )
+    assert response.status_code == 422
+
+
 async def test_clients_and_products_are_tenant_isolated(client):
     alice = await signup(client, email="alice@example.com", organization_name="Org A")
     bob = await signup(client, email="bob@example.com", organization_name="Org B")

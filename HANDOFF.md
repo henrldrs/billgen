@@ -13,7 +13,7 @@ Read this instead of re-deriving context.
 | Location | `C:\Users\hdr_s\Documents\business model\BillGen BETA` |
 | Phases done | 0–9, **11** (domain → rules → DB → services → API → business routers → UI kit → SaaS shell → desktop → legacy import) + **Peppol e-invoicing** (Helger-validated Peppol BIS 3.0 + Belgian elements + pre-export validation gate; `771e903` then switched off UBL.BE). Phase 10 (billing) not yet started. |
 | UI library | **Its own package `@henrioutai/ui`** (`henrioutai-ui/`, extracted `5a81cfd`) — the design system (58 components + 14 icons + tokens/CSS/fonts), token-only, business-free, **public-ready** (MIT). `@billgen/ui` (frontend-react) keeps the business half (API client, generated types, hooks, panels) and re-exports the design system, so `import { Button } from "@billgen/ui"` still works. Both shells run TopNav-only nav (sidebar deleted), OrgSwitcher, AccountMenu, ⌘K palette, SettingsShell (Import + Backup + Activity + theme). Dark mode = one token remap, persisted pre-paint. Dep graph: `@henrioutai/ui` (leaf) ← `@billgen/ui` ← shells. `docs/frontent build/component-library/` is the archived record + preview gallery. Desktop (Tauri) shell same layout (`c09f0f7`; Tauri window not relaunched). See §3 + §9. |
-| Tests | **Python 219 passed, 0 skipped** (`python -m pytest tests`); **frontend 38 passed** (`npm run test --workspace @billgen/ui`) |
+| Tests | **Python 261 passed, 0 skipped** (`python -m pytest tests`); **frontend 99 passed** (`npm run test --workspace @billgen/ui`) |
 | Git | local only, **not pushed** — no remote yet (Henri setting up a private GitHub; this is the top safety-net gap). One commit + tag per phase (`phase-4` … `phase-9b`); later work committed on `main` without tags. CI workflow (`.github/workflows/ci.yml`) is written and waiting for that remote. Branch `main`. |
 | PDF engine | **Headless Chromium via Playwright** (primary, cross-platform incl. Windows/desktop) with **WeasyPrint** as a fallback for the Docker/SaaS image. Setup on a fresh box: `pip install playwright` then `python -m playwright install chromium`. Without any engine, `/pdf` returns a clean 503. Free-tier PDFs carry a subtle "Made with BillGen" footer + logo. |
 | Not a migration | The legacy React/Python apps (`D:\CODING\audit-v2-react-exe`, `myshop-*`) are reference only. Do not edit them. The **approved Peppol reference** is `D:\CODING\FinanceFlow Bill Generator` (the demo) — inventoried in [docs/COMPARISON_demo_vs_new.md](docs/COMPARISON_demo_vs_new.md). |
@@ -508,7 +508,36 @@ build`).
   a `.bg-totals` CSS "nit" (under-specified — it's the on-screen totals box in the
   invoice **builder**, `styles.css`; no concrete defect found, deferred pending a
   specific repro). *(The Peppol/UBL caveats moved to the Peppol bullet above.)*
-- Repo is **local only** — no remote. Commit + tag per phase.
+- **Sprint 1 + Sprint 2 backend — DONE 2026-08-26** (`docs/ROADMAP_IA.md` §4).
+  All of it is server-side; **not one of these is on a screen yet**, so the
+  screens still look exactly as they did:
+  - `GET` + `PATCH /companies/{id}` — closes **B3**. Every `Company` field
+    except `logo_key` (B2) is editable, so a VAT typo is no longer permanent.
+    The router re-validates the merged model instead of `model_copy(update=…)`,
+    which silently skips validation even under `validate_assignment`: an
+    explicit `null` on a non-nullable field is a 422, not a corrupt row. An
+    unknown `default_pdf_template` is rejected against the PDF registry.
+  - `GET /products?status&billing_type` — Catalog's Services and Archived views.
+  - `GET /vat-rates`, `GET /pdf-templates` — the Python constants
+    (`core/rules/vat.py`, `core/pdf/registry.TEMPLATES`) exposed, so the
+    frontend can stop hardcoding `21/12/6/0` and the template ids.
+  - `GET /reports/vat?period` (`YYYY`, `YYYY-Qn`, `YYYY-MM`) — output VAT per
+    (category, rate), invoices minus credit notes, with the Belgian grid where
+    the mapping is unambiguous. **Sales only**: the model has no purchases, so
+    grids 59/81-83/86-87 and the 71/72 balance are not derivable — the response
+    carries `covers: "output_vat_only"` so a UI cannot present it as filable.
+    New `core.rules.vat_buckets` shares the discount-allocation code with
+    `invoice_totals`, so a taxable base can never drift from a stored total.
+  - `vitest.config.ts` now sets `testTimeout`/`hookTimeout` to 30s — closes
+    **BGEN-OPS-02**. Collection alone takes ~45s under load, which is why 5s
+    flaked.
+  - Also swept up so the first CI run is green: 8 pre-existing `ruff` failures
+    in `scripts/`, and a stale `frontend-react/openapi.json` (regenerated, along
+    with `src/types/api.d.ts`).
+- Repo is **local only** — no remote. Commit + tag per phase. **This is now the
+  top item on the board** (`BGEN-OPS-01`): the whole history lives on one
+  machine with no backup, and `.github/workflows/ci.yml` cannot run until there
+  is a remote. Needs Henri's GitHub account.
 
 ---
 

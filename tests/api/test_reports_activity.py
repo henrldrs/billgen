@@ -116,3 +116,52 @@ async def test_activity_is_tenant_isolated(client):
     bob_view = await client.get("/activity", headers=bearer(bob))
     target_types = {entry["target_type"] for entry in bob_view.json()}
     assert "company" not in target_types  # only sees own org's signup entry
+
+
+async def test_vat_report_endpoint(client):
+    alice = await signup(client)
+    headers = bearer(alice)
+    company = await create_company(client, headers)
+    record = await create_client_record(client, headers, company["id"])
+
+    await create_invoice(client, headers, company["id"], record["id"])  # Jul 4, 21%
+    cancelled = await create_invoice(client, headers, company["id"], record["id"])
+    await client.post(
+        "/credit-notes",
+        json={"invoice_id": cancelled["id"], "reason": "cancelled", "issue_date": "2026-10-02"},
+        headers=headers,
+    )
+
+    q3 = await client.get(
+        "/reports/vat",
+        params={"company_id": company["id"], "period": "2026-Q3"},
+        headers=headers,
+    )
+    assert q3.status_code == 200, q3.text
+    body = q3.json()
+    assert body["period_start"] == "2026-07-01"
+    assert body["period_end"] == "2026-09-30"
+    assert body["covers"] == "output_vat_only"
+    assert body["invoice_count"] == 2
+    assert Decimal(str(body["net_vat"])) == Decimal("525.00")
+    assert [line["grid"] for line in body["lines"]] == ["03"]
+
+    q4 = await client.get(
+        "/reports/vat",
+        params={"company_id": company["id"], "period": "2026-Q4"},
+        headers=headers,
+    )
+    assert Decimal(str(q4.json()["net_vat"])) == Decimal("-262.50")
+
+
+async def test_vat_report_rejects_a_malformed_period(client):
+    alice = await signup(client)
+    headers = bearer(alice)
+    company = await create_company(client, headers)
+
+    response = await client.get(
+        "/reports/vat",
+        params={"company_id": company["id"], "period": "last quarter"},
+        headers=headers,
+    )
+    assert response.status_code == 422

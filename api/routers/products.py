@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends
 
-from core.models import Product
+from core.models import BillingType, Product, ProductStatus
 from core.repository import UnitOfWork
 from core.services import ProductService
 from core.tenancy import current_organization_id
@@ -35,9 +35,16 @@ def create_product(
 @router.get("", response_model=list[ProductResponse])
 def list_products(
     company_id: UUID | None = None,
+    status: ProductStatus | None = None,
+    billing_type: BillingType | None = None,
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
 ):
-    return [_to_response(p) for p in ProductService(uow_factory).list(company_id=company_id)]
+    products = ProductService(uow_factory).list(
+        company_id=company_id,
+        status=status,
+        billing_type=billing_type,
+    )
+    return [_to_response(p) for p in products]
 
 
 @router.get("/{product_id}", response_model=ProductResponse)

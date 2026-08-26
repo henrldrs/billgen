@@ -336,6 +336,100 @@
         }
       }
     },
+    "/companies/{company_id}": {
+      "get": {
+        "tags": [
+          "companies"
+        ],
+        "summary": "Get Company",
+        "operationId": "get_company_companies__company_id__get",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Company Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "companies"
+        ],
+        "summary": "Update Company",
+        "operationId": "update_company_companies__company_id__patch",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Company Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompanyUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/clients": {
       "post": {
         "tags": [
@@ -585,6 +679,38 @@
                 }
               ],
               "title": "Company Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ProductStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "billing_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/BillingType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Billing Type"
             }
           }
         ],
@@ -921,6 +1047,23 @@
                 }
               ],
               "title": "Status"
+            }
+          },
+          {
+            "name": "client_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Client Id"
             }
           }
         ],
@@ -1603,6 +1746,48 @@
         }
       }
     },
+    "/vat-rates": {
+      "get": {
+        "tags": [
+          "reference"
+        ],
+        "summary": "List Vat Rates",
+        "operationId": "list_vat_rates_vat_rates_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VatRatesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pdf-templates": {
+      "get": {
+        "tags": [
+          "reference"
+        ],
+        "summary": "List Pdf Templates",
+        "operationId": "list_pdf_templates_pdf_templates_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PdfTemplatesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/reports/kpi": {
       "get": {
         "tags": [
@@ -1715,12 +1900,70 @@
         }
       }
     },
+    "/reports/vat": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Vat",
+        "description": "`period` is a year (`2026`), a quarter (`2026-Q3`) or a month\n(`2026-07`). Output VAT only \u2014 see `VatReportResponse`.",
+        "operationId": "vat_reports_vat_get",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Company Id"
+            }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}(?:-(?:Q[1-4]|0[1-9]|1[0-2]))?$",
+              "examples": [
+                "2026-Q3"
+              ],
+              "title": "Period"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VatReportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/activity": {
       "get": {
         "tags": [
           "activity"
         ],
         "summary": "List Activity",
+        "description": "`target_id` scopes the log to a single record (a client, an invoice).\nWithout it the log can only be read whole or by type, which is why the\nper-client history and activity screens had no source.",
         "operationId": "list_activity_activity_get",
         "parameters": [
           {
@@ -1750,6 +1993,23 @@
               ],
               "title": "Target Type"
             }
+          },
+          {
+            "name": "target_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Target Id"
+            }
           }
         ],
         "responses": {
@@ -1763,6 +2023,75 @@
                     "$ref": "#/components/schemas/ActivityEntryResponse"
                   },
                   "title": "Response List Activity Activity Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/backup/export": {
+      "get": {
+        "tags": [
+          "backup"
+        ],
+        "summary": "Export Backup",
+        "description": "The whole organization as a restorable JSON document (ADR-0003):\ncompanies, clients, products, invoices, credit notes, payments, the audit\nlog, and the gapless sequence counters. Writes one export_backup audit\nentry; users/credentials are never included.",
+        "operationId": "export_backup_backup_export_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Export Backup Backup Export Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/backup/restore": {
+      "post": {
+        "tags": [
+          "backup"
+        ],
+        "summary": "Restore Backup",
+        "description": "Disaster recovery: restore a backup into the current organization.\nRefuses (409) unless the organization has no companies yet \u2014 merging into\nlive data would break the gapless-numbering guarantee.",
+        "operationId": "restore_backup_backup_restore_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object",
+                "title": "Payload",
+                "description": "A billgen-backup document"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RestoreReportResponse"
                 }
               }
             }
@@ -1864,6 +2193,17 @@
           "timestamp"
         ],
         "title": "ActivityEntryResponse"
+      },
+      "BillingType": {
+        "type": "string",
+        "enum": [
+          "hourly",
+          "fixed",
+          "daily",
+          "unit",
+          "recurring"
+        ],
+        "title": "BillingType"
       },
       "ClientCreateRequest": {
         "properties": {
@@ -2508,6 +2848,17 @@
             ],
             "title": "Email"
           },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
           "address_line1": {
             "anyOf": [
               {
@@ -2518,6 +2869,17 @@
               }
             ],
             "title": "Address Line1"
+          },
+          "address_line2": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address Line2"
           },
           "postal_code": {
             "anyOf": [
@@ -2593,7 +2955,9 @@
           "vat_number",
           "registration_number",
           "email",
+          "phone",
           "address_line1",
+          "address_line2",
           "postal_code",
           "city",
           "country_code",
@@ -2605,6 +2969,210 @@
           "invoice_reference_prefix"
         ],
         "title": "CompanyResponse"
+      },
+      "CompanyUpdateRequest": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "legal_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legal Name"
+          },
+          "vat_number": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 32
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vat Number"
+          },
+          "registration_number": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registration Number"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "address_line1": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address Line1"
+          },
+          "address_line2": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address Line2"
+          },
+          "postal_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Postal Code"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "country_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2,
+                "minLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country Code"
+          },
+          "iban": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 34
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Iban"
+          },
+          "bic": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 11
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bic"
+          },
+          "default_currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Currency"
+          },
+          "default_language": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(en|fr|nl|es)$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Language"
+          },
+          "default_pdf_template": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Pdf Template"
+          },
+          "invoice_reference_prefix": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Reference Prefix"
+          }
+        },
+        "type": "object",
+        "title": "CompanyUpdateRequest",
+        "description": "PATCH semantics: only provided fields change (B3).\n\n`organization_id` and `id` are immutable. `logo_key` is deliberately absent \u2014\nit is set by blob storage (B2), not by the client."
       },
       "CreditNoteIssueRequest": {
         "properties": {
@@ -3822,6 +4390,50 @@
         ],
         "title": "PaymentResponse"
       },
+      "PdfTemplateOption": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "lang": {
+            "type": "string",
+            "title": "Lang"
+          },
+          "doc_title": {
+            "type": "string",
+            "title": "Doc Title"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "lang",
+          "doc_title"
+        ],
+        "title": "PdfTemplateOption"
+      },
+      "PdfTemplatesResponse": {
+        "properties": {
+          "templates": {
+            "items": {
+              "$ref": "#/components/schemas/PdfTemplateOption"
+            },
+            "type": "array",
+            "title": "Templates"
+          },
+          "default_template": {
+            "type": "string",
+            "title": "Default Template"
+          }
+        },
+        "type": "object",
+        "required": [
+          "templates",
+          "default_template"
+        ],
+        "title": "PdfTemplatesResponse"
+      },
       "ProductCreateRequest": {
         "properties": {
           "company_id": {
@@ -4030,6 +4642,15 @@
         ],
         "title": "ProductResponse"
       },
+      "ProductStatus": {
+        "type": "string",
+        "enum": [
+          "active",
+          "archived",
+          "draft"
+        ],
+        "title": "ProductStatus"
+      },
       "ProductUpdateRequest": {
         "properties": {
           "name": {
@@ -4175,6 +4796,54 @@
           "refresh_token"
         ],
         "title": "RefreshRequest"
+      },
+      "RestoreReportResponse": {
+        "properties": {
+          "companies": {
+            "type": "integer",
+            "title": "Companies"
+          },
+          "clients": {
+            "type": "integer",
+            "title": "Clients"
+          },
+          "products": {
+            "type": "integer",
+            "title": "Products"
+          },
+          "invoices": {
+            "type": "integer",
+            "title": "Invoices"
+          },
+          "credit_notes": {
+            "type": "integer",
+            "title": "Credit Notes"
+          },
+          "payments": {
+            "type": "integer",
+            "title": "Payments"
+          },
+          "sequences": {
+            "type": "integer",
+            "title": "Sequences"
+          },
+          "audit_entries": {
+            "type": "integer",
+            "title": "Audit Entries"
+          }
+        },
+        "type": "object",
+        "required": [
+          "companies",
+          "clients",
+          "products",
+          "invoices",
+          "credit_notes",
+          "payments",
+          "sequences",
+          "audit_entries"
+        ],
+        "title": "RestoreReportResponse"
       },
       "RevenueByMonthResponse": {
         "properties": {
@@ -4444,6 +5113,244 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "VatCategoryOption": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "label"
+        ],
+        "title": "VatCategoryOption"
+      },
+      "VatRateOption": {
+        "properties": {
+          "rate": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Rate"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "is_default": {
+            "type": "boolean",
+            "title": "Is Default"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rate",
+          "label",
+          "is_default"
+        ],
+        "title": "VatRateOption"
+      },
+      "VatRatesResponse": {
+        "properties": {
+          "country_code": {
+            "type": "string",
+            "title": "Country Code"
+          },
+          "rates": {
+            "items": {
+              "$ref": "#/components/schemas/VatRateOption"
+            },
+            "type": "array",
+            "title": "Rates"
+          },
+          "categories": {
+            "items": {
+              "$ref": "#/components/schemas/VatCategoryOption"
+            },
+            "type": "array",
+            "title": "Categories"
+          }
+        },
+        "type": "object",
+        "required": [
+          "country_code",
+          "rates",
+          "categories"
+        ],
+        "title": "VatRatesResponse"
+      },
+      "VatReportLineResponse": {
+        "properties": {
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "rate": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Rate"
+          },
+          "invoiced_base": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Invoiced Base"
+          },
+          "invoiced_vat": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Invoiced Vat"
+          },
+          "credited_base": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Credited Base"
+          },
+          "credited_vat": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Credited Vat"
+          },
+          "net_base": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Net Base"
+          },
+          "net_vat": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Net Vat"
+          },
+          "grid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grid"
+          }
+        },
+        "type": "object",
+        "required": [
+          "category",
+          "rate",
+          "invoiced_base",
+          "invoiced_vat",
+          "credited_base",
+          "credited_vat",
+          "net_base",
+          "net_vat",
+          "grid"
+        ],
+        "title": "VatReportLineResponse"
+      },
+      "VatReportResponse": {
+        "properties": {
+          "period": {
+            "type": "string",
+            "title": "Period"
+          },
+          "period_start": {
+            "type": "string",
+            "format": "date",
+            "title": "Period Start"
+          },
+          "period_end": {
+            "type": "string",
+            "format": "date",
+            "title": "Period End"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/VatReportLineResponse"
+            },
+            "type": "array",
+            "title": "Lines"
+          },
+          "invoiced_base": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Invoiced Base"
+          },
+          "invoiced_vat": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Invoiced Vat"
+          },
+          "credited_base": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Credited Base"
+          },
+          "credited_vat": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Credited Vat"
+          },
+          "net_base": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Net Base"
+          },
+          "net_vat": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Net Vat"
+          },
+          "invoice_count": {
+            "type": "integer",
+            "title": "Invoice Count"
+          },
+          "credit_note_count": {
+            "type": "integer",
+            "title": "Credit Note Count"
+          },
+          "skipped_other_currency": {
+            "type": "integer",
+            "title": "Skipped Other Currency"
+          },
+          "covers": {
+            "type": "string",
+            "title": "Covers",
+            "default": "output_vat_only"
+          }
+        },
+        "type": "object",
+        "required": [
+          "period",
+          "period_start",
+          "period_end",
+          "currency",
+          "lines",
+          "invoiced_base",
+          "invoiced_vat",
+          "credited_base",
+          "credited_vat",
+          "net_base",
+          "net_vat",
+          "invoice_count",
+          "credit_note_count",
+          "skipped_other_currency"
+        ],
+        "title": "VatReportResponse",
+        "description": "Output VAT only \u2014 see `core.services.reporting_service.VatReport`. The\ncaveat rides along in the payload so a UI cannot present this as a return\nready to file."
       },
       "VoidRequest": {
         "properties": {

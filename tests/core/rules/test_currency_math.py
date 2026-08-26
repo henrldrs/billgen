@@ -1,7 +1,14 @@
 from decimal import Decimal
 
-from core.models import Currency, Discount, DiscountType, InvoiceLine, VATRate
-from core.rules import invoice_totals, line_totals, quantize
+from core.models import (
+    Currency,
+    Discount,
+    DiscountType,
+    InvoiceLine,
+    VATCategory,
+    VATRate,
+)
+from core.rules import invoice_totals, line_totals, quantize, vat_buckets
 
 
 def _line(qty: str, price: str, rate: str, line_number: int = 1, discount: Discount | None = None):
@@ -79,3 +86,61 @@ def test_invoice_no_lines_returns_zeros():
     totals = invoice_totals([], None, Currency.EUR)
     assert totals.total_ttc == Decimal("0")
     assert totals.vat_breakdown == {}
+
+
+def _vat_line(qty: str, price: str, rate: str, category=VATCategory.STANDARD, line_number: int = 1):
+    return InvoiceLine(
+        line_number=line_number,
+        description="Test line",
+        quantity=Decimal(qty),
+        unit_price=Decimal(price),
+        vat=VATRate(category=category, rate=Decimal(rate)),
+    )
+
+
+def test_vat_buckets_group_by_rate():
+    buckets = vat_buckets(
+        [_vat_line("1", "100", "21"), _vat_line("1", "200", "6", line_number=2)],
+        None,
+        Currency.EUR,
+    )
+    assert [(b.rate, b.taxable_base, b.vat_amount) for b in buckets] == [
+        (Decimal("6"), Decimal("200.00"), Decimal("12.00")),
+        (Decimal("21"), Decimal("100.00"), Decimal("21.00")),
+    ]
+
+
+def test_vat_buckets_separate_categories_that_share_a_rate():
+    """Reverse charge and export are both 0%; vat_breakdown (keyed by rate)
+    collapses them, which is exactly what a VAT return must not do."""
+    buckets = vat_buckets(
+        [
+            _vat_line("1", "100", "0", VATCategory.REVERSE_CHARGE),
+            _vat_line("1", "300", "0", VATCategory.EXPORT, line_number=2),
+        ],
+        None,
+        Currency.EUR,
+    )
+    assert [(b.category, b.taxable_base) for b in buckets] == [
+        (VATCategory.REVERSE_CHARGE, Decimal("100.00")),
+        (VATCategory.EXPORT, Decimal("300.00")),
+    ]
+
+
+def test_vat_buckets_carry_the_invoice_discount_like_invoice_totals():
+    lines = [_vat_line("1", "100", "21"), _vat_line("1", "300", "6", line_number=2)]
+    disc = Discount(type=DiscountType.PERCENTAGE, value=Decimal("10"))
+
+    buckets = vat_buckets(lines, disc, Currency.EUR)
+    totals = invoice_totals(lines, disc, Currency.EUR)
+
+    assert sum(b.taxable_base for b in buckets) == totals.net_ht
+    assert sum(b.vat_amount for b in buckets) == totals.total_vat
+    assert {b.rate: b.taxable_base for b in buckets} == {
+        Decimal("6"): Decimal("270.00"),
+        Decimal("21"): Decimal("90.00"),
+    }
+
+
+def test_vat_buckets_of_no_lines_is_empty():
+    assert vat_buckets([], None, Currency.EUR) == []

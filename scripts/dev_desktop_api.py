@@ -42,7 +42,7 @@ from db.models import Base  # noqa: E402
 
 
 def main() -> None:
-    import uvicorn
+    import uvicorn  # noqa: PLC0415 - deferred so `--help` works without the server extra
 
     # The dev DB is disposable, so create the schema directly rather than
     # running Alembic. Never do this against a database you care about:

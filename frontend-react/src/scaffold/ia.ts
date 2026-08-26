@@ -14,15 +14,17 @@
  *  is deliberately ugly — Times New Roman, square 2px borders, dead controls —
  *  so unbuilt surface can never be mistaken for finished work.
  *
- *  Endpoint inventory this was checked against (api/routers/, 2026-08-25):
+ *  Endpoint inventory this was checked against (api/routers/, 2026-08-26):
  *    /auth/{signup,login,refresh,logout,desktop-bootstrap}  /users/me
- *    /orgs/current  /companies[POST,GET]  /clients[POST,GET,GET id,PATCH]
- *    /products[POST,GET,GET id,PATCH]
+ *    /orgs/current  /companies[POST,GET,GET id,PATCH id]
+ *    /clients[POST,GET,GET id,PATCH]
+ *    /products[POST,GET?company_id&status&billing_type,GET id,PATCH]
  *    /invoices[POST,GET?company_id&status&client_id,GET id,POST id/issue,DELETE id,
  *              POST id/void,POST preview,GET id/html,GET id/pdf,
  *              GET id/peppol.xml]
  *    /credit-notes[POST,GET,GET id,GET id/html,GET id/pdf]
- *    /payments[POST,GET?invoice_id]  /reports/{kpi,revenue}
+ *    /payments[POST,GET?invoice_id]  /reports/{kpi,revenue,vat?period}
+ *    /vat-rates  /pdf-templates
  *    /activity?limit&target_type&target_id  /backup/{export,restore}
  *    /imports/legacy/{preview,commit}  /healthz  /readyz
  */
@@ -438,9 +440,9 @@ export const IA: IaSection[] = [
         path: "catalog/services",
         status: "partial",
         layer: "L1",
-        endpoints: ["GET /products"],
-        missing: ["GET /products?billing_type", "a product/service discriminator"],
-        note: "Product.billing_type (hourly/fixed/daily/unit/recurring) makes the split derivable, but the server cannot filter on it. The catalog screen therefore ships NO billing-type filter: a control that filters one fetched page silently stops finding things once the catalog outgrows it.",
+        endpoints: ["GET /products", "GET /products?billing_type"],
+        missing: ["a product/service discriminator"],
+        note: "The server can now filter on Product.billing_type (hourly/fixed/daily/unit/recurring), so a real filter is finally safe to ship - one that filters a single fetched page would silently stop finding things once the catalog outgrows it. The screen still has no control.",
       },
       {
         key: "catalog.categories",
@@ -465,19 +467,19 @@ export const IA: IaSection[] = [
         key: "catalog.vat",
         label: "VAT rates",
         path: "catalog/vat",
-        status: "none",
+        status: "partial",
         layer: "L2",
-        missing: ["GET /vat-rates"],
-        note: "core/rules/vat.py holds the Belgian logic but never exposes it — the frontend hardcodes 21/12/6/0.",
+        endpoints: ["GET /vat-rates"],
+        note: "Frontend-only from here. GET /vat-rates now serves the Belgian rates and the EN 16931 categories from core/rules/vat.py. Until a screen consumes it, 21/12/6/0 stays duplicated in TypeScript.",
       },
       {
         key: "catalog.templates",
         label: "Invoice templates",
         path: "catalog/templates",
-        status: "none",
+        status: "partial",
         layer: "L2",
-        missing: ["GET /pdf-templates"],
-        note: "core/pdf/registry.TEMPLATES has four templates (fr_standard, fr_detailed, nl_minimal, credit_note); no endpoint lists them, so the picker cannot be populated.",
+        endpoints: ["GET /pdf-templates"],
+        note: "Frontend-only from here. GET /pdf-templates lists the four registry templates (fr_standard, fr_detailed, nl_minimal, credit_note) and PATCH /companies/{id} refuses any id it does not list. The picker itself is unbuilt.",
       },
       {
         key: "catalog.archived",
@@ -485,9 +487,8 @@ export const IA: IaSection[] = [
         path: "catalog/archived",
         status: "partial",
         layer: "L2",
-        endpoints: ["GET /products"],
-        missing: ["GET /products?status=archived"],
-        note: "ProductStatus.ARCHIVED exists on the model and the record drawer can now set it (PATCH /products/{id}), but the list endpoint takes no status filter, so archived products cannot be listed separately.",
+        endpoints: ["GET /products", "GET /products?status=archived"],
+        note: "Frontend-only from here. ProductStatus.ARCHIVED exists on the model, the record drawer can set it (PATCH /products/{id}), and the list endpoint now filters on it. The separate view is still unbuilt.",
       },
     ],
   },
@@ -548,10 +549,11 @@ export const IA: IaSection[] = [
         key: "reports.vat",
         label: "VAT",
         path: "reports/vat",
-        status: "none",
+        status: "partial",
         layer: "L2",
-        missing: ["GET /reports/vat?period"],
-        note: "The Belgian VAT return is the single most valuable report for the target user and nothing on the server computes it.",
+        endpoints: ["GET /reports/vat?period"],
+        missing: ["purchase-side data for the deductible-VAT grids"],
+        note: "GET /reports/vat?period (YYYY, YYYY-Qn, YYYY-MM) returns output VAT per (category, rate), invoices minus credit notes, with the Belgian grid where the mapping is unambiguous. Sales only: the model has no purchases, so grids 59/81-83/86-87 and the 71/72 balance cannot be produced. No screen renders it yet.",
       },
       {
         key: "reports.clients",
@@ -596,9 +598,8 @@ export const IA: IaSection[] = [
         path: "company/profile",
         status: "partial",
         layer: "L1",
-        endpoints: ["GET /companies", "POST /companies"],
-        missing: ["PATCH /companies/{id}", "GET /companies/{id}"],
-        note: "THE headline API gap: a company can be created but never edited. Every field below exists on the model and is unreachable after creation.",
+        endpoints: ["GET /companies", "POST /companies", "GET /companies/{id}", "PATCH /companies/{id}"],
+        note: "Frontend-only from here. B3 closed: every field on the model except logo_key is now editable. What is left here is frontend - the screen still renders read-only.",
       },
       {
         key: "company.legal",
@@ -606,9 +607,8 @@ export const IA: IaSection[] = [
         path: "company/legal",
         status: "partial",
         layer: "L1",
-        endpoints: ["POST /companies"],
-        missing: ["PATCH /companies/{id}"],
-        note: "Company.legal_name and registration_number exist on the model; write-once only.",
+        endpoints: ["POST /companies", "PATCH /companies/{id}"],
+        note: "Frontend-only from here. Company.legal_name and registration_number are editable since B3 closed; nothing on screen writes them.",
       },
       {
         key: "company.vat",
@@ -616,9 +616,9 @@ export const IA: IaSection[] = [
         path: "company/vat",
         status: "partial",
         layer: "L1",
-        endpoints: ["POST /companies"],
-        missing: ["PATCH /companies/{id}", "GET /companies/{id}/vat-validation"],
-        note: "Company.vat_number exists and core/rules/identifiers.py can validate it, but no endpoint offers validation.",
+        endpoints: ["POST /companies", "PATCH /companies/{id}"],
+        missing: ["GET /companies/{id}/vat-validation"],
+        note: "Company.vat_number is editable since B3 closed, so a typo is no longer permanent. core/rules/identifiers.py can validate it but no endpoint offers validation.",
       },
       {
         key: "company.bank",
@@ -626,9 +626,9 @@ export const IA: IaSection[] = [
         path: "company/bank",
         status: "partial",
         layer: "L1",
-        endpoints: ["POST /companies"],
-        missing: ["PATCH /companies/{id}", "BankAccount model (many per company)"],
-        note: "Company.iban/bic hold exactly one account.",
+        endpoints: ["POST /companies", "PATCH /companies/{id}"],
+        missing: ["BankAccount model (many per company)"],
+        note: "Company.iban/bic hold exactly one account, now editable.",
       },
       {
         key: "company.numbering",
@@ -636,9 +636,9 @@ export const IA: IaSection[] = [
         path: "company/numbering",
         status: "partial",
         layer: "L1",
-        endpoints: ["POST /companies"],
-        missing: ["PATCH /companies/{id}", "GET /sequences"],
-        note: "Company.invoice_reference_prefix exists; the next-number counter in sequence_repo is not readable.",
+        endpoints: ["POST /companies", "PATCH /companies/{id}"],
+        missing: ["GET /sequences"],
+        note: "Company.invoice_reference_prefix is editable; the next-number counter in sequence_repo is still not readable.",
       },
       {
         key: "company.payment-terms",
@@ -663,9 +663,9 @@ export const IA: IaSection[] = [
         path: "company/defaults",
         status: "partial",
         layer: "L2",
-        endpoints: ["POST /companies"],
-        missing: ["PATCH /companies/{id}", "default notes / payment instructions fields"],
-        note: "default_currency, default_language and default_pdf_template exist; notes and payment instructions do not.",
+        endpoints: ["POST /companies", "PATCH /companies/{id}", "GET /pdf-templates"],
+        missing: ["default notes / payment instructions fields"],
+        note: "default_currency, default_language and default_pdf_template are editable, and GET /pdf-templates can populate the picker. Notes and payment instructions do not exist on the model.",
       },
       {
         key: "company.documents",
@@ -1078,9 +1078,9 @@ export const IA: IaSection[] = [
         path: "settings/localization",
         status: "partial",
         layer: "L6",
-        endpoints: ["POST /companies (default_language)"],
-        missing: ["PATCH /companies/{id}", "per-user language", "timezone", "number/date format"],
-        note: "Language follows the company and cannot be changed after creation; there is no user-level preference.",
+        endpoints: ["POST /companies (default_language)", "PATCH /companies/{id}"],
+        missing: ["per-user language", "timezone", "number/date format"],
+        note: "Language is editable on the company since B3 closed, but it is still company-wide: there is no user-level preference.",
       },
       {
         key: "settings.appearance",

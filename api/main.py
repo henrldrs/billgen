@@ -3,8 +3,10 @@ from contextlib import asynccontextmanager
 
 import structlog
 from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pydantic import ValidationError
 from sqlalchemy.engine import Engine
 
 from core.pdf import PdfEngineUnavailableError
@@ -31,6 +33,7 @@ from .routers import (
     organizations,
     payments,
     products,
+    reference,
     reports,
     users,
 )
@@ -114,6 +117,18 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
             },
         )
 
+    @app.exception_handler(ValidationError)
+    async def domain_validation_handler(request: Request, exc: ValidationError):  # noqa: ANN202
+        # A domain model rejecting a value is a client error, not a server fault.
+        # PATCH handlers re-validate the whole model after merging the changes,
+        # so this is the natural exit for "explicit null on a non-nullable field".
+        # FastAPI's own RequestValidationError handler covers the body/query
+        # layer; this covers the layer below it.
+        return JSONResponse(
+            status_code=422,
+            content={"detail": jsonable_encoder(exc.errors(include_url=False))},
+        )
+
     @app.exception_handler(BusinessRuleError)
     async def business_rule_handler(request: Request, exc: BusinessRuleError):  # noqa: ANN202
         return JSONResponse(status_code=409, content={"detail": str(exc)})
@@ -147,6 +162,7 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
     app.include_router(invoices.router)
     app.include_router(credit_notes.router)
     app.include_router(payments.router)
+    app.include_router(reference.router)
     app.include_router(reports.router)
     app.include_router(activity.router)
     app.include_router(backup.router)

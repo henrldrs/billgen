@@ -52,7 +52,7 @@ def _sized(svg: str, height: int) -> str:
     width = round(height * ASPECT)
     return svg.replace(
         'width="350" height="453"',
-        'width="{}" height="{}"'.format(width, height),
+        f'width="{width}" height="{height}"',
     )
 
 
@@ -77,9 +77,10 @@ class Renderer:
         """The mark centred on the rounded ink tile, square, transparent corners."""
         svg = _sized(_recolor(self.svg, TILE_NAVY, TILE_ACCENT), round(size * MARK_RATIO))
         html = (
-            '<div id="t" style="width:{s}px;height:{s}px;border-radius:{r:.2f}px;'
-            "background:{bg};display:flex;align-items:center;justify-content:center\">{svg}</div>"
-        ).format(s=size, r=size * RADIUS_RATIO, bg=TILE_BG, svg=svg)
+            f'<div id="t" style="width:{size}px;height:{size}px;'
+            f"border-radius:{size * RADIUS_RATIO:.2f}px;background:{TILE_BG};"
+            f'display:flex;align-items:center;justify-content:center">{svg}</div>'
+        )
         # Chromium rounds the element box, so re-assert the exact pixel size.
         return self._shot(html, "#t").resize((size, size), Image.LANCZOS)
 
@@ -93,14 +94,13 @@ def _favicon_svg(mark: str) -> str:
     offset_x = (side - 350) / 2 + (350 - 350 * MARK_RATIO) / 2
     offset_y = (453 - 453 * MARK_RATIO) / 2
     return (
-        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {side} {side}"'
-        ' width="{side}" height="{side}">\n'
-        '  <rect width="{side}" height="{side}" rx="{r:.1f}" fill="{bg}"/>\n'
-        "  <g transform=\"translate({ox:.2f} {oy:.2f}) scale({scale})\">{inner}</g>\n"
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {side} {side}"'
+        f' width="{side}" height="{side}">\n'
+        f'  <rect width="{side}" height="{side}"'
+        f' rx="{side * RADIUS_RATIO:.1f}" fill="{TILE_BG}"/>\n'
+        f'  <g transform="translate({offset_x:.2f} {offset_y:.2f})'
+        f' scale({MARK_RATIO})">{inner}</g>\n'
         "</svg>\n"
-    ).format(
-        side=side, r=side * RADIUS_RATIO, bg=TILE_BG,
-        ox=offset_x, oy=offset_y, scale=MARK_RATIO, inner=inner,
     )
 
 
@@ -155,7 +155,7 @@ def main() -> None:
             tile(size).save(icons / name, format="PNG", optimize=True)
             written.append(icons / name)
         for size in (30, 44, 71, 89, 107, 142, 150, 284, 310):
-            name = "Square{s}x{s}Logo.png".format(s=size)
+            name = f"Square{size}x{size}Logo.png"
             tile(size).save(icons / name, format="PNG", optimize=True)
             written.append(icons / name)
 
@@ -189,8 +189,8 @@ def main() -> None:
         browser.close()
 
     for path in written:
-        print("  {}  ({:,} bytes)".format(path.relative_to(ROOT).as_posix(), path.stat().st_size))
-    print("\n{} assets written from {}".format(len(written), SOURCE.relative_to(ROOT).as_posix()))
+        print(f"  {path.relative_to(ROOT).as_posix()}  ({path.stat().st_size:,} bytes)")
+    print(f"\n{len(written)} assets written from {SOURCE.relative_to(ROOT).as_posix()}")
 
 
 if __name__ == "__main__":

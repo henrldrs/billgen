@@ -1,8 +1,13 @@
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from decimal import ROUND_HALF_EVEN, Decimal
 
-from ..models import Currency, Discount, InvoiceLine
+from ..models import CreditNoteLine, Currency, Discount, InvoiceLine, VATCategory
 from .discounts import discount_amount
+
+# A credit-note line is an invoice line without a per-line discount. Everything
+# below reads only quantity/unit_price/vat/discount, so both fit.
+AnyLine = InvoiceLine | CreditNoteLine
 
 _ZERO = Decimal("0")
 
@@ -14,6 +19,18 @@ class LineTotals:
     net_ht: Decimal
     vat_amount: Decimal
     total_ttc: Decimal
+
+
+@dataclass(frozen=True)
+class VatBucket:
+    """Taxable base and VAT for one (category, rate) pair — the shape a VAT
+    return needs, which `InvoiceTotals.vat_breakdown` (VAT only, keyed by rate
+    alone) cannot express: reverse-charge and export lines are both 0%."""
+
+    category: VATCategory
+    rate: Decimal
+    taxable_base: Decimal
+    vat_amount: Decimal
 
 
 @dataclass(frozen=True)
@@ -67,24 +84,9 @@ def invoice_totals(
             vat_breakdown={},
         )
 
-    line_grosses: list[Decimal] = []
-    line_discs: list[Decimal] = []
-    for line in lines:
-        gross = line.quantity * line.unit_price
-        line_grosses.append(gross)
-        line_discs.append(discount_amount(gross, line.discount))
+    line_grosses, line_discs, invoice_disc, line_nets = _allocate(lines, invoice_discount)
 
-    line_nets_pre = [g - d for g, d in zip(line_grosses, line_discs, strict=True)]
-    total_pre = sum(line_nets_pre, _ZERO)
-
-    invoice_disc = discount_amount(total_pre, invoice_discount)
-
-    if total_pre > 0:
-        shares = [n / total_pre for n in line_nets_pre]
-    else:
-        shares = [Decimal(1) / Decimal(len(lines))] * len(lines)
-    line_nets = [n - (invoice_disc * s) for n, s in zip(line_nets_pre, shares, strict=True)]
-
+    total_pre = sum(line_grosses, _ZERO) - sum(line_discs, _ZERO)
     total_vat = _ZERO
     breakdown: dict[Decimal, Decimal] = {}
     for line, net in zip(lines, line_nets, strict=True):
@@ -101,3 +103,63 @@ def invoice_totals(
         total_ttc=quantize(net_ht + total_vat, currency),
         vat_breakdown={rate: quantize(v, currency) for rate, v in breakdown.items()},
     )
+
+
+def _allocate(
+    lines: Sequence[AnyLine],
+    invoice_discount: Discount | None,
+) -> tuple[list[Decimal], list[Decimal], Decimal, list[Decimal]]:
+    """Per-line gross, per-line discount, the invoice-level discount, and the
+    net each line carries after that discount is spread proportionally.
+
+    Full precision throughout — callers quantize. Shared by `invoice_totals` and
+    `vat_buckets` so the two can never disagree about a line's taxable base.
+    """
+    line_grosses: list[Decimal] = []
+    line_discs: list[Decimal] = []
+    for line in lines:
+        gross = line.quantity * line.unit_price
+        line_grosses.append(gross)
+        line_discs.append(discount_amount(gross, getattr(line, "discount", None)))
+
+    line_nets_pre = [g - d for g, d in zip(line_grosses, line_discs, strict=True)]
+    total_pre = sum(line_nets_pre, _ZERO)
+
+    invoice_disc = discount_amount(total_pre, invoice_discount)
+
+    if total_pre > 0:
+        shares = [n / total_pre for n in line_nets_pre]
+    else:
+        shares = [Decimal(1) / Decimal(len(lines))] * len(lines)
+    line_nets = [n - (invoice_disc * s) for n, s in zip(line_nets_pre, shares, strict=True)]
+    return line_grosses, line_discs, invoice_disc, line_nets
+
+
+def vat_buckets(
+    lines: Sequence[AnyLine],
+    invoice_discount: Discount | None,
+    currency: Currency,
+) -> list[VatBucket]:
+    """Taxable base and VAT per (category, rate), ordered for stable output."""
+    if not lines:
+        return []
+
+    _, _, _, line_nets = _allocate(lines, invoice_discount)
+
+    acc: dict[tuple[VATCategory, Decimal], tuple[Decimal, Decimal]] = {}
+    for line, net in zip(lines, line_nets, strict=True):
+        key = (line.vat.category, line.vat.rate)
+        base, vat = acc.get(key, (_ZERO, _ZERO))
+        acc[key] = (base + net, vat + (net * line.vat.rate) / Decimal(100))
+
+    return [
+        VatBucket(
+            category=category,
+            rate=rate,
+            taxable_base=quantize(base, currency),
+            vat_amount=quantize(vat, currency),
+        )
+        for (category, rate), (base, vat) in sorted(
+            acc.items(), key=lambda item: (item[0][0].value, item[0][1])
+        )
+    ]

@@ -1,6 +1,14 @@
 from .belgian_legal import legal_mention_for, mandatory_mentions_for_invoice
 from .belgian_peppol import btcc_code, peppol_endpoint, structured_communication
-from .currency_math import InvoiceTotals, LineTotals, invoice_totals, line_totals, quantize
+from .currency_math import (
+    InvoiceTotals,
+    LineTotals,
+    VatBucket,
+    invoice_totals,
+    line_totals,
+    quantize,
+    vat_buckets,
+)
 from .discounts import discount_amount
 from .identifiers import (
     ISO_COUNTRY_CODES,
@@ -29,6 +37,7 @@ __all__ = [
     "ISO_COUNTRY_CODES",
     "InvoiceTotals",
     "LineTotals",
+    "VatBucket",
     "btcc_code",
     "build_rate",
     "canonicalize_vat",
@@ -49,4 +58,5 @@ __all__ = [
     "validate_belgian_vat",
     "validate_bic",
     "validate_iban",
+    "vat_buckets",
 ]

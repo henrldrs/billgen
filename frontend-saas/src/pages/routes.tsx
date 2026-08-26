@@ -297,14 +297,15 @@ function InvoicesScreen({ node, companyId, lang }: ScreenProps) {
 }
 
 /** Company details: the one form that exists, plus the eight sub-areas that
- *  cannot be edited because /companies has no PATCH. */
+ *  still have no edit form. PATCH /companies/{id} shipped 2026-08-26 (B3), so
+ *  the block here is the UI, not the server. */
 function CompanyScreen({ node, lang }: ScreenProps) {
   const { data: companies } = useCompanies();
   return (
     <>
       <PageHeader
         title={node.label}
-        subtitle="Create works. Editing does not — /companies has no PATCH."
+        subtitle="Create works. PATCH /companies/{id} exists — no edit form reads it yet."
       />
       {companies && companies.length > 0 ? (
         <Card title="Companies">

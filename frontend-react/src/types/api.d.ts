@@ -179,6 +179,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/companies/{company_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Company */
+        get: operations["get_company_companies__company_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Company */
+        patch: operations["update_company_companies__company_id__patch"];
+        trace?: never;
+    };
     "/clients": {
         parameters: {
             query?: never;
@@ -530,6 +548,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/vat-rates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Vat Rates */
+        get: operations["list_vat_rates_vat_rates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/pdf-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Pdf Templates */
+        get: operations["list_pdf_templates_pdf_templates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/reports/kpi": {
         parameters: {
             query?: never;
@@ -564,6 +616,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/reports/vat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Vat
+         * @description `period` is a year (`2026`), a quarter (`2026-Q3`) or a month
+         *     (`2026-07`). Output VAT only — see `VatReportResponse`.
+         */
+        get: operations["vat_reports_vat_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/activity": {
         parameters: {
             query?: never;
@@ -571,10 +644,60 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Activity */
+        /**
+         * List Activity
+         * @description `target_id` scopes the log to a single record (a client, an invoice).
+         *     Without it the log can only be read whole or by type, which is why the
+         *     per-client history and activity screens had no source.
+         */
         get: operations["list_activity_activity_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/backup/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Backup
+         * @description The whole organization as a restorable JSON document (ADR-0003):
+         *     companies, clients, products, invoices, credit notes, payments, the audit
+         *     log, and the gapless sequence counters. Writes one export_backup audit
+         *     entry; users/credentials are never included.
+         */
+        get: operations["export_backup_backup_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/backup/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restore Backup
+         * @description Disaster recovery: restore a backup into the current organization.
+         *     Refuses (409) unless the organization has no companies yet — merging into
+         *     live data would break the gapless-numbering guarantee.
+         */
+        post: operations["restore_backup_backup_restore_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -614,6 +737,11 @@ export interface components {
              */
             timestamp: string;
         };
+        /**
+         * BillingType
+         * @enum {string}
+         */
+        BillingType: "hourly" | "fixed" | "daily" | "unit" | "recurring";
         /** ClientCreateRequest */
         ClientCreateRequest: {
             /**
@@ -796,8 +924,12 @@ export interface components {
             registration_number: string | null;
             /** Email */
             email: string | null;
+            /** Phone */
+            phone: string | null;
             /** Address Line1 */
             address_line1: string | null;
+            /** Address Line2 */
+            address_line2: string | null;
             /** Postal Code */
             postal_code: string | null;
             /** City */
@@ -816,6 +948,49 @@ export interface components {
             default_pdf_template: string;
             /** Invoice Reference Prefix */
             invoice_reference_prefix: string;
+        };
+        /**
+         * CompanyUpdateRequest
+         * @description PATCH semantics: only provided fields change (B3).
+         *
+         *     `organization_id` and `id` are immutable. `logo_key` is deliberately absent —
+         *     it is set by blob storage (B2), not by the client.
+         */
+        CompanyUpdateRequest: {
+            /** Name */
+            name?: string | null;
+            /** Legal Name */
+            legal_name?: string | null;
+            /** Vat Number */
+            vat_number?: string | null;
+            /** Registration Number */
+            registration_number?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Address Line1 */
+            address_line1?: string | null;
+            /** Address Line2 */
+            address_line2?: string | null;
+            /** Postal Code */
+            postal_code?: string | null;
+            /** City */
+            city?: string | null;
+            /** Country Code */
+            country_code?: string | null;
+            /** Iban */
+            iban?: string | null;
+            /** Bic */
+            bic?: string | null;
+            /** Default Currency */
+            default_currency?: string | null;
+            /** Default Language */
+            default_language?: string | null;
+            /** Default Pdf Template */
+            default_pdf_template?: string | null;
+            /** Invoice Reference Prefix */
+            invoice_reference_prefix?: string | null;
         };
         /** CreditNoteIssueRequest */
         CreditNoteIssueRequest: {
@@ -1233,6 +1408,22 @@ export interface components {
             /** Notes */
             notes: string | null;
         };
+        /** PdfTemplateOption */
+        PdfTemplateOption: {
+            /** Id */
+            id: string;
+            /** Lang */
+            lang: string;
+            /** Doc Title */
+            doc_title: string;
+        };
+        /** PdfTemplatesResponse */
+        PdfTemplatesResponse: {
+            /** Templates */
+            templates: components["schemas"]["PdfTemplateOption"][];
+            /** Default Template */
+            default_template: string;
+        };
         /** ProductCreateRequest */
         ProductCreateRequest: {
             /**
@@ -1311,6 +1502,11 @@ export interface components {
             /** Tags */
             tags: string[];
         };
+        /**
+         * ProductStatus
+         * @enum {string}
+         */
+        ProductStatus: "active" | "archived" | "draft";
         /** ProductUpdateRequest */
         ProductUpdateRequest: {
             /** Name */
@@ -1338,6 +1534,25 @@ export interface components {
         RefreshRequest: {
             /** Refresh Token */
             refresh_token: string;
+        };
+        /** RestoreReportResponse */
+        RestoreReportResponse: {
+            /** Companies */
+            companies: number;
+            /** Clients */
+            clients: number;
+            /** Products */
+            products: number;
+            /** Invoices */
+            invoices: number;
+            /** Credit Notes */
+            credit_notes: number;
+            /** Payments */
+            payments: number;
+            /** Sequences */
+            sequences: number;
+            /** Audit Entries */
+            audit_entries: number;
         };
         /** RevenueByMonthResponse */
         RevenueByMonthResponse: {
@@ -1445,6 +1660,101 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** VatCategoryOption */
+        VatCategoryOption: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Label */
+            label: string;
+        };
+        /** VatRateOption */
+        VatRateOption: {
+            /** Rate */
+            rate: string;
+            /** Label */
+            label: string;
+            /** Is Default */
+            is_default: boolean;
+        };
+        /** VatRatesResponse */
+        VatRatesResponse: {
+            /** Country Code */
+            country_code: string;
+            /** Rates */
+            rates: components["schemas"]["VatRateOption"][];
+            /** Categories */
+            categories: components["schemas"]["VatCategoryOption"][];
+        };
+        /** VatReportLineResponse */
+        VatReportLineResponse: {
+            /** Category */
+            category: string;
+            /** Rate */
+            rate: string;
+            /** Invoiced Base */
+            invoiced_base: string;
+            /** Invoiced Vat */
+            invoiced_vat: string;
+            /** Credited Base */
+            credited_base: string;
+            /** Credited Vat */
+            credited_vat: string;
+            /** Net Base */
+            net_base: string;
+            /** Net Vat */
+            net_vat: string;
+            /** Grid */
+            grid: string | null;
+        };
+        /**
+         * VatReportResponse
+         * @description Output VAT only — see `core.services.reporting_service.VatReport`. The
+         *     caveat rides along in the payload so a UI cannot present this as a return
+         *     ready to file.
+         */
+        VatReportResponse: {
+            /** Period */
+            period: string;
+            /**
+             * Period Start
+             * Format: date
+             */
+            period_start: string;
+            /**
+             * Period End
+             * Format: date
+             */
+            period_end: string;
+            /** Currency */
+            currency: string;
+            /** Lines */
+            lines: components["schemas"]["VatReportLineResponse"][];
+            /** Invoiced Base */
+            invoiced_base: string;
+            /** Invoiced Vat */
+            invoiced_vat: string;
+            /** Credited Base */
+            credited_base: string;
+            /** Credited Vat */
+            credited_vat: string;
+            /** Net Base */
+            net_base: string;
+            /** Net Vat */
+            net_vat: string;
+            /** Invoice Count */
+            invoice_count: number;
+            /** Credit Note Count */
+            credit_note_count: number;
+            /** Skipped Other Currency */
+            skipped_other_currency: number;
+            /**
+             * Covers
+             * @default output_vat_only
+             */
+            covers?: string;
         };
         /** VoidRequest */
         VoidRequest: {
@@ -1747,6 +2057,72 @@ export interface operations {
             };
         };
     };
+    get_company_companies__company_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                company_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_company_companies__company_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                company_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompanyUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_clients_clients_get: {
         parameters: {
             query?: {
@@ -1881,6 +2257,8 @@ export interface operations {
         parameters: {
             query?: {
                 company_id?: string | null;
+                status?: components["schemas"]["ProductStatus"] | null;
+                billing_type?: components["schemas"]["BillingType"] | null;
             };
             header?: never;
             path?: never;
@@ -2115,6 +2493,7 @@ export interface operations {
             query?: {
                 company_id?: string | null;
                 status?: components["schemas"]["InvoiceStatus"] | null;
+                client_id?: string | null;
             };
             header?: never;
             path?: never;
@@ -2623,6 +3002,46 @@ export interface operations {
             };
         };
     };
+    list_vat_rates_vat_rates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VatRatesResponse"];
+                };
+            };
+        };
+    };
+    list_pdf_templates_pdf_templates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PdfTemplatesResponse"];
+                };
+            };
+        };
+    };
     kpi_reports_kpi_get: {
         parameters: {
             query: {
@@ -2687,11 +3106,44 @@ export interface operations {
             };
         };
     };
+    vat_reports_vat_get: {
+        parameters: {
+            query: {
+                company_id: string;
+                period: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VatReportResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_activity_activity_get: {
         parameters: {
             query?: {
                 limit?: number;
                 target_type?: string | null;
+                target_id?: string | null;
             };
             header?: never;
             path?: never;
@@ -2706,6 +3158,63 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ActivityEntryResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_backup_backup_export_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    restore_backup_backup_restore_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RestoreReportResponse"];
                 };
             };
             /** @description Validation Error */

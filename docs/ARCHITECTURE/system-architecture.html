@@ -412,7 +412,7 @@ footer{
   </div>
 
   <div class="note note--warn">
-    <p><strong>Company is the anomaly worth acting on: 0 wired, 6 partial, 3 none.</strong> Every one of those six partials has the same single cause — there is no <code>PATCH /companies/{id}</code>. Legal name, VAT number, registration number, IBAN, BIC, numbering prefix, default template, language and currency all exist on the domain model and are reachable exactly once, at creation. A typo in a VAT number is currently permanent.</p>
+    <p><strong>Company is the anomaly worth acting on: 0 wired, 6 partial, 3 none.</strong> Every one of those six partials had the same single cause — no <code>PATCH /companies/{id}</code>. <strong>Shipped 2026-08-26:</strong> legal name, VAT number, registration number, IBAN, BIC, numbering prefix, default template, language and currency are all editable, and a VAT typo is no longer permanent. What remains in those six areas is frontend work plus logo upload, which waits on B2.</p>
   </div>
 
   <h3>By layer</h3>
@@ -444,7 +444,7 @@ footer{
   <pre class="tree">BillGen
 │
 ├── L1  SHARED DESIGN SYSTEM ......... @henrioutai/ui        72 components, MIT, public-ready
-├── L2  SHARED BACKEND .............. api/ + core/ + db/     FastAPI, 219 tests passing
+├── L2  SHARED BACKEND .............. api/ + core/ + db/     FastAPI, 261 tests passing
 │
 ├── L3  SaaS WEB          (V02)  frontend-saas/      ACTIVE      React 19 + Vite + react-router
 ├── L4  WINDOWS DESKTOP   (V01)  frontend-electron/  PARTIAL     Tauri shell, local SQLite, no sync
@@ -680,7 +680,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
       <tbody>
         <tr><td class="id">B1</td><td>No email transport</td><td class="ev">Cloud &amp; integrations</td><td><span class="chip c-gap">gap</span></td><td class="ev">Reminders, send-invoice, invitations, verification, password reset, support tickets, notification mail. <strong>Highest fan-out in the product.</strong></td></tr>
         <tr><td class="id">B2</td><td>No blob storage</td><td class="ev">Architecture</td><td><span class="chip c-gap">gap</span></td><td class="ev">All 7 Documents areas, branding/logo, invoice attachments, client documents, document search. <code>Company.logo_key</code> already dangles.</td></tr>
-        <tr><td class="id">B3</td><td>No <code>PATCH /companies/{id}</code></td><td class="ev">Data &amp; persistence</td><td><span class="chip c-gap">gap</span></td><td class="ev">6 Company areas at once. Model fields all exist. <strong>Highest value per hour in the roadmap.</strong></td></tr>
+        <tr><td class="id">B3</td><td>No <code>PATCH /companies/{id}</code></td><td class="ev">Data &amp; persistence</td><td><span class="chip c-done">done</span></td><td class="ev">Shipped — <code>GET</code> + <code>PATCH /companies/{id}</code>, every model field editable except <code>logo_key</code> (B2). The router re-validates the merged model, so an explicit null on a non-nullable field is a 422 rather than silent corruption.</td></tr>
         <tr><td class="id">B4</td><td>No subscription/plan model</td><td class="ev">Business logic</td><td><span class="chip c-gap">gap</span></td><td class="ev">All 8 Billing areas, usage metering, plan gating, and the free-tier PDF branding becoming a real paid-tier removal.</td></tr>
       </tbody>
     </table>
@@ -772,7 +772,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
 
   <div class="gate">
     <p class="gate__h">Product gate <span class="chip c-partial">partial</span></p>
-    <p>Blocked by: no company editing (B3), no VAT report, no quotes, no per-record inspector, 31 unmounted components. Clears at the end of Sprint 4.</p>
+    <p>Blocked by: no quotes, no per-record inspector, 31 unmounted components. Company editing (B3) and the VAT report are shipped on the backend and not yet on any screen. Clears at the end of Sprint 4.</p>
   </div>
 
   <div class="gate gate--shut">
@@ -796,11 +796,11 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
     <div class="sprint__h"><span class="sprint__n">SPRINT 1</span><span class="sprint__t">Close the embarrassing gaps</span><span class="chip c-partial">days, not weeks</span></div>
     <p>Nothing here is hard. All of it is currently visible to a user as a defect.</p>
     <ul class="task">
-      <li><b>api</b> — <code>PATCH /companies/{id}</code> + <code>GET /companies/{id}</code> · unblocks B3 and 6 areas</li>
+      <li class="done"><b>api</b> — <code>PATCH /companies/{id}</code> + <code>GET /companies/{id}</code> · unblocked B3 and 6 areas</li>
       <li><b>api</b> — <code>GET /invoices?client_id</code> · Client 360 stops fetching every invoice</li>
       <li><b>api</b> — <code>GET /activity?target_id</code> · per-record timeline becomes possible</li>
-      <li><b>api</b> — <code>GET /products?status&amp;billing_type</code> · Catalog Services + Archived</li>
-      <li><b>api</b> — <code>GET /vat-rates</code>, <code>GET /pdf-templates</code> · expose existing Python constants</li>
+      <li class="done"><b>api</b> — <code>GET /products?status&amp;billing_type</code> · Catalog Services + Archived</li>
+      <li class="done"><b>api</b> — <code>GET /vat-rates</code>, <code>GET /pdf-templates</code> · expose existing Python constants</li>
       <li class="done"><b>saas</b> — <code>Table</code> on invoices + credit notes; 4 lists remain</li>
       <li class="done"><b>saas</b> — credit-note screen built · backend was already complete</li>
       <li class="done"><b>ui</b> — primary-button contrast fixed (600→800, 4.58:1 behind the label)</li>
@@ -885,15 +885,15 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
     <table>
       <thead><tr><th class="id">ID</th><th>Gate</th><th>State</th><th>Evidence / what is missing</th></tr></thead>
       <tbody>
-        <tr><td class="id">BGEN-CORE-01</td><td>Domain rules</td><td><span class="chip c-done">done</span></td><td class="ev">Gapless numbering, banker's rounding, BE VAT, discounts, legal mentions. 219 tests.</td></tr>
+        <tr><td class="id">BGEN-CORE-01</td><td>Domain rules</td><td><span class="chip c-done">done</span></td><td class="ev">Gapless numbering, banker's rounding, BE VAT, discounts, legal mentions. 261 tests.</td></tr>
         <tr><td class="id">BGEN-CORE-02</td><td>Peppol XML</td><td><span class="chip c-done">done</span></td><td class="ev">BIS 3.0 Helger-validated, BE elements, pre-export gate.</td></tr>
-        <tr><td class="id">BGEN-CORE-03</td><td>VAT report engine</td><td><span class="chip c-gap">gap</span></td><td class="ev">No aggregation service. All inputs present in DB.</td></tr>
+        <tr><td class="id">BGEN-CORE-03</td><td>VAT report engine</td><td><span class="chip c-partial">partial</span></td><td class="ev"><code>ReportingService.vat_report</code> + <code>GET /reports/vat?period</code>: output VAT per (category, rate), invoices minus credit notes, Belgian grid where the mapping is unambiguous. <strong>Sales only</strong> — the model has no purchases, so 59/81-83/86-87 and the 71/72 balance cannot be produced.</td></tr>
         <tr><td class="id">BGEN-CORE-04</td><td>Quote / pro-forma series</td><td><span class="chip c-gap">gap</span></td><td class="ev">Must not consume the gapless invoice sequence.</td></tr>
         <tr><td class="id">BGEN-CORE-05</td><td>Recurring scheduler</td><td><span class="chip c-gap">gap</span></td><td class="ev"><code>BillingType.RECURRING</code> exists; nothing schedules.</td></tr>
-        <tr><td class="id">BGEN-API-01</td><td>Company mutation</td><td><span class="chip c-gap">gap</span></td><td class="ev">No <code>PATCH /companies/{id}</code>. B3. Six areas blocked.</td></tr>
-        <tr><td class="id">BGEN-API-02</td><td>List filters</td><td><span class="chip c-partial">partial</span></td><td class="ev">Only invoices filter. No client_id, date, amount, category, status on the rest.</td></tr>
+        <tr><td class="id">BGEN-API-01</td><td>Company mutation</td><td><span class="chip c-done">done</span></td><td class="ev">B3 closed. <code>GET</code> + <code>PATCH /companies/{id}</code>; 7 API tests including tenant isolation and the null-on-non-nullable guard.</td></tr>
+        <tr><td class="id">BGEN-API-02</td><td>List filters</td><td><span class="chip c-partial">partial</span></td><td class="ev">Invoices filter by <code>client_id</code>, activity by <code>target_id</code>, products by <code>status</code> and <code>billing_type</code>. Still none: date, amount, category, cross-entity.</td></tr>
         <tr><td class="id">BGEN-API-03</td><td>Cross-entity search</td><td><span class="chip c-gap">gap</span></td><td class="ev">No <code>GET /search?q</code>. ⌘K navigates pages only.</td></tr>
-        <tr><td class="id">BGEN-API-04</td><td>Expose existing rules</td><td><span class="chip c-gap">gap</span></td><td class="ev">vat-rates, pdf-templates, identifier validation, sequence counter — all Python-side already.</td></tr>
+        <tr><td class="id">BGEN-API-04</td><td>Expose existing rules</td><td><span class="chip c-partial">partial</span></td><td class="ev"><code>GET /vat-rates</code> and <code>GET /pdf-templates</code> shipped, so <code>21/12/6/0</code> and the template ids are no longer duplicated in TypeScript. Identifier validation and the sequence counter are still Python-only.</td></tr>
         <tr><td class="id">BGEN-API-05</td><td>Global payments list</td><td><span class="chip c-gap">gap</span></td><td class="ev"><code>/payments</code> requires invoice_id; no cross-invoice view.</td></tr>
         <tr><td class="id">BGEN-INFRA-01</td><td>Email transport</td><td><span class="chip c-gap">gap</span></td><td class="ev">B1. Blocks 7 downstream features.</td></tr>
         <tr><td class="id">BGEN-INFRA-02</td><td>Blob storage</td><td><span class="chip c-gap">gap</span></td><td class="ev">B2. Blocks Documents (7), branding, attachments.</td></tr>
@@ -920,7 +920,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
         <tr><td class="id">BGEN-BRAND-02</td><td>Navigation model</td><td><span class="chip c-done">decided</span></td><td class="ev">Top bar with a popup list per section — no sidebar. Shipped: <code>TopNavLink.items</code> renders a Menu; nav row wraps so popups are not clipped.</td></tr>
         <tr><td class="id">BGEN-BRAND-03</td><td>Icon language</td><td><span class="chip c-done">decided</span></td><td class="ev">One custom SVG grammar: 24x24, 2px stroke, round caps, currentColor, 4 interaction states as tokens. No lucide alongside, no emoji. Enforced by a guard test that also trips on an icon-library dependency.</td></tr>
         <tr><td class="id">BGEN-OPS-01</td><td>Remote &amp; CI</td><td><span class="chip c-partial">partial</span></td><td class="ev">CI workflow written; repo still local-only, never pushed.</td></tr>
-        <tr><td class="id">BGEN-OPS-02</td><td>Test stability</td><td><span class="chip c-partial">partial</span></td><td class="ev">Frontend suite flakes at the default 5s timeout under load; passes at 30s.</td></tr>
+        <tr><td class="id">BGEN-OPS-02</td><td>Test stability</td><td><span class="chip c-done">done</span></td><td class="ev"><code>vitest.config.ts</code> now sets <code>testTimeout</code>/<code>hookTimeout</code> to 30s. 99 frontend tests pass; collection alone takes 43s under load, which is why 5s flaked.</td></tr>
       </tbody>
     </table>
   </div>
@@ -1088,18 +1088,24 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
   </div>
 
   <div class="sprint">
-    <div class="sprint__h"><span class="sprint__n">STEP 1</span><span class="sprint__t">Ship <code>PATCH /companies/{id}</code></span></div>
-    <p>One endpoint. Converts six <a href="#status">Company areas</a> from write-once to editable, and removes the most visible defect in the product — a permanent VAT typo. Every field already exists on the model. See <a href="#backend">§04</a>, <code>BGEN-API-01</code>.</p>
+    <div class="sprint__h"><span class="sprint__n">STEP 1</span><span class="sprint__t">Push the repo — <code>BGEN-OPS-01</code></span></div>
+    <p>The only item on this page that is a total-loss risk rather than a quality problem: the entire history, every commit below included, exists on one machine with no backup, and the CI workflow cannot run until there is a remote. Everything else assumes work that is backed up and continuously tested. Needs Henri's account, so it cannot be done from a session.</p>
   </div>
 
   <div class="sprint">
-    <div class="sprint__h"><span class="sprint__n">STEP 2</span><span class="sprint__t">Expose the rules that already exist</span></div>
-    <p><code>GET /vat-rates</code>, <code>GET /pdf-templates</code>, identifier validation. Pure plumbing over finished Python, and it removes hardcoded VAT rates from the frontend — a correctness risk, not a convenience. See <a href="#backend">§04</a>, <code>BGEN-API-04</code>.</p>
+    <div class="sprint__h"><span class="sprint__n">STEP 2</span><span class="sprint__t">Sprint 1 backend — all four items shipped</span></div>
+    <p>Backend-complete as of 2026-08-26; each still needs a screen wired to it:</p>
+    <ul class="task">
+      <li class="done"><b>BGEN-API-01</b> — <code>GET</code> + <code>PATCH /companies/{id}</code>, closing B3 and the permanent VAT typo</li>
+      <li class="done"><b>BGEN-API-02</b> — <code>?client_id</code>, <code>?target_id</code>, and <code>?status&amp;billing_type</code> on products</li>
+      <li class="done"><b>BGEN-API-04</b> — <code>GET /vat-rates</code>, <code>GET /pdf-templates</code></li>
+      <li class="done"><b>BGEN-OPS-02</b> — 30s vitest timeout; the frontend suite no longer flakes under load</li>
+    </ul>
   </div>
 
   <div class="sprint">
-    <div class="sprint__h"><span class="sprint__n">STEP 3</span><span class="sprint__t">Build the VAT report</span></div>
-    <p>The highest user value available. For the target customer this is the reason to own the software, and every input is already in the database. See <a href="#roadmap">Sprint 2</a>.</p>
+    <div class="sprint__h"><span class="sprint__n">STEP 3</span><span class="sprint__t">Put the VAT report on a screen</span></div>
+    <p>The engine exists — <code>GET /reports/vat?period</code>, output VAT per (category, rate) with Belgian grid mapping. For the target customer this is the reason to own the software, and no screen renders it yet. The honest caveat travels with the payload: sales only, because the model has no purchases. See <a href="#backend">§04</a>, <code>BGEN-CORE-03</code>.</p>
   </div>
 
   <div class="sprint">
@@ -1212,7 +1218,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
       <text class="bt" x="470" y="348">core/rules/ · core/models/</text>
       <text class="bs" x="470" y="365">currency_math · vat · numbering · discounts</text>
       <text class="bs" x="470" y="380">belgian_legal · identifiers · belgian_peppol</text>
-      <text class="bp" x="470" y="400">pure functions — 219 tests, zero I/O</text>
+      <text class="bp" x="470" y="400">pure functions — 261 tests, zero I/O</text>
       <path class="fl" d="M436 371 L452 371" marker-end="url(#ar)"/>
 
       <!-- 5 PERSISTENCE -->
@@ -1271,7 +1277,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
   <h3>Reading the diagram</h3>
   <p>The load-bearing claim is band 2. <code>ia.ts</code> is not documentation — it is a typed registry that the router, the navigation and the status badges all read at runtime. A product area that is not a node in that file cannot be reached in any frontend, and a node marked anything other than <code>wired</code> renders through the deliberately-ugly scaffold kit so unbuilt surface can never be mistaken for finished work.</p>
 
-  <p>Bands 3 to 5 are the rule the whole backend is organised around, recorded in <a href="ADR-0001-three-layer.md">ADR-0001</a>: <strong>dependencies point inward and never back out.</strong> <code>core/</code> imports no framework — no FastAPI, no SQLAlchemy — which is why the 219 tests run without a server or a database. <code>api/</code> may import <code>core/</code>; <code>core/</code> may not import <code>api/</code>. Persistence is reached through abstract ports in <code>core/repository/</code>, which is what lets the same domain code run against SQLite on the desktop and Postgres in the cloud.</p>
+  <p>Bands 3 to 5 are the rule the whole backend is organised around, recorded in <a href="ADR-0001-three-layer.md">ADR-0001</a>: <strong>dependencies point inward and never back out.</strong> <code>core/</code> imports no framework — no FastAPI, no SQLAlchemy — which is why the 261 tests run without a server or a database. <code>api/</code> may import <code>core/</code>; <code>core/</code> may not import <code>api/</code>. Persistence is reached through abstract ports in <code>core/repository/</code>, which is what lets the same domain code run against SQLite on the desktop and Postgres in the cloud.</p>
 
   <p>The two facts worth carrying away from band 6: nothing in the product sends anything to anyone, and nothing stores a file. Every gap that looks like a missing screen in §14 resolves to one of those four boxes.</p>
 
@@ -1320,7 +1326,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
     <table>
       <thead><tr><th class="num">Screens</th><th>Missing capability</th><th>Blocks</th><th>Punch item</th></tr></thead>
       <tbody>
-        <tr><td class="num">8</td><td><code>PATCH /companies/{id}</code></td><td class="ev">Company · Company profile · Legal information · VAT / BCE information · Bank accounts · Invoice numbering · Invoice defaults · Localization</td><td class="ev"><code>BGEN-API-01</code> <span class="chip c-gap">B3</span></td></tr>
+        <tr><td class="num">0</td><td><code>PATCH /companies/{id}</code></td><td class="ev"><strong>Shipped 2026-08-26.</strong> The endpoint no longer blocks the eight Company screens; wiring them to it is frontend work.</td><td class="ev"><code>BGEN-API-01</code> — closed</td></tr>
         <tr><td class="num">7</td><td><code>GET /alerts</code></td><td class="ev">Financial overview · Revenue · Outstanding invoices · Overdue invoices · Recent activity · Quick actions · Alerts &amp; tasks</td><td class="ev">— <em>unassigned</em></td></tr>
         <tr><td class="num">6</td><td><code>POST /invoices/{id}/send</code></td><td class="ev">Drafts · Issued · Sent · Overdue · Cancelled · Invoice detail &amp; lifecycle</td><td class="ev"><code>BGEN-INFRA-01</code> <span class="chip c-gap">B1</span></td></tr>
         <tr><td class="num">0</td><td><code>GET /activity?target_id</code></td><td class="ev"><strong>Shipped 2026-08-26.</strong> Cleared Client 360 and Client activity. It did <em>not</em> clear Client history — that node was mis-scoped against this endpoint.</td><td class="ev"><code>BGEN-API-02</code> — closed</td></tr>

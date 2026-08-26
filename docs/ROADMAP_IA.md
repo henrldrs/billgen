@@ -46,11 +46,11 @@ Measured over **114 leaf areas**:
 
 | | Count | Share |
 |---|---:|---:|
-| Fully wired | 21 | **18%** |
-| Partial | 30 | 26% |
-| No backend | 63 | 55% |
+| Fully wired | 22 | **19%** |
+| Partial | 31 | 27% |
+| No backend | 61 | 54% |
 
-**171 distinct backend capabilities** are missing. That number is not a
+**166 distinct backend capabilities** are missing. That number is not a
 criticism — it is the honest size of "a real SaaS platform" versus "a working
 invoicing core", and the core is genuinely done.
 
@@ -60,9 +60,9 @@ invoicing core", and the core is genuinely done.
 |---|---:|---:|---:|---:|
 | Dashboard | 6 | 0 | 1 | 7 |
 | Sales | 7 | 1 | 6 | 14 |
-| Clients | 1 | 3 | 3 | 7 |
-| Catalog | 1 | 4 | 2 | 7 |
-| Reports | 3 | 2 | 4 | 9 |
+| Clients | 2 | 1 | 4 | 7 |
+| Catalog | 1 | 6 | 0 | 7 |
+| Reports | 3 | 3 | 3 | 9 |
 | Company | 0 | 6 | 3 | 9 |
 | Billing | 0 | 0 | 8 | 8 |
 | Documents | 0 | 0 | 7 | 7 |
@@ -74,17 +74,18 @@ invoicing core", and the core is genuinely done.
 | Onboarding | 0 | 1 | 0 | 1 |
 | Desktop (Windows) | 0 | 3 | 2 | 5 |
 
-**Company is the standout anomaly: 0 wired, 6 partial, 3 none.** Every field is
-already on the domain model and reachable exactly once, at creation. There is
-no `PATCH /companies/{id}`, so a typo in a VAT number is permanent. This is the
-cheapest high-value fix in the entire roadmap.
+**Company is still 0 wired, 6 partial, 3 none — but the reason changed.** Until
+2026-08-26 every field was reachable exactly once, at creation, because there
+was no `PATCH /companies/{id}`; a typo in a VAT number was permanent. The
+endpoint now exists and every model field except `logo_key` is editable. All six
+partials are now waiting on an edit form, not on the server.
 
 ### By layer
 
 | Layer | Wired | Partial | None | Total |
 |---|---:|---:|---:|---:|
 | **L1 — Core** | 15 | 6 | 0 | 21 |
-| **L2 — Business** | 4 | 10 | 26 | 40 |
+| **L2 — Business** | 5 | 11 | 24 | 40 |
 | **L3 — SaaS** | 0 | 2 | 18 | 20 |
 | **L4 — Trust** | 0 | 2 | 12 | 14 |
 | **L5 — Platform** | 1 | 7 | 4 | 12 |
@@ -125,7 +126,7 @@ strong; its application is not. See §7.*
 
 ## 3. The four hard blockers
 
-Most of the 171 missing capabilities are ordinary CRUD. Four are
+Most of the 166 missing capabilities are ordinary CRUD. Four are
 infrastructure that many other features sit on top of, and nothing downstream
 of them can start until they exist.
 
@@ -141,11 +142,15 @@ areas), company branding and logo upload, invoice attachments, client
 documents, and the document search in Explore. `Company.logo_key` is already a
 dangling reference to storage that does not exist.
 
-### B3 — No `PATCH /companies/{id}`
-Blocks 6 partial Company areas at once. The model already carries legal name,
-VAT, registration number, IBAN/BIC, numbering prefix, default template,
-language and currency. One endpoint converts all of them from write-once to
-editable. **Highest value per hour of work in the whole document.**
+### B3 — No `PATCH /companies/{id}` — **closed 2026-08-26**
+Blocked 6 partial Company areas at once. `GET /companies/{id}` and
+`PATCH /companies/{id}` now ship: legal name, VAT, registration number,
+IBAN/BIC, numbering prefix, default template, language and currency are all
+editable. The router re-validates the merged model rather than using
+`model_copy(update=...)`, so an explicit null on a non-nullable field is a 422
+instead of silent corruption, and an unknown `default_pdf_template` is rejected
+against `core/pdf/registry.TEMPLATES`. `logo_key` stays out — it belongs to B2.
+What remains is frontend: no screen writes to it yet.
 
 ### B4 — No subscription/plan model
 Blocks all 8 Billing areas, usage metering, plan gating, and the entire
@@ -158,21 +163,41 @@ paid-tier removal rather than a hardcoded flag.
 
 Sequenced by dependency and value, not by section order.
 
-**Sprint 1 — Close the embarrassing gaps (days, not weeks)**
-1. `PATCH /companies/{id}` + `GET /companies/{id}` → unblocks B3, 6 areas.
-2. `GET /invoices?client_id` and `GET /activity?target_id` → unblocks Client
-   360 and the per-invoice timeline, both currently faked by fetching
-   everything and filtering in the browser.
-3. `GET /products?status` and `?billing_type` → unblocks Catalog's Services and
-   Archived views.
-4. `GET /vat-rates` and `GET /pdf-templates` → both already exist as Python
-   constants (`core/rules/vat.py`, `core/pdf/registry.TEMPLATES`) and just need
-   exposing. Removes hardcoded `21/12/6/0` from the frontend.
+**Sprint 1 — Close the embarrassing gaps — DONE (backend), 2026-08-26**
+1. ~~`PATCH /companies/{id}` + `GET /companies/{id}`~~ → B3 closed, 6 areas.
+2. ~~`GET /invoices?client_id` and `GET /activity?target_id`~~ → Client 360 and
+   the per-invoice timeline no longer fetch everything and filter in the
+   browser.
+3. ~~`GET /products?status` and `?billing_type`~~ → Catalog's Services and
+   Archived views are unblocked.
+4. ~~`GET /vat-rates` and `GET /pdf-templates`~~ → the Python constants
+   (`core/rules/vat.py`, `core/pdf/registry.TEMPLATES`) are exposed. The
+   frontend can stop hardcoding `21/12/6/0`; it has not yet.
 
-**Sprint 2 — The VAT report**
-`GET /reports/vat?period`. For a Belgian sole trader this is the most valuable
-screen in the product and it does not exist. Everything it needs is already in
-the database.
+Every one of the four is backend-complete and screen-incomplete. The remaining
+Sprint 1 work is frontend.
+
+**Sprint 2 — The VAT report — backend DONE, 2026-08-26**
+`GET /reports/vat?period`, where `period` is `YYYY`, `YYYY-Qn` or `YYYY-MM`.
+Returns output VAT per (category, rate) — invoices minus credit notes — with
+the Belgian return grid where the category and rate determine it unambiguously
+(00/01/02/03 by rate, 44 reverse charge, 46 intra-EU, 47 export) and `null`
+where they do not (exempt, not-subject).
+
+Two things it deliberately is not:
+
+- **It is not a filed return.** It covers **sales only**. The data model has no
+  purchases, so the deductible-VAT grids (59, 81-83, 86-87) and the 71/72
+  balance cannot be produced from it. The response says so in a `covers` field
+  so a UI cannot present it as ready to file.
+- **It is not on a screen.** For a Belgian sole trader this is still the most
+  valuable screen in the product, and it does not exist yet.
+
+A credit note always voids its invoice, so an invoice and its credit note in the
+same period cancel; when the credit note lands in a later period, the earlier
+period keeps the supply and the later one carries the correction — which is what
+the return wants. A bare void (`InvoiceService.void`, no credit note) is treated
+as never declared.
 
 **Sprint 3 — Email (B1)**
 Transport, templates, then in order: password reset → email verification →
@@ -266,21 +291,25 @@ The largest section and the one with the most product value left in it.
   three-step escalation (friendly reminder, formal notice, demand with
   statutory late interest); each step needs its own template and a sent-record.
 
-### 6.3 Clients — 1 wired / 3 partial / 3 none
+### 6.3 Clients — 2 wired / 1 partial / 4 none
 
 - **Clients list** *(wired)* — full CRUD except delete.
-- **Client 360** *(partial)* — Overview totals are computed by fetching every
-  invoice and filtering in the browser: correct, but it does not scale. Needs
-  `GET /clients/{id}/stats` and `GET /invoices?client_id`. The Quotes and
-  Documents tabs have no backend at all.
+- **Client 360** *(partial)* — `GET /invoices?client_id` and
+  `GET /activity?target_id` ship, so the Overview no longer fetches every
+  invoice and filters in the browser. Still wants `GET /clients/{id}/stats`;
+  the Quotes and Documents tabs have no backend at all.
 - **Contacts** *(none)* — `Client` carries one flat email/phone. Multiple named
   contacts per client is a schema change.
 - **Client groups** *(none)* — new model and CRUD.
-- **Client history / activity** *(partial)* — the audit log is real but cannot
-  be scoped to one client without `GET /activity?target_id`.
+- **Client activity** *(wired)* — `GET /activity?target_id` scopes the audit
+  log to one client record.
+- **Client history** *(none)* — the commercial timeline is a different thing
+  from the audit log: invoice, payment and credit-note entries are written
+  against the invoice, carry no `client_id`, and so can never come back from
+  `?target_id`. Needs `GET /clients/{id}/timeline`.
 - **Client documents** *(none)* — blocked on **B2**.
 
-### 6.4 Catalog — 1 wired / 4 partial / 2 none
+### 6.4 Catalog — 1 wired / 6 partial / 0 none
 
 Mostly *filter* gaps rather than missing data — the model is richer than the
 API exposes.
@@ -292,19 +321,21 @@ API exposes.
   need their own table to be renameable, colourable and orderable.
 - **Pricing** *(partial)* — needs a `PriceList`, client-specific pricing and
   bulk updates.
-- **Archived** *(partial)* — `ProductStatus.ARCHIVED` exists; the list endpoint
-  takes no status filter.
-- **VAT rates** *(none)* — `core/rules/vat.py` holds the Belgian logic and
-  never exposes it, so the frontend hardcodes 21/12/6/0. **One endpoint fixes
-  a correctness risk.**
-- **Invoice templates** *(none)* — `core/pdf/registry.TEMPLATES` has four
-  templates; no endpoint lists them, so a picker cannot be populated.
+- **Archived** *(partial)* — `ProductStatus.ARCHIVED` exists and
+  `GET /products?status=archived` now filters on it. The separate view is
+  unbuilt.
+- **VAT rates** *(partial)* — `GET /vat-rates` now serves the Belgian rates and
+  the EN 16931 categories from `core/rules/vat.py`. Until a screen reads it,
+  21/12/6/0 stays duplicated in TypeScript.
+- **Invoice templates** *(partial)* — `GET /pdf-templates` lists the four
+  registry templates; the picker is unbuilt.
 
 ### 6.5 Company — 0 wired / 6 partial / 3 none
 
-**Every partial here has the same single cause: no `PATCH` (B3).** Profile,
-legal information, VAT/BCE, bank account, numbering and invoice defaults all
-exist on the model and are reachable exactly once, at creation.
+**Every partial here had the same single cause: no `PATCH` (B3) — closed
+2026-08-26.** Profile, legal information, VAT/BCE, bank account, numbering and
+invoice defaults are all editable on the server now. Each is waiting on an edit
+form, not an endpoint.
 
 - **Payment conditions** *(none)* — needs `payment_terms_days` and late-fee
   configuration on `Company`.
@@ -315,16 +346,18 @@ exist on the model and are reachable exactly once, at creation.
   `core/rules/identifiers.py` can already validate Belgian VAT, IBAN and BIC
   checksums but never offers it to the UI.
 
-### 6.6 Reports — 3 wired / 2 partial / 4 none
+### 6.6 Reports — 3 wired / 3 partial / 3 none
 
 - **Revenue, outstanding, overdue** *(wired)*.
 - **Invoices** *(partial)* — counts aggregated in the browser from the full
   list; wants `GET /reports/invoices`.
 - **Payments** *(none)* — `/payments` requires an `invoice_id`. There is no way
   to list payments across invoices at all.
-- **VAT** *(none)* — **the most valuable missing report in the product.** For a
-  Belgian sole trader the quarterly VAT return is the reason to own the app,
-  and every input already exists in the database.
+- **VAT** *(partial)* — **the most valuable report in the product, and still
+  screenless.** `GET /reports/vat?period` computes output VAT per (category,
+  rate), invoices minus credit notes, with the Belgian grid where the mapping is
+  unambiguous. Sales only: the model has no purchases, so the deductible-VAT
+  grids cannot be produced. Nothing renders it yet.
 - **Clients / Products** *(none)* — straightforward aggregations.
 - **Export** *(partial)* — `/backup/export` is a whole-org JSON backup, not a
   report export. Needs CSV/XLSX/PDF per report.
