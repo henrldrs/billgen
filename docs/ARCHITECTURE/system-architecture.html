@@ -4,7 +4,50 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 
 <style>
+/* ---------------------------------------------------------------- palette
+
+   Light is the default and the canonical reading theme. Dark is a single
+   remap under [data-theme="dark"] — no rule below this block names a colour
+   directly, so a theme change is this block and nothing else.            */
+
 :root{
+  --ground:#f4f6f9;
+  --surface:#ffffff;
+  --surface-2:#eef1f6;
+  --raised:#e7ebf2;
+  --line:rgba(15,23,42,.11);
+  --line-strong:rgba(15,23,42,.20);
+  --ink:#111827;
+  --ink-strong:#000000;
+  --ink-soft:#4b5565;
+  --ink-faint:#78839a;
+  --track:rgba(15,23,42,.10);
+  --zebra:rgba(15,23,42,.022);
+  --hover:rgba(15,23,42,.045);
+  --shadow:0 1px 2px rgba(15,23,42,.05),0 1px 10px rgba(15,23,42,.04);
+
+  --accent:#10b981;
+  --accent-soft:rgba(16,185,129,.10);
+  --accent-ink:#047857;
+
+  --done:#047857;
+  --done-bg:rgba(16,185,129,.13);
+  --partial:#b45309;
+  --partial-bg:rgba(245,158,11,.15);
+  --gap:#b91c1c;
+  --gap-bg:rgba(239,68,68,.10);
+  --ref:#1d4ed8;
+  --ref-bg:rgba(37,99,235,.10);
+  --plan:#6d28d9;
+  --plan-bg:rgba(109,40,217,.10);
+
+  --sans:"IBM Plex Sans",ui-sans-serif,system-ui,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+
+  --rail:272px;
+}
+
+[data-theme="dark"]{
   --ground:#0b0f19;
   --surface:#111827;
   --surface-2:#161f31;
@@ -12,8 +55,13 @@
   --line:rgba(148,163,184,.18);
   --line-strong:rgba(148,163,184,.32);
   --ink:#e8edf5;
+  --ink-strong:#ffffff;
   --ink-soft:#94a3b8;
   --ink-faint:#64748b;
+  --track:rgba(148,163,184,.16);
+  --zebra:rgba(148,163,184,.035);
+  --hover:rgba(148,163,184,.06);
+  --shadow:none;
 
   --accent:#10b981;
   --accent-soft:rgba(16,185,129,.14);
@@ -29,11 +77,6 @@
   --ref-bg:rgba(96,165,250,.13);
   --plan:#a78bfa;
   --plan-bg:rgba(167,139,250,.13);
-
-  --sans:"IBM Plex Sans",ui-sans-serif,system-ui,"Segoe UI",sans-serif;
-  --mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
-
-  --rail:264px;
 }
 
 *{box-sizing:border-box}
@@ -58,10 +101,11 @@ nav.rail{
   height:100vh;overflow-y:auto;
   background:var(--surface);
   border-right:1px solid var(--line);
-  padding:26px 0 40px;
+  padding:22px 0 40px;
 }
 
-.brand{padding:0 22px 22px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.brand{padding:0 20px 16px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.brand__row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .brand__name{
   font-size:17px;font-weight:700;letter-spacing:-.02em;margin:0;
   display:flex;align-items:center;gap:9px;
@@ -72,18 +116,88 @@ nav.rail{
   text-transform:uppercase;letter-spacing:.11em;margin:7px 0 0;
 }
 
+/* theme toggle */
+.tt{
+  flex:0 0 auto;cursor:pointer;
+  width:28px;height:28px;border-radius:6px;
+  border:1px solid var(--line);background:var(--surface-2);color:var(--ink-soft);
+  font-size:13px;line-height:1;display:grid;place-items:center;
+}
+.tt:hover{color:var(--ink);border-color:var(--line-strong)}
+.tt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tt__dark{display:none}
+[data-theme="dark"] .tt__light{display:none}
+[data-theme="dark"] .tt__dark{display:block}
+
+/* ------------------------------------------------------ active-section card
+
+   The rail shows ONE card — the section you are reading — instead of a
+   sixteen-line list. The full list is still there, one click away, and the
+   card is what a scroll-spy keeps in sync.                                */
+
+.navcard{
+  margin:0 14px 12px;padding:13px 14px 12px;
+  background:var(--surface-2);border:1px solid var(--line);
+  border-radius:9px;box-shadow:var(--shadow);
+}
+.navcard__group{
+  font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-faint);margin:0 0 8px;
+}
+.navcard__top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.navcard__id{
+  font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+  padding:2px 7px;border-radius:3px;
+  background:var(--accent-soft);color:var(--accent-ink);
+  border:1px solid var(--accent-soft);
+}
+.navcard__pos{font-family:var(--mono);font-size:10px;color:var(--ink-faint);margin:0 0 0 auto}
+.navcard__title{font-size:14.5px;font-weight:600;letter-spacing:-.01em;margin:0 0 4px;line-height:1.3}
+.navcard__sub{
+  font-size:11.5px;color:var(--ink-faint);margin:0;line-height:1.45;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+}
+.navcard__steps{display:flex;gap:6px;margin-top:11px}
+.navcard__steps button{
+  flex:1;cursor:pointer;padding:5px 0;border-radius:6px;
+  border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);
+  font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;
+}
+.navcard__steps button:hover{color:var(--ink);border-color:var(--line-strong)}
+.navcard__steps button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+/* progress through the document */
+.railbar{height:3px;background:var(--track);border-radius:3px;margin:0 14px 14px;overflow:hidden}
+.railbar i{display:block;height:100%;background:var(--accent);width:0;transition:width .18s ease}
+
+/* the full list, collapsed by default */
+.rail__toggle{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  width:calc(100% - 28px);margin:0 14px;cursor:pointer;
+  padding:7px 11px;border-radius:7px;
+  border:1px solid var(--line);background:transparent;color:var(--ink-soft);
+  font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+}
+.rail__toggle:hover{color:var(--ink);background:var(--hover)}
+.rail__toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rail__toggle .caret{transition:transform .15s ease}
+.rail__toggle[aria-expanded="true"] .caret{transform:rotate(180deg)}
+
+.rail__list{margin-top:10px}
+.rail__list[hidden]{display:none}
 .rail__group{
   font-family:var(--mono);font-size:9.5px;color:var(--ink-faint);
   text-transform:uppercase;letter-spacing:.13em;
-  padding:16px 22px 6px;
+  padding:14px 22px 6px;margin:0;
 }
 nav.rail a{
   display:flex;align-items:center;justify-content:space-between;gap:8px;
-  padding:7px 22px;color:var(--ink-soft);text-decoration:none;
+  padding:6px 22px;color:var(--ink-soft);text-decoration:none;
   font-size:13.5px;border-left:2px solid transparent;
 }
-nav.rail a:hover{color:var(--ink);background:rgba(148,163,184,.06)}
+nav.rail a:hover{color:var(--ink);background:var(--hover)}
 nav.rail a:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+nav.rail a.is-active{color:var(--ink);border-left-color:var(--accent);background:var(--hover)}
 nav.rail a .n{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint)}
 
 main{flex:1;min-width:0;padding:44px 52px 120px;max-width:1180px}
@@ -101,11 +215,11 @@ p{margin:0 0 13px;max-width:76ch}
 ul,ol{margin:0 0 14px;padding-left:20px;max-width:76ch}
 li{margin-bottom:5px}
 a{color:var(--accent-ink)}
-strong{font-weight:600;color:#fff}
+strong{font-weight:600;color:var(--ink-strong)}
 code{
   font-family:var(--mono);font-size:.87em;
   background:var(--raised);padding:1px 5px;border-radius:3px;
-  color:#cbd5e1;
+  color:var(--ink-soft);
 }
 
 .lede{font-size:16.5px;color:var(--ink-soft);max-width:74ch;margin-bottom:26px}
@@ -123,7 +237,7 @@ section:first-of-type{border-top:none;margin-top:0;padding-top:0}
   font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
   text-transform:uppercase;padding:3px 8px;border-radius:3px;
   background:var(--accent-soft);color:var(--accent-ink);
-  border:1px solid rgba(16,185,129,.3);flex:0 0 auto;
+  border:1px solid var(--accent-soft);flex:0 0 auto;
 }
 .sechead__sub{color:var(--ink-faint);font-size:13.5px;width:100%;margin:0}
 
@@ -135,12 +249,12 @@ section:first-of-type{border-top:none;margin-top:0;padding-top:0}
   padding:2px 7px;border-radius:3px;white-space:nowrap;
   border:1px solid transparent;
 }
-.c-done{background:var(--done-bg);color:var(--done);border-color:rgba(16,185,129,.35)}
-.c-partial{background:var(--partial-bg);color:var(--partial);border-color:rgba(245,158,11,.35)}
-.c-gap{background:var(--gap-bg);color:var(--gap);border-color:rgba(239,68,68,.35)}
-.c-ref{background:var(--ref-bg);color:var(--ref);border-color:rgba(96,165,250,.35)}
-.c-plan{background:var(--plan-bg);color:var(--plan);border-color:rgba(167,139,250,.35)}
-.c-none{background:rgba(148,163,184,.1);color:var(--ink-faint);border-color:var(--line)}
+.c-done{background:var(--done-bg);color:var(--done);border-color:var(--done)}
+.c-partial{background:var(--partial-bg);color:var(--partial);border-color:var(--partial)}
+.c-gap{background:var(--gap-bg);color:var(--gap);border-color:var(--gap)}
+.c-ref{background:var(--ref-bg);color:var(--ref);border-color:var(--ref)}
+.c-plan{background:var(--plan-bg);color:var(--plan);border-color:var(--plan)}
+.c-none{background:var(--track);color:var(--ink-faint);border-color:var(--line)}
 
 /* ----------------------------------------------------------------- tables */
 
@@ -154,7 +268,7 @@ thead th{
 }
 tbody td{padding:9px 13px;border-bottom:1px solid var(--line);vertical-align:top}
 tbody tr:last-child td{border-bottom:none}
-tbody tr:nth-child(even){background:rgba(148,163,184,.035)}
+tbody tr:nth-child(even){background:var(--zebra)}
 td.id,td.num{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);white-space:nowrap}
 td.num{text-align:right;font-variant-numeric:tabular-nums}
 th.num{text-align:right}
@@ -191,7 +305,7 @@ th.num{text-align:right}
 /* ------------------------------------------------------------------ meter */
 
 .meter{
-  height:7px;border-radius:4px;background:rgba(148,163,184,.16);
+  height:7px;border-radius:4px;background:var(--track);
   overflow:hidden;display:flex;margin:7px 0;
 }
 .meter i{display:block;height:100%}
@@ -290,6 +404,7 @@ footer{
     position:static;width:auto;height:auto;
     border-right:none;border-bottom:1px solid var(--line);
   }
+  .navcard__steps{max-width:320px}
   main{padding:30px 20px 80px}
 }
 </style>
@@ -298,31 +413,62 @@ footer{
 
 <nav class="rail">
   <div class="brand">
-    <p class="brand__name"><span class="brand__dot"></span>BillGen</p>
-    <p class="brand__sub">System Architecture · v0.7</p>
+    <div class="brand__row">
+      <div>
+        <p class="brand__name"><span class="brand__dot"></span>BillGen</p>
+        <p class="brand__sub">System Architecture · v0.9</p>
+      </div>
+      <button class="tt" id="tt" type="button" aria-label="Switch between light and dark">
+        <span class="tt__light">☾</span><span class="tt__dark">☀</span>
+      </button>
+    </div>
   </div>
 
-  <p class="rail__group">Assessment</p>
-  <a href="#overview">Overview</a>
-  <a href="#status">Status <span class="n">18%</span></a>
-  <a href="#frontends">Multi-Frontend Architecture</a>
-  <a href="#components">Component &amp; Library Comparison</a>
-  <a href="#backend">Backend Architecture</a>
-  <a href="#compliance">Compliance Architecture</a>
+  <!-- The rail shows the section you are in, not all sixteen at once. -->
+  <div class="navcard" id="navcard">
+    <p class="navcard__group" id="nc-group">Assessment</p>
+    <div class="navcard__top">
+      <span class="navcard__id" id="nc-id">§00</span>
+      <span class="navcard__pos" id="nc-pos">1 / 17</span>
+    </div>
+    <p class="navcard__title" id="nc-title">System Architecture</p>
+    <p class="navcard__sub" id="nc-sub">Audit of one product across four frontend surfaces.</p>
+    <div class="navcard__steps">
+      <button type="button" id="nc-prev">↑ Prev</button>
+      <button type="button" id="nc-next">Next ↓</button>
+    </div>
+  </div>
 
-  <p class="rail__group">Execution</p>
-  <a href="#roadmap">Roadmap &amp; Progress</a>
-  <a href="#path">Path to 100% <span class="n">42</span></a>
-  <a href="#experience">Experience Layer (L6)</a>
-  <a href="#features">Feature Index</a>
-  <a href="#security">Data &amp; Security Checklist</a>
-  <a href="#extensions">Possible Extensions</a>
-  <a href="#start">Workflow Starter</a>
+  <div class="railbar"><i id="railbar"></i></div>
 
-  <p class="rail__group">Deep dive</p>
-  <a href="#dataflow">Data Architecture</a>
-  <a href="#debt">Backend Debt Ledger <span class="n">171</span></a>
-  <a href="#repo">Repo Map <span class="n">442</span></a>
+  <button class="rail__toggle" id="rail-toggle" type="button" aria-expanded="false" aria-controls="rail-list">
+    <span>All sections</span><span class="caret">▾</span>
+  </button>
+
+  <div class="rail__list" id="rail-list" hidden>
+    <p class="rail__group">Assessment</p>
+    <a href="#overview">Overview</a>
+    <a href="#status">Status <span class="n">20%</span></a>
+    <a href="#frontends">Multi-Frontend Architecture</a>
+    <a href="#components">Component &amp; Library Comparison</a>
+    <a href="#backend">Backend Architecture <span class="n">55</span></a>
+    <a href="#compliance">Compliance Architecture</a>
+
+    <p class="rail__group">Execution</p>
+    <a href="#roadmap">Roadmap &amp; Progress</a>
+    <a href="#path">Path to 100% <span class="n">38</span></a>
+    <a href="#experience">Experience Layer (L6)</a>
+    <a href="#features">Feature Index</a>
+    <a href="#security">Data &amp; Security Checklist</a>
+    <a href="#extensions">Possible Extensions</a>
+    <a href="#start">Workflow Starter</a>
+
+    <p class="rail__group">Deep dive</p>
+    <a href="#dataflow">Data Architecture</a>
+    <a href="#debt">Backend Debt Ledger <span class="n">170</span></a>
+    <a href="#repo">Repo Map <span class="n">478</span></a>
+    <a href="#entitlements">Entitlement Layer <span class="n">B4</span></a>
+  </div>
 </nav>
 
 <main>
@@ -332,42 +478,46 @@ footer{
   <div class="sechead">
     <span class="sechead__id">§00</span>
     <h1>System Architecture</h1>
-    <p class="sechead__sub">Audit of one product across four frontend surfaces, one Python backend, and a shared design system. Generated 2026-08-25 against commit <code>9984869</code>.</p>
+    <p class="sechead__sub">Audit of one product across four frontend surfaces, one Python backend, and a shared design system. Regenerated 2026-08-26 against commit <code>aef79c3</code>, plus the uncommitted entitlement UI in the working tree.</p>
   </div>
 
   <p class="lede">BillGen is a Belgian invoicing SaaS with a finished domain core and an unfinished product wrapper. This document separates those two facts, measures each, and orders the work.</p>
 
+  <div class="note">
+    <p><strong>What changed since v0.8 (2026-08-25).</strong> Four commits landed: Sprint 1 plus the VAT report engine, four record screens, six screen-unblocking reads, and <strong>the whole B4 entitlement layer</strong> — four tiers, six meters, atomic quota guards and a uniform 402 contract (<a href="#entitlements">§16</a>). Endpoints went 41 → <strong>55</strong>, backend tests 261 → <strong>298</strong>. Wired areas moved 21 → 23 of 115. <strong>The backend is now roughly twenty endpoints ahead of the UI:</strong> two sessions of server work landed and almost no screen reads any of it.</p>
+  </div>
+
   <div class="grid g3">
     <div class="stat">
       <p class="stat__k">Product areas</p>
-      <p class="stat__v">114</p>
-      <p class="stat__n">leaf nodes in the IA</p>
+      <p class="stat__v">115</p>
+      <p class="stat__n">leaf nodes in the IA · 130 with sections</p>
     </div>
     <div class="stat">
       <p class="stat__k">Fully wired</p>
-      <p class="stat__v" style="color:var(--done)">18%</p>
-      <p class="stat__n">21 wired · 30 partial · 63 none</p>
+      <p class="stat__v" style="color:var(--done)">20%</p>
+      <p class="stat__n">23 wired · 31 partial · 61 none</p>
     </div>
     <div class="stat">
       <p class="stat__k">Missing capabilities</p>
-      <p class="stat__v" style="color:var(--gap)">171</p>
-      <p class="stat__n">distinct backend gaps</p>
+      <p class="stat__v" style="color:var(--gap)">170</p>
+      <p class="stat__n">distinct, over 85 nodes</p>
     </div>
     <div class="stat">
       <p class="stat__k">Library components</p>
-      <p class="stat__v">72</p>
-      <p class="stat__n">35 mounted · 26 never rendered</p>
+      <p class="stat__v">74</p>
+      <p class="stat__n">49 mounted · 25 never rendered</p>
     </div>
   </div>
 
   <div class="note">
-    <p><strong>The central finding.</strong> Layer 1 — the invoicing core — has <em>zero</em> unwired areas. Everything outstanding is the SaaS wrapper around it. The engineering half of the 2026 audit closed; the commercial half never started. That is a coherent position to be in, and it is not the same as being 18% finished.</p>
+    <p><strong>The central finding, restated.</strong> Layer 1 — the invoicing core — still has <em>zero</em> unwired areas. What has changed is the commercial half: it is no longer unstarted. The entitlement layer means the server can now price, meter and refuse, tier by tier. Nothing renders it yet. So the shape of the problem has moved from &ldquo;the backend cannot answer this&rdquo; to <strong>&ldquo;no screen asks&rdquo;</strong> — and that is frontend work, not architecture.</p>
   </div>
 
   <h3>What this document treats as source of truth</h3>
   <ul>
     <li><strong>The IA registry</strong> — <code>frontend-react/src/scaffold/ia.ts</code>, a typed tree that drives navigation, routes, status badges, and every count below. Invariants enforced by <code>ia.test.ts</code>.</li>
-    <li><strong>The endpoint inventory</strong> — read directly from <code>api/routers/</code>, not from documentation.</li>
+    <li><strong>The endpoint inventory</strong> — read directly from <code>api/routers/</code>, not from documentation. 17 routers, 55 endpoints as of <code>aef79c3</code>.</li>
     <li><strong>The component matrix</strong> — computed by walking JSX across all frontends plus the Studio AI reference.</li>
     <li><strong>The Studio AI reference</strong> — <code>docs/billgen---enterprise-invoicing-&amp;-financial-saas.zip</code>, 95 files. A Google AI Studio (Gemini) generation dated 2026-08-25, seeded with this project&#39;s stylesheets but importing none of its components — see <a href="#repo">§15</a>.</li>
   </ul>
@@ -393,26 +543,27 @@ footer{
       <thead><tr><th>Section</th><th>Coverage</th><th class="num">Wired</th><th class="num">Partial</th><th class="num">None</th><th class="num">Total</th></tr></thead>
       <tbody>
         <tr><td>Dashboard</td><td><span class="meter"><i class="m-done" style="width:85.7%"></i><i class="m-gap" style="width:14.3%"></i></span></td><td class="num">6</td><td class="num">0</td><td class="num">1</td><td class="num">7</td></tr>
-        <tr><td>Sales</td><td><span class="meter"><i class="m-done" style="width:50%"></i><i class="m-partial" style="width:7.1%"></i><i class="m-gap" style="width:42.9%"></i></span></td><td class="num">7</td><td class="num">1</td><td class="num">6</td><td class="num">14</td></tr>
-        <tr><td>Clients</td><td><span class="meter"><i class="m-done" style="width:14.3%"></i><i class="m-partial" style="width:42.8%"></i><i class="m-gap" style="width:42.9%"></i></span></td><td class="num">1</td><td class="num">3</td><td class="num">3</td><td class="num">7</td></tr>
-        <tr><td>Catalog</td><td><span class="meter"><i class="m-done" style="width:14.3%"></i><i class="m-partial" style="width:57.1%"></i><i class="m-gap" style="width:28.6%"></i></span></td><td class="num">1</td><td class="num">4</td><td class="num">2</td><td class="num">7</td></tr>
-        <tr><td>Reports</td><td><span class="meter"><i class="m-done" style="width:33.3%"></i><i class="m-partial" style="width:22.2%"></i><i class="m-gap" style="width:44.5%"></i></span></td><td class="num">3</td><td class="num">2</td><td class="num">4</td><td class="num">9</td></tr>
-        <tr><td><strong>Company</strong></td><td><span class="meter"><i class="m-partial" style="width:66.7%"></i><i class="m-gap" style="width:33.3%"></i></span></td><td class="num">0</td><td class="num">6</td><td class="num">3</td><td class="num">9</td></tr>
-        <tr><td>Billing</td><td><span class="meter"><i class="m-gap" style="width:100%"></i></span></td><td class="num">0</td><td class="num">0</td><td class="num">8</td><td class="num">8</td></tr>
-        <tr><td>Documents</td><td><span class="meter"><i class="m-gap" style="width:100%"></i></span></td><td class="num">0</td><td class="num">0</td><td class="num">7</td><td class="num">7</td></tr>
-        <tr><td>Explore</td><td><span class="meter"><i class="m-partial" style="width:40%"></i><i class="m-gap" style="width:60%"></i></span></td><td class="num">0</td><td class="num">2</td><td class="num">3</td><td class="num">5</td></tr>
-        <tr><td>Activity</td><td><span class="meter"><i class="m-done" style="width:20%"></i><i class="m-partial" style="width:20%"></i><i class="m-gap" style="width:60%"></i></span></td><td class="num">1</td><td class="num">1</td><td class="num">3</td><td class="num">5</td></tr>
-        <tr><td>Settings</td><td><span class="meter"><i class="m-done" style="width:13.3%"></i><i class="m-partial" style="width:40%"></i><i class="m-gap" style="width:46.7%"></i></span></td><td class="num">2</td><td class="num">6</td><td class="num">7</td><td class="num">15</td></tr>
+        <tr><td>Sales</td><td><span class="meter"><i class="m-done" style="width:53.3%"></i><i class="m-partial" style="width:6.7%"></i><i class="m-gap" style="width:40.0%"></i></span></td><td class="num">8</td><td class="num">1</td><td class="num">6</td><td class="num">15</td></tr>
+        <tr><td>Clients</td><td><span class="meter"><i class="m-done" style="width:28.6%"></i><i class="m-partial" style="width:14.3%"></i><i class="m-gap" style="width:57.1%"></i></span></td><td class="num">2</td><td class="num">1</td><td class="num">4</td><td class="num">7</td></tr>
+        <tr><td>Catalog</td><td><span class="meter"><i class="m-done" style="width:14.3%"></i><i class="m-partial" style="width:85.7%"></i></span></td><td class="num">1</td><td class="num">6</td><td class="num">0</td><td class="num">7</td></tr>
+        <tr><td>Reports</td><td><span class="meter"><i class="m-done" style="width:33.3%"></i><i class="m-partial" style="width:33.3%"></i><i class="m-gap" style="width:33.3%"></i></span></td><td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num">9</td></tr>
+        <tr><td>Company</td><td><span class="meter"><i class="m-partial" style="width:66.7%"></i><i class="m-gap" style="width:33.3%"></i></span></td><td class="num">0</td><td class="num">6</td><td class="num">3</td><td class="num">9</td></tr>
+        <tr><td><strong>Billing</strong></td><td><span class="meter"><i class="m-gap" style="width:100.0%"></i></span></td><td class="num">0</td><td class="num">0</td><td class="num">8</td><td class="num">8</td></tr>
+        <tr><td>Documents</td><td><span class="meter"><i class="m-gap" style="width:100.0%"></i></span></td><td class="num">0</td><td class="num">0</td><td class="num">7</td><td class="num">7</td></tr>
+        <tr><td>Explore</td><td><span class="meter"><i class="m-partial" style="width:40.0%"></i><i class="m-gap" style="width:60.0%"></i></span></td><td class="num">0</td><td class="num">2</td><td class="num">3</td><td class="num">5</td></tr>
+        <tr><td>Activity</td><td><span class="meter"><i class="m-done" style="width:20.0%"></i><i class="m-partial" style="width:20.0%"></i><i class="m-gap" style="width:60.0%"></i></span></td><td class="num">1</td><td class="num">1</td><td class="num">3</td><td class="num">5</td></tr>
+        <tr><td>Settings</td><td><span class="meter"><i class="m-done" style="width:13.3%"></i><i class="m-partial" style="width:40.0%"></i><i class="m-gap" style="width:46.7%"></i></span></td><td class="num">2</td><td class="num">6</td><td class="num">7</td><td class="num">15</td></tr>
         <tr><td>Help &amp; support</td><td><span class="meter"><i class="m-partial" style="width:14.3%"></i><i class="m-gap" style="width:85.7%"></i></span></td><td class="num">0</td><td class="num">1</td><td class="num">6</td><td class="num">7</td></tr>
-        <tr><td>Legal</td><td><span class="meter"><i class="m-gap" style="width:100%"></i></span></td><td class="num">0</td><td class="num">0</td><td class="num">8</td><td class="num">8</td></tr>
-        <tr><td>Onboarding</td><td><span class="meter"><i class="m-partial" style="width:100%"></i></span></td><td class="num">0</td><td class="num">1</td><td class="num">0</td><td class="num">1</td></tr>
-        <tr><td>Desktop (Windows)</td><td><span class="meter"><i class="m-partial" style="width:60%"></i><i class="m-gap" style="width:40%"></i></span></td><td class="num">0</td><td class="num">3</td><td class="num">2</td><td class="num">5</td></tr>
+        <tr><td>Legal</td><td><span class="meter"><i class="m-gap" style="width:100.0%"></i></span></td><td class="num">0</td><td class="num">0</td><td class="num">8</td><td class="num">8</td></tr>
+        <tr><td>Onboarding</td><td><span class="meter"><i class="m-partial" style="width:100.0%"></i></span></td><td class="num">0</td><td class="num">1</td><td class="num">0</td><td class="num">1</td></tr>
+        <tr><td>Desktop (Windows)</td><td><span class="meter"><i class="m-partial" style="width:60.0%"></i><i class="m-gap" style="width:40.0%"></i></span></td><td class="num">0</td><td class="num">3</td><td class="num">2</td><td class="num">5</td></tr>
       </tbody>
     </table>
   </div>
 
   <div class="note note--warn">
-    <p><strong>Company is the anomaly worth acting on: 0 wired, 6 partial, 3 none.</strong> Every one of those six partials had the same single cause — no <code>PATCH /companies/{id}</code>. <strong>Shipped 2026-08-26:</strong> legal name, VAT number, registration number, IBAN, BIC, numbering prefix, default template, language and currency are all editable, and a VAT typo is no longer permanent. What remains in those six areas is frontend work plus logo upload, which waits on B2.</p>
+    <p><strong>Billing still reads 0 / 0 / 8, and that score is now stale.</strong> <code>GET /entitlements</code> and <code>GET /plans</code> ship the whole commercial matrix — tier, features, per-meter usage and limits — so Subscription, Plan and Usage are <em>partial</em>, not <em>none</em>. The score has not moved because it lives in <code>ia.ts</code> and nobody re-scored those nodes; the panels that consume the endpoints are in the working tree, uncommitted. Re-score with the commit that lands them, not before — the number is supposed to describe screens, not endpoints.</p>
+    <p><strong>Company is the other anomaly: 0 wired, 6 partial, 3 none.</strong> Every one of those six partials had one cause — no <code>PATCH /companies/{id}</code> — and it shipped on 2026-08-26 along with <code>GET /companies/{id}/validation</code>. What is left there is frontend work plus logo upload, which waits on B2. A section can be entirely unblocked on the server and still score zero, because <code>status</code> is about screens.</p>
   </div>
 
   <h3>By layer</h3>
@@ -420,8 +571,8 @@ footer{
     <table>
       <thead><tr><th>Layer</th><th>Scope</th><th class="num">Wired</th><th class="num">Partial</th><th class="num">None</th><th class="num">Total</th></tr></thead>
       <tbody>
-        <tr><td><strong>L1 — Core</strong></td><td class="ev">Dashboard, clients, products, invoices, company</td><td class="num">15</td><td class="num">6</td><td class="num">0</td><td class="num">21</td></tr>
-        <tr><td><strong>L2 — Business</strong></td><td class="ev">Quotes, credit notes, recurring, payments, reports, documents</td><td class="num">4</td><td class="num">10</td><td class="num">26</td><td class="num">40</td></tr>
+        <tr><td><strong>L1 — Core</strong></td><td class="ev">Dashboard, clients, products, invoices, company</td><td class="num">16</td><td class="num">6</td><td class="num">0</td><td class="num">22</td></tr>
+        <tr><td><strong>L2 — Business</strong></td><td class="ev">Quotes, credit notes, recurring, payments, reports, documents</td><td class="num">5</td><td class="num">11</td><td class="num">24</td><td class="num">40</td></tr>
         <tr><td><strong>L3 — SaaS</strong></td><td class="ev">Account, subscription, billing, usage, notifications, onboarding, support</td><td class="num">0</td><td class="num">2</td><td class="num">18</td><td class="num">20</td></tr>
         <tr><td><strong>L4 — Trust</strong></td><td class="ev">Security, GDPR, privacy, cookies, audit, legal</td><td class="num">0</td><td class="num">2</td><td class="num">12</td><td class="num">14</td></tr>
         <tr><td><strong>L5 — Platform</strong></td><td class="ev">Integrations, Peppol transport, API, webhooks, offline/sync</td><td class="num">1</td><td class="num">7</td><td class="num">4</td><td class="num">12</td></tr>
@@ -430,7 +581,7 @@ footer{
     </table>
   </div>
 
-  <p><strong>L1 contains zero unwired areas.</strong> L3 and L4 contain zero wired ones. The product is not evenly 18% built — it is one finished layer sitting under five unstarted ones.</p>
+  <p><strong>L1 contains zero unwired areas.</strong> L3 and L4 still contain zero wired ones. The product is not evenly 20% built — it is one finished layer sitting under five thinner ones. The difference from v0.8 is that L3's floor is now built in Python and simply unrendered: the entitlement service answers for every tier, and the two L3 partials are the only nodes that admit it.</p>
 </section>
 
 <!-- ================================================== FRONTENDS -->
@@ -443,8 +594,8 @@ footer{
 
   <pre class="tree">BillGen
 │
-├── L1  SHARED DESIGN SYSTEM ......... @henrioutai/ui        72 components, MIT, public-ready
-├── L2  SHARED BACKEND .............. api/ + core/ + db/     FastAPI, 261 tests passing
+├── L1  SHARED DESIGN SYSTEM ......... @henrioutai/ui        74 components, MIT, public-ready
+├── L2  SHARED BACKEND .............. api/ + core/ + db/     FastAPI, 55 endpoints, 298 tests passing
 │
 ├── L3  SaaS WEB          (V02)  frontend-saas/      ACTIVE      React 19 + Vite + react-router
 ├── L4  WINDOWS DESKTOP   (V01)  frontend-electron/  PARTIAL     Tauri shell, local SQLite, no sync
@@ -455,8 +606,8 @@ footer{
     <table>
       <thead><tr><th class="id">ID</th><th>Layer</th><th>State</th><th>Evidence / what is missing</th></tr></thead>
       <tbody>
-        <tr><td class="id">FE-01</td><td>Design system <code>@henrioutai/ui</code></td><td><span class="chip c-done">done</span></td><td class="ev">72 components + tokens + fonts, token-only colouring, dark mode as a single remap. Extracted to its own package at <code>5a81cfd</code>.</td></tr>
-        <tr><td class="id">FE-02</td><td>SaaS web (V02)</td><td><span class="chip c-partial">partial</span></td><td class="ev">Full IA routed; 21 areas wired. Shell is premium (TopNav, OrgSwitcher, CommandPalette, SettingsShell); content panels were raw markup until the IA pass.</td></tr>
+        <tr><td class="id">FE-01</td><td>Design system <code>@henrioutai/ui</code></td><td><span class="chip c-done">done</span></td><td class="ev">74 exports — 60 components + 14 icons — plus tokens and fonts, token-only colouring, dark mode as a single remap. Extracted to its own package at <code>5a81cfd</code>. <code>DataList</code> and <code>RecordLayout</code> were added by the Client 360 build.</td></tr>
+        <tr><td class="id">FE-02</td><td>SaaS web (V02)</td><td><span class="chip c-partial">partial</span></td><td class="ev">Full IA routed; 23 areas wired. Shell is premium (TopNav, OrgSwitcher, CommandPalette, SettingsShell). <strong>The binding constraint is here:</strong> ~20 endpoints shipped in the last two sessions and the screens for them are unbuilt — VAT report, company form, credit notes, payments, plans and usage all have hooks and no route.</td></tr>
         <tr><td class="id">FE-03</td><td>Windows desktop (V01)</td><td><span class="chip c-partial">partial</span></td><td class="ev">Tauri shell compiles; own SQLite in <code>%APPDATA%</code>; auto-login, no signup. Mounts 17 library components. <strong>No IA, no sync, no signed installer.</strong></td></tr>
         <tr><td class="id">FE-04</td><td>Mobile (V0)</td><td><span class="chip c-gap">gap</span></td><td class="ev">No directory, no build target, no bottom-nav component. Design system is responsive-capable but only one <code>max-width</code> media query exists in 4,227 lines of CSS.</td></tr>
         <tr><td class="id">FE-05</td><td>Studio AI reference (V1)</td><td><span class="chip c-ref">reference</span></td><td class="ev">Not a frontend to ship — a Gemini-generated sketch of full product scope, dated 2026-08-25. Mounts <strong>no</strong> library components: it was handed <code>tokens.css</code> and reimplemented all 76 from scratch, carrying 51 raw hex values. Provenance corrected in <a href="#repo">§15</a>.</td></tr>
@@ -522,22 +673,22 @@ footer{
   <div class="sechead">
     <span class="sechead__id">§03</span>
     <h2>Component &amp; Library Comparison</h2>
-    <p class="sechead__sub">72 library components measured across four surfaces.</p>
+    <p class="sechead__sub">74 library exports measured across four surfaces.</p>
   </div>
 
   <div class="grid g3">
-    <div class="stat"><p class="stat__k">In the library</p><p class="stat__v">72</p><p class="stat__n">58 components + 14 icons</p></div>
-    <div class="stat"><p class="stat__k">Mounted by an app</p><p class="stat__v" style="color:var(--done)">35</p><p class="stat__n">was 30 · +Table, Drawer, Pagination, CopyButton, Divider</p></div>
-    <div class="stat"><p class="stat__k">Never rendered</p><p class="stat__v" style="color:var(--gap)">26</p><p class="stat__n">was 31</p></div>
-    <div class="stat"><p class="stat__k">Proven by reference</p><p class="stat__v" style="color:var(--ref)">40</p><p class="stat__n">of which 26 unused here</p></div>
+    <div class="stat"><p class="stat__k">In the library</p><p class="stat__v">74</p><p class="stat__n">60 components + 14 icons</p></div>
+    <div class="stat"><p class="stat__k">Mounted by an app</p><p class="stat__v" style="color:var(--done)">49</p><p class="stat__n">was 35 · +KpiCard, ProgressBar, Select, DatePicker, Textarea, Banner, Skeleton, Modal…</p></div>
+    <div class="stat"><p class="stat__k">Never rendered</p><p class="stat__v" style="color:var(--gap)">25</p><p class="stat__n">was 26 · measured across all three frontend trees</p></div>
+    <div class="stat"><p class="stat__k">Proven by reference</p><p class="stat__v" style="color:var(--ref)">40</p><p class="stat__n">the Studio AI sketch renders these</p></div>
   </div>
 
   <div class="note">
-    <p><strong>Answering the direct question:</strong> yes — the library was checked. <strong>26 components have never been rendered by any frontend</strong> (down from 31), and a further 11 appear only inside other library components (<code>Avatar</code>, <code>IconButton</code>, <code>Menu</code>, <code>LogoMark</code>, <code>Segmented</code>, <code>Skeleton</code>, <code>HomeButton</code>, <code>CreateBillButton</code>, <code>IconChip</code>, <code>HelpIcon</code>, <code>NotificationsIcon</code>) — used, but never chosen by an app.</p>
+    <p><strong>Measured 2026-08-26 across <code>frontend-saas/</code>, <code>frontend-electron/</code> and <code>frontend-react/</code>:</strong> 49 of 74 are mounted by an app, and <strong>25 have never been rendered anywhere</strong>. The list has shortened by half since v0.8 because the record screens brought the form and data components with them. What is left is not accidental — it clusters into three groups, and each group is blocked by the same thing: <em>preferences</em> (Switch, Checkbox, RadioGroup, LanguageSwitcher) waiting on settings that persist, <em>feedback</em> (Toast, Tooltip, SuccessState, HelpBubble, NotificationCenter) waiting on a decision rather than an endpoint, and <em>overlays</em> (Menu, ContextMenu, Kbd) parked behind the portal problem below.</p>
   </div>
 
-  <h3>The 31 never-rendered components</h3>
-  <p>Ordered by what unlocks the most product surface. <span class="chip c-ref">ref</span> marks the ones the Studio AI reference proves are needed — those are not speculative.</p>
+  <h3>The 25 never-rendered components</h3>
+  <p>Ordered by what unlocks the most product surface. Rows marked <span class="chip c-done">shipped</span> have since been mounted and are kept as the record of what closed. <span class="chip c-ref">ref</span> marks the ones the Studio AI reference proves are needed — those are not speculative.</p>
 
   <div class="tw">
     <table>
@@ -545,26 +696,26 @@ footer{
       <tbody>
         <tr><td><code>Table</code></td><td>Data</td><td><span class="chip c-done">shipped</span></td><td class="ev">Mounted on invoices and credit notes; brings the <code>.bg-table-wrap</code> overflow container. Remaining: clients, products, import, dashboard.</td></tr>
         <tr><td><code>Drawer</code></td><td>Overlay</td><td><span class="chip c-done">shipped</span></td><td class="ev">Invoice inspector built — the N3 depth. Customer inspector still to do.</td></tr>
-        <tr><td><code>StatusTimeline</code></td><td>Data</td><td><span class="chip c-ref">ref</span></td><td class="ev">Invoice lifecycle inside the drawer. Blocked on <code>GET /activity?target_id</code> for full history; created/issued/paid work today.</td></tr>
-        <tr><td><code>KpiCard</code></td><td>Data</td><td><span class="chip c-ref">ref</span></td><td class="ev">Dashboard and Reports. Carries delta, direction and hint that the current hand-rolled KPI markup drops.</td></tr>
-        <tr><td><code>ChartWrapper</code></td><td>Data</td><td><span class="chip c-ref">ref</span></td><td class="ev">Revenue graph. Dashboard currently renders revenue as a <em>table</em>.</td></tr>
+        <tr><td><code>StatusTimeline</code></td><td>Data</td><td><span class="chip c-done">shipped</span></td><td class="ev">Mounted in the invoice drawer. <code>GET /activity?target_id</code> shipped, so the full history is now reachable.</td></tr>
+        <tr><td><code>KpiCard</code></td><td>Data</td><td><span class="chip c-done">shipped</span></td><td class="ev">Mounted on the dashboard and the receivables screen; delta and direction are rendered rather than dropped.</td></tr>
+        <tr><td><code>ChartWrapper</code></td><td>Data</td><td><span class="chip c-done">shipped</span></td><td class="ev">Mounted on the revenue report. The VAT report — the screen that most wants it — does not exist yet.</td></tr>
         <tr><td><code>Menu</code> / <code>ContextMenu</code></td><td>Overlay</td><td><span class="chip c-gap">blocked</span></td><td class="ev">Cannot be used for row overflow: <code>Menu</code> renders no portal, so <code>.bg-table-wrap</code>'s <code>overflow-x</code> clips it. Action soup was solved with the Drawer instead. Still wanted for non-table menus.</td></tr>
-        <tr><td><code>Select</code></td><td>Form</td><td><span class="chip c-ref">ref</span></td><td class="ev">Every form currently uses a raw <code>&lt;select class="bg-field__input"&gt;</code>.</td></tr>
+        <tr><td><code>Select</code></td><td>Form</td><td><span class="chip c-done">shipped</span></td><td class="ev">Mounted. Its options should now come from <code>GET /vat-rates</code> and <code>GET /pdf-templates</code> rather than TypeScript constants.</td></tr>
         <tr><td><code>Combobox</code></td><td>Form</td><td><span class="chip c-ref">ref</span></td><td class="ev">Client picker on the invoice builder; product picker on lines.</td></tr>
-        <tr><td><code>DatePicker</code></td><td>Form</td><td><span class="chip c-ref">ref</span></td><td class="ev">Invoice date, due date, report period.</td></tr>
-        <tr><td><code>Textarea</code></td><td>Form</td><td><span class="chip c-ref">ref</span></td><td class="ev">Invoice notes, legal clauses, client notes.</td></tr>
-        <tr><td><code>Banner</code></td><td>Feedback</td><td><span class="chip c-ref">ref</span></td><td class="ev">Dashboard alerts, Peppol validation failures, accounting warnings.</td></tr>
+        <tr><td><code>DatePicker</code></td><td>Form</td><td><span class="chip c-done">shipped</span></td><td class="ev">Mounted on the invoice builder and the report period pickers.</td></tr>
+        <tr><td><code>Textarea</code></td><td>Form</td><td><span class="chip c-done">shipped</span></td><td class="ev">Mounted on invoice notes and client notes.</td></tr>
+        <tr><td><code>Banner</code></td><td>Feedback</td><td><span class="chip c-done">shipped</span></td><td class="ev">Mounted — including on every scaffold block, where it names the missing endpoint. Dashboard alerts still wait on <code>GET /alerts</code>.</td></tr>
         <tr><td><code>Toast</code></td><td>Feedback</td><td><span class="chip c-none">—</span></td><td class="ev">Every mutation currently gives no transient confirmation.</td></tr>
         <tr><td><code>Pagination</code></td><td>Data</td><td><span class="chip c-done">shipped</span></td><td class="ev">Mounted on credit notes. Remaining lists still render every row.</td></tr>
-        <tr><td><code>SearchBar</code></td><td>Form</td><td><span class="chip c-ref">ref</span></td><td class="ev">Per-list search. Distinct from the ⌘K palette, which navigates pages only.</td></tr>
-        <tr><td><code>ProgressBar</code></td><td>Data</td><td><span class="chip c-ref">ref</span></td><td class="ev">Customer concentration, aging balance, storage, plan usage.</td></tr>
+        <tr><td><code>SearchBar</code></td><td>Form</td><td><span class="chip c-ref">ref</span></td><td class="ev">Per-list search, still unmounted. Distinct from the ⌘K palette, which navigates pages only — and from <code>GET /search?q</code>, which does not exist.</td></tr>
+        <tr><td><code>ProgressBar</code></td><td>Data</td><td><span class="chip c-done">shipped</span></td><td class="ev">Mounted. Plan usage is its next home: <code>GET /entitlements</code> returns used/limit per meter, which is exactly this component's shape.</td></tr>
         <tr><td><code>NotificationCenter</code></td><td>Feedback</td><td><span class="chip c-ref">ref</span></td><td class="ev">Built since the UI phase; has never had a data source.</td></tr>
         <tr><td><code>FileUpload</code></td><td>Form</td><td><span class="chip c-ref">ref</span></td><td class="ev">Documents, logo upload, CSV import. Blocked on blob storage (B2).</td></tr>
         <tr><td><code>Switch</code> · <code>Checkbox</code> · <code>RadioGroup</code></td><td>Form</td><td><span class="chip c-partial">1 of 3</span></td><td class="ev">Notification preferences, cookie categories, export selection.</td></tr>
         <tr><td><code>CopyButton</code> · <code>Divider</code></td><td>Utility</td><td><span class="chip c-done">shipped</span></td><td class="ev">Both mounted in the invoice drawer. <code>Kbd</code> still unused (shortcut hints).</td></tr>
         <tr><td><code>Stepper</code></td><td>Navigation</td><td><span class="chip c-none">—</span></td><td class="ev">The nine-step onboarding wizard.</td></tr>
-        <tr><td><code>Breadcrumbs</code></td><td>Navigation</td><td><span class="chip c-none">—</span></td><td class="ev">N3 depth — returning from a record to its filtered list.</td></tr>
-        <tr><td><code>Skeleton</code></td><td>Feedback</td><td><span class="chip c-none">—</span></td><td class="ev">Every load currently shows a centred spinner.</td></tr>
+        <tr><td><code>Breadcrumbs</code></td><td>Navigation</td><td><span class="chip c-done">shipped</span></td><td class="ev">Mounted on the record screens — returning from a record to its filtered list.</td></tr>
+        <tr><td><code>Skeleton</code></td><td>Feedback</td><td><span class="chip c-done">shipped</span></td><td class="ev">Mounted on the list screens. The remaining centred spinners are on route-level loads.</td></tr>
         <tr><td><code>SuccessState</code> · <code>HelpBubble</code> · <code>Tooltip</code></td><td>Feedback</td><td><span class="chip c-partial">partial</span></td><td class="ev">Post-action confirmation; contextual help on Peppol validation failures.</td></tr>
         <tr><td><code>LanguageSwitcher</code> · <code>LanguageIcon</code> · <code>SupportIcon</code></td><td>Prefs</td><td><span class="chip c-none">—</span></td><td class="ev">FR/NL/EN/ES exists in <code>translations.ts</code> and is not switchable at runtime.</td></tr>
       </tbody>
@@ -647,7 +798,9 @@ footer{
 └── utils/                 money · dates · jsonsafe
 
 api/                       Layer 2 — FastAPI
-├── routers/               16 routers, 41 endpoints
+├── routers/               17 routers, 55 endpoints
+├── entitlements/          matrix(tiers) · service(resolve, quota_guard) · usage · deps · errors
+│                          the ONLY place a tier maps to a capability — core/ may not import it
 ├── security/              auth_service · jwt
 ├── middleware/  integrations/
 
@@ -658,15 +811,17 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
     <table>
       <thead><tr><th>Router</th><th>Endpoints</th><th>Verdict</th></tr></thead>
       <tbody>
-        <tr><td><code>/invoices</code></td><td class="ev">POST · GET <code>?company_id&amp;status</code> · GET id · POST id/issue · DELETE id · POST id/void · POST preview · GET id/html · GET id/pdf · GET id/peppol.xml</td><td><span class="chip c-done">complete</span></td></tr>
-        <tr><td><code>/credit-notes</code></td><td class="ev">POST · GET · GET id · GET id/html · GET id/pdf</td><td><span class="chip c-done">no UI</span></td></tr>
-        <tr><td><code>/clients</code></td><td class="ev">POST · GET · GET id · PATCH id</td><td><span class="chip c-partial">no filters</span></td></tr>
-        <tr><td><code>/products</code></td><td class="ev">POST · GET · GET id · PATCH id</td><td><span class="chip c-partial">no filters</span></td></tr>
-        <tr><td><code>/companies</code></td><td class="ev">POST · GET</td><td><span class="chip c-gap">no PATCH</span></td></tr>
-        <tr><td><code>/payments</code></td><td class="ev">POST · GET <code>?invoice_id</code> (required)</td><td><span class="chip c-partial">not listable</span></td></tr>
-        <tr><td><code>/reports</code></td><td class="ev">GET kpi · GET revenue</td><td><span class="chip c-partial">2 of 9</span></td></tr>
-        <tr><td><code>/activity</code></td><td class="ev">GET <code>?limit&amp;target_type</code></td><td><span class="chip c-partial">no target_id</span></td></tr>
-        <tr><td><code>/auth</code></td><td class="ev">signup · login · refresh · logout · desktop-bootstrap</td><td><span class="chip c-partial">no reset</span></td></tr>
+        <tr><td><code>/invoices</code></td><td class="ev">POST · GET <code>?company_id&amp;status&amp;client_id</code> · GET id · POST id/issue · POST id/duplicate · DELETE id · POST id/void · POST preview · GET id/html · GET id/pdf · GET id/peppol.xml</td><td><span class="chip c-done">complete</span></td></tr>
+        <tr><td><code>/credit-notes</code></td><td class="ev">POST · GET · GET id · GET id/html · GET id/pdf</td><td><span class="chip c-gap">still no UI</span></td></tr>
+        <tr><td><code>/clients</code></td><td class="ev">POST · GET · GET id · PATCH id · GET id/stats · GET id/timeline</td><td><span class="chip c-done">complete</span></td></tr>
+        <tr><td><code>/products</code></td><td class="ev">POST · GET <code>?company_id&amp;status&amp;billing_type</code> · GET id · PATCH id</td><td><span class="chip c-done">filters shipped</span></td></tr>
+        <tr><td><code>/companies</code></td><td class="ev">POST · GET · GET id · PATCH id · GET id/validation</td><td><span class="chip c-done">B3 closed</span></td></tr>
+        <tr><td><code>/payments</code></td><td class="ev">POST · GET <code>?invoice_id</code> optional — cross-invoice listing with a date window</td><td><span class="chip c-done">listable</span></td></tr>
+        <tr><td><code>/reports</code></td><td class="ev">GET kpi · GET revenue · GET vat<code>?period</code> · GET invoices</td><td><span class="chip c-partial">4 of 9 · none on a screen</span></td></tr>
+        <tr><td><code>/entitlements</code></td><td class="ev">GET /entitlements — tier, features, per-meter usage · GET /plans — the full matrix</td><td><span class="chip c-partial">no UI yet</span></td></tr>
+        <tr><td><code>/reference</code></td><td class="ev">GET vat-rates · GET pdf-templates</td><td><span class="chip c-partial">TS still hardcodes 21/12/6/0</span></td></tr>
+        <tr><td><code>/activity</code></td><td class="ev">GET <code>?limit&amp;target_type&amp;target_id</code></td><td><span class="chip c-done">wired</span></td></tr>
+        <tr><td><code>/auth</code> · <code>/desktop</code></td><td class="ev">signup · login · refresh · logout · desktop-bootstrap</td><td><span class="chip c-gap">no reset, no verify</span></td></tr>
         <tr><td><code>/backup</code> · <code>/imports</code></td><td class="ev">export · restore · legacy/preview · legacy/commit</td><td><span class="chip c-done">wired</span></td></tr>
         <tr><td><code>/users</code> · <code>/orgs</code> · health</td><td class="ev">GET me · GET current · healthz · readyz</td><td><span class="chip c-partial">read-only</span></td></tr>
       </tbody>
@@ -681,7 +836,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
         <tr><td class="id">B1</td><td>No email transport</td><td class="ev">Cloud &amp; integrations</td><td><span class="chip c-gap">gap</span></td><td class="ev">Reminders, send-invoice, invitations, verification, password reset, support tickets, notification mail. <strong>Highest fan-out in the product.</strong></td></tr>
         <tr><td class="id">B2</td><td>No blob storage</td><td class="ev">Architecture</td><td><span class="chip c-gap">gap</span></td><td class="ev">All 7 Documents areas, branding/logo, invoice attachments, client documents, document search. <code>Company.logo_key</code> already dangles.</td></tr>
         <tr><td class="id">B3</td><td>No <code>PATCH /companies/{id}</code></td><td class="ev">Data &amp; persistence</td><td><span class="chip c-done">done</span></td><td class="ev">Shipped — <code>GET</code> + <code>PATCH /companies/{id}</code>, every model field editable except <code>logo_key</code> (B2). The router re-validates the merged model, so an explicit null on a non-nullable field is a 422 rather than silent corruption.</td></tr>
-        <tr><td class="id">B4</td><td>No subscription/plan model</td><td class="ev">Business logic</td><td><span class="chip c-gap">gap</span></td><td class="ev">All 8 Billing areas, usage metering, plan gating, and the free-tier PDF branding becoming a real paid-tier removal.</td></tr>
+        <tr><td class="id">B4</td><td>No subscription/plan model</td><td class="ev">Business logic</td><td><span class="chip c-partial">server done</span></td><td class="ev"><strong>Shipped 2026-08-26 — see <a href="#entitlements">§16</a>.</strong> Four tiers, six meters, atomic quota guards, a uniform 402, and <code>PdfService(branded=…)</code> honouring <code>pdf_remove_branding</code>. What is left is a checkout provider (deliberately deferred) and every screen: no meter, badge or upgrade path renders yet.</td></tr>
       </tbody>
     </table>
   </div>
@@ -691,9 +846,9 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
     <div class="det-body">
       <p>These are the cheapest wins on the board — the Python exists and works, only the HTTP surface is absent.</p>
       <ul>
-        <li><code>core/rules/vat.py</code> — Belgian VAT categories and rate construction. No <code>GET /vat-rates</code>, so the frontend <strong>hardcodes 21/12/6/0</strong>. That is a correctness risk, not a convenience gap.</li>
-        <li><code>core/pdf/registry.TEMPLATES</code> — four templates. No <code>GET /pdf-templates</code>, so a template picker cannot be populated.</li>
-        <li><code>core/rules/identifiers.py</code> — VAT mod-97, IBAN ISO 13616, BIC ISO 9362 checksums, ported from the approved demo. No validation endpoint, so the UI cannot check a VAT number before submit.</li>
+        <li><code>core/rules/vat.py</code> — <span class="chip c-partial">exposed, unused</span> <code>GET /vat-rates</code> ships the categories and rates, and the frontend <strong>still hardcodes 21/12/6/0</strong>. The endpoint closed the architectural gap; deleting the TypeScript copy closes the correctness risk, and that has not been done.</li>
+        <li><code>core/pdf/registry.TEMPLATES</code> — <span class="chip c-partial">exposed, unused</span> <code>GET /pdf-templates</code> ships. No picker consumes it.</li>
+        <li><code>core/rules/identifiers.py</code> — <span class="chip c-done">exposed</span> VAT mod-97, IBAN ISO 13616, BIC ISO 9362 checksums now reachable through <code>GET /companies/{id}/validation</code>, which also returns <code>missing_for_peppol</code> — what still blocks e-invoicing for this tenant. No form renders it.</li>
         <li><code>core/repository/sequence_repo</code> — the gapless counter. Not readable, so "next invoice number" cannot be shown in settings.</li>
         <li><code>core/einvoicing/ubl_builder</code> — Helger-validated BIS 3.0 XML. Generated and downloaded by hand; <strong>nothing transmits it.</strong></li>
       </ul>
@@ -767,12 +922,12 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
 
   <div class="gate gate--open">
     <p class="gate__h">Domain gate <span class="chip c-done">open</span></p>
-    <p>Gapless numbering, banker's rounding, Belgian VAT rules, multi-tenancy, Peppol BIS 3.0, audit log, backup/restore. 219 Python tests passing. <strong>Cleared.</strong></p>
+    <p>Gapless numbering, banker's rounding, Belgian VAT rules, multi-tenancy, Peppol BIS 3.0, audit log, backup/restore, and now VAT aggregation. <strong>298 Python tests passing.</strong> Cleared. <em>One caveat carried from this session:</em> the quota guard's row lock and the numbering row lock are both no-ops on SQLite. Neither is proven until CI runs against Postgres, which needs the repo pushed.</p>
   </div>
 
   <div class="gate">
     <p class="gate__h">Product gate <span class="chip c-partial">partial</span></p>
-    <p>Blocked by: no quotes, no per-record inspector, 31 unmounted components. Company editing (B3) and the VAT report are shipped on the backend and not yet on any screen. Clears at the end of Sprint 4.</p>
+    <p>Blocked by: no quotes, and <strong>a backend roughly twenty endpoints ahead of the UI</strong> — VAT report, company form, credit notes, payments listing, invoice report, client 360 stats, plans and usage all have endpoints and hooks and no screen. The record inspector shipped. This gate now closes with frontend work only.</p>
   </div>
 
   <div class="gate gate--shut">
@@ -781,8 +936,8 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
   </div>
 
   <div class="gate gate--shut">
-    <p class="gate__h">Monetisation gate <span class="chip c-gap">shut</span></p>
-    <p>Blocked by: B4 — no plan, subscription, metering, or Merchant-of-Record. Depends on the compliance gate, since cancellation policy is defined in the DPA.</p>
+    <p class="gate__h">Monetisation gate <span class="chip c-partial">half open</span></p>
+    <p><strong>Half open.</strong> B4's server side is built — tiers, meters, quota guards, 402 (<a href="#entitlements">§16</a>). Still blocked by: no Merchant-of-Record and no checkout, no billing screen of any kind, and the compliance gate, since the cancellation and retention contract belongs in the DPA before a cancellation flow exists.</p>
   </div>
 
   <div class="gate gate--shut">
@@ -793,12 +948,12 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
   <h3>Sprints</h3>
 
   <div class="sprint">
-    <div class="sprint__h"><span class="sprint__n">SPRINT 1</span><span class="sprint__t">Close the embarrassing gaps</span><span class="chip c-partial">days, not weeks</span></div>
-    <p>Nothing here is hard. All of it is currently visible to a user as a defect.</p>
+    <div class="sprint__h"><span class="sprint__n">SPRINT 1</span><span class="sprint__t">Close the embarrassing gaps</span><span class="chip c-done">closed 2026-08-26</span></div>
+    <p>Nothing here was hard, and all of it is now shipped.</p>
     <ul class="task">
       <li class="done"><b>api</b> — <code>PATCH /companies/{id}</code> + <code>GET /companies/{id}</code> · unblocked B3 and 6 areas</li>
-      <li><b>api</b> — <code>GET /invoices?client_id</code> · Client 360 stops fetching every invoice</li>
-      <li><b>api</b> — <code>GET /activity?target_id</code> · per-record timeline becomes possible</li>
+      <li class="done"><b>api</b> — <code>GET /invoices?client_id</code> · Client 360 stops fetching every invoice</li>
+      <li class="done"><b>api</b> — <code>GET /activity?target_id</code> · per-record timeline becomes possible</li>
       <li class="done"><b>api</b> — <code>GET /products?status&amp;billing_type</code> · Catalog Services + Archived</li>
       <li class="done"><b>api</b> — <code>GET /vat-rates</code>, <code>GET /pdf-templates</code> · expose existing Python constants</li>
       <li class="done"><b>saas</b> — <code>Table</code> on invoices + credit notes; 4 lists remain</li>
@@ -810,12 +965,12 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
   </div>
 
   <div class="sprint">
-    <div class="sprint__h"><span class="sprint__n">SPRINT 2</span><span class="sprint__t">The VAT report</span><span class="chip c-gap">highest user value</span></div>
-    <p>For a Belgian sole trader the quarterly VAT return is the reason to own the software. Every input is already in the database.</p>
+    <div class="sprint__h"><span class="sprint__n">SPRINT 2</span><span class="sprint__t">The VAT report</span><span class="chip c-partial">engine done · screenless</span></div>
+    <p>For a Belgian sole trader the quarterly VAT return is the reason to own the software. Every input was already in the database, and now every input is aggregated — by nothing anyone can look at.</p>
     <ul class="task">
-      <li><b>core</b> — VAT aggregation service over the existing multi-rate engine</li>
-      <li><b>api</b> — <code>GET /reports/vat?period</code></li>
-      <li><b>saas</b> — Reports → VAT screen with <code>ChartWrapper</code> and period picker</li>
+      <li class="done"><b>core</b> — VAT aggregation service over the existing multi-rate engine</li>
+      <li class="done"><b>api</b> — <code>GET /reports/vat?period</code> · returns <code>covers: "output_vat_only"</code>, which the screen must render honestly</li>
+      <li><b>saas</b> — Reports → VAT screen with <code>ChartWrapper</code> and period picker · <strong>the single highest-value unbuilt screen in the product</strong></li>
       <li><b>api</b> — <code>GET /reports/export?format=csv|xlsx|pdf</code></li>
     </ul>
   </div>
@@ -855,10 +1010,11 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
   <div class="sprint">
     <div class="sprint__h"><span class="sprint__n">SPRINT 6</span><span class="sprint__t">Billing (B4) &amp; Peppol transmission</span></div>
     <ul class="task">
-      <li><b>core</b> — Plan + Subscription models; metering for invoices, clients, storage, seats</li>
-      <li><b>integrations</b> — Merchant-of-Record; <strong>never render a card field</strong>, provider-hosted only</li>
+      <li class="done"><b>core/api</b> — the entitlement layer: four tiers, six meters, atomic quota guards, uniform 402 · <a href="#entitlements">§16</a></li>
+      <li class="done"><b>core/pdf</b> — free-tier branding is real: <code>PdfService(branded=…)</code> defaults to <code>True</code>, so a forgetful call site over-brands rather than giving the paid feature away</li>
+      <li><b>integrations</b> — Merchant-of-Record; <strong>never render a card field</strong>, provider-hosted only. The adapter writes <code>SubscriptionRow</code> and nothing else has to change</li>
       <li><b>integrations</b> — Peppol Access Point transport + round-trip test</li>
-      <li><b>saas</b> — Billing section, usage meters, plan gating; free-tier PDF branding becomes real</li>
+      <li><b>saas</b> — Billing section, usage meters, plan gating, upgrade dialog on 402 · in the working tree, uncommitted</li>
     </ul>
   </div>
 
@@ -885,21 +1041,23 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
     <table>
       <thead><tr><th class="id">ID</th><th>Gate</th><th>State</th><th>Evidence / what is missing</th></tr></thead>
       <tbody>
-        <tr><td class="id">BGEN-CORE-01</td><td>Domain rules</td><td><span class="chip c-done">done</span></td><td class="ev">Gapless numbering, banker's rounding, BE VAT, discounts, legal mentions. 261 tests.</td></tr>
+        <tr><td class="id">BGEN-CORE-01</td><td>Domain rules</td><td><span class="chip c-done">done</span></td><td class="ev">Gapless numbering, banker's rounding, BE VAT, discounts, legal mentions. 298 tests.</td></tr>
         <tr><td class="id">BGEN-CORE-02</td><td>Peppol XML</td><td><span class="chip c-done">done</span></td><td class="ev">BIS 3.0 Helger-validated, BE elements, pre-export gate.</td></tr>
-        <tr><td class="id">BGEN-CORE-03</td><td>VAT report engine</td><td><span class="chip c-partial">partial</span></td><td class="ev"><code>ReportingService.vat_report</code> + <code>GET /reports/vat?period</code>: output VAT per (category, rate), invoices minus credit notes, Belgian grid where the mapping is unambiguous. <strong>Sales only</strong> — the model has no purchases, so 59/81-83/86-87 and the 71/72 balance cannot be produced.</td></tr>
+        <tr><td class="id">BGEN-CORE-03</td><td>VAT report engine</td><td><span class="chip c-done">engine done</span></td><td class="ev"><code>ReportingService.vat_report</code> + <code>GET /reports/vat?period</code>: output VAT per (category, rate), invoices minus credit notes, Belgian grid where the mapping is unambiguous. <strong>Sales only</strong> — the model has no purchases, so 59/81-83/86-87 and the 71/72 balance cannot be produced.</td></tr>
         <tr><td class="id">BGEN-CORE-04</td><td>Quote / pro-forma series</td><td><span class="chip c-gap">gap</span></td><td class="ev">Must not consume the gapless invoice sequence.</td></tr>
         <tr><td class="id">BGEN-CORE-05</td><td>Recurring scheduler</td><td><span class="chip c-gap">gap</span></td><td class="ev"><code>BillingType.RECURRING</code> exists; nothing schedules.</td></tr>
         <tr><td class="id">BGEN-API-01</td><td>Company mutation</td><td><span class="chip c-done">done</span></td><td class="ev">B3 closed. <code>GET</code> + <code>PATCH /companies/{id}</code>; 7 API tests including tenant isolation and the null-on-non-nullable guard.</td></tr>
-        <tr><td class="id">BGEN-API-02</td><td>List filters</td><td><span class="chip c-partial">partial</span></td><td class="ev">Invoices filter by <code>client_id</code>, activity by <code>target_id</code>, products by <code>status</code> and <code>billing_type</code>. Still none: date, amount, category, cross-entity.</td></tr>
+        <tr><td class="id">BGEN-API-02</td><td>List filters</td><td><span class="chip c-partial">partial</span></td><td class="ev">Invoices filter by <code>client_id</code> and <code>status</code>, activity by <code>target_id</code>, products by <code>status</code> and <code>billing_type</code>, payments by a date window. Still none: amount, category, cross-entity. Several shipped filters are not yet used by the screen that asked for them.</td></tr>
         <tr><td class="id">BGEN-API-03</td><td>Cross-entity search</td><td><span class="chip c-gap">gap</span></td><td class="ev">No <code>GET /search?q</code>. ⌘K navigates pages only.</td></tr>
-        <tr><td class="id">BGEN-API-04</td><td>Expose existing rules</td><td><span class="chip c-partial">partial</span></td><td class="ev"><code>GET /vat-rates</code> and <code>GET /pdf-templates</code> shipped, so <code>21/12/6/0</code> and the template ids are no longer duplicated in TypeScript. Identifier validation and the sequence counter are still Python-only.</td></tr>
-        <tr><td class="id">BGEN-API-05</td><td>Global payments list</td><td><span class="chip c-gap">gap</span></td><td class="ev"><code>/payments</code> requires invoice_id; no cross-invoice view.</td></tr>
+        <tr><td class="id">BGEN-API-04</td><td>Expose existing rules</td><td><span class="chip c-partial">partial</span></td><td class="ev"><code>GET /vat-rates</code>, <code>GET /pdf-templates</code> and <code>GET /companies/{id}/validation</code> all ship. <strong>The TypeScript copies were never deleted</strong> — <code>21/12/6/0</code> is still hardcoded — so the duplication this item exists to remove is still there. The sequence counter remains Python-only.</td></tr>
+        <tr><td class="id">BGEN-API-05</td><td>Global payments list</td><td><span class="chip c-done">done</span></td><td class="ev"><code>GET /payments</code> now lists across invoices with an optional date window. No screen renders it.</td></tr>
+        <tr><td class="id">BGEN-API-06</td><td>Alerts rules engine</td><td><span class="chip c-gap">gap</span></td><td class="ev">No <code>GET /alerts</code>. Blocks the dashboard's whole right-hand column — overdue, clients missing VAT, plan limits approaching. Cannot be faked from <code>/reports/kpi</code>. <strong>Added to this list in v0.9</strong>; §14 flagged it as unassigned in v0.8.</td></tr>
+        <tr><td class="id">BGEN-API-07</td><td>Invoice duplicate</td><td><span class="chip c-done">done</span></td><td class="ev"><code>POST /invoices/{id}/duplicate</code>. The other item §14 flagged as unassigned; it shipped before it was ever tracked here. One button on invoice detail consumes it — unbuilt.</td></tr>
         <tr><td class="id">BGEN-INFRA-01</td><td>Email transport</td><td><span class="chip c-gap">gap</span></td><td class="ev">B1. Blocks 7 downstream features.</td></tr>
         <tr><td class="id">BGEN-INFRA-02</td><td>Blob storage</td><td><span class="chip c-gap">gap</span></td><td class="ev">B2. Blocks Documents (7), branding, attachments.</td></tr>
         <tr><td class="id">BGEN-INFRA-03</td><td>Job runner</td><td><span class="chip c-gap">gap</span></td><td class="ev">Needed by recurring invoices, reminders, scheduled backup.</td></tr>
-        <tr><td class="id">BGEN-SAAS-01</td><td>IA routing</td><td><span class="chip c-done">done</span></td><td class="ev">All 114 areas routed; generated from <code>ia.ts</code>; unwired surface visibly scaffolded.</td></tr>
-        <tr><td class="id">BGEN-SAAS-02</td><td>Component adoption</td><td><span class="chip c-partial">partial</span></td><td class="ev">26 of 72 never rendered, down from 31. See §03.</td></tr>
+        <tr><td class="id">BGEN-SAAS-01</td><td>IA routing</td><td><span class="chip c-done">done</span></td><td class="ev">All 115 areas routed; generated from <code>ia.ts</code>; unwired surface visibly scaffolded.</td></tr>
+        <tr><td class="id">BGEN-SAAS-02</td><td>Component adoption</td><td><span class="chip c-partial">partial</span></td><td class="ev">25 of 74 never rendered, down from 26 — but the shortfall is now screens, not components. See §03.</td></tr>
         <tr><td class="id">BGEN-SAAS-03</td><td>Record inspector (N3)</td><td><span class="chip c-partial">partial</span></td><td class="ev">Invoice inspector shipped; client 360 inspector still to build.</td></tr>
         <tr><td class="id">BGEN-SAAS-04</td><td>Primary nav model</td><td><span class="chip c-done">done</span></td><td class="ev">Top bar + per-section popups, generated from <code>ia.ts</code>. All 15 sections reachable in one hop; unfinished destinations carry their marker inside the popup.</td></tr>
         <tr><td class="id">BGEN-SAAS-05</td><td>Responsive</td><td><span class="chip c-gap">gap</span></td><td class="ev">One <code>max-width</code> query in 4,227 CSS lines. TopNav row cannot wrap or scroll.</td></tr>
@@ -909,18 +1067,18 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
         <tr><td class="id">BGEN-MOB-01</td><td>Mobile surface</td><td><span class="chip c-gap">gap</span></td><td class="ev">No directory. Needs bottom-tab nav, card lists instead of tables, sheet instead of drawer.</td></tr>
         <tr><td class="id">BGEN-TRUST-01</td><td>Auth completeness</td><td><span class="chip c-gap">gap</span></td><td class="ev">No password reset, email verification, or 2FA. Depends on B1.</td></tr>
         <tr><td class="id">BGEN-TRUST-02</td><td>Session control</td><td><span class="chip c-gap">gap</span></td><td class="ev">Refresh tokens exist but are not listable or individually revocable.</td></tr>
-        <tr><td class="id">BGEN-TRUST-03</td><td>Roles &amp; permissions</td><td><span class="chip c-gap">gap</span></td><td class="ev"><code>OrgMembership</code> exists, unexposed, no role enum.</td></tr>
+        <tr><td class="id">BGEN-TRUST-03</td><td>Roles &amp; permissions</td><td><span class="chip c-gap">modelled, unenforced</span></td><td class="ev"><code>core/models/user.py</code> carries <code>Role = owner | admin | member | viewer</code>, the JWT carries it and <code>api/deps.current_role</code> exposes it — read in exactly one place, <code>/users/me</code>, to display it. <strong>A <code>viewer</code> can void an invoice today.</strong> Enforcement must also be gated: <code>roles_permissions</code> is Business+ in the matrix.</td></tr>
         <tr><td class="id">BGEN-TRUST-04</td><td>GDPR lifecycle</td><td><span class="chip c-gap">gap</span></td><td class="ev">Backup export ≠ subject-access export. No deletion, consent, or retention.</td></tr>
         <tr><td class="id">BGEN-TRUST-05</td><td>Legal corpus</td><td><span class="chip c-gap">gap</span></td><td class="ev">ToS, Privacy, Cookie, DPA, subprocessors, SLA, BE legal notices — none drafted.</td></tr>
         <tr><td class="id">BGEN-PLAT-01</td><td>Peppol transmission</td><td><span class="chip c-gap">gap</span></td><td class="ev">XML validated, never transmitted. Highest leverage integration.</td></tr>
         <tr><td class="id">BGEN-PLAT-02</td><td>Banking</td><td><span class="chip c-gap">gap</span></td><td class="ev">No CODA/PSD2 link or reconciliation.</td></tr>
         <tr><td class="id">BGEN-PLAT-03</td><td>API &amp; webhooks</td><td><span class="chip c-gap">gap</span></td><td class="ev">No API keys, no delivery with retries.</td></tr>
-        <tr><td class="id">BGEN-BIZ-01</td><td>Subscription</td><td><span class="chip c-gap">gap</span></td><td class="ev">B4. No plan, metering, MoR, or checkout.</td></tr>
+        <tr><td class="id">BGEN-BIZ-01</td><td>Subscription</td><td><span class="chip c-partial">server done</span></td><td class="ev">B4. Tiers, features, meters, quota guards and 402 all ship (<a href="#entitlements">§16</a>). Missing: MoR/checkout, the billing UI, and a seat-invite flow — which cannot exist without B1.</td></tr>
         <tr><td class="id">BGEN-BRAND-01</td><td>Accent &amp; typeface</td><td><span class="chip c-done">decided</span></td><td class="ev">tokens.css is the standard — emerald + Satoshi stay, reference re-skin rejected. Enforced by a build-failing guard test; 4 off-token violations fixed.</td></tr>
         <tr><td class="id">BGEN-BRAND-02</td><td>Navigation model</td><td><span class="chip c-done">decided</span></td><td class="ev">Top bar with a popup list per section — no sidebar. Shipped: <code>TopNavLink.items</code> renders a Menu; nav row wraps so popups are not clipped.</td></tr>
         <tr><td class="id">BGEN-BRAND-03</td><td>Icon language</td><td><span class="chip c-done">decided</span></td><td class="ev">One custom SVG grammar: 24x24, 2px stroke, round caps, currentColor, 4 interaction states as tokens. No lucide alongside, no emoji. Enforced by a guard test that also trips on an icon-library dependency.</td></tr>
-        <tr><td class="id">BGEN-OPS-01</td><td>Remote &amp; CI</td><td><span class="chip c-partial">partial</span></td><td class="ev">CI workflow written; repo still local-only, never pushed.</td></tr>
-        <tr><td class="id">BGEN-OPS-02</td><td>Test stability</td><td><span class="chip c-done">done</span></td><td class="ev"><code>vitest.config.ts</code> now sets <code>testTimeout</code>/<code>hookTimeout</code> to 30s. 99 frontend tests pass; collection alone takes 43s under load, which is why 5s flaked.</td></tr>
+        <tr><td class="id">BGEN-OPS-01</td><td>Remote &amp; CI</td><td><span class="chip c-partial">partial</span></td><td class="ev"><strong>Still the only total-loss risk on the board.</strong> The pre-push audit is done and the tree is clean — no keys or tokens in tracked content, the three tracked env files are templates, 1,146 objects / 1.48 MiB. <code>gh</code> is not installed on this machine, so the remote has to be created by hand. CI has never executed.</td></tr>
+        <tr><td class="id">BGEN-OPS-02</td><td>Test stability</td><td><span class="chip c-done">done</span></td><td class="ev"><code>vitest.config.ts</code> sets <code>testTimeout</code>/<code>hookTimeout</code> to 30s. 107 frontend tests pass, 298 Python tests pass, ruff clean, four workspaces typecheck.</td></tr>
       </tbody>
     </table>
   </div>
@@ -966,12 +1124,12 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
       <thead><tr><th>Section</th><th>Areas</th><th>Layer</th><th>State</th></tr></thead>
       <tbody>
         <tr><td>Dashboard</td><td class="ev">Overview · Revenue · Outstanding · Overdue · Activity · Quick actions · <em>Alerts</em></td><td>L1</td><td><span class="chip c-done">6/7</span></td></tr>
-        <tr><td>Sales</td><td class="ev">Invoices (+6 status tabs) · Credit notes · <em>Sent</em> · <em>Viewed</em> · <em>Quotes</em> · <em>Pro-forma</em> · <em>Recurring</em> · <em>Reminders</em> · Detail</td><td>L1–L2</td><td><span class="chip c-partial">7/14</span></td></tr>
-        <tr><td>Clients</td><td class="ev">List · Client 360 · History · Activity · <em>Contacts</em> · <em>Groups</em> · <em>Documents</em></td><td>L1–L2</td><td><span class="chip c-partial">1/7</span></td></tr>
-        <tr><td>Catalog</td><td class="ev">Products · Services · Categories · Pricing · Archived · <em>VAT rates</em> · <em>Templates</em></td><td>L1–L2</td><td><span class="chip c-partial">1/7</span></td></tr>
+        <tr><td>Sales</td><td class="ev">Invoices (+6 status tabs) · Credit notes · <em>Sent</em> · <em>Viewed</em> · <em>Quotes</em> · <em>Pro-forma</em> · <em>Recurring</em> · <em>Reminders</em> · Detail</td><td>L1–L2</td><td><span class="chip c-partial">8/15</span></td></tr>
+        <tr><td>Clients</td><td class="ev">List · Client 360 · Activity · <em>History</em> · <em>Contacts</em> · <em>Groups</em> · <em>Documents</em></td><td>L1–L2</td><td><span class="chip c-partial">2/7</span></td></tr>
+        <tr><td>Catalog</td><td class="ev">Products · Services · Categories · Pricing · Archived · VAT rates · Templates</td><td>L1–L2</td><td><span class="chip c-partial">1/7 · 6 partial, 0 none</span></td></tr>
         <tr><td>Reports</td><td class="ev">Revenue · Outstanding · Overdue · Invoices · Export · <em>Payments</em> · <em>VAT</em> · <em>Clients</em> · <em>Products</em></td><td>L2</td><td><span class="chip c-partial">3/9</span></td></tr>
         <tr><td>Company</td><td class="ev">Profile · Legal · VAT/BCE · Bank · Numbering · Defaults · <em>Terms</em> · <em>Branding</em> · <em>Documents</em></td><td>L1–L2</td><td><span class="chip c-gap">0/9</span></td></tr>
-        <tr><td>Billing</td><td class="ev"><em>Subscription · Plan · Usage · Invoices · Payment method · History · Change · Cancel</em></td><td>L3</td><td><span class="chip c-gap">0/8</span></td></tr>
+        <tr><td>Billing</td><td class="ev">Subscription · Plan · Usage — <em>endpoints ship, screens do not</em> · <em>Invoices · Payment method · History · Change · Cancel</em></td><td>L3</td><td><span class="chip c-gap">0/8 · stale, see §01</span></td></tr>
         <tr><td>Documents</td><td class="ev"><em>All · Folders · Invoice attachments · Client · Company · Archived · Trash</em></td><td>L2</td><td><span class="chip c-gap">0/7</span></td></tr>
         <tr><td>Explore</td><td class="ev">Filters · Activity search · <em>Global search</em> · <em>Saved searches</em> · <em>Document search</em></td><td>L6</td><td><span class="chip c-gap">0/5</span></td></tr>
         <tr><td>Activity</td><td class="ev">Audit log · User activity · <em>Notifications</em> · <em>Security events</em> · <em>System events</em></td><td>L1–L4</td><td><span class="chip c-partial">1/5</span></td></tr>
@@ -1093,33 +1251,40 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
   </div>
 
   <div class="sprint">
-    <div class="sprint__h"><span class="sprint__n">STEP 2</span><span class="sprint__t">Sprint 1 backend — all four items shipped</span></div>
-    <p>Backend-complete as of 2026-08-26; each still needs a screen wired to it:</p>
+    <div class="sprint__h"><span class="sprint__n">STEP 2</span><span class="sprint__t">Catch the frontend up to the backend</span><span class="chip c-partial">highest value</span></div>
+    <p>Every endpoint below exists, has a typed hook, and is consumed by nothing. This is the largest single block of value on the board and it needs no server work at all:</p>
     <ul class="task">
-      <li class="done"><b>BGEN-API-01</b> — <code>GET</code> + <code>PATCH /companies/{id}</code>, closing B3 and the permanent VAT typo</li>
-      <li class="done"><b>BGEN-API-02</b> — <code>?client_id</code>, <code>?target_id</code>, and <code>?status&amp;billing_type</code> on products</li>
-      <li class="done"><b>BGEN-API-04</b> — <code>GET /vat-rates</code>, <code>GET /pdf-templates</code></li>
-      <li class="done"><b>BGEN-OPS-02</b> — 30s vitest timeout; the frontend suite no longer flakes under load</li>
+      <li><b>saas</b> — <b>VAT report</b> · <code>useVatReport()</code> · must render <code>covers: "output_vat_only"</code> honestly — sales only, not a filable return</li>
+      <li><b>saas</b> — <b>Company edit form</b> · <code>useUpdateCompany()</code> + <code>useCompanyValidation()</code> · per-field VAT/IBAN/BIC verdicts inline, <code>missing_for_peppol</code> shown as what blocks e-invoicing</li>
+      <li><b>saas</b> — <b>Credit notes</b> · fully wired for months; cheapest feature on the board</li>
+      <li><b>saas</b> — <b>Client 360 header</b> · <code>useClientStats()</code> + <code>useClientTimeline()</code></li>
+      <li><b>saas</b> — <b>Payments and invoice reports</b> · <code>usePaymentsList()</code>, <code>useInvoiceReport()</code> · kill the browser-side aggregation</li>
+      <li><b>saas</b> — <b>Duplicate button</b>, <b>VAT-rate and template pickers</b>, <b>Catalog Services / Archived</b> · and delete the hardcoded <code>21/12/6/0</code></li>
     </ul>
   </div>
 
   <div class="sprint">
-    <div class="sprint__h"><span class="sprint__n">STEP 3</span><span class="sprint__t">Put the VAT report on a screen</span></div>
-    <p>The engine exists — <code>GET /reports/vat?period</code>, output VAT per (category, rate) with Belgian grid mapping. For the target customer this is the reason to own the software, and no screen renders it yet. The honest caveat travels with the payload: sales only, because the model has no purchases. See <a href="#backend">§04</a>, <code>BGEN-CORE-03</code>.</p>
+    <div class="sprint__h"><span class="sprint__n">STEP 3</span><span class="sprint__t">The entitlement UI — it gates everything commercial</span></div>
+    <p>In the working tree and uncommitted as of this revision: <code>entitlements.ts</code>, <code>UsagePanel</code>, <code>PlansPanel</code>, <code>UpgradeDialog</code>, <code>FeatureValue</code>, <code>EntitlementBoundary</code>. The shape to hold to (<a href="#entitlements">§16</a>):</p>
+    <ul class="task">
+      <li><b>saas</b> — one generic 402 handler at the React Query mutation boundary, reading <code>required_tier</code>, <code>feature</code> and <code>message</code> off the error. <strong>No per-feature payment logic anywhere in React</strong> — that is the whole point of the 402 contract</li>
+      <li><b>saas</b> — usage meters from <code>useEntitlements()</code>: "7 of 10 invoices this month", shown <em>before</em> the ceiling is hit</li>
+      <li><b>saas</b> — plan badges and disabled states from <code>features</code>. UX only: the server refuses independently</li>
+      <li><b>saas</b> — pricing screen from <code>usePlans()</code>; the full matrix is served, so there is no second copy to maintain in TypeScript</li>
+    </ul>
   </div>
 
   <div class="sprint">
     <div class="sprint__h"><span class="sprint__n">STEP 4</span><span class="sprint__t">Start email transport (B1)</span></div>
-    <p>Longest lead time and widest fan-out, so start it early and in dependency order: provider → password reset → verification → send-invoice → reminders. See <a href="#roadmap">Sprint 3</a>.</p>
+    <p>Longest lead time and widest fan-out, so start it early and in dependency order: provider → password reset → verification → send-invoice → reminders. It also unblocks seats: <code>Meter.SEATS</code> is in the matrix and reported on <code>/entitlements</code>, and nothing can consume it because there is no invite flow. Signup always creates a new org, so today every org has exactly one member. See <a href="#roadmap">Sprint 3</a>.</p>
   </div>
 
   <div class="sprint">
-    <div class="sprint__h"><span class="sprint__n">STEP 5</span><span class="sprint__t">The three brand decisions — all settled</span></div>
-    <p>All three are closed, each enforced by a guard test rather than a convention, because everything built afterward inherits them:</p>
+    <div class="sprint__h"><span class="sprint__n">STEP 5</span><span class="sprint__t">Decide the two open commercial questions</span><span class="chip c-partial">cheap now</span></div>
+    <p>Both are trivial to change today and expensive once a real subscription references them:</p>
     <ul class="task">
-      <li class="done"><b>BGEN-BRAND-01</b> — decided: tokens.css is the standard, emerald + Satoshi stay</li>
-      <li class="done"><b>BGEN-BRAND-02</b> — decided: top bar with a popup list per section, no sidebar</li>
-      <li class="done"><b>BGEN-BRAND-03</b> — decided: one custom SVG grammar, enforced by a guard test</li>
+      <li><b>naming</b> — <code>free / starter / business / business_pro</code> is final unless the fourth becomes <code>organization</code>. Renaming is a string change until a subscription row points at it</li>
+      <li><b>product</b> — <strong>what the Business Pro shell actually is.</strong> Decided in principle: the top tier's differentiator is an administration surface for the billing owner — several people under one bill — not a better VAT screen. Encoded as <code>team_administration: True</code> and <code>vat_report: "consolidated"</code>. <strong>Nothing renders either.</strong> Needs design: seats, per-entity usage, consolidated reporting, member management</li>
     </ul>
   </div>
 
@@ -1195,7 +1360,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
       <text class="bt" x="54" y="153">Information architecture registry</text>
       <text class="bp" x="54" y="168">frontend-react/src/scaffold/ia.ts</text>
       <text class="bs" x="470" y="153">Drives nav, routes, status badges and the scaffold treatment.</text>
-      <text class="bs" x="470" y="168">130 nodes · 22 wired · 41 partial · 67 none · 171 declared gaps</text>
+      <text class="bs" x="470" y="168">130 nodes · 115 leaves · 23 wired · 31 partial · 61 none · 170 declared gaps</text>
 
       <!-- 3 HTTP -->
       <path class="fl" d="M446 180 L446 224" marker-end="url(#ar)"/>
@@ -1203,7 +1368,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
       <rect class="bx" x="40" y="226" width="812" height="56"/>
       <text class="bt" x="54" y="246">api/</text>
       <text class="bs" x="54" y="262">routers/ · security/ (JWT) · middleware/ · integrations/</text>
-      <text class="bp" x="54" y="276">16 routers · 41 endpoints · FastAPI · Pydantic in, Pydantic out</text>
+      <text class="bp" x="54" y="276">17 routers · 55 endpoints · entitlements/ gates · FastAPI, Pydantic in and out</text>
 
       <!-- 4 DOMAIN -->
       <path class="fl" d="M446 282 L446 326" marker-end="url(#ar)"/>
@@ -1218,7 +1383,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
       <text class="bt" x="470" y="348">core/rules/ · core/models/</text>
       <text class="bs" x="470" y="365">currency_math · vat · numbering · discounts</text>
       <text class="bs" x="470" y="380">belgian_legal · identifiers · belgian_peppol</text>
-      <text class="bp" x="470" y="400">pure functions — 261 tests, zero I/O</text>
+      <text class="bp" x="470" y="400">pure functions — 298 tests, zero I/O</text>
       <path class="fl" d="M436 371 L452 371" marker-end="url(#ar)"/>
 
       <!-- 5 PERSISTENCE -->
@@ -1268,7 +1433,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
         <text class="bs" x="578" y="678" fill="var(--ink)">Job runner <tspan class="bp" fill="var(--gap)">recurring · reminders</tspan></text>
 
         <rect class="bx" x="826" y="656" width="254" height="34" stroke="var(--gap)" stroke-dasharray="4 3" fill="var(--gap-bg)"/>
-        <text class="bs" x="840" y="678" fill="var(--ink)">Subscription <tspan class="bp" fill="var(--gap)">B4 · all Billing</tspan></text>
+        <text class="bs" x="840" y="678" fill="var(--ink)">Checkout / MoR <tspan class="bp" fill="var(--partial)">B4 · matrix ships</tspan></text>
       </g>
       <path class="fl-gap" d="M446 610 L446 640" marker-end="url(#ar-gap)"/>
     </svg>
@@ -1277,7 +1442,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
   <h3>Reading the diagram</h3>
   <p>The load-bearing claim is band 2. <code>ia.ts</code> is not documentation — it is a typed registry that the router, the navigation and the status badges all read at runtime. A product area that is not a node in that file cannot be reached in any frontend, and a node marked anything other than <code>wired</code> renders through the deliberately-ugly scaffold kit so unbuilt surface can never be mistaken for finished work.</p>
 
-  <p>Bands 3 to 5 are the rule the whole backend is organised around, recorded in <a href="ADR-0001-three-layer.md">ADR-0001</a>: <strong>dependencies point inward and never back out.</strong> <code>core/</code> imports no framework — no FastAPI, no SQLAlchemy — which is why the 261 tests run without a server or a database. <code>api/</code> may import <code>core/</code>; <code>core/</code> may not import <code>api/</code>. Persistence is reached through abstract ports in <code>core/repository/</code>, which is what lets the same domain code run against SQLite on the desktop and Postgres in the cloud.</p>
+  <p>Bands 3 to 5 are the rule the whole backend is organised around, recorded in <a href="ADR-0001-three-layer.md">ADR-0001</a>: <strong>dependencies point inward and never back out.</strong> <code>core/</code> imports no framework — no FastAPI, no SQLAlchemy — which is why the 298 tests run without a server or a database. <code>api/</code> may import <code>core/</code>; <code>core/</code> may not import <code>api/</code>. Persistence is reached through abstract ports in <code>core/repository/</code>, which is what lets the same domain code run against SQLite on the desktop and Postgres in the cloud.</p>
 
   <p>The two facts worth carrying away from band 6: nothing in the product sends anything to anyone, and nothing stores a file. Every gap that looks like a missing screen in §14 resolves to one of those four boxes.</p>
 
@@ -1299,12 +1464,12 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
   <div class="grid g3">
     <div class="stat">
       <p class="stat__k">Declared gaps</p>
-      <p class="stat__v" style="color:var(--gap)">171</p>
-      <p class="stat__n">distinct, across 254 references</p>
+      <p class="stat__v" style="color:var(--gap)">170</p>
+      <p class="stat__n">distinct, across 181 references</p>
     </div>
     <div class="stat">
       <p class="stat__k">Nodes carrying debt</p>
-      <p class="stat__v" style="color:var(--partial)">93</p>
+      <p class="stat__v" style="color:var(--partial)">85</p>
       <p class="stat__n">of 130 nodes in <code>ia.ts</code></p>
     </div>
     <div class="stat">
@@ -1315,8 +1480,8 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
   </div>
 
   <div class="note">
-    <p><strong>Where this lives, and why it was invisible.</strong> Each node in <code>frontend-react/src/scaffold/ia.ts</code> carries an optional <code>missing: string[]</code> — the endpoints the server would have to grow for that screen to be real. 93 nodes carry one. That is machine-readable, it is enforced, and it is why a screen renders as a scaffold rather than as a lie.</p>
-    <p>What did not exist was the join. <a href="#path">§07</a> lists 38 punch items at engineering altitude — "list filters", "expose existing rules". <a href="#overview">§00</a> quotes 171 as a bare number. Neither told you which button on which screen was waiting on which endpoint. The tables below are that join, derived from <code>ia.ts</code>.</p>
+    <p><strong>Where this lives, and why it was invisible.</strong> Each node in <code>frontend-react/src/scaffold/ia.ts</code> carries an optional <code>missing: string[]</code> — the endpoints the server would have to grow for that screen to be real. 85 nodes carry one, down from 93. That is machine-readable, it is enforced, and it is why a screen renders as a scaffold rather than as a lie.</p>
+    <p>What did not exist was the join. <a href="#path">§07</a> lists 38 punch items at engineering altitude — "list filters", "expose existing rules". <a href="#overview">§00</a> quotes 170 as a bare number. Neither told you which button on which screen was waiting on which endpoint. The tables below are that join, derived from <code>ia.ts</code>.</p>
   </div>
 
   <h3>The ten endpoints that unblock the most screens</h3>
@@ -1326,22 +1491,23 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
     <table>
       <thead><tr><th class="num">Screens</th><th>Missing capability</th><th>Blocks</th><th>Punch item</th></tr></thead>
       <tbody>
-        <tr><td class="num">0</td><td><code>PATCH /companies/{id}</code></td><td class="ev"><strong>Shipped 2026-08-26.</strong> The endpoint no longer blocks the eight Company screens; wiring them to it is frontend work.</td><td class="ev"><code>BGEN-API-01</code> — closed</td></tr>
-        <tr><td class="num">7</td><td><code>GET /alerts</code></td><td class="ev">Financial overview · Revenue · Outstanding invoices · Overdue invoices · Recent activity · Quick actions · Alerts &amp; tasks</td><td class="ev">— <em>unassigned</em></td></tr>
-        <tr><td class="num">6</td><td><code>POST /invoices/{id}/send</code></td><td class="ev">Drafts · Issued · Sent · Overdue · Cancelled · Invoice detail &amp; lifecycle</td><td class="ev"><code>BGEN-INFRA-01</code> <span class="chip c-gap">B1</span></td></tr>
-        <tr><td class="num">0</td><td><code>GET /activity?target_id</code></td><td class="ev"><strong>Shipped 2026-08-26.</strong> Cleared Client 360 and Client activity. It did <em>not</em> clear Client history — that node was mis-scoped against this endpoint.</td><td class="ev"><code>BGEN-API-02</code> — closed</td></tr>
-        <tr><td class="num">4</td><td><code>Document</code> model + <code>CRUD /documents</code></td><td class="ev">Client documents · Company documents · Documents · All documents</td><td class="ev"><code>BGEN-INFRA-02</code> <span class="chip c-gap">B2</span></td></tr>
-        <tr><td class="num">4</td><td>Drafted legal text</td><td class="ev">Legal · Terms of Service · Privacy Policy · Cookie Policy</td><td class="ev"><code>BGEN-TRUST-05</code></td></tr>
-        <tr><td class="num">3</td><td><code>InvoiceStatus.SENT</code> + <code>GET /invoices?status=sent</code></td><td class="ev">Drafts · Issued · Sent — the status filter renders, nothing answers it</td><td class="ev"><code>BGEN-API-02</code></td></tr>
-        <tr><td class="num">3</td><td><code>POST /invoices/{id}/duplicate</code></td><td class="ev">Overdue · Cancelled · Invoice detail &amp; lifecycle</td><td class="ev">— <em>unassigned</em></td></tr>
-        <tr><td class="num">1</td><td><code>GET /clients/{id}/stats</code></td><td class="ev">Client 360's totals strip. <code>GET /invoices?client_id</code> shipped 2026-08-26 and left this row.</td><td class="ev"><code>BGEN-SAAS-03</code></td></tr>
-        <tr><td class="num">3</td><td><code>GET /reports/vat?period</code></td><td class="ev">VAT return · VAT reports · Tax summary. All inputs are in the DB.</td><td class="ev"><code>BGEN-CORE-03</code></td></tr>
+        <tr><td class="num">3</td><td>blob storage</td><td class="ev">Client documents · Branding · Company documents</td><td class="ev"><code>BGEN-INFRA-02</code> <span class="chip c-gap">B2</span></td></tr>
+        <tr><td class="num">3</td><td><code>Document</code> model + <code>CRUD /documents</code></td><td class="ev">Client documents · Company documents · All documents</td><td class="ev"><code>BGEN-INFRA-02</code> <span class="chip c-gap">B2</span></td></tr>
+        <tr><td class="num">3</td><td>Drafted legal text</td><td class="ev">Terms of Service · Privacy Policy · Cookie Policy</td><td class="ev"><code>BGEN-TRUST-05</code></td></tr>
+        <tr><td class="num">2</td><td><code>POST /invoices/{id}/send</code></td><td class="ev">Sent · Invoice detail &amp; lifecycle</td><td class="ev"><code>BGEN-INFRA-01</code> <span class="chip c-gap">B1</span></td></tr>
+        <tr><td class="num">2</td><td>email transport</td><td class="ev">Payment reminders · Contact support</td><td class="ev"><code>BGEN-INFRA-01</code> <span class="chip c-gap">B1</span></td></tr>
+        <tr><td class="num">2</td><td>Quote PDF template</td><td class="ev">Quotes · Pro-forma invoices</td><td class="ev"><code>BGEN-CORE-04</code></td></tr>
+        <tr><td class="num">2</td><td><code>GET /reports/clients</code></td><td class="ev">Client 360 · Clients reporting</td><td class="ev">— <em>unassigned</em></td></tr>
+        <tr><td class="num">2</td><td>Written content source</td><td class="ev">Tutorials · FAQ</td><td class="ev">— <em>not an engineering item</em></td></tr>
+        <tr><td class="num">1</td><td><code>GET /alerts</code></td><td class="ev">Alerts &amp; tasks. Scoped down from seven screens in v0.8: the other six were the dashboard's own nodes, which are wired.</td><td class="ev"><code>BGEN-API-06</code> <span class="chip c-partial">now tracked</span></td></tr>
+        <tr><td class="num">1</td><td><code>InvoiceStatus.SENT</code> · <code>?status=sent</code> · tracking</td><td class="ev">Sent · Viewed — the status filters render and nothing answers them</td><td class="ev"><code>BGEN-INFRA-01</code> <span class="chip c-gap">B1</span></td></tr>
       </tbody>
     </table>
   </div>
 
   <div class="note note--warn">
-    <p><strong>Two of the top ten have no punch item.</strong> <code>GET /alerts</code> blocks seven screens — the entire dashboard's right-hand column — and appears nowhere in §07. <code>POST /invoices/{id}/duplicate</code> blocks three. Both should be added to the punch list before the next sprint is scoped, or they will keep being skipped by a planning pass that reads §07 and not <code>ia.ts</code>.</p>
+    <p><strong>Both v0.8 orphans are closed.</strong> <code>POST /invoices/{id}/duplicate</code> shipped, and <code>GET /alerts</code> is now <code>BGEN-API-06</code> in <a href="#path">§07</a>.</p>
+    <p><strong>Read the fan-out column carefully — it fell, and not because work was done.</strong> v0.8 counted a section node's debt against each of its children, so <code>GET /alerts</code> read as seven screens. This table counts only the nodes that actually declare the capability. The debt did not shrink by six screens; the measurement got stricter. What the flattened numbers show is the real shape: <strong>no single missing endpoint blocks more than three screens any more.</strong> There is no keystone left to pull. What is left is B1, B2, and a long tail — which is a worse position for a planner and a better one for the product, because it means the structural work is finished.</p>
   </div>
 
   <h3>Client 360 — built 2026-08-26</h3>
@@ -1375,7 +1541,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
   <div class="sechead">
     <span class="sechead__id">§15</span>
     <h2>Repo Map</h2>
-    <p class="sechead__sub">What every directory is for, and the record of what was removed on 2026-08-26.</p>
+    <p class="sechead__sub">What every directory is for, and the record of what was removed on 2026-08-26. 478 tracked files.</p>
   </div>
 
   <p class="lede">A repository that cannot be read cheaply is a repository that gets misread. This section names the purpose of every top-level directory, so nothing in the tree is unexplained, and records what left.</p>
@@ -1387,17 +1553,17 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
     <table>
       <thead><tr><th>Path</th><th class="num">Files</th><th>What it is</th><th>What breaks without it</th></tr></thead>
       <tbody>
-        <tr><td><code>core/</code></td><td class="num">80</td><td class="ev"><strong>Layer 1 — the product's actual logic.</strong> Money arithmetic, Belgian VAT, gapless invoice numbering, legal mentions, Peppol XML, PDF rendering, the legacy importer. Imports no web framework and no ORM.</td><td class="ev">Everything. This is the finished half of the product and the reason §01 reads 18% rather than 0%.</td></tr>
-        <tr><td><code>api/</code></td><td class="num">49</td><td class="ev"><strong>Layer 2 — the HTTP boundary.</strong> 16 routers, 41 endpoints, JWT auth, middleware. Translates JSON into domain calls and back.</td><td class="ev">No frontend can reach the domain. <code>core/</code> would still pass its tests.</td></tr>
-        <tr><td><code>db/</code></td><td class="num">29</td><td class="ev">SQLAlchemy models and the Alembic migration history. The concrete implementation behind <code>core/repository/</code>'s abstract ports.</td><td class="ev">Nothing persists. The domain would run entirely in memory.</td></tr>
-        <tr><td><code>tests/</code></td><td class="num">45</td><td class="ev">219 backend tests. Includes the palette guard test and the icon-grammar guard test, both build-failing.</td><td class="ev">The brand decisions at <code>4e39460</code> and <code>81d2c66</code> become suggestions rather than rules.</td></tr>
-        <tr><td><code>henrioutai-ui/</code></td><td class="num">85</td><td class="ev"><strong>The design system, and the only place components are edited.</strong> 72 components, <code>tokens.css</code>, three vendored font files. Its own package, MIT, public-ready.</td><td class="ev">Every frontend loses its component vocabulary. <code>@billgen/ui</code> re-exports this; it holds nothing of its own.</td></tr>
-        <tr><td><code>frontend-react/</code></td><td class="num">50</td><td class="ev"><strong>Holds <code>src/scaffold/ia.ts</code> — the source of truth</strong> for nav, routes, status and the 171 gaps in §14. Also the scaffold kit that renders unwired areas as deliberately ugly.</td><td class="ev">No frontend knows what screens exist. This is the highest-leverage file in the repository.</td></tr>
-        <tr><td><code>frontend-saas/</code></td><td class="num">19</td><td class="ev">L3, the active surface. React 19 + Vite + react-router. Thin — it composes <code>henrioutai-ui</code> against <code>ia.ts</code>.</td><td class="ev">The web product. Thin by design: the weight lives in the two directories above.</td></tr>
+        <tr><td><code>core/</code></td><td class="num">81</td><td class="ev"><strong>Layer 1 — the product's actual logic.</strong> Money arithmetic, Belgian VAT, gapless invoice numbering, legal mentions, Peppol XML, PDF rendering, the legacy importer. Imports no web framework and no ORM.</td><td class="ev">Everything. This is the finished half of the product and the reason §01 reads 20% rather than 0%.</td></tr>
+        <tr><td><code>api/</code></td><td class="num">60</td><td class="ev"><strong>Layer 2 — the HTTP boundary.</strong> 17 routers, 55 endpoints, JWT auth, middleware — and <code>api/entitlements/</code>, the commercial matrix. Translates JSON into domain calls and back, and decides whether the caller's plan permits the call.</td><td class="ev">No frontend can reach the domain. <code>core/</code> would still pass its tests.</td></tr>
+        <tr><td><code>db/</code></td><td class="num">30</td><td class="ev">SQLAlchemy models and the Alembic migration history. The concrete implementation behind <code>core/repository/</code>'s abstract ports.</td><td class="ev">Nothing persists. The domain would run entirely in memory.</td></tr>
+        <tr><td><code>tests/</code></td><td class="num">51</td><td class="ev">298 backend tests. Includes the palette guard test and the icon-grammar guard test, both build-failing.</td><td class="ev">The brand decisions at <code>4e39460</code> and <code>81d2c66</code> become suggestions rather than rules.</td></tr>
+        <tr><td><code>henrioutai-ui/</code></td><td class="num">87</td><td class="ev"><strong>The design system, and the only place components are edited.</strong> 74 exports, <code>tokens.css</code>, three vendored font files. Its own package, MIT, public-ready.</td><td class="ev">Every frontend loses its component vocabulary. <code>@billgen/ui</code> re-exports this; it holds nothing of its own.</td></tr>
+        <tr><td><code>frontend-react/</code></td><td class="num">61</td><td class="ev"><strong>Holds <code>src/scaffold/ia.ts</code> — the source of truth</strong> for nav, routes, status and the 170 gaps in §14. Also the scaffold kit that renders unwired areas as deliberately ugly.</td><td class="ev">No frontend knows what screens exist. This is the highest-leverage file in the repository.</td></tr>
+        <tr><td><code>frontend-saas/</code></td><td class="num">20</td><td class="ev">L3, the active surface. React 19 + Vite + react-router. Thin — it composes <code>henrioutai-ui</code> against <code>ia.ts</code>.</td><td class="ev">The web product. Thin by design: the weight lives in the two directories above.</td></tr>
         <tr><td><code>frontend-electron/</code></td><td class="num">39</td><td class="ev">L4, the Tauri desktop shell. Own local SQLite in <code>%APPDATA%</code>, auto-login, no sync. Despite the name it is Tauri, not Electron.</td><td class="ev">The desktop product. Currently mounts 17 components and consumes no IA.</td></tr>
-        <tr><td><code>infra/</code> · <code>desktop/</code> · <code>scripts/</code></td><td class="num">12</td><td class="ev">Compose and deployment config; the desktop packaging target; two generators — <code>generate_brand_assets.py</code> (writes <code>assets/brand/</code>) and <code>generate_peppol_samples.py</code>.</td><td class="ev">Deployment and asset regeneration become manual.</td></tr>
+        <tr><td><code>infra/</code> · <code>desktop/</code> · <code>scripts/</code></td><td class="num">13</td><td class="ev">Compose and deployment config; the desktop packaging target; two generators — <code>generate_brand_assets.py</code> (writes <code>assets/brand/</code>) and <code>generate_peppol_samples.py</code>.</td><td class="ev">Deployment and asset regeneration become manual.</td></tr>
         <tr><td><code>assets/brand/</code></td><td class="num">1</td><td class="ev">Generated output, not a source. <code>billgen-mark.svg</code> is written by the script above from the vector geometry at <code>92e5f07</code>.</td><td class="ev">Regenerate it. Never hand-edit it.</td></tr>
-        <tr><td><code>docs/</code></td><td class="num">15</td><td class="ev">This document, four ADRs, the token standard, the IA roadmap, and three working specs. <strong>Down from 356 files.</strong></td><td class="ev">The decision record. ADRs in particular are superseded by writing new ones, never by deletion.</td></tr>
+        <tr><td><code>docs/</code></td><td class="num">18</td><td class="ev">This document, four ADRs, the token standard, the IA roadmap, and three working specs. <strong>Down from 356 files.</strong></td><td class="ev">The decision record. ADRs in particular are superseded by writing new ones, never by deletion.</td></tr>
         <tr><td><code>var/</code> · <code>backups/</code></td><td class="num">—</td><td class="ev">Runtime data. Dev SQLite and the local backup target. Gitignored.</td><td class="ev">Nothing — both are regenerated on demand.</td></tr>
       </tbody>
     </table>
@@ -1439,7 +1605,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
     <div class="stat">
       <p class="stat__k">Files removed</p>
       <p class="stat__v" style="color:var(--done)">341</p>
-      <p class="stat__n">783 tracked → 442</p>
+      <p class="stat__n">783 tracked → 442 · 478 today</p>
     </div>
     <div class="stat">
       <p class="stat__k">Readable text removed</p>
@@ -1486,11 +1652,241 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
   </div>
 </section>
 
+<!-- =========================================== ENTITLEMENT LAYER -->
+<section id="entitlements">
+  <div class="sechead">
+    <span class="sechead__id">§16</span>
+    <h2>Entitlement Layer (B4)</h2>
+    <p class="sechead__sub">What each plan may do, where that is decided, and what still has no screen.</p>
+  </div>
+
+  <p class="lede">B4 was the last of the four hard blockers with no code behind it. It now has a complete server implementation and no user interface whatsoever — which makes it the clearest example of this revision's central fact: the backend is ahead of the product.</p>
+
+  <div class="grid g3">
+    <div class="stat">
+      <p class="stat__k">Tiers</p>
+      <p class="stat__v">4</p>
+      <p class="stat__n">free · starter · business · business_pro</p>
+    </div>
+    <div class="stat">
+      <p class="stat__k">Meters</p>
+      <p class="stat__v">6</p>
+      <p class="stat__n">2 flow · 4 stock</p>
+    </div>
+    <div class="stat">
+      <p class="stat__k">Gated features</p>
+      <p class="stat__v">23</p>
+      <p class="stat__n">boolean or graded</p>
+    </div>
+    <div class="stat">
+      <p class="stat__k">Screens rendering any of it</p>
+      <p class="stat__v" style="color:var(--gap)">0</p>
+      <p class="stat__n">panels exist, uncommitted</p>
+    </div>
+  </div>
+
+  <div class="note">
+    <p><strong>The one architectural rule.</strong> <code>api/entitlements/matrix.py</code> is the only place a tier name maps to a capability, and <strong><code>core/</code> may not import it.</strong> The domain knows how to create an invoice; this layer decides whether the caller's subscription permits the call. That separation is what lets a price or quota change ship without touching domain code — and it is the same inward-pointing dependency rule as <a href="ADR-0001-three-layer.md">ADR-0001</a>, applied to commerce.</p>
+  </div>
+
+  <h3>Quotas — what each tier may hold</h3>
+  <p><strong>Flow</strong> meters reset every calendar month. <strong>Stock</strong> meters are a standing total. <code>∞</code> is unlimited.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Meter</th><th>Kind</th><th class="num">Free</th><th class="num">Starter</th><th class="num">Business</th><th class="num">Business Pro</th></tr></thead>
+      <tbody>
+        <tr><td>Invoices</td><td class="ev">flow · per month</td><td class="num">10</td><td class="num">50</td><td class="num">250</td><td class="num">1000</td></tr>
+        <tr><td>Peppol documents</td><td class="ev">flow · per month</td><td class="num">5</td><td class="num">30</td><td class="num">100</td><td class="num">500</td></tr>
+        <tr><td>Clients</td><td class="ev">stock</td><td class="num">10</td><td class="num">100</td><td class="num">1000</td><td class="num">∞</td></tr>
+        <tr><td>Products</td><td class="ev">stock</td><td class="num">10</td><td class="num">100</td><td class="num">1000</td><td class="num">∞</td></tr>
+        <tr><td>Companies</td><td class="ev">stock</td><td class="num">1</td><td class="num">1</td><td class="num">3</td><td class="num">10</td></tr>
+        <tr><td>Seats</td><td class="ev">stock · <span class="chip c-gap">unenforced</span></td><td class="num">1</td><td class="num">1</td><td class="num">3</td><td class="num">10</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Features — where the tiers actually differ</h3>
+  <p>A graded value (<code>basic</code> / <code>full</code> / <code>advanced</code> / <code>consolidated</code>) is read by the frontend to pick a variant. The backend enforces the booleans and the meters only.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Feature</th><th>Free</th><th>Starter</th><th>Business</th><th>Business Pro</th></tr></thead>
+      <tbody>
+        <tr><td>Credit notes · PDF export · backup · restore</td><td><span class="chip c-done">yes</span></td><td><span class="chip c-done">yes</span></td><td><span class="chip c-done">yes</span></td><td><span class="chip c-done">yes</span></td></tr>
+        <tr><td>Peppol export</td><td><span class="chip c-done">yes</span></td><td><span class="chip c-done">yes</span></td><td><span class="chip c-done">yes</span></td><td><span class="chip c-done">yes</span></td></tr>
+        <tr><td><code>pdf_remove_branding</code></td><td><span class="chip c-gap">no</span></td><td><span class="chip c-done">yes</span></td><td><span class="chip c-done">yes</span></td><td><span class="chip c-done">yes</span></td></tr>
+        <tr><td><code>vat_report</code></td><td class="ev">basic</td><td class="ev">full</td><td class="ev">advanced</td><td class="ev"><strong>consolidated</strong></td></tr>
+        <tr><td><code>recurring_invoices</code></td><td><span class="chip c-gap">no</span></td><td><span class="chip c-done">yes</span></td><td><span class="chip c-done">yes</span></td><td><span class="chip c-done">yes</span></td></tr>
+        <tr><td><code>multi_company</code> · <code>company_level_settings</code></td><td><span class="chip c-gap">no</span></td><td><span class="chip c-gap">no</span></td><td><span class="chip c-done">yes</span></td><td><span class="chip c-done">yes</span></td></tr>
+        <tr><td><code>roles_permissions</code></td><td><span class="chip c-gap">no</span></td><td><span class="chip c-gap">no</span></td><td class="ev">yes</td><td class="ev">advanced</td></tr>
+        <tr><td><code>team_administration</code></td><td><span class="chip c-gap">no</span></td><td><span class="chip c-gap">no</span></td><td><span class="chip c-gap">no</span></td><td><span class="chip c-done">the differentiator</span></td></tr>
+        <tr><td><code>accountant_export</code></td><td><span class="chip c-gap">no</span></td><td class="ev">csv</td><td class="ev">structured</td><td class="ev">full</td></tr>
+        <tr><td><code>priority_support</code></td><td><span class="chip c-gap">no</span></td><td><span class="chip c-gap">no</span></td><td><span class="chip c-done">yes</span></td><td><span class="chip c-done">yes</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <p><strong>What is deliberately <em>not</em> an upsell.</strong> Credit notes, PDF export, backup, restore and legacy import are on every tier including Free. Correcting an invoice and owning your own data are not features to be sold — a free user who cannot issue a credit note has been handed a legal problem, and a free user who cannot export has been locked in. Peppol export is universal for the same reason: Belgium mandates structured e-invoicing for B2B from 2026, and metering the <em>volume</em> is legitimate where withholding the <em>capability</em> is not.</p>
+  </div>
+
+  <h3>The four design decisions worth keeping</h3>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th class="id">#</th><th>Decision</th><th>Why it is built this way</th></tr></thead>
+      <tbody>
+        <tr><td class="id">E-01</td><td><strong>Usage is derived, never accumulated</strong></td><td class="ev">Every meter is a <code>COUNT(*)</code> over rows that already exist, filtered on <code>created_at</code> for flow meters. There is no counter column, so there is no counter to drift: a restore, a legacy import, a deleted draft or a manual DB fix all move the number correctly and automatically. An incremented counter would need repairing by hand after any of those. Peppol documents are the one meter with no table of their own and are counted from the append-only audit log.</td></tr>
+        <tr><td class="id">E-02</td><td><strong>402 means commercially unavailable; 403 means not authorized</strong></td><td class="ev">One uniform body — <code>error</code>, <code>required_tier</code>, <code>feature</code>, <code>message</code> — and <code>isEntitlementError(err)</code> on the client. Only a 402 may open an upgrade modal. The consequence for the frontend is strict: <strong>one handler at the query boundary, and no per-feature payment logic anywhere in React.</strong></td></tr>
+        <tr><td class="id">E-03</td><td><strong>Quotas refuse creation only</strong></td><td class="ev">Reading, editing, exporting or correcting something that already exists is never refused for a quota reason. An over-limit tenant keeps every record; only new creation stops. A customer's own business records are not put behind a paywall — which is also what makes a lapsed subscription a survivable state rather than a hostage situation.</td></tr>
+        <tr><td class="id">E-04</td><td><strong>The allowance is spent at draft creation, not at issue</strong></td><td class="ev">Issuing is legally load-bearing — it consumes a gapless number and produces a document with statutory force — so it must never fail for a commercial reason. Charging the slot to the draft moves the refusal to the harmless end of the lifecycle. A deleted draft frees its slot, which E-01 makes automatic.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <details>
+    <summary>The concurrency guard, and the one thing it has not proven</summary>
+    <div class="det-body">
+      <p><code>quota_guard</code> is a context manager that takes a row lock on the organization <em>before</em> counting and holds it until the endpoint body's own transaction has landed. Without it the naive shape — read 49, return, create, and someone else also read 49 — lets two concurrent requests both create the 50th invoice. Every quota check for one tenant serialises on that single row; different tenants never contend.</p>
+      <p class="lede" style="font-size:15px"><strong>It is unproven.</strong> <code>with_for_update()</code> is a no-op on SQLite — one connection behind a <code>StaticPool</code>, which is what both the desktop build and the entire test suite run on. It becomes a real <code>FOR UPDATE</code> only on Postgres. The CI workflow runs the Python suite twice, once on each, and <strong>CI has never executed</strong> because the repo has never been pushed (<code>BGEN-OPS-01</code>). The same asymmetry, for the same reason, applies to the gapless numbering lock. A red first run would be information, not a regression.</p>
+    </div>
+  </details>
+
+  <h3>What has no screen</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Surface</th><th>What the server already provides</th><th>State</th></tr></thead>
+      <tbody>
+        <tr><td>Upgrade modal on 402</td><td class="ev"><code>required_tier</code>, <code>feature</code>, <code>message</code> on a uniform error body</td><td><span class="chip c-partial">in the working tree</span></td></tr>
+        <tr><td>Usage meters</td><td class="ev"><code>GET /entitlements</code> — used, limit and period per meter</td><td><span class="chip c-partial">in the working tree</span></td></tr>
+        <tr><td>Pricing / plan matrix</td><td class="ev"><code>GET /plans</code> — the full matrix, so there is no second copy in TypeScript</td><td><span class="chip c-partial">in the working tree</span></td></tr>
+        <tr><td>Plan badges &amp; graded variants</td><td class="ev"><code>features</code> map, boolean or graded</td><td><span class="chip c-partial">helpers only</span></td></tr>
+        <tr><td>Checkout / Merchant-of-Record</td><td class="ev">An adapter that writes <code>SubscriptionRow</code>; <code>resolve_tier()</code> already prefers it over <code>Organization.plan_tier</code> when its status is active, trialing or past_due</td><td><span class="chip c-gap">deliberately deferred</span></td></tr>
+        <tr><td>Seat invitations</td><td class="ev"><code>Meter.SEATS</code> is in the matrix and reported</td><td><span class="chip c-gap">blocked on B1</span></td></tr>
+        <tr><td>The Business Pro shell</td><td class="ev"><code>team_administration</code> and <code>vat_report: "consolidated"</code></td><td><span class="chip c-gap">undesigned</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note note--warn">
+    <p><strong>Two watch items.</strong> <code>PdfService(branded=…)</code> <strong>defaults to <code>True</code></strong> — a new call site that forgets to pass it shows the free-tier footer rather than silently giving away a paid feature. Keep that default if the constructor is ever refactored. And <strong>roles are modelled but unenforced</strong>: a <code>viewer</code> can void an invoice today. When roles are enforced they must also be gated, since <code>roles_permissions</code> is Business+ — the two have to land together or the enforcement leaks a paid feature to Free.</p>
+  </div>
+
+  <div class="note note--stop">
+    <p><strong>The one legal item that cannot be coded around.</strong> The downgrade and lapsed-subscription <em>behaviour</em> is settled and tested (E-03: keep every record, refuse only new creation). The downgrade <em>contract</em> — how long data is retained after cancellation, and on what basis — belongs in the DPA, and the DPA does not exist (<code>CMP-10</code>). No cancellation flow should be built before it does.</p>
+  </div>
+</section>
+
 <footer>
-  BillGen System Architecture · generated 2026-08-25 against <code>9984869</code> ·
-  counts derived from <code>frontend-react/src/scaffold/ia.ts</code> ·
-  regenerate with <code>npx vitest run --root frontend-react src/scaffold/report.test.ts</code>
+  BillGen System Architecture v0.9 · regenerated 2026-08-26 against <code>aef79c3</code> ·
+  IA counts derived from <code>frontend-react/src/scaffold/ia.ts</code>, endpoint counts read from <code>api/routers/</code> ·
+  regenerate the IA report with <code>npx vitest run --root frontend-react src/scaffold/report.test.ts</code>
 </footer>
 
 </main>
 </div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ------------------------------------------------------------- theme
+     Light is the default. A stored choice wins; otherwise the OS
+     preference decides once, and clicking pins it. */
+  const root = document.documentElement;
+  const stored = (() => { try { return localStorage.getItem("billgen-arch-theme"); } catch { return null; } })();
+  const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  root.setAttribute("data-theme", stored || (prefersDark ? "dark" : "light"));
+
+  const tt = document.getElementById("tt");
+  tt.addEventListener("click", () => {
+    const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("billgen-arch-theme", next); } catch {}
+  });
+
+  /* --------------------------------------------------- the active card
+     One card in the rail, kept in sync with what is on screen. The full
+     list stays available behind the toggle for jumping across the doc. */
+  const links = Array.from(document.querySelectorAll("#rail-list a"));
+  const groups = new Map();
+  let group = "";
+  for (const node of document.getElementById("rail-list").children) {
+    if (node.classList.contains("rail__group")) group = node.textContent;
+    else if (node.tagName === "A") groups.set(node.getAttribute("href").slice(1), group);
+  }
+
+  const sections = links
+    .map((a) => document.getElementById(a.getAttribute("href").slice(1)))
+    .filter(Boolean);
+
+  const el = {
+    group: document.getElementById("nc-group"),
+    id: document.getElementById("nc-id"),
+    pos: document.getElementById("nc-pos"),
+    title: document.getElementById("nc-title"),
+    sub: document.getElementById("nc-sub"),
+    bar: document.getElementById("railbar"),
+  };
+
+  let current = -1;
+
+  const render = (i) => {
+    if (i === current || i < 0 || i >= sections.length) return;
+    current = i;
+    const s = sections[i];
+    const head = s.querySelector(".sechead");
+    el.group.textContent = groups.get(s.id) || "";
+    el.id.textContent = head?.querySelector(".sechead__id")?.textContent || "";
+    el.title.textContent = head?.querySelector("h1, h2")?.textContent || s.id;
+    el.sub.textContent = head?.querySelector(".sechead__sub")?.textContent || "";
+    el.pos.textContent = (i + 1) + " / " + sections.length;
+    el.bar.style.width = (((i + 1) / sections.length) * 100).toFixed(1) + "%";
+    links.forEach((a, n) => a.classList.toggle("is-active", n === i));
+  };
+
+  /* Scroll position, not intersection ratio: with sections this tall the
+     one crossing a line a third down the viewport is the one being read. */
+  const spy = () => {
+    const line = window.scrollY + window.innerHeight * 0.3;
+    let i = 0;
+    for (let n = 0; n < sections.length; n++) {
+      if (sections[n].offsetTop <= line) i = n;
+    }
+    render(i);
+  };
+
+  let ticking = false;
+  window.addEventListener("scroll", () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => { spy(); ticking = false; });
+  }, { passive: true });
+  window.addEventListener("resize", spy, { passive: true });
+  spy();
+  render(current < 0 ? 0 : current);
+
+  const go = (i) => {
+    const n = Math.max(0, Math.min(sections.length - 1, i));
+    sections[n].scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  document.getElementById("nc-prev").addEventListener("click", () => go(current - 1));
+  document.getElementById("nc-next").addEventListener("click", () => go(current + 1));
+
+  const toggle = document.getElementById("rail-toggle");
+  const list = document.getElementById("rail-list");
+  toggle.addEventListener("click", () => {
+    const open = toggle.getAttribute("aria-expanded") === "true";
+    toggle.setAttribute("aria-expanded", String(!open));
+    list.hidden = open;
+  });
+  /* Picking a destination collapses the list again — the card takes over. */
+  list.addEventListener("click", (e) => {
+    if (e.target.closest("a")) {
+      toggle.setAttribute("aria-expanded", "false");
+      list.hidden = true;
+    }
+  });
+})();
+</script>
