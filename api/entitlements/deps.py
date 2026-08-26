@@ -30,6 +30,7 @@ from core.tenancy import current_organization_id
 from . import service
 from .matrix import Meter
 from .service import Entitlements
+from .usage import peppol_already_counted
 
 
 def _organization_id(request: Request) -> UUID:
@@ -100,5 +101,33 @@ __all__ = [
     "get_entitlements",
     "pdf_branded",
     "require_feature",
+    "require_peppol_quota",
     "require_quota",
 ]
+
+
+def require_peppol_quota(request: Request, invoice_id: UUID) -> Iterator[None]:
+    """The Peppol allowance, which counts *documents* rather than clicks.
+
+    Re-exporting an invoice that already consumed a slot this period is free,
+    even when the allowance is otherwise spent: the customer is downloading a
+    document they have already paid for. Only a new invoice draws down the
+    meter. `invoice_id` is resolved by FastAPI from the path, which is why this
+    one cannot be built by `require_quota` — that factory has no idea what is
+    being exported.
+    """
+    if _exempt(request):
+        yield
+        return
+
+    organization_id = _organization_id(request)
+    session_factory = request.app.state.session_factory
+    with session_factory() as session:
+        if peppol_already_counted(session, organization_id, invoice_id):
+            yield
+            return
+
+    with session_factory() as session, service.quota_guard(
+        session, organization_id, Meter.PEPPOL_DOCUMENTS
+    ):
+        yield

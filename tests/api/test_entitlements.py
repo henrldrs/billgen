@@ -254,21 +254,46 @@ async def test_pdf_branding_follows_the_tier(client, tier, expect_footer):
     assert ('<div class="brand-footer">' in html.text) is expect_footer
 
 
-async def test_peppol_document_allowance_is_metered(client):
-    """Peppol is on every tier — it is the Belgian differentiator, not an
-    upsell — but the monthly document allowance applies."""
+async def test_peppol_allowance_counts_documents_not_downloads(client):
+    """Peppol is on every tier — the Belgian differentiator, not an upsell —
+    but the monthly allowance applies. It counts *distinct invoices*: exporting
+    the same invoice again is free, because it is a document the customer has
+    already paid for. Losing a download must never cost money."""
     headers, company, record = await free_org(client)
-    invoice = await create_invoice(client, headers, company["id"], record["id"])
+    invoices = [
+        await create_invoice(client, headers, company["id"], record["id"])
+        for _ in range(6)
+    ]
 
-    for _ in range(5):
+    for invoice in invoices[:5]:
         ok = await client.get(f"/invoices/{invoice['id']}/peppol.xml", headers=headers)
         assert ok.status_code == 200, ok.text
 
-    blocked = await client.get(f"/invoices/{invoice['id']}/peppol.xml", headers=headers)
+    usage = {
+        item["meter"]: item
+        for item in (await client.get("/entitlements", headers=headers)).json()["usage"]
+    }
+    assert usage["peppol_documents"]["used"] == 5
+    assert usage["peppol_documents"]["remaining"] == 0
+
+    # A sixth *invoice* is refused...
+    blocked = await client.get(f"/invoices/{invoices[5]['id']}/peppol.xml", headers=headers)
     assert blocked.status_code == 402
     assert blocked.json()["feature"] == "peppol_documents"
     assert blocked.json()["limit"] == 5
     assert blocked.json()["required_tier"] == "starter"
+
+    # ...while re-downloading any of the five still works, and does not move
+    # the meter.
+    for invoice in invoices[:5]:
+        again = await client.get(f"/invoices/{invoice['id']}/peppol.xml", headers=headers)
+        assert again.status_code == 200, again.text
+
+    after = {
+        item["meter"]: item
+        for item in (await client.get("/entitlements", headers=headers)).json()["usage"]
+    }
+    assert after["peppol_documents"]["used"] == 5
 
 
 # ── the 402 contract ───────────────────────────────────────────────────────

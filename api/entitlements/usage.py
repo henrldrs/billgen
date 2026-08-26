@@ -119,8 +119,13 @@ def count_used(
         return int(session.execute(stmt).scalar_one())
 
     if meter is Meter.PEPPOL_DOCUMENTS:
+        # DISTINCT on the invoice, not a count of export actions. "5 Peppol
+        # documents" is how a customer thinks about it: five invoices sent, not
+        # five clicks. Re-downloading a file you already exported this period
+        # must not burn a second slot — losing a download should never cost
+        # money. See `peppol_already_counted`.
         stmt = (
-            select(func.count())
+            select(func.count(func.distinct(AuditLogRow.target_id)))
             .select_from(AuditLogRow)
             .where(
                 AuditLogRow.organization_id == organization_id,
@@ -132,3 +137,26 @@ def count_used(
         return int(session.execute(stmt).scalar_one())
 
     raise ValueError(f"No usage source for meter {meter}")  # pragma: no cover
+
+
+def peppol_already_counted(
+    session: Session, organization_id: UUID, invoice_id: UUID, period: str | None = None
+) -> bool:
+    """Has this invoice already consumed a Peppol slot in this period?
+
+    If so the export is free, even at the cap: the allowance counts documents,
+    and this document is already one of them.
+    """
+    start, end = period_bounds(period or current_period())
+    stmt = (
+        select(AuditLogRow.id)
+        .where(
+            AuditLogRow.organization_id == organization_id,
+            AuditLogRow.action == "export_peppol",
+            AuditLogRow.target_id == invoice_id,
+            AuditLogRow.timestamp >= start,
+            AuditLogRow.timestamp <= end,
+        )
+        .limit(1)
+    )
+    return session.execute(stmt).first() is not None

@@ -6,7 +6,13 @@ this layer decides whether the caller's plan allows the call. See
 (subscription / entitlement / usage).
 """
 
-from .deps import get_entitlements, pdf_branded, require_feature, require_quota
+from .deps import (
+    get_entitlements,
+    pdf_branded,
+    require_feature,
+    require_peppol_quota,
+    require_quota,
+)
 from .errors import EntitlementError, EntitlementRequiredError, UsageLimitReachedError
 from .matrix import FEATURES, QUOTAS, Meter, MeterKind
 from .service import Entitlements, meter_usage, resolve
@@ -27,6 +33,7 @@ __all__ = [
     "meter_usage",
     "pdf_branded",
     "require_feature",
+    "require_peppol_quota",
     "require_quota",
     "resolve",
 ]

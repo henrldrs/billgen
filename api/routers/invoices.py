@@ -8,7 +8,7 @@ from core.repository import UnitOfWork
 from core.services import InvoiceService, PdfService, PeppolService
 
 from ..deps import current_user_id, get_uow_factory
-from ..entitlements import Meter, pdf_branded, require_quota
+from ..entitlements import Meter, pdf_branded, require_peppol_quota, require_quota
 from ..schemas.invoices import (
     DiscountIn,
     InvoiceCreateRequest,
@@ -221,11 +221,13 @@ def invoice_peppol(
     invoice_id: UUID,
     user_id: UUID = Depends(current_user_id),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
-    _quota: None = Depends(require_quota(Meter.PEPPOL_DOCUMENTS)),
+    _quota: None = Depends(require_peppol_quota),
 ):
     """Peppol BIS 3.0 XML. Every tier can do this — Peppol is the Belgian
-    differentiator, not an upsell — but the monthly document allowance applies,
-    counted from the EXPORT_PEPPOL audit entries this call writes."""
+    differentiator, not an upsell — but the monthly *document* allowance
+    applies: distinct invoices exported this period, counted from the
+    EXPORT_PEPPOL audit entries. Re-downloading an invoice already exported
+    this period is free, even at the cap."""
     invoice = InvoiceService(uow_factory).get(invoice_id)
     xml = PeppolService(uow_factory).generate_invoice_xml(invoice_id, actor_user_id=user_id)
     # Drafts have no reference yet (assigned at issue time).
