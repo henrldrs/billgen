@@ -826,6 +826,190 @@ const MESSAGES = {
   "audit.logout": { en: "Signed out", fr: "Déconnexion", nl: "Afgemeld", es: "Cierre de sesión" },
   "audit.error": { en: "Error", fr: "Erreur", nl: "Fout", es: "Error" },
 
+  // ---- VAT report -------------------------------------------------------------
+  // Every string here has to survive being read by an accountant. The caveat
+  // keys in particular are not decoration: the endpoint returns SALES only, and
+  // a screen that let someone believe otherwise would be a filing error.
+  "vat.title": { en: "VAT", fr: "TVA", nl: "Btw", es: "IVA" },
+  "vat.period": { en: "Period", fr: "Période", nl: "Periode", es: "Período" },
+  "vat.granularity": { en: "Period type", fr: "Type de période", nl: "Periodetype", es: "Tipo de período" },
+  "vat.month": { en: "Month", fr: "Mois", nl: "Maand", es: "Mes" },
+  "vat.quarter": { en: "Quarter", fr: "Trimestre", nl: "Kwartaal", es: "Trimestre" },
+  "vat.year": { en: "Year", fr: "Année", nl: "Jaar", es: "Año" },
+  "vat.outputOnly": {
+    en: "Sales only — output VAT",
+    fr: "Ventes uniquement — TVA due",
+    nl: "Alleen verkopen — verschuldigde btw",
+    es: "Solo ventas — IVA repercutido",
+  },
+  "vat.outputOnlyBody": {
+    en: "This is a preparation aid, not a return you can file. BillGen holds no purchases, so deductible VAT and the 71/72 balance are not in it. Check the figures against your accounting before declaring.",
+    fr: "Il s'agit d'une aide à la préparation, pas d'une déclaration prête à déposer. BillGen ne contient aucun achat : la TVA déductible et le solde 71/72 n'y figurent pas. Vérifiez les montants avec votre comptabilité avant de déclarer.",
+    nl: "Dit is een hulpmiddel bij de voorbereiding, geen aangifte die u kunt indienen. BillGen bevat geen aankopen, dus aftrekbare btw en het saldo 71/72 ontbreken. Controleer de bedragen met uw boekhouding voor u aangifte doet.",
+    es: "Es una ayuda de preparación, no una declaración lista para presentar. BillGen no contiene compras, por lo que el IVA deducible y el saldo 71/72 no están incluidos. Verifique las cifras con su contabilidad antes de declarar.",
+  },
+  "vat.otherCurrency": {
+    en: "Documents in another currency were left out",
+    fr: "Des documents dans une autre devise ont été exclus",
+    nl: "Documenten in een andere valuta zijn weggelaten",
+    es: "Se excluyeron documentos en otra moneda",
+  },
+  "vat.otherCurrencyBody": {
+    en: "The report is denominated in one currency. Anything invoiced in another is not counted here and has to be declared separately.",
+    fr: "Le rapport est libellé dans une seule devise. Ce qui est facturé dans une autre n'est pas compté ici et doit être déclaré séparément.",
+    nl: "Het rapport luidt in één valuta. Wat in een andere valuta is gefactureerd, telt hier niet mee en moet apart worden aangegeven.",
+    es: "El informe se expresa en una sola moneda. Lo facturado en otra no se cuenta aquí y debe declararse por separado.",
+  },
+  "vat.category": { en: "Category", fr: "Catégorie", nl: "Categorie", es: "Categoría" },
+  "vat.rate": { en: "Rate", fr: "Taux", nl: "Tarief", es: "Tipo" },
+  "vat.grid": { en: "Grid", fr: "Grille", nl: "Rooster", es: "Casilla" },
+  "vat.invoicedBase": { en: "Invoiced base", fr: "Base facturée", nl: "Gefactureerde basis", es: "Base facturada" },
+  "vat.invoicedVat": { en: "Invoiced VAT", fr: "TVA facturée", nl: "Gefactureerde btw", es: "IVA facturado" },
+  "vat.creditedBase": { en: "Credited base", fr: "Base créditée", nl: "Gecrediteerde basis", es: "Base abonada" },
+  "vat.creditedVat": { en: "Credited VAT", fr: "TVA créditée", nl: "Gecrediteerde btw", es: "IVA abonado" },
+  "vat.netBase": { en: "Net base", fr: "Base nette", nl: "Nettobasis", es: "Base neta" },
+  "vat.netVat": { en: "Net VAT", fr: "TVA nette", nl: "Netto btw", es: "IVA neto" },
+  "vat.invoiceCount": { en: "Invoices", fr: "Factures", nl: "Facturen", es: "Facturas" },
+  "vat.creditNoteCount": { en: "Credit notes", fr: "Notes de crédit", nl: "Creditnota's", es: "Notas de crédito" },
+  "vat.breakdown": {
+    en: "Per category and rate",
+    fr: "Par catégorie et taux",
+    nl: "Per categorie en tarief",
+    es: "Por categoría y tipo",
+  },
+  "vat.noLines": {
+    en: "Nothing was invoiced in this period.",
+    fr: "Rien n'a été facturé sur cette période.",
+    nl: "In deze periode is niets gefactureerd.",
+    es: "No se facturó nada en este período.",
+  },
+  "vat.gridUnmapped": {
+    en: "No unambiguous grid",
+    fr: "Pas de grille univoque",
+    nl: "Geen eenduidig rooster",
+    es: "Sin casilla inequívoca",
+  },
+  "vat.breakdownLockedBody": {
+    en: "Your plan shows the period totals. The breakdown per category and rate comes with a paid plan.",
+    fr: "Votre formule affiche les totaux de la période. Le détail par catégorie et taux est inclus dans une formule payante.",
+    nl: "Uw abonnement toont de periodetotalen. De uitsplitsing per categorie en tarief hoort bij een betaald abonnement.",
+    es: "Su plan muestra los totales del período. El desglose por categoría y tipo se incluye en un plan de pago.",
+  },
+  "vat.breakdownLocked": {
+    en: "The per-rate breakdown is part of a paid plan.",
+    fr: "Le détail par taux fait partie d'une formule payante.",
+    nl: "De uitsplitsing per tarief hoort bij een betaald abonnement.",
+    es: "El desglose por tipo forma parte de un plan de pago.",
+  },
+
+  // ---- plan, usage & entitlements (B4) ----------------------------------------
+  // Two vocabularies arrive from the server as raw wire strings: meter names
+  // ("invoices") and feature keys ("pdf_remove_branding"). Both are translated
+  // through tMeter/tFeature, which fall back to the raw key so a backend newer
+  // than this UI degrades to an ugly label instead of a blank cell.
+  "plan.title": { en: "Plan & usage", fr: "Formule et utilisation", nl: "Abonnement en verbruik", es: "Plan y uso" },
+  "plan.current": { en: "Current plan", fr: "Formule actuelle", nl: "Huidig abonnement", es: "Plan actual" },
+  "plan.status": { en: "Subscription status", fr: "Statut de l'abonnement", nl: "Abonnementsstatus", es: "Estado de la suscripción" },
+  "plan.usage": { en: "Usage", fr: "Utilisation", nl: "Verbruik", es: "Uso" },
+  "plan.used": { en: "Used", fr: "Utilisé", nl: "Gebruikt", es: "Usado" },
+  "plan.limit": { en: "Limit", fr: "Limite", nl: "Limiet", es: "Límite" },
+  "plan.remaining": { en: "remaining", fr: "restant", nl: "resterend", es: "restante" },
+  "plan.unlimited": { en: "Unlimited", fr: "Illimité", nl: "Onbeperkt", es: "Ilimitado" },
+  "plan.thisPeriod": { en: "this month", fr: "ce mois-ci", nl: "deze maand", es: "este mes" },
+  "plan.exhausted": { en: "Limit reached", fr: "Limite atteinte", nl: "Limiet bereikt", es: "Límite alcanzado" },
+  "plan.features": { en: "What your plan includes", fr: "Ce que votre formule inclut", nl: "Wat uw abonnement bevat", es: "Lo que incluye su plan" },
+  "plan.allPlans": { en: "All plans", fr: "Toutes les formules", nl: "Alle abonnementen", es: "Todos los planes" },
+  "plan.yourPlan": { en: "Your plan", fr: "Votre formule", nl: "Uw abonnement", es: "Su plan" },
+  "plan.seePlans": { en: "See plans", fr: "Voir les formules", nl: "Bekijk abonnementen", es: "Ver planes" },
+  "plan.included": { en: "Included", fr: "Inclus", nl: "Inbegrepen", es: "Incluido" },
+  "plan.notIncluded": { en: "Not included", fr: "Non inclus", nl: "Niet inbegrepen", es: "No incluido" },
+  "plan.upgradeTitle": { en: "Not on your plan", fr: "Absent de votre formule", nl: "Niet in uw abonnement", es: "No está en su plan" },
+  "plan.limitTitle": { en: "Plan limit reached", fr: "Limite de la formule atteinte", nl: "Abonnementslimiet bereikt", es: "Límite del plan alcanzado" },
+  "plan.requiredTier": { en: "Available from", fr: "Disponible à partir de", nl: "Beschikbaar vanaf", es: "Disponible desde" },
+  "plan.noUpgrade": {
+    en: "No plan includes this yet.",
+    fr: "Aucune formule ne l'inclut encore.",
+    nl: "Nog geen abonnement bevat dit.",
+    es: "Ningún plan lo incluye todavía.",
+  },
+  "plan.usageCaption": {
+    en: "Counted by the server. Screens hide what your plan excludes; the server refuses it independently.",
+    fr: "Compté par le serveur. Les écrans masquent ce que votre formule exclut ; le serveur le refuse indépendamment.",
+    nl: "Geteld door de server. Schermen verbergen wat uw abonnement uitsluit; de server weigert het onafhankelijk.",
+    es: "Contado por el servidor. Las pantallas ocultan lo que su plan excluye; el servidor lo rechaza de forma independiente.",
+  },
+  "plan.matrixCaption": {
+    en: "Served from the server's own plan matrix — there is no second copy in the app.",
+    fr: "Servi depuis la matrice de formules du serveur — il n'y a pas de seconde copie dans l'application.",
+    nl: "Geleverd door de abonnementsmatrix van de server — er is geen tweede kopie in de app.",
+    es: "Servido desde la matriz de planes del servidor: no hay una segunda copia en la aplicación.",
+  },
+  "plan.noBilling": {
+    en: "Changing plan is not possible yet: no checkout is connected.",
+    fr: "Changer de formule n'est pas encore possible : aucun paiement n'est connecté.",
+    nl: "Van abonnement wisselen kan nog niet: er is geen afrekening gekoppeld.",
+    es: "Aún no se puede cambiar de plan: no hay pago conectado.",
+  },
+
+  // ---- subscription status (wire values from api/entitlements/service.py) -----
+  // "none" is the honest state for every tenant today: no billing provider is
+  // connected, so no organisation has a SubscriptionRow at all.
+  "substatus.none": { en: "No subscription", fr: "Aucun abonnement", nl: "Geen abonnement", es: "Sin suscripción" },
+  "substatus.active": { en: "Active", fr: "Actif", nl: "Actief", es: "Activa" },
+  "substatus.trialing": { en: "Trial", fr: "Essai", nl: "Proefperiode", es: "Prueba" },
+  "substatus.past_due": { en: "Payment overdue", fr: "Paiement en retard", nl: "Betaling te laat", es: "Pago vencido" },
+  "substatus.canceled": { en: "Cancelled", fr: "Résilié", nl: "Opgezegd", es: "Cancelada" },
+
+  // ---- tier names (wire values from PlanTier) ----------------------------------
+  "tier.free": { en: "Free", fr: "Gratuit", nl: "Gratis", es: "Gratis" },
+  "tier.starter": { en: "Starter", fr: "Starter", nl: "Starter", es: "Starter" },
+  "tier.business": { en: "Business", fr: "Business", nl: "Business", es: "Business" },
+  "tier.business_pro": { en: "Business Pro", fr: "Business Pro", nl: "Business Pro", es: "Business Pro" },
+
+  // ---- meter names (wire values from api/entitlements/matrix.py) ---------------
+  "meter.invoices": { en: "Invoices", fr: "Factures", nl: "Facturen", es: "Facturas" },
+  "meter.clients": { en: "Clients", fr: "Clients", nl: "Klanten", es: "Clientes" },
+  "meter.products": { en: "Products", fr: "Produits", nl: "Producten", es: "Productos" },
+  "meter.companies": { en: "Companies", fr: "Sociétés", nl: "Bedrijven", es: "Empresas" },
+  "meter.seats": { en: "Users", fr: "Utilisateurs", nl: "Gebruikers", es: "Usuarios" },
+  "meter.peppol_documents": { en: "Peppol documents", fr: "Documents Peppol", nl: "Peppol-documenten", es: "Documentos Peppol" },
+
+  // ---- feature names ----------------------------------------------------------
+  "feature.credit_notes": { en: "Credit notes", fr: "Notes de crédit", nl: "Creditnota's", es: "Notas de crédito" },
+  "feature.pdf_export": { en: "PDF export", fr: "Export PDF", nl: "PDF-export", es: "Exportación PDF" },
+  "feature.backup_export": { en: "Backup export", fr: "Export de sauvegarde", nl: "Back-up exporteren", es: "Exportar copia de seguridad" },
+  "feature.backup_restore": { en: "Backup restore", fr: "Restauration de sauvegarde", nl: "Back-up herstellen", es: "Restaurar copia de seguridad" },
+  "feature.backup_automatic": { en: "Automatic backups", fr: "Sauvegardes automatiques", nl: "Automatische back-ups", es: "Copias automáticas" },
+  "feature.backup_scheduled": { en: "Scheduled backups", fr: "Sauvegardes planifiées", nl: "Geplande back-ups", es: "Copias programadas" },
+  "feature.backup_history": { en: "Backup history", fr: "Historique des sauvegardes", nl: "Back-upgeschiedenis", es: "Historial de copias" },
+  "feature.import_legacy": { en: "Legacy import", fr: "Import de l'ancien logiciel", nl: "Import uit oude software", es: "Importación heredada" },
+  "feature.pdf_remove_branding": { en: "Remove BillGen branding", fr: "Retirer la marque BillGen", nl: "BillGen-merk verwijderen", es: "Quitar la marca BillGen" },
+  "feature.pdf_templates_premium": { en: "Premium PDF templates", fr: "Modèles PDF premium", nl: "Premium PDF-sjablonen", es: "Plantillas PDF premium" },
+  "feature.pdf_customization": { en: "PDF customisation", fr: "Personnalisation du PDF", nl: "PDF-aanpassing", es: "Personalización del PDF" },
+  "feature.peppol_export": { en: "Peppol export", fr: "Export Peppol", nl: "Peppol-export", es: "Exportación Peppol" },
+  "feature.vat_report": { en: "VAT report", fr: "Rapport TVA", nl: "Btw-rapport", es: "Informe de IVA" },
+  "feature.dashboard": { en: "Dashboard", fr: "Tableau de bord", nl: "Dashboard", es: "Panel" },
+  "feature.search": { en: "Search", fr: "Recherche", nl: "Zoeken", es: "Búsqueda" },
+  "feature.audit_history": { en: "Audit history", fr: "Historique d'audit", nl: "Auditgeschiedenis", es: "Historial de auditoría" },
+  "feature.payment_tracking": { en: "Payment tracking", fr: "Suivi des paiements", nl: "Betalingsopvolging", es: "Seguimiento de pagos" },
+  "feature.recurring_invoices": { en: "Recurring invoices", fr: "Factures récurrentes", nl: "Terugkerende facturen", es: "Facturas recurrentes" },
+  "feature.accountant_export": { en: "Accountant export", fr: "Export comptable", nl: "Boekhoudexport", es: "Exportación contable" },
+  "feature.multi_company": { en: "Multiple companies", fr: "Plusieurs sociétés", nl: "Meerdere bedrijven", es: "Varias empresas" },
+  "feature.company_level_settings": { en: "Per-company settings", fr: "Paramètres par société", nl: "Instellingen per bedrijf", es: "Ajustes por empresa" },
+  "feature.roles_permissions": { en: "Roles & permissions", fr: "Rôles et permissions", nl: "Rollen en rechten", es: "Roles y permisos" },
+  "feature.team_administration": { en: "Team administration", fr: "Administration d'équipe", nl: "Teambeheer", es: "Administración de equipo" },
+  "feature.priority_support": { en: "Priority support", fr: "Support prioritaire", nl: "Prioritaire ondersteuning", es: "Soporte prioritario" },
+
+  // ---- graded feature levels --------------------------------------------------
+  "level.basic": { en: "Basic", fr: "Basique", nl: "Basis", es: "Básico" },
+  "level.standard": { en: "Standard", fr: "Standard", nl: "Standaard", es: "Estándar" },
+  "level.full": { en: "Full", fr: "Complet", nl: "Volledig", es: "Completo" },
+  "level.advanced": { en: "Advanced", fr: "Avancé", nl: "Geavanceerd", es: "Avanzado" },
+  "level.custom": { en: "Custom", fr: "Sur mesure", nl: "Op maat", es: "A medida" },
+  "level.consolidated": { en: "Consolidated", fr: "Consolidé", nl: "Geconsolideerd", es: "Consolidado" },
+  "level.csv": { en: "CSV", fr: "CSV", nl: "CSV", es: "CSV" },
+  "level.structured": { en: "Structured", fr: "Structuré", nl: "Gestructureerd", es: "Estructurado" },
+
 } as const;
 
 export type MessageKey = keyof typeof MESSAGES;
@@ -854,4 +1038,43 @@ export function tPeppolError(lang: Lang, messageKey: string): string {
 export function tAuditAction(lang: Lang, action: string): string {
   const key = `audit.${action}`;
   return key in MESSAGES ? t(lang, key as MessageKey) : action;
+}
+
+/** Look up `prefix.value`, falling back to a humanised form of the wire value.
+ *
+ *  The entitlement layer sends three open vocabularies — tier names, meter
+ *  names and feature keys — and the server is allowed to grow all three
+ *  without this UI shipping. The fallback turns `team_administration` into
+ *  "Team administration": still readable, visibly not a designed label. */
+function tWire(lang: Lang, prefix: string, value: string): string {
+  const key = `${prefix}.${value}`;
+  if (key in MESSAGES) return t(lang, key as MessageKey);
+  const words = value.replace(/_/g, " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+/** Translate a subscription status ("past_due"). */
+export function tSubscriptionStatus(lang: Lang, status: string): string {
+  return tWire(lang, "substatus", status);
+}
+
+/** Translate a plan tier ("business_pro"). */
+export function tTier(lang: Lang, tier: string): string {
+  return tWire(lang, "tier", tier);
+}
+
+/** Translate a meter name ("peppol_documents"). */
+export function tMeter(lang: Lang, meter: string): string {
+  return tWire(lang, "meter", meter);
+}
+
+/** Translate a feature key ("pdf_remove_branding"). */
+export function tFeature(lang: Lang, feature: string): string {
+  return tWire(lang, "feature", feature);
+}
+
+/** Translate a graded feature value ("advanced", "consolidated"). Graded
+ *  features are the ones whose value is a string rather than a boolean. */
+export function tLevel(lang: Lang, level: string): string {
+  return tWire(lang, "level", level);
 }

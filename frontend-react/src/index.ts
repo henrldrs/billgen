@@ -5,20 +5,48 @@ export * from "./types";
 export {
   ApiClient,
   ApiError,
+  isEntitlementError,
   MemoryTokenStore,
   type ApiClientOptions,
+  type EntitlementFailure,
   type RestoreReport,
   type Tokens,
   type TokenStore,
 } from "./lib/apiClient";
 
 // i18n & display formatting
-export { t, tAuditAction, tPeppolError, type Lang, type MessageKey } from "./lib/translations";
+export {
+  t,
+  tAuditAction,
+  tFeature,
+  tLevel,
+  tMeter,
+  tPeppolError,
+  tSubscriptionStatus,
+  tTier,
+  type Lang,
+  type MessageKey,
+} from "./lib/translations";
 export { formatDate, formatMoney, monthName } from "./lib/format";
 export { documentFilename, saveBlob } from "./lib/download";
 
+// Entitlement reading — presentation only; the server enforces with a 402.
+export {
+  featureGrade,
+  featureValue,
+  hasFeature,
+  meterPercent,
+  meterTone,
+  meterUsage,
+  type FeatureMap,
+} from "./lib/entitlements";
+
 // Providers & hooks
 export { BillGenProvider, useApi } from "./providers/BillGenProvider";
+export {
+  EntitlementBoundary,
+  type EntitlementBoundaryProps,
+} from "./providers/EntitlementBoundary";
 export { AuthProvider, useAuth, type Session } from "./hooks/useAuth";
 export * from "./hooks/queries";
 
@@ -88,3 +116,8 @@ export {
   RevenueReportPanel,
   type RevenueReportPanelProps,
 } from "./panels/RevenueReportPanel";
+export { FeatureValue, type FeatureValueProps } from "./panels/FeatureValue";
+export { PlansPanel, type PlansPanelProps } from "./panels/PlansPanel";
+export { UpgradeDialog, type UpgradeDialogProps } from "./panels/UpgradeDialog";
+export { UsagePanel, type UsagePanelProps } from "./panels/UsagePanel";
+export { VatReportPanel, type VatReportPanelProps } from "./panels/VatReportPanel";

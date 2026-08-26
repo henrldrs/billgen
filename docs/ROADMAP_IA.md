@@ -64,7 +64,7 @@ invoicing core", and the core is genuinely done.
 | Catalog | 1 | 6 | 0 | 7 |
 | Reports | 3 | 4 | 2 | 9 |
 | Company | 0 | 6 | 3 | 9 |
-| Billing | 0 | 0 | 8 | 8 |
+| Billing | 2 | 0 | 6 | 8 |
 | Documents | 0 | 0 | 7 | 7 |
 | Explore | 0 | 2 | 3 | 5 |
 | Activity | 1 | 1 | 3 | 5 |
@@ -158,10 +158,22 @@ instead of silent corruption, and an unknown `default_pdf_template` is rejected
 against `core/pdf/registry.TEMPLATES`. `logo_key` stays out — it belongs to B2.
 What remains is frontend: no screen writes to it yet.
 
-### B4 — No subscription/plan model
-Blocks all 8 Billing areas, usage metering, plan gating, and the entire
-monetisation path. Also blocks the free-tier PDF branding becoming a real
-paid-tier removal rather than a hardcoded flag.
+### B4 — No subscription/plan model — **closed 2026-08-26**
+The entitlement layer ships: four tiers as data, derived usage, atomic quota
+guards and one uniform 402 body. Plan and Usage are wired, and free-tier PDF
+branding is now a real paid-tier removal (`pdf_remove_branding`) rather than a
+hardcoded flag. Two things it deliberately did NOT do, both still open:
+
+- **No checkout.** A payment provider is a Merchant-of-Record adapter that
+  writes `SubscriptionRow`; `resolve_tier()` already prefers it over
+  `Organization.plan_tier`, so nothing else changes when it lands. Until then
+  the six remaining Billing areas have nothing to show.
+- **Graded features are declared, not enforced.** Meters and boolean features
+  are guarded server-side; the graded ones (`vat_report`, `dashboard`,
+  `search`, `pdf_customization`, `import_legacy`, `accountant_export`) are
+  read by the UI to pick a variant and are refused by no endpoint. The VAT
+  screen hides its per-rate breakdown below "full" on that basis, which is UX
+  and not a rule — decide whether it should become one.
 
 ---
 
@@ -395,20 +407,39 @@ form, not an endpoint.
   `invoice_id`; `company_id`, `client_id` and an inclusive `paid_from`/`paid_to`
   window filter it. A cross-invoice payments report is now possible; it is not
   built.
-- **VAT** *(partial)* — **the most valuable report in the product, and still
-  screenless.** `GET /reports/vat?period` computes output VAT per (category,
-  rate), invoices minus credit notes, with the Belgian grid where the mapping is
-  unambiguous. Sales only: the model has no purchases, so the deductible-VAT
-  grids cannot be produced. Nothing renders it yet.
+- **VAT** *(partial)* — **screened 2026-08-26.** `GET /reports/vat?period`
+  computes output VAT per (category, rate), invoices minus credit notes, with
+  the Belgian grid where the mapping is unambiguous, and `VatReportPanel` now
+  renders it for a month, a quarter or a year. It stays *partial* for the
+  reason it always was: sales only. The model has no purchases, so deductible
+  VAT, grids 59/81-83/86-87 and the 71/72 balance cannot be produced — the
+  screen says so in a banner driven by the response's own `covers` field, and
+  declares any document dropped for being in another currency. The missing half
+  is purchase data, not UI.
 - **Clients / Products** *(none)* — straightforward aggregations.
 - **Export** *(partial)* — `/backup/export` is a whole-org JSON backup, not a
   report export. Needs CSV/XLSX/PDF per report.
 
-### 6.7 Billing — 0 wired / 0 partial / 8 none
+### 6.7 Billing — 2 wired / 0 partial / 6 none
 
-Entirely unbuilt (Phase 10), blocked on **B4**. Subscription, current plan,
-usage, BillGen's own invoices, payment method, billing history,
-upgrade/downgrade, cancellation.
+**B4 shipped, and it moved two of the eight.** The server owns the commercial
+matrix (`api/entitlements/matrix.py`), meters every allowance and refuses with a
+uniform 402:
+
+- **Current plan** *(wired)* — `GET /plans` serves the whole matrix, so the
+  comparison screen holds no copy of it. No "choose this plan" button, because
+  there is no checkout to send anyone to.
+- **Usage** *(wired)* — `GET /entitlements`: invoices and Peppol documents
+  monthly, clients/products/companies/seats as standing totals. Storage is
+  absent because B2 does not exist, so nothing consumes any.
+
+The refusal path is wired once, at the React Query cache, not per feature:
+`EntitlementBoundary` turns any 402 into the upgrade prompt, and no panel, hook
+or button in either shell contains payment logic.
+
+The remaining six — subscription, BillGen's own invoices, payment method,
+billing history, upgrade/downgrade, cancellation — all wait on a payment
+provider. There is nothing to subscribe to, charge or cancel.
 
 Two constraints worth writing down now:
 

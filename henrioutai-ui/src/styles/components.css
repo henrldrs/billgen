@@ -4601,3 +4601,151 @@ hr.bg-divider {
   font-size: var(--bg-text-helper);
   color: var(--bg-ink-soft);
 }
+
+/* ---- plan, usage & the upgrade dialog (B4) --------------------------------
+ * Application-level layout for the three entitlement screens. Same reasoning
+ * as the report rules above: these are flex and grid declarations for one
+ * product area, not components the design system should own. A <MeterCard> in
+ * @henrioutai/ui would be a billing primitive in a library that holds none. */
+
+.bg-plan__identity {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.bg-plan__status {
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+}
+
+/* Allowances read as a grid of cards rather than a list: six meters in one
+   column pushes seats below the fold on the screen that exists to show it. */
+.bg-plan__meters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1rem;
+}
+.bg-plan__meter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--bg-line);
+  border-radius: var(--bg-radius-md);
+}
+/* Only the two states that need attention are coloured; a plan sitting
+   comfortably inside its limits should look like nothing is happening. */
+.bg-plan__meter--warn {
+  border-color: var(--bg-warn);
+}
+.bg-plan__meter--danger {
+  border-color: var(--bg-danger);
+}
+.bg-plan__meterHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.bg-plan__meterName {
+  font-weight: var(--bg-weight-label);
+}
+.bg-plan__meterCount {
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+}
+.bg-plan__meterFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 1.4rem;
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+}
+
+.bg-plan__features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: 0.35rem 1.5rem;
+}
+.bg-plan__feature {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--bg-line);
+}
+.bg-plan__featureName {
+  font-size: var(--bg-text-helper);
+}
+
+/* Same job as .bg-record__hint: a line saying what the card is not. */
+.bg-plan__caption,
+.bg-plans__caption {
+  margin: 1rem 0 0;
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+}
+.bg-plans__caption {
+  padding: 0.85rem var(--bg-pad-card);
+  border-top: 1px solid var(--bg-line);
+  margin: 0;
+}
+
+/* The comparison matrix is wide by construction — one column per tier — so it
+   scrolls inside its card instead of widening the page. */
+.bg-plans__table {
+  min-width: 40rem;
+}
+.bg-plans__head {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+/* Quota rows carry the number people actually compare on; feature rows are the
+   long tail underneath and are set quieter so the two groups stay legible as
+   groups without a header row between them. */
+.bg-plans__row--feature {
+  color: var(--bg-ink-soft);
+}
+.bg-plans__row--quota {
+  font-weight: var(--bg-weight-label);
+}
+
+.bg-upgrade__subject {
+  margin: 0 0 0.75rem;
+  font-size: var(--bg-text-section);
+  font-weight: var(--bg-weight-label);
+}
+.bg-upgrade__meter {
+  margin: 0 0 0.75rem;
+}
+.bg-upgrade__counts {
+  margin: 0.35rem 0 0;
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+}
+.bg-upgrade__message {
+  margin: 0 0 0.75rem;
+  color: var(--bg-ink-soft);
+}
+.bg-upgrade__tier {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: var(--bg-text-helper);
+}
+
+/* A VAT line whose Belgian grid is genuinely undecidable from sales data. Set
+   quiet so the mapped grids read as the signal they are. */
+.bg-vat__unmapped {
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+}

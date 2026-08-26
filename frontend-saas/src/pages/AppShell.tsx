@@ -17,6 +17,7 @@ import {
   CommandPalette,
   CompanyForm,
   CompanyIcon,
+  EntitlementBoundary,
   DashboardIcon,
   iaFor,
   LoadingScreen,
@@ -283,6 +284,12 @@ export function AppShell() {
         onClose={() => setPaletteOpen(false)}
         commands={commands}
       />
+      {/* Every commercial refusal in the app, handled once. It listens to the
+          React Query caches, so no panel, hook or button opts in and none of
+          them contains payment logic — which is what the uniform 402 body was
+          for. It lives here rather than around <BillGenProvider> because the
+          upgrade prompt needs the router to reach the plan screen. */}
+      <EntitlementBoundary lang={lang} onSeePlans={() => navigate("/app/billing/plan")} />
     </Shell>
   );
 }

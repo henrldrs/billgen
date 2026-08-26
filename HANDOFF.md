@@ -22,8 +22,8 @@ Read this instead of re-deriving context.
 Design decision of record: [docs/ARCHITECTURE/ADR-0001-three-layer.md](docs/ARCHITECTURE/ADR-0001-three-layer.md).
 
 **Starting a session? Read [docs/NEXT_SESSION.md](docs/NEXT_SESSION.md) first** — the
-open TODO, written at the end of the 2026-08-26 entitlement session. Delete it once
-consumed.
+open TODO, rewritten at the end of the 2026-08-26 entitlement-UI session. Delete it
+once consumed.
 
 ---
 

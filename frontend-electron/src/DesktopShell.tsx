@@ -17,12 +17,14 @@ import {
   CompanyIcon,
   DashboardIcon,
   DashboardPanel,
+  EntitlementBoundary,
   ForwardIcon,
   HistoryPanel,
   ImportPanel,
   InvoiceBuilderPanel,
   LoadingScreen,
   OrgSwitcher,
+  PlansPanel,
   PlusIcon,
   PolicyIcon,
   ProductsPanel,
@@ -32,6 +34,7 @@ import {
   ThemeSwitcher,
   TopNav,
   UpgradeIcon,
+  UsagePanel,
   t,
   useCompanies,
   type CommandItem,
@@ -50,7 +53,13 @@ type Tab =
   | "invoices"
   | "settings";
 
-type SettingsSection = "company" | "import" | "backup" | "activity" | "preferences";
+type SettingsSection =
+  | "company"
+  | "plan"
+  | "import"
+  | "backup"
+  | "activity"
+  | "preferences";
 
 function isLang(value: string): value is Lang {
   return ["en", "fr", "nl", "es"].includes(value);
@@ -155,6 +164,10 @@ export function DesktopShell() {
   // ForwardIcon/SearchIcon are stand-ins pending Henri's sketches.
   const settingsSections = [
     { key: "company", label: t(lang, "company.title"), icon: <CompanyIcon /> },
+    // Desktop is a single local user, but the plan is the ORGANISATION's and
+    // the same server refuses the same calls with the same 402 — so the
+    // allowances have to be visible here too, not only in the web app.
+    { key: "plan", label: t(lang, "plan.title"), icon: <UpgradeIcon /> },
     { key: "import", label: t(lang, "import.title"), icon: <ForwardIcon /> },
     { key: "backup", label: t(lang, "backup.title"), icon: <BackIcon /> },
     { key: "activity", label: t(lang, "activity.title"), icon: <SearchIcon /> },
@@ -222,6 +235,11 @@ export function DesktopShell() {
               </section>
               <CompanyForm lang={lang} />
             </div>
+          ) : settingsSection === "plan" ? (
+            <div className="bg-stack">
+              <UsagePanel lang={lang} />
+              <PlansPanel lang={lang} />
+            </div>
           ) : settingsSection === "import" ? (
             <ImportPanel lang={lang} />
           ) : settingsSection === "backup" ? (
@@ -245,6 +263,15 @@ export function DesktopShell() {
         open={paletteOpen}
         onClose={() => setPaletteOpen(false)}
         commands={commands}
+      />
+      {/* One listener for every commercial refusal — see the SaaS shell. There
+          is no router here, so "See plans" moves the settings rail instead. */}
+      <EntitlementBoundary
+        lang={lang}
+        onSeePlans={() => {
+          setSettingsSection("plan");
+          setTab("settings");
+        }}
       />
     </Shell>
   );

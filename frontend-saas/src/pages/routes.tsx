@@ -28,6 +28,7 @@ import {
   InvoiceDetailPanel,
   List,
   PageHeader,
+  PlansPanel,
   ProductsPanel,
   ReceivablesPanel,
   RevenueReportPanel,
@@ -41,6 +42,8 @@ import {
   SettingsShell,
   Tabs,
   ThemeSwitcher,
+  UsagePanel,
+  VatReportPanel,
   coverage,
   iaTrail,
   routableNodes,
@@ -496,6 +499,23 @@ const BUILT: Record<string, Screen> = {
     );
   },
 
+  // billing — the entitlement layer's two screens. Everything else under
+  // Billing waits on a payment provider; these two need none, because usage and
+  // the plan matrix are already served (GET /entitlements, GET /plans).
+  "billing/usage": ({ lang }) => {
+    const navigate = useNavigate();
+    return <UsagePanel lang={lang} onSeePlans={() => navigate("/app/billing/plan")} />;
+  },
+  "billing/plan": ({ lang }) => <PlansPanel lang={lang} />,
+
+  // reports - VAT. The most valuable report in a Belgian invoicing product and
+  // the last one without a screen; the endpoint has existed for months.
+  // Unlike the other report screens, this panel owns its own PageHeader - the
+  // period it is showing belongs in the subtitle, next to the title.
+  "reports/vat": ({ companyId, lang }) => (
+    <VatReportPanel companyId={companyId} lang={lang} />
+  ),
+
   // company & settings. The landing is a SectionIndex like every other
   // section; the rail belongs to the CHILDREN (see SettingsFrame).
   "company/profile": CompanyScreen,
@@ -533,15 +553,6 @@ const SKETCHES: Record<string, () => ReactNode> = {
       </ScaffoldNote>
       <ScaffoldTable columns={["Invoice", "Client", "Days overdue", "Last reminder", "Next step"]} />
       <ScaffoldButton wouldDo="send a reminder email">Send reminder</ScaffoldButton>
-    </>
-  ),
-  "billing/usage": () => (
-    <>
-      <ScaffoldHeading>Plan usage</ScaffoldHeading>
-      <ScaffoldNote>Invoices, clients, storage and seats — all unmetered today.</ScaffoldNote>
-      <ScaffoldMeter percent={0} />
-      <ScaffoldMeter percent={0} />
-      <ScaffoldMeter percent={0} />
     </>
   ),
   "billing/payment-method": () => (
