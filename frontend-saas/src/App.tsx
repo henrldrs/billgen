@@ -7,9 +7,7 @@ import { api } from "./lib/api";
 import { AppShell } from "./pages/AppShell";
 import { LoginPage } from "./pages/LoginPage";
 import {
-  ClientDetailRoute,
   InvoiceBuilderRoute,
-  InvoiceDetailRoute,
   buildAppRoutes,
 } from "./pages/routes";
 import { SignupPage } from "./pages/SignupPage";
@@ -40,18 +38,21 @@ export function App() {
               {/* Every IA node with a path, generated — see pages/routes.tsx. */}
               {buildAppRoutes()}
 
-              {/* Actions and detail views: not destinations in the IA tree. */}
+              {/* The invoice builder is an action, not a destination, so it owns
+                  no IA node and must be declared here. The two DETAIL views used
+                  to be declared here too and never rendered: buildAppRoutes()
+                  emits their paths from the IA, and the first route declared for
+                  a path wins. They now live in routes.tsx's BUILT map. */}
               <Route path="sales/invoices/new" element={<InvoiceBuilderRoute />} />
-              <Route path="sales/invoices/id/:invoiceId" element={<InvoiceDetailRoute />} />
-              <Route path="customers/clients/:clientId" element={<ClientDetailRoute />} />
 
-              {/* Pre-IA URLs keep working. */}
+              {/* Pre-IA URLs keep working. None of these may collide with a
+                  path the IA owns, or the generated route wins and the redirect
+                  silently never fires — enforced by scaffold/routes.test.ts. */}
               <Route path="invoices/new" element={<Navigate to="/app/sales/invoices/new" replace />} />
               <Route path="invoices" element={<Navigate to="/app/sales/invoices" replace />} />
               <Route path="clients" element={<Navigate to="/app/customers/clients" replace />} />
               <Route path="products" element={<Navigate to="/app/catalog/products" replace />} />
               <Route path="import" element={<Navigate to="/app/settings/import" replace />} />
-              <Route path="activity" element={<Navigate to="/app/activity/audit" replace />} />
             </Route>
             <Route path="*" element={<Navigate to="/app" replace />} />
           </Routes>

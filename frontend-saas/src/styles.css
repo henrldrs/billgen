@@ -18,3 +18,15 @@ body {
   color: var(--bg-ink);
   background: var(--bg-surface-alt);
 }
+
+/* Dev-only sign-in block on the login card. Deliberately set apart from the
+   real form: it exists only in a development build (see LoginPage). */
+.bg-auth-page__dev {
+  margin-top: 1.5rem;
+  padding-top: 1.15rem;
+  border-top: 1px dashed var(--bg-line);
+}
+.bg-auth-page__dev .bg-muted {
+  margin-bottom: 0.75rem;
+  font-size: var(--bg-text-helper);
+}

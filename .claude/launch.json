@@ -4,14 +4,44 @@
     {
       "name": "api",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "uvicorn", "api.main:app", "--port", "8000"],
+      "runtimeArgs": [
+        "-m",
+        "uvicorn",
+        "api.main:app",
+        "--port",
+        "8000"
+      ],
       "port": 8000
     },
     {
       "name": "saas",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--workspace", "@billgen/saas"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--workspace",
+        "@billgen/saas"
+      ],
       "port": 5173
+    },
+    {
+      "name": "api-desktop",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "scripts/dev_desktop_api.py"
+      ],
+      "port": 8010
+    },
+    {
+      "name": "saas-desktop",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev:desktop",
+        "--workspace",
+        "@billgen/saas"
+      ],
+      "port": 5183
     }
   ]
 }

@@ -18,12 +18,12 @@
  *    /auth/{signup,login,refresh,logout,desktop-bootstrap}  /users/me
  *    /orgs/current  /companies[POST,GET]  /clients[POST,GET,GET id,PATCH]
  *    /products[POST,GET,GET id,PATCH]
- *    /invoices[POST,GET?company_id&status,GET id,POST id/issue,DELETE id,
+ *    /invoices[POST,GET?company_id&status&client_id,GET id,POST id/issue,DELETE id,
  *              POST id/void,POST preview,GET id/html,GET id/pdf,
  *              GET id/peppol.xml]
  *    /credit-notes[POST,GET,GET id,GET id/html,GET id/pdf]
  *    /payments[POST,GET?invoice_id]  /reports/{kpi,revenue}
- *    /activity?limit&target_type  /backup/{export,restore}
+ *    /activity?limit&target_type&target_id  /backup/{export,restore}
  *    /imports/legacy/{preview,commit}  /healthz  /readyz
  */
 
@@ -248,13 +248,16 @@ export const IA: IaSection[] = [
           "GET /invoices/{id}/peppol.xml",
           "GET /payments?invoice_id",
           "POST /payments",
+          "POST /invoices/{id}/issue",
+          "POST /invoices/{id}/void",
+          "DELETE /invoices/{id}",
+          "GET /activity?target_id",
         ],
         missing: [
-          "GET /activity?target_id (per-invoice timeline)",
           "POST /invoices/{id}/send",
           "POST /invoices/{id}/duplicate",
         ],
-        note: "Header, totals, payments and exports are real. The status timeline can only show created/issued/paid — /activity filters by target_type, not target_id, so a true per-invoice history is unavailable.",
+        note: "Header, lines, frozen totals, payments, exports and the full audit timeline are real: /activity grew target_id, and every invoice event — including payments — is written with target_type=\"invoice\" and target_id=<invoice id>. Only delivery is fiction: InvoiceStatus has no SENT or VIEWED member and there is no email transport, so Send and Duplicate stay in a scaffold block inside the screen.",
       },
       {
         key: "sales.creditnotes",
@@ -347,13 +350,19 @@ export const IA: IaSection[] = [
         path: "customers/clients/:clientId",
         status: "partial",
         layer: "L2",
-        endpoints: ["GET /clients/{id}", "GET /invoices?company_id"],
-        missing: [
-          "GET /clients/{id}/stats",
+        endpoints: [
+          "GET /clients/{id}",
           "GET /invoices?client_id",
           "GET /activity?target_id",
         ],
-        note: "Overview totals are computed client-side by filtering the whole invoice list — correct but unscalable. Quotes and Documents tabs have no backend at all.",
+        missing: [
+          "GET /clients/{id}/stats",
+          "Quote model + CRUD /quotes",
+          "Document model + CRUD /documents",
+          "ClientGroup model + CRUD /client-groups",
+          "GET /reports/clients",
+        ],
+        note: "Identity, invoice history and the audit trail are real. The totals strip, quotes, documents, tags and risk flags are quarantined into scaffold blocks inside the screen — each maps to a model that does not exist rather than to a screen nobody built.",
       },
       {
         key: "customers.contacts",
@@ -376,11 +385,10 @@ export const IA: IaSection[] = [
         key: "customers.history",
         label: "Client history",
         path: "customers/history",
-        status: "partial",
+        status: "none",
         layer: "L2",
-        endpoints: ["GET /activity"],
-        missing: ["GET /activity?target_id"],
-        note: "The audit log is real but cannot be scoped to one client.",
+        missing: ["GET /clients/{id}/timeline (invoices + payments + credit notes)"],
+        note: "The COMMERCIAL relationship over time — what was invoiced, what was paid, what was credited. Not the audit log: invoice, payment and credit-note entries are written with target_type=\"invoice\" and target_id=<invoice id>, and carry no client_id anywhere, not even in their `after` payload. So GET /activity?target_id={client} can never return them — it returns only the three things written against a client row (created, edited, imported). That is customers.activity, one node down. This needs a join the server does not expose.",
       },
       {
         key: "customers.documents",
@@ -394,10 +402,10 @@ export const IA: IaSection[] = [
         key: "customers.activity",
         label: "Client activity",
         path: "customers/activity",
-        status: "partial",
+        status: "wired",
         layer: "L2",
-        endpoints: ["GET /activity?target_type=client"],
-        missing: ["GET /activity?target_id"],
+        endpoints: ["GET /activity?target_type=client", "GET /activity?target_id"],
+        note: "Who touched this client RECORD: created, edited, imported. Deliberately narrow — the commercial timeline is customers.history, and the who-did-what-in-the-app axis is the Activity section (activity.user, filtered by actor rather than target).",
       },
     ],
   },
@@ -432,7 +440,7 @@ export const IA: IaSection[] = [
         layer: "L1",
         endpoints: ["GET /products"],
         missing: ["GET /products?billing_type", "a product/service discriminator"],
-        note: "Product.billing_type (hourly/fixed/daily/unit/recurring) makes the split derivable, but the server cannot filter on it — the UI filters after fetching everything.",
+        note: "Product.billing_type (hourly/fixed/daily/unit/recurring) makes the split derivable, but the server cannot filter on it. The catalog screen therefore ships NO billing-type filter: a control that filters one fetched page silently stops finding things once the catalog outgrows it.",
       },
       {
         key: "catalog.categories",
@@ -479,7 +487,7 @@ export const IA: IaSection[] = [
         layer: "L2",
         endpoints: ["GET /products"],
         missing: ["GET /products?status=archived"],
-        note: "ProductStatus.ARCHIVED exists on the model; the list endpoint takes no status filter.",
+        note: "ProductStatus.ARCHIVED exists on the model and the record drawer can now set it (PATCH /products/{id}), but the list endpoint takes no status filter, so archived products cannot be listed separately.",
       },
     ],
   },
@@ -509,7 +517,7 @@ export const IA: IaSection[] = [
         layer: "L2",
         endpoints: ["GET /invoices"],
         missing: ["GET /reports/invoices (aggregated)"],
-        note: "Counts are aggregated in the browser from the full list.",
+        note: "GET /invoices returns rows, not counts. Nothing aggregates them: the report screens use /reports/kpi, which has no per-status breakdown beyond its `counts` map and no date range, so an invoice report would have to be tallied in the browser — which is why this stays scaffolded.",
       },
       {
         key: "reports.payments",
@@ -1367,6 +1375,28 @@ export function routableNodes(surface: Surface = "saas"): IaNode[] {
 
 export function findByPath(path: string, surface: Surface = "both"): IaNode | undefined {
   return routableNodes(surface).find((node) => node.path === path);
+}
+
+/**
+ * Ancestor chain for a routable path, section first, the node itself last.
+ *
+ * Every screen needs to know where it sits to offer a way back out, and the
+ * IA is the only thing that knows. Returns [] for an unknown path rather than
+ * throwing: a route that is not in the tree (the invoice builder) simply has
+ * no trail, which is the correct answer for an action.
+ */
+export function iaTrail(path: string, surface: Surface = "saas"): IaNode[] {
+  const walk = (nodes: IaNode[], trail: IaNode[]): IaNode[] | undefined => {
+    for (const node of nodes) {
+      if (!onSurface(node, surface)) continue;
+      const here = [...trail, node];
+      if (node.path === path) return here;
+      const deeper = walk(node.children ?? [], here);
+      if (deeper) return deeper;
+    }
+    return undefined;
+  };
+  return walk(IA, []) ?? [];
 }
 
 export interface IaCoverage {

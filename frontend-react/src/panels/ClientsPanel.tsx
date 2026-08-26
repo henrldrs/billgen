@@ -1,21 +1,51 @@
 /** Clients — list + create. The reference implementation of the panel pattern:
- *  server state via hooks, zero business logic, translations via t(). */
+ *  server state via hooks, zero business logic, translations via t().
+ *
+ *  No search box. GET /clients takes company_id and nothing else, so a search
+ *  field here could only filter an already-downloaded page — a control that
+ *  works until the list outgrows one response and then quietly stops finding
+ *  things. It belongs to a server-side query parameter that does not exist.
+ */
 
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 
-import { Button, EmptyState, Field, Modal, Spinner, TextInput } from "@henrioutai/ui";
+import {
+  Badge,
+  Banner,
+  Button,
+  Card,
+  EmptyState,
+  ErrorState,
+  Field,
+  Modal,
+  PageHeader,
+  Pagination,
+  Skeleton,
+  Table,
+  TextInput,
+  type TableColumn,
+  type TableSort,
+} from "@henrioutai/ui";
+
 import { useClients, useCreateClient } from "../hooks/queries";
 import { t, type Lang } from "../lib/translations";
+import type { ClientResponse } from "../types";
+
+const PAGE_SIZE = 25;
 
 export interface ClientsPanelProps {
   companyId: string;
   lang?: Lang;
+  /** Open one client's 360 screen. Rows are inert without it. */
+  onOpenClient?: (clientId: string) => void;
 }
 
-export function ClientsPanel({ companyId, lang = "en" }: ClientsPanelProps) {
-  const { data: clients, isLoading, isError } = useClients(companyId);
+export function ClientsPanel({ companyId, lang = "en", onOpenClient }: ClientsPanelProps) {
+  const { data: clients, isLoading, isError, refetch } = useClients(companyId);
   const createClient = useCreateClient();
 
+  const [sort, setSort] = useState<TableSort>({ key: "name", direction: "asc" });
+  const [page, setPage] = useState(1);
   const [formOpen, setFormOpen] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -57,40 +87,140 @@ export function ClientsPanel({ companyId, lang = "en" }: ClientsPanelProps) {
     );
   };
 
-  if (isLoading) return <Spinner label={t(lang, "common.loading")} />;
-  if (isError) return <div role="alert">{t(lang, "common.error")}</div>;
+  const sorted = useMemo(() => {
+    const rows = [...(clients ?? [])];
+    const direction = sort.direction === "asc" ? 1 : -1;
+    const pick = (row: ClientResponse) => {
+      switch (sort.key) {
+        case "email":
+          return row.email ?? "";
+        case "vat_number":
+          return row.vat_number ?? "";
+        case "city":
+          return row.city ?? "";
+        default:
+          return row.name;
+      }
+    };
+    rows.sort((a, b) => {
+      const left = pick(a);
+      const right = pick(b);
+      if (left === right) return 0;
+      return (left < right ? -1 : 1) * direction;
+    });
+    return rows;
+  }, [clients, sort]);
+
+  const pageCount = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const visible = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const columns: TableColumn<ClientResponse>[] = [
+    {
+      key: "name",
+      label: t(lang, "clients.name"),
+      sortable: true,
+      render: (client) =>
+        onOpenClient ? (
+          <button
+            type="button"
+            className="bg-linkish"
+            onClick={(event) => {
+              // The row handles the click; the button exists so the destination
+              // is reachable by keyboard, not by mouse only.
+              event.stopPropagation();
+              onOpenClient(client.id);
+            }}
+          >
+            {client.name}
+          </button>
+        ) : (
+          client.name
+        ),
+    },
+    {
+      key: "type",
+      label: t(lang, "client360.type"),
+      render: (client) => (
+        <Badge tone={client.is_business ? "info" : "neutral"}>
+          {client.is_business
+            ? t(lang, "client360.business")
+            : t(lang, "client360.individual")}
+        </Badge>
+      ),
+    },
+    {
+      key: "email",
+      label: t(lang, "clients.email"),
+      sortable: true,
+      render: (client) => client.email ?? "—",
+    },
+    {
+      key: "vat_number",
+      label: t(lang, "clients.vat"),
+      sortable: true,
+      render: (client) =>
+        client.vat_number ? (
+          <span className="bg-num">{client.vat_number}</span>
+        ) : (
+          "—"
+        ),
+    },
+    {
+      key: "city",
+      label: t(lang, "clients.city"),
+      sortable: true,
+      render: (client) => client.city ?? "—",
+    },
+  ];
+
+  if (isError) {
+    return (
+      <Card>
+        <ErrorState
+          title={t(lang, "common.error")}
+          onRetry={() => void refetch()}
+          retryLabel={t(lang, "common.retry")}
+        />
+      </Card>
+    );
+  }
 
   return (
-    <section className="bg-panel" aria-label={t(lang, "clients.title")}>
-      <header className="bg-panel__header">
-        <h1>{t(lang, "clients.title")}</h1>
-        <Button onClick={() => setFormOpen(true)}>{t(lang, "clients.add")}</Button>
-      </header>
+    <section className="bg-stack" aria-label={t(lang, "clients.title")}>
+      <PageHeader
+        title={t(lang, "clients.title")}
+        actions={
+          <Button onClick={() => setFormOpen(true)}>{t(lang, "clients.add")}</Button>
+        }
+      />
 
-      {clients && clients.length > 0 ? (
-        <table className="bg-table">
-          <thead>
-            <tr>
-              <th>{t(lang, "clients.name")}</th>
-              <th>{t(lang, "clients.email")}</th>
-              <th>{t(lang, "clients.vat")}</th>
-              <th>{t(lang, "clients.city")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {clients.map((client) => (
-              <tr key={client.id}>
-                <td>{client.name}</td>
-                <td>{client.email ?? "—"}</td>
-                <td>{client.vat_number ?? "—"}</td>
-                <td>{client.city ?? "—"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <EmptyState title={t(lang, "clients.empty")} />
-      )}
+      <Card padded={false}>
+        {isLoading ? (
+          <div className="bg-report__skeleton">
+            <Skeleton lines={6} />
+          </div>
+        ) : (
+          <>
+            <Table
+              columns={columns}
+              rows={visible}
+              rowKey={(client) => client.id}
+              sort={sort}
+              onSortChange={(next) => {
+                setSort(next);
+                setPage(1);
+              }}
+              onRowClick={onOpenClient ? (client) => onOpenClient(client.id) : undefined}
+              empty={<EmptyState title={t(lang, "clients.empty")} />}
+            />
+            {pageCount > 1 ? (
+              <div className="bg-report__pagination">
+                <Pagination page={page} pageCount={pageCount} onPageChange={setPage} />
+              </div>
+            ) : null}
+          </>
+        )}
+      </Card>
 
       <Modal
         open={formOpen}
@@ -144,7 +274,7 @@ export function ClientsPanel({ companyId, lang = "en" }: ClientsPanelProps) {
             />
           </Field>
           {createClient.isError ? (
-            <div role="alert">{t(lang, "common.error")}</div>
+            <Banner tone="danger">{t(lang, "common.error")}</Banner>
           ) : null}
           <div className="bg-panel__actions">
             <Button variant="secondary" onClick={() => setFormOpen(false)}>

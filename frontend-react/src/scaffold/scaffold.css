@@ -68,6 +68,36 @@
   margin: 0 0 16px;
 }
 
+/* ---- the unwired BLOCK: a hole inside an otherwise real screen ----------- */
+
+/* Same face as .sk-page, tightened: it sits between working cards rather than
+ * owning the viewport, so the padding and the title come down a scale step.
+ * The margin stays generous — the block must not read as part of the real
+ * card above it. */
+.sk-block {
+  margin: 0 0 16px;
+}
+
+.sk-block__body {
+  padding: 12px 14px 16px;
+}
+
+.sk-block__title {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 19px;
+  font-weight: bold;
+  margin: 0 0 2px;
+  letter-spacing: 0;
+}
+
+.sk-block .sk-page__path {
+  margin-bottom: 10px;
+}
+
+.sk-block .sk-endpoints {
+  margin: 12px 0 0;
+}
+
 /* ---- the endpoint ledger ------------------------------------------------- */
 
 .sk-endpoints {

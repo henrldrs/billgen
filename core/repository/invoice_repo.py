@@ -24,6 +24,7 @@ class InvoiceRepository(ABC):
         self,
         company_id: UUID | None = None,
         status: InvoiceStatus | None = None,
+        client_id: UUID | None = None,
     ) -> list[Invoice]: ...
 
     @abstractmethod

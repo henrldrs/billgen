@@ -5,13 +5,30 @@ import { Link, useNavigate } from "react-router-dom";
 import { useSession } from "../auth/session";
 
 export function LoginPage() {
-  const { login } = useSession();
+  const { login, devBootstrap } = useSession();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+
+  const handleDevBootstrap = async () => {
+    setError(null);
+    setPending(true);
+    try {
+      await devBootstrap();
+      navigate("/app");
+    } catch (err) {
+      setError(
+        err instanceof ApiError && err.status === 404
+          ? "Dev sign-in needs the API started with DESKTOP_MODE=true."
+          : "Dev sign-in failed",
+      );
+    } finally {
+      setPending(false);
+    }
+  };
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -66,6 +83,28 @@ export function LoginPage() {
         <p className="bg-muted mt-4">
           No account yet? <Link to="/signup" className="bg-link">Create one</Link>
         </p>
+
+        {/* Dev-only escape hatch. `import.meta.env.DEV` is replaced with the
+            literal `false` by Vite in a production build, so this block is
+            tree-shaken out of the shipped bundle — it cannot be reached by
+            flipping a runtime flag, because it is not there. */}
+        {import.meta.env.DEV ? (
+          <div className="bg-auth-page__dev">
+            <p className="bg-muted">
+              Development build. Signs in as the local single-user account via
+              POST /auth/desktop-bootstrap — no password, and the API returns
+              404 unless it was started with DESKTOP_MODE=true.
+            </p>
+            <Button
+              variant="secondary"
+              disabled={pending}
+              className="w-full"
+              onClick={() => void handleDevBootstrap()}
+            >
+              Continue as local dev user
+            </Button>
+          </div>
+        ) : null}
       </div>
     </main>
   );

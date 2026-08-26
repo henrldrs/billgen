@@ -14,7 +14,9 @@ import {
   ActivityPanel,
   BackupPanel,
   Badge,
+  Breadcrumbs,
   Card,
+  Client360Panel,
   ClientsPanel,
   CompanyForm,
   CreditNotesPanel,
@@ -23,9 +25,12 @@ import {
   IA,
   ImportPanel,
   InvoiceBuilderPanel,
+  InvoiceDetailPanel,
   List,
   PageHeader,
   ProductsPanel,
+  ReceivablesPanel,
+  RevenueReportPanel,
   ScaffoldButton,
   ScaffoldField,
   ScaffoldHeading,
@@ -37,8 +42,10 @@ import {
   Tabs,
   ThemeSwitcher,
   coverage,
+  iaTrail,
   routableNodes,
   t,
+  tAuditAction,
   useActivity,
   useCompanies,
   type IaNode,
@@ -56,17 +63,98 @@ interface ScreenProps {
   node: IaNode;
   companyId: string;
   lang: Lang;
+  /** The active company's default currency. Report endpoints return bare
+   *  decimals, so the screen has to be told what they are denominated in. */
+  currency: string;
 }
 
 type Screen = (props: ScreenProps) => ReactNode;
 
-/** Read the shell context and render either the built screen or its scaffold. */
+/** Read the shell context and render either the built screen or its scaffold.
+ *
+ *  Two things wrap EVERY screen here rather than being each screen's problem:
+ *
+ *  1. Breadcrumbs. Without them the only way back out of a leaf is the top nav,
+ *     which is a nav bar being used as a back button. The trail comes from the
+ *     IA, so a screen cannot forget to have one and cannot get it wrong.
+ *  2. The settings rail. It used to be rendered by the two settings screens
+ *     that happened to be BUILT, so the other thirteen dropped it and became
+ *     dead ends — you could enter a settings page and not leave it except via
+ *     the top nav. A rail that vanishes on most of the section it belongs to is
+ *     worse than no rail; now the section owns it, not the screen.
+ */
 function IaScreen({ node }: { node: IaNode }) {
-  const { companyId, lang } = useOutletContext<ShellContext>();
+  const { companyId, lang, currency } = useOutletContext<ShellContext>();
   const Built = BUILT[node.path as string];
-  if (Built) return <Built node={node} companyId={companyId} lang={lang} />;
   const sketch = SKETCHES[node.path as string];
-  return <ScaffoldPage node={node}>{sketch?.()}</ScaffoldPage>;
+
+  const body = Built ? (
+    <Built node={node} companyId={companyId} lang={lang} currency={currency} />
+  ) : (
+    <ScaffoldPage node={node}>{sketch?.()}</ScaffoldPage>
+  );
+
+  return (
+    <>
+      <IaBreadcrumbs node={node} />
+      {isSettingsChild(node) ? <SettingsFrame node={node}>{body}</SettingsFrame> : body}
+    </>
+  );
+}
+
+/** Trail from the section down to this screen, every ancestor clickable. */
+function IaBreadcrumbs({ node }: { node: IaNode }) {
+  const navigate = useNavigate();
+  const trail = iaTrail(node.path as string);
+
+  // A one-item trail is the dashboard: "Dashboard ›" and nothing else is noise.
+  if (trail.length < 2) return null;
+
+  // "Clients › Clients › Client 360" — a section and its list often share a
+  // name, and repeating it reads as a rendering bug rather than a hierarchy.
+  const items = trail.filter(
+    (entry, index) => index === 0 || entry.label !== trail[index - 1].label,
+  );
+
+  return (
+    <Breadcrumbs
+      items={items.map((entry, index) => ({
+        key: entry.key,
+        label: entry.label,
+        onClick:
+          index === items.length - 1
+            ? undefined
+            : () => navigate(`/app${entry.path ? `/${entry.path}` : ""}`),
+      }))}
+    />
+  );
+}
+
+function isSettingsChild(node: IaNode): boolean {
+  return node.key.startsWith("settings.");
+}
+
+/** The settings rail, around whatever the child screen turned out to be —
+ *  built screen or scaffold. Keeping it outside BUILT is the point: an unwired
+ *  settings page must still be escapable. */
+function SettingsFrame({ node, children }: { node: IaNode; children: ReactNode }) {
+  const navigate = useNavigate();
+  const sections = findNode("settings")?.children ?? [];
+  return (
+    <SettingsShell
+      sections={sections.map((section) => ({
+        key: section.key,
+        label: section.label,
+      }))}
+      activeKey={node.key}
+      onSectionChange={(key) => {
+        const target = sections.find((section) => section.key === key);
+        if (target?.path) navigate(`/app/${target.path}`);
+      }}
+    >
+      {children}
+    </SettingsShell>
+  );
 }
 
 export function buildAppRoutes() {
@@ -120,12 +208,12 @@ function SectionIndex({ node }: ScreenProps) {
 }
 
 /** Dashboard: real KPIs and revenue, real recent activity, scaffolded alerts. */
-function DashboardScreen({ companyId, lang }: ScreenProps) {
+function DashboardScreen({ companyId, lang, currency }: ScreenProps) {
   const alerts = findNode("dashboard.alerts");
   return (
     <>
       <PageHeader title={t(lang, "dashboard.title")} />
-      <DashboardPanel companyId={companyId} lang={lang} />
+      <DashboardPanel companyId={companyId} lang={lang} currency={currency} />
       <RecentActivityCard lang={lang} />
       {alerts ? (
         <ScaffoldPage node={alerts}>
@@ -148,7 +236,8 @@ function RecentActivityCard({ lang }: { lang: Lang }) {
         <List
           items={data.map((entry, index) => ({
             key: `${entry.timestamp}-${index}`,
-            primary: entry.action,
+            // The wire value ("export_pdf") is a contract, not a label.
+            primary: tAuditAction(lang, entry.action),
             secondary: new Date(entry.timestamp).toLocaleString(),
           }))}
         />
@@ -196,7 +285,13 @@ function InvoicesScreen({ node, companyId, lang }: ScreenProps) {
         activeKey={node.path as string}
         onChange={(key) => navigate(`/app/${key}`)}
       />
-      <HistoryPanel key={status ?? "all"} companyId={companyId} lang={lang} status={status} />
+      <HistoryPanel
+        key={status ?? "all"}
+        companyId={companyId}
+        lang={lang}
+        status={status}
+        onOpenInvoice={(invoiceId) => navigate(`/app/sales/invoices/id/${invoiceId}`)}
+      />
     </>
   );
 }
@@ -227,31 +322,18 @@ function CompanyScreen({ node, lang }: ScreenProps) {
   );
 }
 
-/** Settings keeps the rail, but every section in the IA now has a home. */
-function SettingsScreen({ lang }: ScreenProps) {
-  const navigate = useNavigate();
+/** Appearance — the one settings section with something real to change. The
+ *  rail around it is supplied by SettingsFrame, so this renders only its own
+ *  content; rendering the shell here is what used to make the rail a property
+ *  of two screens instead of the section. */
+function AppearanceScreen({ node }: ScreenProps) {
   const [theme, setTheme] = useTheme();
-  const settings = findNode("settings");
-  const sections = settings?.children ?? [];
-
   return (
     <>
-      <PageHeader title={t(lang, "company.title")} />
-      <SettingsShell
-        sections={sections.map((section) => ({
-          key: section.key,
-          label: section.label,
-        }))}
-        activeKey="settings.appearance"
-        onSectionChange={(key) => {
-          const target = sections.find((section) => section.key === key);
-          if (target?.path) navigate(`/app/${target.path}`);
-        }}
-      >
-        <Card title="Appearance">
-          <ThemeSwitcher theme={theme} onChange={setTheme} />
-        </Card>
-      </SettingsShell>
+      <PageHeader title={node.label} />
+      <Card title="Appearance">
+        <ThemeSwitcher theme={theme} onChange={setTheme} />
+      </Card>
     </>
   );
 }
@@ -312,18 +394,112 @@ const BUILT: Record<string, Screen> = {
     );
   },
 
+  // customers — Client 360. Registered here rather than as an explicit <Route>
+  // in App.tsx: buildAppRoutes() already emits this path from the IA, and two
+  // routes with the same path resolve to the first declared, which is the
+  // generated one. BUILT is the documented way to claim a node's screen.
+  "customers/clients/:clientId": ({ lang }) => {
+    const { clientId } = useParams();
+    const navigate = useNavigate();
+    if (!clientId) return null;
+    return (
+      <Client360Panel
+        clientId={clientId}
+        lang={lang}
+        onBack={() => navigate("/app/customers/clients")}
+        onOpenInvoice={(invoiceId) => navigate(`/app/sales/invoices/id/${invoiceId}`)}
+        onNewInvoice={() => navigate("/app/sales/invoices/new")}
+      />
+    );
+  },
+
+  // sales — invoice detail. Same shadowing rule as Client 360 above: this was
+  // registered only in App.tsx, so its sketch never rendered and the node fell
+  // through to the bare scaffold page. It is now the real record screen: every
+  // endpoint that scaffold listed as "already usable" was in fact usable.
+  "sales/invoices/id/:invoiceId": ({ lang }) => {
+    const { invoiceId } = useParams();
+    const navigate = useNavigate();
+    if (!invoiceId) return null;
+    return (
+      <InvoiceDetailPanel
+        invoiceId={invoiceId}
+        lang={lang}
+        onBack={() => navigate("/app/sales/invoices")}
+        onOpenClient={(clientId) => navigate(`/app/customers/clients/${clientId}`)}
+        onDeleted={() => navigate("/app/sales/invoices")}
+      />
+    );
+  },
+
   // customers & catalog
-  "customers/clients": ({ companyId, lang }) => (
-    <ClientsPanel companyId={companyId} lang={lang} />
-  ),
+  "customers/clients": ({ companyId, lang }) => {
+    const navigate = useNavigate();
+    return (
+      <ClientsPanel
+        companyId={companyId}
+        lang={lang}
+        onOpenClient={(clientId) => navigate(`/app/customers/clients/${clientId}`)}
+      />
+    );
+  },
   "catalog/products": ({ companyId, lang }) => (
     <ProductsPanel companyId={companyId} lang={lang} />
   ),
 
-  // company & settings
+  // customers — the audit trail for client RECORDS. Wired since /activity grew
+  // target_type, and the only screen in this section that never got one.
+  "customers/activity": ({ node, lang }) => (
+    <ActivityPanel
+      lang={lang}
+      targetType="client"
+      title={node.label}
+      hint={t(lang, "activity.clientHint")}
+    />
+  ),
+
+  // reports — the three the server can answer today. VAT, payments, clients and
+  // products stay scaffolded: each names the endpoint it is waiting for.
+  "reports/revenue": ({ node, companyId, lang }) => (
+    <>
+      <PageHeader title={node.label} />
+      <RevenueReportPanel companyId={companyId} lang={lang} />
+    </>
+  ),
+  "reports/outstanding": ({ node, companyId, lang }) => {
+    const navigate = useNavigate();
+    return (
+      <>
+        <PageHeader title={node.label} />
+        <ReceivablesPanel
+          companyId={companyId}
+          mode="outstanding"
+          lang={lang}
+          onOpenInvoice={(invoiceId) => navigate(`/app/sales/invoices/id/${invoiceId}`)}
+        />
+      </>
+    );
+  },
+  "reports/overdue": ({ node, companyId, lang }) => {
+    const navigate = useNavigate();
+    return (
+      <>
+        <PageHeader title={node.label} />
+        <ReceivablesPanel
+          companyId={companyId}
+          mode="overdue"
+          lang={lang}
+          onOpenInvoice={(invoiceId) => navigate(`/app/sales/invoices/id/${invoiceId}`)}
+        />
+      </>
+    );
+  },
+
+  // company & settings. The landing is a SectionIndex like every other
+  // section; the rail belongs to the CHILDREN (see SettingsFrame).
   "company/profile": CompanyScreen,
-  settings: SettingsScreen,
-  "settings/appearance": SettingsScreen,
+  settings: SectionIndex,
+  "settings/appearance": AppearanceScreen,
   "settings/import": ({ lang }) => <ImportPanel lang={lang} />,
   "settings/backup": ({ lang }) => <BackupPanel lang={lang} />,
   "activity/audit": ({ lang }) => <ActivityPanel lang={lang} />,
@@ -491,50 +667,5 @@ export function InvoiceBuilderRoute() {
       lang={lang}
       onCreated={() => navigate("/app/sales/invoices")}
     />
-  );
-}
-
-/** Invoice detail — scaffolded: the per-invoice timeline has no endpoint. */
-export function InvoiceDetailRoute() {
-  const { invoiceId } = useParams();
-  const node = findNode("sales.invoice.detail");
-  if (!node) return null;
-  return (
-    <ScaffoldPage node={node}>
-      <ScaffoldNote>Invoice {invoiceId}</ScaffoldNote>
-      <ScaffoldHeading>Status timeline</ScaffoldHeading>
-      <ScaffoldTable columns={["Event", "When", "By"]} rows={4} />
-      <ScaffoldNote>
-        Created, issued and paid are recoverable from the invoice row itself.
-        Sent, delivered and viewed are not — those states do not exist in
-        InvoiceStatus, and /activity filters by target_type rather than
-        target_id, so a true per-invoice history cannot be assembled.
-      </ScaffoldNote>
-      <ScaffoldButton wouldDo="email the invoice to the client">Send</ScaffoldButton>
-      <ScaffoldButton wouldDo="copy this invoice into a new draft">Duplicate</ScaffoldButton>
-    </ScaffoldPage>
-  );
-}
-
-/** Client 360 — scaffolded: no per-client stats or invoice filter exists. */
-export function ClientDetailRoute() {
-  const { clientId } = useParams();
-  const node = findNode("customers.detail");
-  if (!node) return null;
-  return (
-    <ScaffoldPage node={node}>
-      <ScaffoldNote>Client {clientId}</ScaffoldNote>
-      <ScaffoldHeading>Overview</ScaffoldHeading>
-      <ScaffoldTable
-        columns={["Total invoiced", "Paid", "Outstanding", "Overdue", "Avg. payment days"]}
-        rows={1}
-      />
-      <ScaffoldHeading>Tabs</ScaffoldHeading>
-      <ScaffoldNote>
-        Overview, Invoices and Activity could be assembled client-side today by
-        fetching every invoice and filtering — correct but unscalable. Quotes
-        and Documents have no backend at all.
-      </ScaffoldNote>
-    </ScaffoldPage>
   );
 }

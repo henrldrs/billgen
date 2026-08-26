@@ -79,6 +79,35 @@ async def test_activity_lists_and_limits(client):
     assert all(entry["target_type"] == "invoice" for entry in filtered.json())
 
 
+async def test_activity_filters_by_target_id(client):
+    """Client history and Client activity both read the audit log scoped to one
+    record. Before this parameter the log could only be read whole or by type."""
+    alice = await signup(client)
+    headers = bearer(alice)
+    company = await create_company(client, headers)
+    record = await create_client_record(client, headers, company["id"])
+    other = await create_client_record(client, headers, company["id"], name="Other Corp")
+
+    scoped = await client.get(
+        "/activity", params={"target_id": record["id"]}, headers=headers
+    )
+    assert scoped.status_code == 200
+    entries = scoped.json()
+    assert entries, "creating the client wrote an audit entry"
+    assert all(entry["target_id"] == record["id"] for entry in entries)
+    assert all(entry["target_type"] == "client" for entry in entries)
+
+    # An id is unique across types, so combining the two filters narrows.
+    both = await client.get(
+        "/activity",
+        params={"target_id": record["id"], "target_type": "invoice"},
+        headers=headers,
+    )
+    assert both.json() == []
+
+    assert other["id"] not in {entry["target_id"] for entry in entries}
+
+
 async def test_activity_is_tenant_isolated(client):
     alice = await signup(client, email="alice@example.com", organization_name="Org A")
     await create_company(client, bearer(alice))

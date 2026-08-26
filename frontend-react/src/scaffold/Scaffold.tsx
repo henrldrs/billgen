@@ -77,6 +77,66 @@ export function ScaffoldPage({ node, children }: ScaffoldPageProps) {
   );
 }
 
+// ----------------------------------------------------------------- the block
+
+export interface ScaffoldBlockProps {
+  /** The IA node this slice stands in for — supplies title, path and gaps. */
+  node: IaNode;
+  /** Override the node's label when the block is a slice of it rather than
+   *  the whole node ("Tags", not "Client groups"). */
+  title?: string;
+  /** Narrow the ledger to this slice's own gap. A block titled "Totals" must
+   *  not claim that a missing Document model is what blocks totals — that is
+   *  the node's list, not the slice's, and printing it whole turns a precise
+   *  ledger into noise. Defaults to the node's full `missing`. */
+  missing?: string[];
+  /** Why this slice is here, in the context of the screen hosting it. */
+  children?: ReactNode;
+}
+
+/**
+ * A ScaffoldPage-shaped hole inside a screen that is otherwise real.
+ *
+ * Client 360 is the case this exists for: identity, invoice history and the
+ * audit trail are wired, while tags, documents, risk flags and GDPR each map
+ * to a model that does not exist. Rendering those with the design system would
+ * be a lie, and rendering the whole screen as a scaffold would hide three
+ * working features. So the gap is quarantined to the block that has it.
+ *
+ * Same banner and same ledger as ScaffoldPage — the block still states its own
+ * missing endpoints — but headed by an h3 rather than an h1, because a page
+ * that already has a title does not want four more.
+ */
+export function ScaffoldBlock({
+  node,
+  title,
+  missing,
+  children,
+}: ScaffoldBlockProps) {
+  const gaps = missing ?? node.missing;
+  return (
+    <section
+      className="sk-page sk-block"
+      aria-label={`${title ?? node.label} (${ARIA[node.status]})`}
+    >
+      <p className={BANNER_CLASS[node.status]}>⚠ {BANNER[node.status]}</p>
+
+      <div className="sk-page__body sk-block__body">
+        <h3 className="sk-block__title">{title ?? node.label}</h3>
+        <p className="sk-page__path">
+          /app/{node.path ?? "—"} · <ScaffoldBadge status={node.status} />
+        </p>
+
+        {children}
+
+        {gaps?.length ? (
+          <EndpointLedger title="Missing before this is real" items={gaps} />
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
 // --------------------------------------------------------------- the ledger
 
 function EndpointLedger({

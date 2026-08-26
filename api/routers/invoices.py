@@ -132,9 +132,12 @@ def delete_invoice(
 def list_invoices(
     company_id: UUID | None = None,
     status: InvoiceStatus | None = None,
+    client_id: UUID | None = None,
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
 ):
-    invoices = InvoiceService(uow_factory).list(company_id=company_id, status=status)
+    invoices = InvoiceService(uow_factory).list(
+        company_id=company_id, status=status, client_id=client_id
+    )
     return [_to_response(invoice) for invoice in invoices]
 
 

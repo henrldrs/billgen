@@ -2,21 +2,29 @@
  *  Corrections follow the Belgian-clean path — the credit-note action is the
  *  primary correction; void exists for pre-send mistakes. */
 
-import { useId, useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 
 import {
   Badge,
+  Banner,
   Button,
+  Card,
   CopyButton,
+  DatePicker,
   Divider,
   Drawer,
   EmptyState,
+  ErrorState,
   Field,
   Modal,
-  Spinner,
+  Pagination,
+  Select,
+  Skeleton,
   Table,
+  Textarea,
   TextInput,
   type TableColumn,
+  type TableSort,
 } from "@henrioutai/ui";
 import {
   useDeleteInvoice,
@@ -27,54 +35,11 @@ import {
   useVoidInvoice,
 } from "../hooks/queries";
 import { ApiError } from "../lib/apiClient";
+import { documentFilename, saveBlob } from "../lib/download";
 import { formatDate, formatMoney } from "../lib/format";
 import { t, tPeppolError, type Lang } from "../lib/translations";
 import { useApi } from "../providers/BillGenProvider";
 import type { InvoiceResponse } from "../types";
-
-/** Minimal typing for the File System Access API save dialog. */
-type SaveFilePicker = (options: {
-  suggestedName?: string;
-}) => Promise<{
-  createWritable(): Promise<{
-    write(data: Blob): Promise<void>;
-    close(): Promise<void>;
-  }>;
-}>;
-
-/** Trigger a browser "Save as" for a fetched document blob (no dialog). */
-function saveBlobViaAnchor(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-}
-
-/** Save a document blob, letting the user pick the destination when the
- *  browser supports it (Chromium/WebView2); otherwise fall back to the
- *  classic downloads-folder anchor. Returns false when the user cancelled. */
-async function saveBlob(blob: Blob, filename: string): Promise<boolean> {
-  const picker = (window as { showSaveFilePicker?: SaveFilePicker })
-    .showSaveFilePicker;
-  if (picker) {
-    try {
-      const handle = await picker({ suggestedName: filename });
-      const writable = await handle.createWritable();
-      await writable.write(blob);
-      await writable.close();
-      return true;
-    } catch (err) {
-      if ((err as DOMException)?.name === "AbortError") return false;
-      // Picker unavailable in this context (e.g. sandboxed iframe) — fall back.
-    }
-  }
-  saveBlobViaAnchor(blob, filename);
-  return true;
-}
 
 export interface HistoryPanelProps {
   companyId: string;
@@ -86,6 +51,9 @@ export interface HistoryPanelProps {
    * `key` of the status so switching tabs remounts with the new seed.
    */
   status?: string;
+  /** Open one invoice's full record screen. The drawer is the quick inspector;
+   *  this is the whole document, its lines, payments and audit history. */
+  onOpenInvoice?: (invoiceId: string) => void;
 }
 
 type ActionKind = "void" | "credit_note" | "payment" | "issue" | "delete";
@@ -96,10 +64,24 @@ interface PendingAction {
   reference: string;
 }
 
-const STATUS_FILTERS = ["", "draft", "issued", "partially_paid", "paid", "voided"] as const;
+const STATUS_FILTERS = [
+  "",
+  "draft",
+  "issued",
+  "partially_paid",
+  "paid",
+  "overdue",
+  "voided",
+] as const;
 
-export function HistoryPanel({ companyId, lang = "en", status }: HistoryPanelProps) {
-  const filterSelectId = useId();
+const PAGE_SIZE = 25;
+
+export function HistoryPanel({
+  companyId,
+  lang = "en",
+  status,
+  onOpenInvoice,
+}: HistoryPanelProps) {
   const routeFiltered = status !== undefined;
   const [statusFilter, setStatusFilter] = useState(status ?? "");
   const { data: invoices, isLoading, isError } = useInvoices({
@@ -123,7 +105,7 @@ export function HistoryPanel({ companyId, lang = "en", status }: HistoryPanelPro
 
   const download = async (kind: "pdf" | "xml", invoiceId: string, reference: string) => {
     const key = `${invoiceId}:${kind}`;
-    const filename = `${reference.replace(/\//g, "-")}.${kind}`;
+    const filename = documentFilename(reference, kind);
     setDownloading(key);
     setDownloadFailed(false);
     setDownloadedFile(null);
@@ -149,13 +131,13 @@ export function HistoryPanel({ companyId, lang = "en", status }: HistoryPanelPro
   const [action, setAction] = useState<PendingAction | null>(null);
   const [reason, setReason] = useState("");
   const [amount, setAmount] = useState("");
-  const [paidOn, setPaidOn] = useState("");
+  const [paidOn, setPaidOn] = useState<string | null>(null);
 
   const closeAction = () => {
     setAction(null);
     setReason("");
     setAmount("");
-    setPaidOn("");
+    setPaidOn(null);
   };
 
   const handleActionSubmit = (event: FormEvent) => {
@@ -175,7 +157,7 @@ export function HistoryPanel({ companyId, lang = "en", status }: HistoryPanelPro
         { invoice_id: action.invoiceId, reason },
         { onSuccess: closeAction },
       );
-    } else {
+    } else if (paidOn) {
       recordPayment.mutate(
         { invoice_id: action.invoiceId, amount, paid_on: paidOn },
         { onSuccess: closeAction },
@@ -189,10 +171,43 @@ export function HistoryPanel({ companyId, lang = "en", status }: HistoryPanelPro
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = invoices?.find((invoice) => invoice.id === selectedId);
 
+  const [sort, setSort] = useState<TableSort>({ key: "issue_date", direction: "desc" });
+  const [page, setPage] = useState(1);
+
+  const sorted = useMemo(() => {
+    const rows = [...(invoices ?? [])];
+    const direction = sort.direction === "asc" ? 1 : -1;
+    const pick = (row: InvoiceResponse) => {
+      switch (sort.key) {
+        case "reference":
+          // Drafts have no number yet, so they sort together at one end rather
+          // than interleaving with the numbered invoices.
+          return row.reference ?? "";
+        case "total_ttc":
+          return Number(row.total_ttc);
+        case "status":
+          return row.status;
+        default:
+          return row.issue_date;
+      }
+    };
+    rows.sort((a, b) => {
+      const left = pick(a);
+      const right = pick(b);
+      if (left === right) return 0;
+      return (left < right ? -1 : 1) * direction;
+    });
+    return rows;
+  }, [invoices, sort]);
+
+  const pageCount = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const visible = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   const columns: TableColumn<InvoiceResponse>[] = [
     {
       key: "reference",
       label: t(lang, "history.reference"),
+      sortable: true,
       render: (invoice) => (
         <span className="bg-num">{invoice.reference ?? t(lang, "history.draft")}</span>
       ),
@@ -200,23 +215,38 @@ export function HistoryPanel({ companyId, lang = "en", status }: HistoryPanelPro
     {
       key: "issue_date",
       label: t(lang, "history.date"),
+      sortable: true,
       render: (invoice) => formatDate(invoice.issue_date, lang),
     },
     {
       key: "total_ttc",
       label: t(lang, "history.total"),
       numeric: true,
+      sortable: true,
       render: (invoice) => formatMoney(invoice.total_ttc, invoice.currency, lang),
     },
     {
       key: "status",
       label: t(lang, "history.status"),
-      render: (invoice) => <Badge status={invoice.status as never} />,
+      sortable: true,
+      // OVERDUE is the one InvoiceStatus member Badge has no colour for; a warn
+      // tone rather than an invented modifier class.
+      render: (invoice) =>
+        invoice.status === "overdue" ? (
+          <Badge tone="warn">{invoice.status}</Badge>
+        ) : (
+          <Badge status={invoice.status as never} />
+        ),
     },
   ];
 
-  if (isLoading) return <Spinner label={t(lang, "common.loading")} />;
-  if (isError) return <div role="alert">{t(lang, "common.error")}</div>;
+  if (isError) {
+    return (
+      <Card>
+        <ErrorState title={t(lang, "common.error")} />
+      </Card>
+    );
+  }
 
   const actionPending =
     voidInvoice.isPending ||
@@ -233,60 +263,80 @@ export function HistoryPanel({ companyId, lang = "en", status }: HistoryPanelPro
   const isConfirmOnly = action?.kind === "issue" || action?.kind === "delete";
 
   return (
-    <section className="bg-panel" aria-label={t(lang, "history.title")}>
-      <header className="bg-panel__header">
-        <h1>{t(lang, "history.title")}</h1>
-        {routeFiltered ? null : (
-          <div className="bg-field">
-            <label className="bg-field__label" htmlFor={filterSelectId}>
-              {t(lang, "history.status")}
-            </label>
-            <select
-              id={filterSelectId}
-              className="bg-field__input"
+    <section className="bg-stack" aria-label={t(lang, "history.title")}>
+      {/* The route already renders a PageHeader with this title, so the panel
+          owns only its filter — two <h1>s on one screen was the old shape. */}
+      {routeFiltered ? null : (
+        <div className="bg-report__controls">
+          <Field label={t(lang, "history.status")}>
+            <Select
               value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-            >
-              {STATUS_FILTERS.map((option) => (
-                <option key={option} value={option}>
-                  {option === "" ? t(lang, "history.all") : option}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-      </header>
+              options={STATUS_FILTERS.map((option) => ({
+                value: option,
+                label: option === "" ? t(lang, "history.all") : option,
+              }))}
+              onChange={(event) => {
+                setStatusFilter(event.target.value);
+                setPage(1);
+              }}
+            />
+          </Field>
+        </div>
+      )}
 
       {downloadFailed ? (
-        <div className="bg-field__error" role="alert">
+        <Banner tone="danger" onDismiss={() => setDownloadFailed(false)}>
           {t(lang, "history.downloadError")}
-        </div>
+        </Banner>
       ) : null}
 
       {peppolErrors.length > 0 ? (
-        <div className="bg-field__error" role="alert">
-          <p>{t(lang, "history.peppolBlocked")}</p>
+        <Banner
+          tone="danger"
+          title={t(lang, "history.peppolBlocked")}
+          onDismiss={() => setPeppolErrors([])}
+        >
           <ul>
             {peppolErrors.map((key) => (
               <li key={key}>{tPeppolError(lang, key)}</li>
             ))}
           </ul>
-        </div>
+        </Banner>
       ) : null}
 
       {downloadedFile ? (
-        <div className="bg-download-confirm" role="status">
+        <Banner tone="success" onDismiss={() => setDownloadedFile(null)}>
           {t(lang, "history.downloadSaved")} {downloadedFile}
-        </div>
+        </Banner>
       ) : null}
 
-      <Table
-        columns={columns}
-        rows={invoices ?? []}
-        rowKey={(invoice) => invoice.id}
-        onRowClick={(invoice) => setSelectedId(invoice.id)}
-        empty={<EmptyState title={t(lang, "history.empty")} />}
-      />
+      <Card padded={false}>
+        {isLoading ? (
+          <div className="bg-report__skeleton">
+            <Skeleton lines={6} />
+          </div>
+        ) : (
+          <>
+            <Table
+              columns={columns}
+              rows={visible}
+              rowKey={(invoice) => invoice.id}
+              sort={sort}
+              onSortChange={(next) => {
+                setSort(next);
+                setPage(1);
+              }}
+              onRowClick={(invoice) => setSelectedId(invoice.id)}
+              empty={<EmptyState title={t(lang, "history.empty")} />}
+            />
+            {pageCount > 1 ? (
+              <div className="bg-report__pagination">
+                <Pagination page={page} pageCount={pageCount} onPageChange={setPage} />
+              </div>
+            ) : null}
+          </>
+        )}
+      </Card>
 
       {/* N3 — the record inspector. Every action except the single most common
           one (download PDF) lives here rather than in the row: a row that ends
@@ -300,6 +350,11 @@ export function HistoryPanel({ companyId, lang = "en", status }: HistoryPanelPro
         footer={
           selected ? (
             <>
+              {onOpenInvoice ? (
+                <Button variant="secondary" onClick={() => onOpenInvoice(selected.id)}>
+                  {t(lang, "invoiceDetail.open")}
+                </Button>
+              ) : null}
               <Button
                 variant="secondary"
                 disabled={downloading === `${selected.id}:pdf`}
@@ -432,12 +487,7 @@ export function HistoryPanel({ companyId, lang = "en", status }: HistoryPanelPro
                 />
               </Field>
               <Field label={t(lang, "history.paymentDate")} required>
-                <TextInput
-                  value={paidOn}
-                  required
-                  type="date"
-                  onChange={(event) => setPaidOn(event.target.value)}
-                />
+                <DatePicker value={paidOn} onChange={setPaidOn} />
               </Field>
             </>
           ) : isConfirmOnly ? (
@@ -455,7 +505,7 @@ export function HistoryPanel({ companyId, lang = "en", status }: HistoryPanelPro
               )}
               required
             >
-              <TextInput
+              <Textarea
                 value={reason}
                 required
                 onChange={(event) => setReason(event.target.value)}
@@ -470,7 +520,10 @@ export function HistoryPanel({ companyId, lang = "en", status }: HistoryPanelPro
             <Button
               type="submit"
               variant={action?.kind === "delete" ? "danger" : "primary"}
-              disabled={actionPending}
+              // The calendar returns null until a day is picked, and paid_on is
+              // required by the API — `required` on a native input cannot see a
+              // controlled null.
+              disabled={actionPending || (action?.kind === "payment" && !paidOn)}
             >
               {t(lang, isConfirmOnly ? "history.confirm" : "history.record")}
             </Button>

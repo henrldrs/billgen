@@ -5,7 +5,7 @@
 
 import { expect, test } from "vitest";
 
-import { IA, coverage, flattenIa, iaFor, missingEndpoints, routableNodes } from "./ia";
+import { IA, coverage, flattenIa, iaFor, iaTrail, missingEndpoints, routableNodes } from "./ia";
 
 test("every node key is unique", () => {
   const keys = flattenIa().map((node) => node.key);
@@ -85,4 +85,28 @@ test("the missing-endpoint list is deduplicated and non-empty", () => {
   const missing = missingEndpoints();
   expect(new Set(missing).size).toBe(missing.length);
   expect(missing.length).toBeGreaterThan(0);
+});
+
+test("every routable node knows its way back to a section", () => {
+  // Breadcrumbs are generated from this, so a node with no trail is a screen
+  // with no way out except the top nav — the thing they exist to prevent.
+  const orphans = routableNodes("saas")
+    .filter((node) => iaTrail(node.path as string).length === 0)
+    .map((node) => node.key);
+  expect(orphans).toEqual([]);
+});
+
+test("a trail starts at a section and ends at the node itself", () => {
+  // The tree is two levels deep by design: customers.detail is a SIBLING of
+  // customers.clients, not a child of it, even though its URL nests under the
+  // list's. So the trail is the section and the node — "Clients > Client 360" —
+  // and never repeats a label the way a URL-derived trail would.
+  const trail = iaTrail("customers/clients/:clientId");
+  expect(trail.map((node) => node.key)).toEqual(["customers", "customers.detail"]);
+  expect(trail.map((node) => node.label)).toEqual(["Clients", "Client 360"]);
+});
+
+test("an unknown path has no trail rather than throwing", () => {
+  // The invoice builder is an action, not a destination — no IA node, no trail.
+  expect(iaTrail("sales/invoices/new")).toEqual([]);
 });

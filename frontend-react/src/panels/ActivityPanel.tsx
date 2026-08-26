@@ -1,40 +1,114 @@
-import { EmptyState, Spinner } from "@henrioutai/ui";
+/** The audit log, read whole or scoped to one kind of record.
+ *
+ *  `targetType` is the only filter the server offers (GET /activity takes
+ *  target_type, target_id and limit — nothing else), so this panel exposes no
+ *  actor filter, no date range and no free-text search: those would each have
+ *  to be a client-side illusion over a truncated `limit` window. They are
+ *  logged as gaps on activity.user and explore.activity in scaffold/ia.ts.
+ */
+
+import { useMemo, useState } from "react";
+
+import {
+  Badge,
+  Card,
+  EmptyState,
+  ErrorState,
+  PageHeader,
+  Pagination,
+  Skeleton,
+  Table,
+  type TableColumn,
+} from "@henrioutai/ui";
+
 import { useActivity } from "../hooks/queries";
-import { t, type Lang } from "../lib/translations";
+import { t, tAuditAction, type Lang } from "../lib/translations";
+import type { ActivityEntryResponse } from "../types";
+
+const PAGE_SIZE = 25;
 
 export interface ActivityPanelProps {
   lang?: Lang;
   limit?: number;
+  /** Scope to one kind of record ("client", "invoice", "product"). */
   targetType?: string;
+  /** Page title. Defaults to the generic audit-log heading. */
+  title?: string;
+  /** One line under the title explaining what this slice of the log is. */
+  hint?: string;
 }
 
-export function ActivityPanel({ lang = "en", limit = 50, targetType }: ActivityPanelProps) {
-  const { data: entries, isLoading, isError } = useActivity({ limit, targetType });
+export function ActivityPanel({
+  lang = "en",
+  limit = 50,
+  targetType,
+  title,
+  hint,
+}: ActivityPanelProps) {
+  const { data: entries, isLoading, isError, refetch } = useActivity({ limit, targetType });
+  const [page, setPage] = useState(1);
 
-  if (isLoading) return <Spinner label={t(lang, "common.loading")} />;
-  if (isError) return <div role="alert">{t(lang, "common.error")}</div>;
+  // The API already returns newest-first; this panel does not reorder it,
+  // because "most recent first" is the only reading an audit log has.
+  const rows = useMemo(() => entries ?? [], [entries]);
+  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const visible = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const columns: TableColumn<ActivityEntryResponse>[] = [
+    {
+      key: "action",
+      label: t(lang, "activity.action"),
+      render: (entry) => <Badge tone="info">{tAuditAction(lang, entry.action)}</Badge>,
+    },
+    {
+      key: "target_type",
+      label: t(lang, "activity.target"),
+      render: (entry) => entry.target_type,
+    },
+    {
+      key: "timestamp",
+      label: t(lang, "activity.when"),
+      render: (entry) => (
+        <time dateTime={entry.timestamp}>
+          {new Date(entry.timestamp).toLocaleString()}
+        </time>
+      ),
+    },
+  ];
 
   return (
-    <section className="bg-panel" aria-label={t(lang, "activity.title")}>
-      <header className="bg-panel__header">
-        <h1>{t(lang, "activity.title")}</h1>
-      </header>
+    <section className="bg-stack" aria-label={title ?? t(lang, "activity.title")}>
+      <PageHeader title={title ?? t(lang, "activity.title")} subtitle={hint} />
 
-      {entries && entries.length > 0 ? (
-        <ul className="bg-activity">
-          {entries.map((entry) => (
-            <li key={entry.id} className="bg-activity__entry">
-              <span className={`bg-badge bg-badge--${entry.action}`}>{entry.action}</span>{" "}
-              <span className="bg-activity__target">{entry.target_type}</span>{" "}
-              <time dateTime={entry.timestamp}>
-                {new Date(entry.timestamp).toLocaleString()}
-              </time>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <EmptyState title={t(lang, "activity.empty")} />
-      )}
+      <Card padded={false}>
+        {isError ? (
+          <div className="bg-report__skeleton">
+            <ErrorState
+              title={t(lang, "common.error")}
+              onRetry={() => void refetch()}
+              retryLabel={t(lang, "common.retry")}
+            />
+          </div>
+        ) : isLoading ? (
+          <div className="bg-report__skeleton">
+            <Skeleton lines={6} />
+          </div>
+        ) : (
+          <>
+            <Table
+              columns={columns}
+              rows={visible}
+              rowKey={(entry) => entry.id}
+              empty={<EmptyState title={t(lang, "activity.empty")} />}
+            />
+            {pageCount > 1 ? (
+              <div className="bg-report__pagination">
+                <Pagination page={page} pageCount={pageCount} onPageChange={setPage} />
+              </div>
+            ) : null}
+          </>
+        )}
+      </Card>
     </section>
   );
 }

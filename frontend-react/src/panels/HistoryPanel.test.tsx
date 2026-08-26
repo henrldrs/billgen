@@ -257,7 +257,13 @@ test("deleting a draft confirms then removes it", async () => {
   expect(await screen.findByText("No invoices yet.")).toBeInTheDocument();
 });
 
-test("recording a payment posts amount and date", async () => {
+test("recording a payment posts amount and the date picked in the calendar", async () => {
+  // The payment date is a DatePicker (a calendar popup), not a text field, so
+  // the date is chosen rather than typed. "Today" is used because it is the one
+  // day that is deterministic without freezing the clock.
+  const today = new Date();
+  const todayISO = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
   const record = invoiceRecord("inv-1", "ACME-BC07012026");
   server.use(
     http.get(`${BASE}/invoices`, () => HttpResponse.json([record])),
@@ -270,7 +276,7 @@ test("recording a payment posts amount and date", async () => {
       expect(body).toMatchObject({
         invoice_id: "inv-1",
         amount: "500.00",
-        paid_on: "2026-07-20",
+        paid_on: todayISO,
       });
       record.status = "partially_paid";
       return HttpResponse.json(
@@ -287,9 +293,35 @@ test("recording a payment posts amount and date", async () => {
   await user.click(payDrawer.getByRole("button", { name: "Payment" }));
   const dialog = await screen.findByRole("dialog", { name: /Payment/ });
   await user.type(within(dialog).getByLabelText("Amount"), "500.00");
-  await user.type(within(dialog).getByLabelText("Payment date"), "2026-07-20");
+
+  // Record stays disabled until a day is picked — paid_on is required and the
+  // picker starts null, which a native `required` cannot see.
+  expect(within(dialog).getByRole("button", { name: "Record" })).toBeDisabled();
+
+  await user.click(within(dialog).getByLabelText("Payment date"));
+  await user.click(await screen.findByRole("button", { name: "Today" }));
   await user.click(within(dialog).getByRole("button", { name: "Record" }));
 
   const table = within(await screen.findByRole("table"));
   expect(await table.findByText("Partially paid")).toBeInTheDocument();
+});
+
+test("the status filter is a Select and drives the server-side query", async () => {
+  const seen: string[] = [];
+  server.use(
+    http.get(`${BASE}/invoices`, ({ request }) => {
+      seen.push(new URL(request.url).searchParams.get("status") ?? "");
+      return HttpResponse.json([invoiceRecord("inv-1", "ACME-BC07012026")]);
+    }),
+  );
+
+  renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
+  const user = userEvent.setup();
+
+  const filter = await screen.findByLabelText("Status");
+  await user.selectOptions(filter, "paid");
+
+  // The filter is a query parameter, not a client-side predicate over an
+  // already-fetched list — that is the whole point of the control existing.
+  await waitFor(() => expect(seen).toContain("paid"));
 });

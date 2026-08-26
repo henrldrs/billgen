@@ -42,6 +42,16 @@ export function useClients(companyId?: string) {
   });
 }
 
+/** One client by id — the identity half of Client 360. */
+export function useClient(clientId: string | undefined) {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["clients", "detail", clientId],
+    queryFn: () => api.getClient(clientId as string),
+    enabled: Boolean(clientId),
+  });
+}
+
 export function useCreateClient() {
   const api = useApi();
   const queryClient = useQueryClient();
@@ -92,10 +102,19 @@ export function useUpdateProduct() {
 
 // ---- invoices --------------------------------------------------------------------
 
-export function useInvoices(params?: { companyId?: string; status?: string }) {
+export function useInvoices(params?: {
+  companyId?: string;
+  status?: string;
+  clientId?: string;
+}) {
   const api = useApi();
   return useQuery({
-    queryKey: ["invoices", params?.companyId ?? "all", params?.status ?? "any"],
+    queryKey: [
+      "invoices",
+      params?.companyId ?? "all",
+      params?.status ?? "any",
+      params?.clientId ?? "any-client",
+    ],
     queryFn: () => api.listInvoices(params),
   });
 }
@@ -233,11 +252,23 @@ export function useRevenue(companyId: string | undefined, year: number) {
   });
 }
 
-export function useActivity(params?: { limit?: number; targetType?: string }) {
+export function useActivity(params?: {
+  limit?: number;
+  targetType?: string;
+  targetId?: string;
+}) {
   const api = useApi();
   return useQuery({
-    queryKey: ["activity", params?.limit ?? 50, params?.targetType ?? "all"],
+    queryKey: [
+      "activity",
+      params?.limit ?? 50,
+      params?.targetType ?? "all",
+      params?.targetId ?? "all-targets",
+    ],
     queryFn: () => api.activity(params),
+    // A per-record log is only meaningful once the record is known; without
+    // this an undefined id would fetch the whole org's log and look scoped.
+    enabled: params?.targetId === undefined || Boolean(params.targetId),
   });
 }
 

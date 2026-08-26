@@ -14,17 +14,20 @@ import { useMemo, useState } from "react";
 
 import {
   Badge,
+  Banner,
   Button,
   Card,
   EmptyState,
+  ErrorState,
   Pagination,
-  Spinner,
+  Skeleton,
   Table,
   type TableColumn,
   type TableSort,
 } from "@henrioutai/ui";
 
 import { useClients, useCreditNotes } from "../hooks/queries";
+import { documentFilename, saveBlob } from "../lib/download";
 import { formatDate, formatMoney } from "../lib/format";
 import { t, type Lang } from "../lib/translations";
 import { useApi } from "../providers/BillGenProvider";
@@ -39,25 +42,13 @@ export interface CreditNotesPanelProps {
   onGoToInvoices?: () => void;
 }
 
-/** Trigger a browser "Save as" for a fetched document blob. */
-function saveBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-}
-
 export function CreditNotesPanel({
   companyId,
   lang = "en",
   onGoToInvoices,
 }: CreditNotesPanelProps) {
   const api = useApi();
-  const { data: creditNotes, isLoading, isError } = useCreditNotes(companyId);
+  const { data: creditNotes, isLoading, isError, refetch } = useCreditNotes(companyId);
   const { data: clients } = useClients(companyId);
 
   const [sort, setSort] = useState<TableSort>({ key: "issue_date", direction: "desc" });
@@ -105,7 +96,7 @@ export function CreditNotesPanel({
     setFailed(false);
     try {
       const blob = await api.creditNotePdf(creditNote.id);
-      saveBlob(blob, `${creditNote.reference}.pdf`);
+      await saveBlob(blob, documentFilename(creditNote.reference, "pdf"));
     } catch {
       setFailed(true);
     } finally {
@@ -172,8 +163,27 @@ export function CreditNotesPanel({
     },
   ];
 
-  if (isLoading) return <Spinner label={t(lang, "common.loading")} />;
-  if (isError) return <div role="alert">{t(lang, "common.error")}</div>;
+  if (isError) {
+    return (
+      <Card>
+        <ErrorState
+          title={t(lang, "common.error")}
+          onRetry={() => void refetch()}
+          retryLabel={t(lang, "common.retry")}
+        />
+      </Card>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <Card padded={false}>
+        <div className="bg-report__skeleton">
+          <Skeleton lines={6} />
+        </div>
+      </Card>
+    );
+  }
 
   if (sorted.length === 0) {
     return (
@@ -196,9 +206,9 @@ export function CreditNotesPanel({
   return (
     <Card padded={false}>
       {failed ? (
-        <div className="bg-field__error" role="alert" style={{ padding: "0.75rem 1rem" }}>
+        <Banner tone="danger" onDismiss={() => setFailed(false)}>
           {t(lang, "history.downloadError")}
-        </div>
+        </Banner>
       ) : null}
 
       <Table
@@ -213,7 +223,7 @@ export function CreditNotesPanel({
       />
 
       {pageCount > 1 ? (
-        <div style={{ padding: "0.75rem 1rem" }}>
+        <div className="bg-report__pagination">
           <Pagination page={page} pageCount={pageCount} onPageChange={setPage} />
         </div>
       ) : null}

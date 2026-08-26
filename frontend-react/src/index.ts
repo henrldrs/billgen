@@ -13,8 +13,9 @@ export {
 } from "./lib/apiClient";
 
 // i18n & display formatting
-export { t, type Lang, type MessageKey } from "./lib/translations";
+export { t, tAuditAction, tPeppolError, type Lang, type MessageKey } from "./lib/translations";
 export { formatDate, formatMoney, monthName } from "./lib/format";
+export { documentFilename, saveBlob } from "./lib/download";
 
 // Providers & hooks
 export { BillGenProvider, useApi } from "./providers/BillGenProvider";
@@ -34,6 +35,7 @@ export {
   findByPath,
   flattenIa,
   iaFor,
+  iaTrail,
   missingEndpoints,
   onSurface,
   routableNodes,
@@ -49,6 +51,7 @@ export {
 // Never use these for a feature that works; that is what @henrioutai/ui is for.
 export {
   ScaffoldBadge,
+  ScaffoldBlock,
   ScaffoldButton,
   ScaffoldField,
   ScaffoldHeading,
@@ -62,11 +65,26 @@ export {
 // Panels — BillGen business UI (data via hooks, no math here).
 export { ActivityPanel } from "./panels/ActivityPanel";
 export { BackupPanel } from "./panels/BackupPanel";
+export { Client360Panel, type Client360PanelProps } from "./panels/Client360Panel";
 export { ClientsPanel } from "./panels/ClientsPanel";
 export { CompanyForm } from "./panels/CompanyForm";
 export { CreditNotesPanel } from "./panels/CreditNotesPanel";
 export { DashboardPanel } from "./panels/DashboardPanel";
 export { HistoryPanel } from "./panels/HistoryPanel";
+export {
+  InvoiceDetailPanel,
+  type InvoiceDetailPanelProps,
+} from "./panels/InvoiceDetailPanel";
 export { ImportPanel } from "./panels/ImportPanel";
 export { InvoiceBuilderPanel } from "./panels/InvoiceBuilderPanel";
 export { ProductsPanel } from "./panels/ProductsPanel";
+export {
+  ReceivablesPanel,
+  type ReceivablesMode,
+  type ReceivablesPanelProps,
+} from "./panels/ReceivablesPanel";
+export {
+  MonthlyRevenueChart,
+  RevenueReportPanel,
+  type RevenueReportPanelProps,
+} from "./panels/RevenueReportPanel";

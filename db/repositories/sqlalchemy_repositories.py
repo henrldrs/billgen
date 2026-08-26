@@ -243,6 +243,7 @@ class SqlAlchemyInvoiceRepository(InvoiceRepository):
         self,
         company_id: UUID | None = None,
         status: InvoiceStatus | None = None,
+        client_id: UUID | None = None,
     ) -> list[Invoice]:
         stmt = (
             select(InvoiceRow)
@@ -253,6 +254,8 @@ class SqlAlchemyInvoiceRepository(InvoiceRepository):
             stmt = stmt.where(InvoiceRow.company_id == company_id)
         if status is not None:
             stmt = stmt.where(InvoiceRow.status == status.value)
+        if client_id is not None:
+            stmt = stmt.where(InvoiceRow.client_id == client_id)
         return [row_to_invoice(row) for row in self._s.execute(stmt).scalars()]
 
     def update(self, invoice: Invoice) -> Invoice:
@@ -398,7 +401,12 @@ class SqlAlchemyAuditLogRepository(AuditLogRepository):
         self._s.flush()
         return entry
 
-    def list(self, limit: int = 50, target_type: str | None = None) -> list[AuditLogEntry]:
+    def list(
+        self,
+        limit: int = 50,
+        target_type: str | None = None,
+        target_id: UUID | None = None,
+    ) -> list[AuditLogEntry]:
         stmt = (
             select(AuditLogRow)
             .where(AuditLogRow.organization_id == current_organization_id())
@@ -407,4 +415,6 @@ class SqlAlchemyAuditLogRepository(AuditLogRepository):
         )
         if target_type is not None:
             stmt = stmt.where(AuditLogRow.target_type == target_type)
+        if target_id is not None:
+            stmt = stmt.where(AuditLogRow.target_id == target_id)
         return [to_domain(AuditLogEntry, row) for row in self._s.execute(stmt).scalars()]

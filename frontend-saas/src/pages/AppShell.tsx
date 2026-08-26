@@ -45,6 +45,9 @@ import { useSession } from "../auth/session";
 export interface ShellContext {
   companyId: string;
   lang: Lang;
+  /** The active company's default currency. The report endpoints return bare
+   *  decimals, so every screen that renders money needs to be told this. */
+  currency: string;
 }
 
 /** Palette-safe status marker (see the label comment in `commands`). */
@@ -266,7 +269,15 @@ export function AppShell() {
         </TopNav>
       }
     >
-      <Outlet context={{ companyId: company.id, lang } satisfies ShellContext} />
+      <Outlet
+        context={
+          {
+            companyId: company.id,
+            lang,
+            currency: company.default_currency,
+          } satisfies ShellContext
+        }
+      />
       <CommandPalette
         open={paletteOpen}
         onClose={() => setPaletteOpen(false)}

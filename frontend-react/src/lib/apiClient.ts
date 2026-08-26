@@ -275,6 +275,10 @@ export class ApiClient {
     return this.request("GET", `/clients${query}`);
   }
 
+  getClient(clientId: string): Promise<ClientResponse> {
+    return this.request("GET", `/clients/${clientId}`);
+  }
+
   createClient(body: ClientCreateRequest): Promise<ClientResponse> {
     return this.request("POST", "/clients", body);
   }
@@ -308,10 +312,15 @@ export class ApiClient {
     return this.request("POST", "/invoices", body);
   }
 
-  listInvoices(params?: { companyId?: string; status?: string }): Promise<InvoiceResponse[]> {
+  listInvoices(params?: {
+    companyId?: string;
+    status?: string;
+    clientId?: string;
+  }): Promise<InvoiceResponse[]> {
     const search = new URLSearchParams();
     if (params?.companyId) search.set("company_id", params.companyId);
     if (params?.status) search.set("status", params.status);
+    if (params?.clientId) search.set("client_id", params.clientId);
     const query = search.size > 0 ? `?${search}` : "";
     return this.request("GET", `/invoices${query}`);
   }
@@ -421,10 +430,13 @@ export class ApiClient {
   activity(params?: {
     limit?: number;
     targetType?: string;
+    /** Scope the log to one record — a client, an invoice. */
+    targetId?: string;
   }): Promise<ActivityEntryResponse[]> {
     const search = new URLSearchParams();
     if (params?.limit) search.set("limit", String(params.limit));
     if (params?.targetType) search.set("target_type", params.targetType);
+    if (params?.targetId) search.set("target_id", params.targetId);
     const query = search.size > 0 ? `?${search}` : "";
     return this.request("GET", `/activity${query}`);
   }

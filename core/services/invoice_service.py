@@ -207,9 +207,14 @@ class InvoiceService:
         self,
         company_id: UUID | None = None,
         status: InvoiceStatus | None = None,
+        client_id: UUID | None = None,
     ) -> list[Invoice]:
+        """`client_id` is what Client 360's invoice history reads: filtering the
+        whole company list in the browser is correct but does not scale."""
         with self._uow_factory() as uow:
-            return uow.invoices.list(company_id=company_id, status=status)
+            return uow.invoices.list(
+                company_id=company_id, status=status, client_id=client_id
+            )
 
     def void(
         self, invoice_id: UUID, reason: str, actor_user_id: UUID | None = None

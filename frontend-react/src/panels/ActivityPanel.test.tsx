@@ -30,7 +30,8 @@ test("renders audit entries", async () => {
   );
 
   renderWithProvider(<ActivityPanel />);
-  expect(await screen.findByText("create")).toBeInTheDocument();
+  // Audit actions are translated for display; "create" is the wire value.
+  expect(await screen.findByText("Created")).toBeInTheDocument();
   expect(screen.getByText("invoice")).toBeInTheDocument();
 });
 

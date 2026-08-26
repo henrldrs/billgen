@@ -143,6 +143,33 @@ async def test_list_filter_by_status_and_get(client):
     assert fetched.json()["reference"] == invoice["reference"]
 
 
+async def test_list_filter_by_client(client):
+    """Client 360's invoice history. Without this filter the screen has to pull
+    every invoice in the company and narrow it in the browser."""
+    headers, company, record = await _setup(client)
+    other = await create_client_record(client, headers, company["id"], name="Other Corp")
+
+    mine = await create_invoice(client, headers, company["id"], record["id"])
+    await create_invoice(client, headers, company["id"], other["id"])
+
+    filtered = await client.get(
+        "/invoices", params={"client_id": record["id"]}, headers=headers
+    )
+    assert filtered.status_code == 200
+    assert [row["id"] for row in filtered.json()] == [mine["id"]]
+
+    # Composable with the filters that were already there.
+    with_status = await client.get(
+        "/invoices",
+        params={"client_id": record["id"], "status": "voided"},
+        headers=headers,
+    )
+    assert with_status.json() == []
+
+    unfiltered = await client.get("/invoices", headers=headers)
+    assert len(unfiltered.json()) == 2
+
+
 async def test_void_and_double_void(client):
     headers, company, record = await _setup(client)
     invoice = await create_invoice(client, headers, company["id"], record["id"])

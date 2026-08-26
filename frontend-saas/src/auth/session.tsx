@@ -30,6 +30,8 @@ interface SessionContextValue {
   login(body: LoginRequest): Promise<void>;
   signup(body: SignupRequest): Promise<void>;
   logout(): Promise<void>;
+  /** Dev only — see devBootstrap below. Absent from a production build. */
+  devBootstrap(): Promise<void>;
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -97,6 +99,30 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setStatus("authenticated");
   }, []);
 
+  /**
+   * Sign in with no credentials, against a local API started with
+   * DESKTOP_MODE=true. This is not a back door bolted on for convenience: it
+   * calls POST /auth/desktop-bootstrap, which is the desktop build's real
+   * login path, and which the API 404s unless desktop_mode is set. Hosting it
+   * is impossible by construction — api/config.py raises ConfigurationError
+   * on a production start with desktop_mode=true (tests/api/test_config_guards.py).
+   *
+   * The `import.meta.env.DEV` guard at the call site is a second, independent
+   * lock: Vite statically replaces it with `false` in a production build, so
+   * the button below is tree-shaken out of the shipped bundle entirely.
+   */
+  const devBootstrap = useCallback(async () => {
+    const result = await api.desktopBootstrap();
+    setUser({
+      id: result.user_id,
+      email: result.email,
+      displayName: result.display_name,
+      organizationId: result.organization_id,
+      role: result.role,
+    });
+    setStatus("authenticated");
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await api.logout();
@@ -107,7 +133,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <SessionContext.Provider value={{ status, user, login, signup, logout }}>
+    <SessionContext.Provider
+      value={{ status, user, login, signup, logout, devBootstrap }}
+    >
       {children}
     </SessionContext.Provider>
   );

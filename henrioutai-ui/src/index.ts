@@ -100,3 +100,12 @@ export {
   type ChartLegendItem,
 } from "./components/ChartWrapper";
 export { Divider, type DividerProps } from "./components/Divider";
+export {
+  RecordLayout,
+  type RecordLayoutProps,
+} from "./components/RecordLayout";
+export {
+  DataList,
+  type DataListProps,
+  type DataListRow,
+} from "./components/DataList";

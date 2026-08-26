@@ -1204,12 +1204,18 @@ textarea.bg-field__input {
     transform var(--bg-duration-pop) var(--bg-ease-standard),
     box-shadow var(--bg-duration-pop) var(--bg-ease-standard);
 }
-.bg-card:hover {
+/* The lift is opt-in (Card's `interactive` prop), not automatic. It used to be
+   on every .bg-card, which meant a card wrapping a table tilted and re-shadowed
+   whenever the pointer touched ANY row — the whole container animating while
+   the row you are actually pointing at is the thing that should respond. Same
+   reasoning already applied to .bg-panel above: a container is not a hoverable
+   object. Only a card that is itself one clickable target gets this. */
+.bg-card--interactive:hover {
   transform: perspective(900px) translateY(-2px) rotateX(1deg) rotateY(-0.6deg);
   box-shadow: var(--bg-shadow-card-hover), var(--bg-glass-highlight);
 }
 @media (prefers-reduced-motion: reduce) {
-  .bg-card:hover {
+  .bg-card--interactive:hover {
     transform: none;
   }
 }
@@ -1904,6 +1910,29 @@ textarea.bg-field__input {
 .bg-table__row--clickable:hover {
   background: color-mix(in srgb, var(--bg-accent) 6%, transparent);
 }
+/* Reads as a link, whatever element it is on. Two jobs: a table cell that is
+   the row's real destination (keyboard-reachable where the row itself is only
+   mouse-clickable), and a genuine <a> that must not fall back to the browser's
+   default blue — which is off-palette in light mode and unreadable in dark. */
+.bg-linkish {
+  text-decoration: none;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--bg-accent-ink);
+  text-align: left;
+  cursor: pointer;
+}
+.bg-linkish:hover {
+  text-decoration: underline;
+}
+.bg-linkish:focus-visible {
+  outline: 3px solid var(--bg-focus-ring-color);
+  outline-offset: 2px;
+  border-radius: var(--bg-radius-sm);
+}
+
 .bg-table__empty {
   text-align: center;
   color: var(--bg-ink-soft);
@@ -4344,5 +4373,231 @@ hr.bg-divider {
   font-family: var(--bg-font-mono);
   font-size: 0.72em;
   text-align: center;
+  color: var(--bg-ink-soft);
+}
+
+/* ---- record layout: identity · substance · context --------------------------
+ * The three-column detail page. Both rails are sticky because the whole point
+ * of a "360" screen is that the record's identity stays put while you read its
+ * history — a rail that scrolls away is just a card stacked at the top. */
+.bg-record {
+  display: grid;
+  gap: 1.25rem;
+  align-items: start;
+}
+.bg-record--three {
+  grid-template-columns: 19rem minmax(0, 1fr) 20rem;
+}
+.bg-record--two {
+  grid-template-columns: 19rem minmax(0, 1fr);
+}
+.bg-record__main {
+  min-width: 0;
+}
+.bg-record__rail {
+  position: sticky;
+  /* Clears the sticky TopNav; the shell owns the nav height, this clears it
+     generously rather than coupling to it. */
+  top: 1.25rem;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* One column below 1100px, and the CENTRE goes first: on a narrow screen the
+   substance is what was navigated to, and the rails read as context after it. */
+@media (max-width: 1100px) {
+  .bg-record--three,
+  .bg-record--two {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .bg-record__main {
+    order: 1;
+  }
+  .bg-record__rail--left {
+    order: 2;
+  }
+  .bg-record__rail--right {
+    order: 3;
+  }
+  .bg-record__rail {
+    position: static;
+  }
+}
+
+/* Sticky rails and reduced motion are unrelated, but a rail that stays put
+   while the page moves is exactly the effect some vestibular users disable. */
+@media (prefers-reduced-motion: reduce) {
+  .bg-record__rail {
+    position: static;
+  }
+}
+
+/* ---- data list: label/value facts about one record ------------------------ */
+.bg-datalist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin: 0;
+}
+.bg-datalist__row {
+  display: flex;
+  min-width: 0;
+}
+.bg-datalist--stacked .bg-datalist__row {
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.bg-datalist--inline .bg-datalist__row {
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.bg-datalist__label {
+  font-size: var(--bg-text-helper);
+  font-weight: var(--bg-weight-label);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--bg-ink-soft);
+}
+.bg-datalist__value {
+  margin: 0;
+  min-width: 0;
+  font-size: var(--bg-text-body);
+  color: var(--bg-ink);
+  overflow-wrap: anywhere;
+}
+.bg-datalist--inline .bg-datalist__value {
+  text-align: right;
+}
+/* An absent fact is dimmed rather than hidden: "no VAT number" is itself
+   information on a Belgian client, and a missing row would not say it. */
+.bg-datalist__value--empty {
+  color: var(--bg-ink-soft);
+  opacity: 0.7;
+}
+
+/* ---- client 360: the hybrid detail screen ----------------------------------
+ * App-specific, alongside .bg-panel and .bg-activity above. RecordLayout and
+ * DataList are the generic halves; this is only the glue that makes one
+ * particular screen sit right. */
+.bg-client360__identity {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+.bg-client360__identity-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  min-width: 0;
+}
+.bg-client360__name {
+  margin: 0;
+  font-size: var(--bg-text-section);
+  font-weight: var(--bg-weight-title);
+  letter-spacing: var(--bg-tracking-title);
+  overflow-wrap: anywhere;
+}
+
+/* The tab strip is the card's own header, so it sits flush against the top
+   edge and carries the card's horizontal padding rather than its own. */
+.bg-client360__tabs {
+  padding: 0 var(--bg-pad-card);
+}
+.bg-client360__tabpanel {
+  padding: var(--bg-pad-card);
+}
+/* A table draws its own edges; padding around it would double the frame. */
+.bg-client360__tabpanel--flush {
+  padding: 0;
+}
+
+/* Explanatory line under a card title — says what the card is NOT, where the
+   name alone would over-promise (Client 360's record-activity card). */
+.bg-client360__hint {
+  margin: 0 0 1rem;
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+}
+
+/* ---- stack: vertical rhythm for a screen's top-level blocks ---------------
+ * Screens used to get their spacing from .bg-panel's margin-bottom, which only
+ * worked while every screen WAS one panel. A screen made of a PageHeader, a KPI
+ * grid, a chart and a table is four siblings, and four siblings with no rule
+ * between them touch. One owner-agnostic rule, applied by the container. */
+.bg-stack > * + * {
+  margin-top: 1.25rem;
+}
+
+/* ---- report composition --------------------------------------------------
+ * Application-level layout for the report and list screens (@billgen/ui
+ * panels). Deliberately not new components: these are three flex rules, and a
+ * <ReportControls> in the design system would be a page-specific primitive. */
+
+/* The filter row above a table — year picker, status picker. Bottom-aligned so
+   a labelled Select lines up with an unlabelled one. */
+.bg-report__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+}
+.bg-report__controls .bg-field {
+  margin-bottom: 0;
+  min-width: 11rem;
+}
+
+/* A Card with padded={false} wraps a table, which draws its own edges. A
+   skeleton or a state in that slot has to supply the padding the table had. */
+.bg-report__skeleton {
+  padding: var(--bg-pad-card);
+}
+
+/* Pagination sits under the table inside the same card, separated by the rule
+   the table's last row would otherwise butt against. */
+.bg-report__pagination {
+  padding: 0.85rem var(--bg-pad-card);
+  border-top: 1px solid var(--bg-line);
+}
+
+.bg-report__counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem 1.4rem;
+}
+.bg-report__count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+/* ---- record screens ------------------------------------------------------ */
+
+/* The centre column of a RecordLayout stacks cards; the rails already have a
+   flex gap, and the centre had nothing. */
+.bg-record__main > * + * {
+  margin-top: 1.25rem;
+}
+
+/* Record actions are a decision list, not a toolbar: one per line, full width,
+   so "Void" is never a narrow button hiding at the end of a row. */
+.bg-record__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.bg-record__actions .bg-button {
+  width: 100%;
+}
+
+/* Same job as .bg-client360__hint — a line under a card title saying what the
+   card is not, where the name alone would over-promise. */
+.bg-record__hint {
+  margin: 0 0 1rem;
+  font-size: var(--bg-text-helper);
   color: var(--bg-ink-soft);
 }

@@ -369,6 +369,88 @@ const MESSAGES = {
     es: "Sin actividad registrada.",
   },
 
+  // ---- client 360 -------------------------------------------------------------------
+  "client360.identity": {
+    en: "Identity",
+    fr: "Identité",
+    nl: "Identiteit",
+    es: "Identidad",
+  },
+  "client360.invoices": {
+    en: "Invoices",
+    fr: "Factures",
+    nl: "Facturen",
+    es: "Facturas",
+  },
+  "client360.noInvoices": {
+    en: "No invoices for this client yet.",
+    fr: "Aucune facture pour ce client.",
+    nl: "Nog geen facturen voor deze klant.",
+    es: "Aún no hay facturas para este cliente.",
+  },
+  // Named "record activity", not "history": this card shows edits to the CLIENT
+  // RECORD (created, edited, imported), not the commercial history of invoices
+  // and payments. Calling it "Historique" promised the second and delivered the
+  // first — see customers.history vs customers.activity in scaffold/ia.ts.
+  "client360.recordActivity": {
+    en: "Record activity",
+    fr: "Activité de la fiche",
+    nl: "Activiteit op de fiche",
+    es: "Actividad de la ficha",
+  },
+  "client360.recordActivityHint": {
+    en: "Changes to this client's details. Invoices and payments are not here — they are in the Invoices tab.",
+    fr: "Modifications des données de ce client. Les factures et paiements ne sont pas ici — ils sont dans l'onglet Factures.",
+    nl: "Wijzigingen aan de gegevens van deze klant. Facturen en betalingen staan hier niet — die staan op het tabblad Facturen.",
+    es: "Cambios en los datos de este cliente. Las facturas y los pagos no están aquí — están en la pestaña Facturas.",
+  },
+  "client360.noRecordActivity": {
+    en: "This client's details have not been changed since it was created.",
+    fr: "Les données de ce client n'ont pas été modifiées depuis sa création.",
+    nl: "De gegevens van deze klant zijn sinds de aanmaak niet gewijzigd.",
+    es: "Los datos de este cliente no han cambiado desde su creación.",
+  },
+  "client360.staleFilter": {
+    en: "The API ignored the target_id filter and returned the whole organization's log, so it is not shown. Restart the API — it is older than this build.",
+    fr: "L'API a ignoré le filtre target_id et a renvoyé le journal de toute l'organisation ; il n'est donc pas affiché. Redémarrez l'API — elle est antérieure à cette version.",
+    nl: "De API negeerde de target_id-filter en gaf het log van de hele organisatie terug; het wordt daarom niet getoond. Herstart de API — die is ouder dan deze build.",
+    es: "La API ignoró el filtro target_id y devolvió el registro de toda la organización, por lo que no se muestra. Reinicie la API — es anterior a esta versión.",
+  },
+  "client360.contact": { en: "Contact", fr: "Contact", nl: "Contact", es: "Contacto" },
+  "client360.phone": { en: "Phone", fr: "Téléphone", nl: "Telefoon", es: "Teléfono" },
+  "client360.notes": { en: "Notes", fr: "Notes", nl: "Notities", es: "Notas" },
+  "client360.type": { en: "Type", fr: "Type", nl: "Type", es: "Tipo" },
+  "client360.business": {
+    en: "Business",
+    fr: "Professionnel",
+    nl: "Zakelijk",
+    es: "Empresa",
+  },
+  "client360.individual": {
+    en: "Individual",
+    fr: "Particulier",
+    nl: "Particulier",
+    es: "Particular",
+  },
+  "client360.notFound": {
+    en: "This client does not exist, or belongs to another organization.",
+    fr: "Ce client n'existe pas ou appartient à une autre organisation.",
+    nl: "Deze klant bestaat niet of hoort bij een andere organisatie.",
+    es: "Este cliente no existe o pertenece a otra organización.",
+  },
+  "client360.backToClients": {
+    en: "Back to clients",
+    fr: "Retour aux clients",
+    nl: "Terug naar klanten",
+    es: "Volver a clientes",
+  },
+  "client360.newInvoice": {
+    en: "New invoice",
+    fr: "Nouvelle facture",
+    nl: "Nieuwe factuur",
+    es: "Nueva factura",
+  },
+
   // ---- company -----------------------------------------------------------------------
   "company.title": {
     en: "Company details",
@@ -580,12 +662,183 @@ const MESSAGES = {
     nl: "Dat bestand is geen geldige JSON.",
     es: "Ese archivo no es un JSON válido.",
   },
+  // ---- reports -------------------------------------------------------------------
+  "reports.year": { en: "Year", fr: "Année", nl: "Jaar", es: "Año" },
+  "reports.invoicedPerMonth": {
+    en: "Invoiced per month",
+    fr: "Facturé par mois",
+    nl: "Gefactureerd per maand",
+    es: "Facturado por mes",
+  },
+  "reports.revenueCaption": {
+    en: "Issued invoices, VAT included, exactly as the server totalled them.",
+    fr: "Factures émises, TVA comprise, telles que totalisées par le serveur.",
+    nl: "Uitgereikte facturen, inclusief btw, zoals de server ze optelde.",
+    es: "Facturas emitidas, IVA incluido, tal como las totalizó el servidor.",
+  },
+  "reports.noRevenue": {
+    en: "No invoices were issued in this year.",
+    fr: "Aucune facture émise cette année.",
+    nl: "In dit jaar zijn geen facturen uitgereikt.",
+    es: "No se emitieron facturas este año.",
+  },
+  "reports.bestMonth": { en: "Best month", fr: "Meilleur mois", nl: "Beste maand", es: "Mejor mes" },
+  "reports.byStatus": {
+    en: "Invoices by status",
+    fr: "Factures par statut",
+    nl: "Facturen per status",
+    es: "Facturas por estado",
+  },
+  "reports.count": { en: "Count", fr: "Nombre", nl: "Aantal", es: "Cantidad" },
+  "reports.dueDate": { en: "Due date", fr: "Échéance", nl: "Vervaldatum", es: "Vencimiento" },
+  "reports.outstandingHint": {
+    en: "Issued and partially paid invoices — money billed and not yet received.",
+    fr: "Factures émises et partiellement payées — facturé, pas encore encaissé.",
+    nl: "Uitgereikte en deels betaalde facturen — gefactureerd, nog niet ontvangen.",
+    es: "Facturas emitidas y parcialmente pagadas — facturado, aún no cobrado.",
+  },
+  "reports.overdueHint": {
+    en: "Invoices the server has marked overdue — past their due date and unpaid.",
+    fr: "Factures marquées en retard par le serveur — échues et impayées.",
+    nl: "Facturen die de server als achterstallig markeerde — vervallen en onbetaald.",
+    es: "Facturas marcadas como vencidas por el servidor — vencidas e impagadas.",
+  },
+  "reports.noOutstanding": {
+    en: "Nothing outstanding. Every issued invoice has been paid.",
+    fr: "Rien en attente. Toutes les factures émises sont payées.",
+    nl: "Niets openstaand. Elke uitgereikte factuur is betaald.",
+    es: "Nada pendiente. Todas las facturas emitidas están pagadas.",
+  },
+  "reports.noOverdue": {
+    en: "No overdue invoices.",
+    fr: "Aucune facture en retard.",
+    nl: "Geen achterstallige facturen.",
+    es: "Sin facturas vencidas.",
+  },
+
+  // ---- invoice detail ------------------------------------------------------------
+  "invoiceDetail.summary": { en: "Summary", fr: "Récapitulatif", nl: "Overzicht", es: "Resumen" },
+  "invoiceDetail.lines": { en: "Lines", fr: "Lignes", nl: "Regels", es: "Líneas" },
+  "invoiceDetail.payments": { en: "Payments", fr: "Paiements", nl: "Betalingen", es: "Pagos" },
+  "invoiceDetail.noPayments": {
+    en: "No payment has been recorded against this invoice.",
+    fr: "Aucun paiement enregistré pour cette facture.",
+    nl: "Voor deze factuur is geen betaling geregistreerd.",
+    es: "No se ha registrado ningún pago para esta factura.",
+  },
+  "invoiceDetail.history": { en: "History", fr: "Historique", nl: "Geschiedenis", es: "Historial" },
+  "invoiceDetail.historyHint": {
+    en: "Every recorded action on this invoice, from the audit log.",
+    fr: "Chaque action enregistrée sur cette facture, depuis le journal d'audit.",
+    nl: "Elke geregistreerde actie op deze factuur, uit het auditlogboek.",
+    es: "Cada acción registrada sobre esta factura, desde el registro de auditoría.",
+  },
+  "invoiceDetail.noHistory": {
+    en: "The audit log holds nothing for this invoice.",
+    fr: "Le journal d'audit ne contient rien pour cette facture.",
+    nl: "Het auditlogboek bevat niets voor deze factuur.",
+    es: "El registro de auditoría no contiene nada para esta factura.",
+  },
+  "invoiceDetail.paymentTerms": {
+    en: "Payment terms",
+    fr: "Conditions de paiement",
+    nl: "Betalingsvoorwaarden",
+    es: "Condiciones de pago",
+  },
+  "invoiceDetail.template": { en: "PDF template", fr: "Modèle PDF", nl: "PDF-sjabloon", es: "Plantilla PDF" },
+  "invoiceDetail.voidedReason": {
+    en: "Void reason",
+    fr: "Motif d'annulation",
+    nl: "Reden van annulering",
+    es: "Motivo de anulación",
+  },
+  "invoiceDetail.notFound": {
+    en: "That invoice could not be loaded.",
+    fr: "Cette facture n'a pas pu être chargée.",
+    nl: "Deze factuur kon niet worden geladen.",
+    es: "No se pudo cargar esa factura.",
+  },
+  "invoiceDetail.backToInvoices": {
+    en: "Back to invoices",
+    fr: "Retour aux factures",
+    nl: "Terug naar facturen",
+    es: "Volver a las facturas",
+  },
+  "invoiceDetail.method": { en: "Method", fr: "Moyen", nl: "Methode", es: "Método" },
+  "invoiceDetail.open": {
+    en: "Open full record",
+    fr: "Ouvrir la fiche complète",
+    nl: "Volledig record openen",
+    es: "Abrir la ficha completa",
+  },
+
+  // ---- products (detail & editing) ------------------------------------------------
+  "products.description": { en: "Description", fr: "Description", nl: "Omschrijving", es: "Descripción" },
+  "products.billingType": {
+    en: "Billing type",
+    fr: "Type de facturation",
+    nl: "Facturatietype",
+    es: "Tipo de facturación",
+  },
+  "products.status": { en: "Status", fr: "Statut", nl: "Status", es: "Estado" },
+  "products.edit": { en: "Edit product", fr: "Modifier le produit", nl: "Product bewerken", es: "Editar producto" },
+  "products.saved": {
+    en: "Product saved.",
+    fr: "Produit enregistré.",
+    nl: "Product opgeslagen.",
+    es: "Producto guardado.",
+  },
+
+  // ---- activity log columns --------------------------------------------------------
+  "activity.action": { en: "Action", fr: "Action", nl: "Actie", es: "Acción" },
+  "activity.target": { en: "Record", fr: "Enregistrement", nl: "Record", es: "Registro" },
+  "activity.when": { en: "When", fr: "Quand", nl: "Wanneer", es: "Cuándo" },
+  "activity.clientTitle": {
+    en: "Client record activity",
+    fr: "Activité sur les fiches clients",
+    nl: "Activiteit op klantrecords",
+    es: "Actividad de fichas de cliente",
+  },
+  "activity.clientHint": {
+    en: "Who created, edited or imported a client record. Not the commercial history.",
+    fr: "Qui a créé, modifié ou importé une fiche client. Pas l'historique commercial.",
+    nl: "Wie een klantrecord aanmaakte, wijzigde of importeerde. Niet de commerciële historiek.",
+    es: "Quién creó, editó o importó una ficha de cliente. No el historial comercial.",
+  },
+
+  // ---- common (feedback) -----------------------------------------------------------
+  "common.retry": { en: "Try again", fr: "Réessayer", nl: "Opnieuw proberen", es: "Reintentar" },
+  "common.saved": { en: "Saved", fr: "Enregistré", nl: "Opgeslagen", es: "Guardado" },
+
+  // ---- audit actions (AuditAction in core/models/audit_log.py) ---------------------
+  "audit.create": { en: "Created", fr: "Créé", nl: "Aangemaakt", es: "Creado" },
+  "audit.update": { en: "Edited", fr: "Modifié", nl: "Gewijzigd", es: "Editado" },
+  "audit.issue": { en: "Issued", fr: "Émis", nl: "Uitgereikt", es: "Emitida" },
+  "audit.pay": { en: "Payment recorded", fr: "Paiement enregistré", nl: "Betaling geregistreerd", es: "Pago registrado" },
+  "audit.void": { en: "Voided", fr: "Annulé", nl: "Geannuleerd", es: "Anulada" },
+  "audit.delete": { en: "Deleted", fr: "Supprimé", nl: "Verwijderd", es: "Eliminado" },
+  "audit.export_pdf": { en: "PDF exported", fr: "PDF exporté", nl: "PDF geëxporteerd", es: "PDF exportado" },
+  "audit.export_peppol": { en: "Peppol XML exported", fr: "XML Peppol exporté", nl: "Peppol-XML geëxporteerd", es: "XML Peppol exportado" },
+  "audit.export_backup": { en: "Backup exported", fr: "Sauvegarde exportée", nl: "Back-up geëxporteerd", es: "Copia exportada" },
+  "audit.restore": { en: "Restored", fr: "Restauré", nl: "Hersteld", es: "Restaurado" },
+  "audit.import": { en: "Imported", fr: "Importé", nl: "Geïmporteerd", es: "Importado" },
+  "audit.login": { en: "Signed in", fr: "Connexion", nl: "Aangemeld", es: "Inicio de sesión" },
+  "audit.logout": { en: "Signed out", fr: "Déconnexion", nl: "Afgemeld", es: "Cierre de sesión" },
+  "audit.error": { en: "Error", fr: "Erreur", nl: "Fout", es: "Error" },
+
 } as const;
 
 export type MessageKey = keyof typeof MESSAGES;
 
 export function t(lang: Lang, key: MessageKey): string {
-  return MESSAGES[key][lang] ?? MESSAGES[key].en;
+  // The key is typed, but not every call site can prove it: HistoryPanel builds
+  // `history.${action.kind}` and casts, which is the one hole the type system
+  // cannot close. Indexing an absent key used to throw inside render, which
+  // React turns into a blank screen for the whole route — an unreadable label
+  // is a far better failure than a missing page, so fall back to the key.
+  const entry = MESSAGES[key];
+  if (!entry) return key;
+  return entry[lang] ?? entry.en;
 }
 
 /** Translate a backend Peppol-gate message key (e.g. "errSupplierVat").
@@ -593,4 +846,12 @@ export function t(lang: Lang, key: MessageKey): string {
 export function tPeppolError(lang: Lang, messageKey: string): string {
   const key = `peppol.${messageKey}`;
   return key in MESSAGES ? t(lang, key as MessageKey) : messageKey;
+}
+
+/** Translate an audit-log action ("issue", "export_pdf"). Unknown actions —
+ *  a backend newer than this UI — fall back to the raw string rather than
+ *  rendering a blank cell. */
+export function tAuditAction(lang: Lang, action: string): string {
+  const key = `audit.${action}`;
+  return key in MESSAGES ? t(lang, key as MessageKey) : action;
 }
