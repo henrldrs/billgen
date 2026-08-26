@@ -250,6 +250,13 @@ pre.tree{
   color:var(--ink-soft);margin:0 0 20px;
 }
 
+.figw{
+  overflow-x:auto;margin:0 0 24px;
+  background:var(--surface);border:1px solid var(--line);border-radius:6px;
+  padding:18px 20px;
+}
+.figw svg{display:block;min-width:940px;width:100%;height:auto}
+
 /* ---------------------------------------------------------------- sprints */
 
 .sprint{
@@ -311,6 +318,11 @@ footer{
   <a href="#security">Data &amp; Security Checklist</a>
   <a href="#extensions">Possible Extensions</a>
   <a href="#start">Workflow Starter</a>
+
+  <p class="rail__group">Deep dive</p>
+  <a href="#dataflow">Data Architecture</a>
+  <a href="#debt">Backend Debt Ledger <span class="n">171</span></a>
+  <a href="#repo">Repo Map <span class="n">442</span></a>
 </nav>
 
 <main>
@@ -357,7 +369,7 @@ footer{
     <li><strong>The IA registry</strong> — <code>frontend-react/src/scaffold/ia.ts</code>, a typed tree that drives navigation, routes, status badges, and every count below. Invariants enforced by <code>ia.test.ts</code>.</li>
     <li><strong>The endpoint inventory</strong> — read directly from <code>api/routers/</code>, not from documentation.</li>
     <li><strong>The component matrix</strong> — computed by walking JSX across all frontends plus the Studio AI reference.</li>
-    <li><strong>The Studio AI reference</strong> — <code>docs/billgen---enterprise-invoicing-&amp;-financial-saas.zip</code>, 95 files, built on top of this project's own component library.</li>
+    <li><strong>The Studio AI reference</strong> — <code>docs/billgen---enterprise-invoicing-&amp;-financial-saas.zip</code>, 95 files. A Google AI Studio (Gemini) generation dated 2026-08-25, seeded with this project&#39;s stylesheets but importing none of its components — see <a href="#repo">§15</a>.</li>
   </ul>
 </section>
 
@@ -447,7 +459,7 @@ footer{
         <tr><td class="id">FE-02</td><td>SaaS web (V02)</td><td><span class="chip c-partial">partial</span></td><td class="ev">Full IA routed; 21 areas wired. Shell is premium (TopNav, OrgSwitcher, CommandPalette, SettingsShell); content panels were raw markup until the IA pass.</td></tr>
         <tr><td class="id">FE-03</td><td>Windows desktop (V01)</td><td><span class="chip c-partial">partial</span></td><td class="ev">Tauri shell compiles; own SQLite in <code>%APPDATA%</code>; auto-login, no signup. Mounts 17 library components. <strong>No IA, no sync, no signed installer.</strong></td></tr>
         <tr><td class="id">FE-04</td><td>Mobile (V0)</td><td><span class="chip c-gap">gap</span></td><td class="ev">No directory, no build target, no bottom-nav component. Design system is responsive-capable but only one <code>max-width</code> media query exists in 4,227 lines of CSS.</td></tr>
-        <tr><td class="id">FE-05</td><td>Studio AI reference (V1)</td><td><span class="chip c-ref">reference</span></td><td class="ev">Not a frontend to ship — a proof of what the library can render. Mounts 40 library components against BillGen's own token file.</td></tr>
+        <tr><td class="id">FE-05</td><td>Studio AI reference (V1)</td><td><span class="chip c-ref">reference</span></td><td class="ev">Not a frontend to ship — a Gemini-generated sketch of full product scope, dated 2026-08-25. Mounts <strong>no</strong> library components: it was handed <code>tokens.css</code> and reimplemented all 76 from scratch, carrying 51 raw hex values. Provenance corrected in <a href="#repo">§15</a>.</td></tr>
       </tbody>
     </table>
   </div>
@@ -1111,6 +1123,357 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
 
   <div class="note note--warn">
     <p><strong>Then push the repo.</strong> <code>BGEN-OPS-01</code>: the CI workflow has been written and waiting since <code>dd0483e</code>, and the entire history is still local-only. Every gate above assumes work that is backed up and continuously tested.</p>
+  </div>
+</section>
+
+<!-- ========================================= DATA ARCHITECTURE -->
+<section id="dataflow">
+  <div class="sechead">
+    <span class="sechead__id">§13</span>
+    <h2>Data Architecture</h2>
+    <p class="sechead__sub">One request, end to end — which file touches it, in what order, and where it stops.</p>
+  </div>
+
+  <p class="lede">Sections §02 and §04 list the parts. This one shows the path between them: what a click becomes, which directory owns each hop, and which hops do not exist yet.</p>
+
+  <div class="figw">
+    <svg viewBox="0 0 1120 700" role="img" aria-label="BillGen data flow from user surfaces through the HTTP boundary, domain layer and persistence layer to the database, with side outputs for PDF, Peppol XML and legacy import, and a band of missing infrastructure.">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-faint)"/>
+        </marker>
+        <marker id="ar-gap" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--gap)"/>
+        </marker>
+        <style>
+          .lane{font-family:var(--mono);font-size:10px;letter-spacing:.14em;fill:var(--ink-faint);text-transform:uppercase}
+          .bx{fill:var(--surface-2);stroke:var(--line);stroke-width:1;rx:5}
+          .bt{font-family:var(--sans);font-size:12.5px;font-weight:600;fill:var(--ink)}
+          .bp{font-family:var(--mono);font-size:10px;fill:var(--accent-ink)}
+          .bs{font-family:var(--sans);font-size:10.5px;fill:var(--ink-soft)}
+          .fl{stroke:var(--ink-faint);stroke-width:1.2;fill:none}
+          .fl-gap{stroke:var(--gap);stroke-width:1.2;fill:none;stroke-dasharray:4 3}
+          .tag{font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase}
+        </style>
+      </defs>
+
+      <!-- 1 SURFACES -->
+      <text class="lane" x="40" y="20">1 · Surfaces — what a person touches</text>
+      <g>
+        <rect class="bx" x="40"  y="30" width="188" height="56"/>
+        <text class="bt" x="54" y="50">SaaS web</text>
+        <text class="bp" x="54" y="65">frontend-saas/</text>
+        <text class="tag" x="54" y="79" fill="var(--partial)">L3 · active · partial</text>
+
+        <rect class="bx" x="248" y="30" width="188" height="56"/>
+        <text class="bt" x="262" y="50">Windows desktop</text>
+        <text class="bp" x="262" y="65">frontend-electron/</text>
+        <text class="tag" x="262" y="79" fill="var(--partial)">L4 · Tauri · partial</text>
+
+        <rect class="bx" x="456" y="30" width="188" height="56" stroke-dasharray="4 3"/>
+        <text class="bt" x="470" y="50" fill="var(--ink-faint)">Mobile</text>
+        <text class="bp" x="470" y="65" fill="var(--ink-faint)">— no directory</text>
+        <text class="tag" x="470" y="79" fill="var(--gap)">L5 · not started</text>
+
+        <rect class="bx" x="664" y="30" width="188" height="56"/>
+        <text class="bt" x="678" y="50">Studio AI prototype</text>
+        <text class="bp" x="678" y="65">docs/*.zip</text>
+        <text class="tag" x="678" y="79" fill="var(--ref)">L6 · reference · no backend</text>
+      </g>
+
+      <!-- 2 CONTRACT -->
+      <path class="fl" d="M134 86 L134 132" marker-end="url(#ar)"/>
+      <path class="fl" d="M342 86 L342 132" marker-end="url(#ar)"/>
+      <text class="lane" x="40" y="112">2 · Contract — the single source of truth</text>
+      <rect class="bx" x="40" y="134" width="812" height="46" stroke="var(--accent)"/>
+      <text class="bt" x="54" y="153">Information architecture registry</text>
+      <text class="bp" x="54" y="168">frontend-react/src/scaffold/ia.ts</text>
+      <text class="bs" x="470" y="153">Drives nav, routes, status badges and the scaffold treatment.</text>
+      <text class="bs" x="470" y="168">130 nodes · 22 wired · 41 partial · 67 none · 171 declared gaps</text>
+
+      <!-- 3 HTTP -->
+      <path class="fl" d="M446 180 L446 224" marker-end="url(#ar)"/>
+      <text class="lane" x="40" y="206">3 · HTTP boundary — Layer 2</text>
+      <rect class="bx" x="40" y="226" width="812" height="56"/>
+      <text class="bt" x="54" y="246">api/</text>
+      <text class="bs" x="54" y="262">routers/ · security/ (JWT) · middleware/ · integrations/</text>
+      <text class="bp" x="54" y="276">16 routers · 41 endpoints · FastAPI · Pydantic in, Pydantic out</text>
+
+      <!-- 4 DOMAIN -->
+      <path class="fl" d="M446 282 L446 326" marker-end="url(#ar)"/>
+      <text class="lane" x="40" y="308">4 · Domain — Layer 1, pure Python, no framework imports</text>
+      <rect class="bx" x="40" y="328" width="396" height="86"/>
+      <text class="bt" x="54" y="348">core/services/</text>
+      <text class="bs" x="54" y="365">Invoice · CreditNote · Payment · Pdf</text>
+      <text class="bs" x="54" y="380">Peppol · Import · Reporting · Activity</text>
+      <text class="bp" x="54" y="400">orchestration — owns the transaction</text>
+
+      <rect class="bx" x="456" y="328" width="396" height="86"/>
+      <text class="bt" x="470" y="348">core/rules/ · core/models/</text>
+      <text class="bs" x="470" y="365">currency_math · vat · numbering · discounts</text>
+      <text class="bs" x="470" y="380">belgian_legal · identifiers · belgian_peppol</text>
+      <text class="bp" x="470" y="400">pure functions — 219 tests, zero I/O</text>
+      <path class="fl" d="M436 371 L452 371" marker-end="url(#ar)"/>
+
+      <!-- 5 PERSISTENCE -->
+      <path class="fl" d="M238 414 L238 458" marker-end="url(#ar)"/>
+      <text class="lane" x="40" y="440">5 · Persistence</text>
+      <rect class="bx" x="40" y="460" width="396" height="56"/>
+      <text class="bt" x="54" y="480">core/repository/</text>
+      <text class="bs" x="54" y="496">abstract ports · UnitOfWork · sequence_repo</text>
+      <text class="bp" x="54" y="510">the gapless invoice counter lives here</text>
+
+      <path class="fl" d="M238 516 L238 552" marker-end="url(#ar)"/>
+      <rect class="bx" x="40" y="554" width="396" height="56"/>
+      <text class="bt" x="54" y="574">db/</text>
+      <text class="bs" x="54" y="590">SQLAlchemy 2.x · Alembic migrations</text>
+      <text class="bp" x="54" y="604">SQLite (desktop) │ Postgres (SaaS)</text>
+
+      <!-- SIDE OUTPUTS -->
+      <text class="lane" x="872" y="206">Outputs</text>
+      <rect class="bx" x="872" y="226" width="208" height="66"/>
+      <text class="bt" x="886" y="246">core/pdf/</text>
+      <text class="bs" x="886" y="262">4 templates · context builder</text>
+      <text class="bp" x="886" y="278">Chromium → WeasyPrint → PDF</text>
+      <path class="fl" d="M852 259 L868 259" marker-end="url(#ar)"/>
+
+      <rect class="bx" x="872" y="304" width="208" height="66"/>
+      <text class="bt" x="886" y="324">core/einvoicing/</text>
+      <text class="bs" x="886" y="340">ubl_builder · ubl_validator</text>
+      <text class="tag" x="886" y="357" fill="var(--gap)">XML valid — nothing transmits it</text>
+      <path class="fl" d="M852 337 L868 337" marker-end="url(#ar)"/>
+
+      <rect class="bx" x="872" y="382" width="208" height="66"/>
+      <text class="bt" x="886" y="402">core/imports/</text>
+      <text class="bs" x="886" y="418">FinanceFlow legacy parser</text>
+      <text class="bp" x="886" y="434">preview → commit, into services</text>
+      <path class="fl" d="M868 415 L852 415" marker-end="url(#ar)"/>
+
+      <!-- 6 MISSING -->
+      <text class="lane" x="40" y="646" fill="var(--gap)">6 · Missing infrastructure — no directory exists for any of these</text>
+      <g>
+        <rect class="bx" x="40"  y="656" width="250" height="34" stroke="var(--gap)" stroke-dasharray="4 3" fill="var(--gap-bg)"/>
+        <text class="bs" x="54" y="678" fill="var(--ink)">Email transport <tspan class="bp" fill="var(--gap)">B1 · 7 features</tspan></text>
+
+        <rect class="bx" x="302" y="656" width="250" height="34" stroke="var(--gap)" stroke-dasharray="4 3" fill="var(--gap-bg)"/>
+        <text class="bs" x="316" y="678" fill="var(--ink)">Blob storage <tspan class="bp" fill="var(--gap)">B2 · all Documents</tspan></text>
+
+        <rect class="bx" x="564" y="656" width="250" height="34" stroke="var(--gap)" stroke-dasharray="4 3" fill="var(--gap-bg)"/>
+        <text class="bs" x="578" y="678" fill="var(--ink)">Job runner <tspan class="bp" fill="var(--gap)">recurring · reminders</tspan></text>
+
+        <rect class="bx" x="826" y="656" width="254" height="34" stroke="var(--gap)" stroke-dasharray="4 3" fill="var(--gap-bg)"/>
+        <text class="bs" x="840" y="678" fill="var(--ink)">Subscription <tspan class="bp" fill="var(--gap)">B4 · all Billing</tspan></text>
+      </g>
+      <path class="fl-gap" d="M446 610 L446 640" marker-end="url(#ar-gap)"/>
+    </svg>
+  </div>
+
+  <h3>Reading the diagram</h3>
+  <p>The load-bearing claim is band 2. <code>ia.ts</code> is not documentation — it is a typed registry that the router, the navigation and the status badges all read at runtime. A product area that is not a node in that file cannot be reached in any frontend, and a node marked anything other than <code>wired</code> renders through the deliberately-ugly scaffold kit so unbuilt surface can never be mistaken for finished work.</p>
+
+  <p>Bands 3 to 5 are the rule the whole backend is organised around, recorded in <a href="ADR-0001-three-layer.md">ADR-0001</a>: <strong>dependencies point inward and never back out.</strong> <code>core/</code> imports no framework — no FastAPI, no SQLAlchemy — which is why the 219 tests run without a server or a database. <code>api/</code> may import <code>core/</code>; <code>core/</code> may not import <code>api/</code>. Persistence is reached through abstract ports in <code>core/repository/</code>, which is what lets the same domain code run against SQLite on the desktop and Postgres in the cloud.</p>
+
+  <p>The two facts worth carrying away from band 6: nothing in the product sends anything to anyone, and nothing stores a file. Every gap that looks like a missing screen in §14 resolves to one of those four boxes.</p>
+
+  <div class="note note--warn">
+    <p><strong>The path that stops short.</strong> Follow the Peppol rail. <code>core/einvoicing/ubl_builder</code> produces BIS 3.0 XML that passes Helger validation, <code>GET /invoices/{id}/peppol.xml</code> serves it, and the user downloads a file. In a finished product that file is transmitted to an access point and the invoice is legally delivered. Here the flow ends at the browser's download folder. The engineering is done; the last hop was never built.</p>
+  </div>
+</section>
+
+<!-- ======================================== BACKEND DEBT LEDGER -->
+<section id="debt">
+  <div class="sechead">
+    <span class="sechead__id">§14</span>
+    <h2>Backend Debt Ledger</h2>
+    <p class="sechead__sub">Every frontend control with nothing behind it, and the endpoint that would fix it.</p>
+  </div>
+
+  <p class="lede">The SaaS frontend renders tables, buttons and filters that no endpoint answers. That is tracked — but until now it was tracked in a place this document never showed.</p>
+
+  <div class="grid g3">
+    <div class="stat">
+      <p class="stat__k">Declared gaps</p>
+      <p class="stat__v" style="color:var(--gap)">171</p>
+      <p class="stat__n">distinct, across 254 references</p>
+    </div>
+    <div class="stat">
+      <p class="stat__k">Nodes carrying debt</p>
+      <p class="stat__v" style="color:var(--partial)">93</p>
+      <p class="stat__n">of 130 nodes in <code>ia.ts</code></p>
+    </div>
+    <div class="stat">
+      <p class="stat__k">Punch items</p>
+      <p class="stat__v">38</p>
+      <p class="stat__n">engineering-side, in <a href="#path">§07</a></p>
+    </div>
+  </div>
+
+  <div class="note">
+    <p><strong>Where this lives, and why it was invisible.</strong> Each node in <code>frontend-react/src/scaffold/ia.ts</code> carries an optional <code>missing: string[]</code> — the endpoints the server would have to grow for that screen to be real. 93 nodes carry one. That is machine-readable, it is enforced, and it is why a screen renders as a scaffold rather than as a lie.</p>
+    <p>What did not exist was the join. <a href="#path">§07</a> lists 38 punch items at engineering altitude — "list filters", "expose existing rules". <a href="#overview">§00</a> quotes 171 as a bare number. Neither told you which button on which screen was waiting on which endpoint. The tables below are that join, derived from <code>ia.ts</code>.</p>
+  </div>
+
+  <h3>The ten endpoints that unblock the most screens</h3>
+  <p>Ordered by fan-out. Building the top four clears 26 screens.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th class="num">Screens</th><th>Missing capability</th><th>Blocks</th><th>Punch item</th></tr></thead>
+      <tbody>
+        <tr><td class="num">8</td><td><code>PATCH /companies/{id}</code></td><td class="ev">Company · Company profile · Legal information · VAT / BCE information · Bank accounts · Invoice numbering · Invoice defaults · Localization</td><td class="ev"><code>BGEN-API-01</code> <span class="chip c-gap">B3</span></td></tr>
+        <tr><td class="num">7</td><td><code>GET /alerts</code></td><td class="ev">Financial overview · Revenue · Outstanding invoices · Overdue invoices · Recent activity · Quick actions · Alerts &amp; tasks</td><td class="ev">— <em>unassigned</em></td></tr>
+        <tr><td class="num">6</td><td><code>POST /invoices/{id}/send</code></td><td class="ev">Drafts · Issued · Sent · Overdue · Cancelled · Invoice detail &amp; lifecycle</td><td class="ev"><code>BGEN-INFRA-01</code> <span class="chip c-gap">B1</span></td></tr>
+        <tr><td class="num">5</td><td><code>GET /activity?target_id</code></td><td class="ev">Clients · Client 360 · Client history · Client activity</td><td class="ev"><code>BGEN-API-02</code></td></tr>
+        <tr><td class="num">4</td><td><code>Document</code> model + <code>CRUD /documents</code></td><td class="ev">Client documents · Company documents · Documents · All documents</td><td class="ev"><code>BGEN-INFRA-02</code> <span class="chip c-gap">B2</span></td></tr>
+        <tr><td class="num">4</td><td>Drafted legal text</td><td class="ev">Legal · Terms of Service · Privacy Policy · Cookie Policy</td><td class="ev"><code>BGEN-TRUST-05</code></td></tr>
+        <tr><td class="num">3</td><td><code>InvoiceStatus.SENT</code> + <code>GET /invoices?status=sent</code></td><td class="ev">Drafts · Issued · Sent — the status filter renders, nothing answers it</td><td class="ev"><code>BGEN-API-02</code></td></tr>
+        <tr><td class="num">3</td><td><code>POST /invoices/{id}/duplicate</code></td><td class="ev">Overdue · Cancelled · Invoice detail &amp; lifecycle</td><td class="ev">— <em>unassigned</em></td></tr>
+        <tr><td class="num">3</td><td><code>GET /clients/{id}/stats</code> + <code>GET /invoices?client_id</code></td><td class="ev">Clients · Client 360 — <strong>the next piece of work</strong></td><td class="ev"><code>BGEN-SAAS-03</code> · <code>BGEN-API-02</code></td></tr>
+        <tr><td class="num">3</td><td><code>GET /reports/vat?period</code></td><td class="ev">VAT return · VAT reports · Tax summary. All inputs are in the DB.</td><td class="ev"><code>BGEN-CORE-03</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note note--warn">
+    <p><strong>Two of the top ten have no punch item.</strong> <code>GET /alerts</code> blocks seven screens — the entire dashboard's right-hand column — and appears nowhere in §07. <code>POST /invoices/{id}/duplicate</code> blocks three. Both should be added to the punch list before the next sprint is scoped, or they will keep being skipped by a planning pass that reads §07 and not <code>ia.ts</code>.</p>
+  </div>
+
+  <h3>Client 360 — the debt on the screen being built next</h3>
+  <p>Read this as the build order for the piece starting now.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Node</th><th>State</th><th>Waiting on</th><th>Verdict for the build</th></tr></thead>
+      <tbody>
+        <tr><td><code>customers.clients</code> — Clients list</td><td><span class="chip c-done">wired</span></td><td class="ev"><code>GET /clients</code> exists</td><td class="ev">Real. Identity and list come from the server today.</td></tr>
+        <tr><td><code>customers.detail</code> — Client 360</td><td><span class="chip c-partial">partial</span></td><td class="ev"><code>GET /clients/{id}/stats</code> · <code>GET /invoices?client_id</code> · <code>GET /activity?target_id</code></td><td class="ev">Identity panel is real via <code>GET /clients/{id}</code>. Invoice history needs the <code>client_id</code> filter — <strong>the one endpoint change worth making for this piece.</strong></td></tr>
+        <tr><td><code>customers.history</code> — Client history</td><td><span class="chip c-partial">partial</span></td><td class="ev"><code>GET /activity?target_id</code></td><td class="ev"><code>/activity</code> exists but filters only by <code>target_type</code>. One query parameter away.</td></tr>
+        <tr><td><code>customers.activity</code> — Client activity</td><td><span class="chip c-partial">partial</span></td><td class="ev"><code>GET /activity?target_id</code></td><td class="ev">Same parameter. Two screens for one change.</td></tr>
+        <tr><td><code>customers.documents</code> — Client documents</td><td><span class="chip c-gap">none</span></td><td class="ev">blob storage · <code>Document</code> model · <code>CRUD /documents</code></td><td class="ev">Scaffold only. Blocked behind B2; not reachable in this piece.</td></tr>
+        <tr><td><code>customers.groups</code> — Client groups</td><td><span class="chip c-gap">none</span></td><td class="ev"><code>ClientGroup</code> model · <code>CRUD /client-groups</code></td><td class="ev">Scaffold only. This is where tags belong.</td></tr>
+        <tr><td><code>reports.clients</code> — Client reporting</td><td><span class="chip c-gap">none</span></td><td class="ev"><code>GET /reports/clients</code></td><td class="ev">Scaffold only. Risk flags would read from here.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <p><strong>So the Client 360 split is not a guess.</strong> Identity and invoice history are real or one query parameter from real. GDPR, documents, tags and risk flags each map to a named model that does not exist — <code>Document</code>, <code>ClientGroup</code>, <code>GET /reports/clients</code> — which is exactly why they get the scaffold treatment rather than mock data.</p>
+  </div>
+</section>
+
+<!-- ==================================================== REPO MAP -->
+<section id="repo">
+  <div class="sechead">
+    <span class="sechead__id">§15</span>
+    <h2>Repo Map</h2>
+    <p class="sechead__sub">What every directory is for, and the record of what was removed on 2026-08-26.</p>
+  </div>
+
+  <p class="lede">A repository that cannot be read cheaply is a repository that gets misread. This section names the purpose of every top-level directory, so nothing in the tree is unexplained, and records what left.</p>
+
+  <h3>What every directory is for</h3>
+  <p>Ordered as the request flows through them — §13's bands, as files.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Path</th><th class="num">Files</th><th>What it is</th><th>What breaks without it</th></tr></thead>
+      <tbody>
+        <tr><td><code>core/</code></td><td class="num">80</td><td class="ev"><strong>Layer 1 — the product's actual logic.</strong> Money arithmetic, Belgian VAT, gapless invoice numbering, legal mentions, Peppol XML, PDF rendering, the legacy importer. Imports no web framework and no ORM.</td><td class="ev">Everything. This is the finished half of the product and the reason §01 reads 18% rather than 0%.</td></tr>
+        <tr><td><code>api/</code></td><td class="num">49</td><td class="ev"><strong>Layer 2 — the HTTP boundary.</strong> 16 routers, 41 endpoints, JWT auth, middleware. Translates JSON into domain calls and back.</td><td class="ev">No frontend can reach the domain. <code>core/</code> would still pass its tests.</td></tr>
+        <tr><td><code>db/</code></td><td class="num">29</td><td class="ev">SQLAlchemy models and the Alembic migration history. The concrete implementation behind <code>core/repository/</code>'s abstract ports.</td><td class="ev">Nothing persists. The domain would run entirely in memory.</td></tr>
+        <tr><td><code>tests/</code></td><td class="num">45</td><td class="ev">219 backend tests. Includes the palette guard test and the icon-grammar guard test, both build-failing.</td><td class="ev">The brand decisions at <code>4e39460</code> and <code>81d2c66</code> become suggestions rather than rules.</td></tr>
+        <tr><td><code>henrioutai-ui/</code></td><td class="num">85</td><td class="ev"><strong>The design system, and the only place components are edited.</strong> 72 components, <code>tokens.css</code>, three vendored font files. Its own package, MIT, public-ready.</td><td class="ev">Every frontend loses its component vocabulary. <code>@billgen/ui</code> re-exports this; it holds nothing of its own.</td></tr>
+        <tr><td><code>frontend-react/</code></td><td class="num">50</td><td class="ev"><strong>Holds <code>src/scaffold/ia.ts</code> — the source of truth</strong> for nav, routes, status and the 171 gaps in §14. Also the scaffold kit that renders unwired areas as deliberately ugly.</td><td class="ev">No frontend knows what screens exist. This is the highest-leverage file in the repository.</td></tr>
+        <tr><td><code>frontend-saas/</code></td><td class="num">19</td><td class="ev">L3, the active surface. React 19 + Vite + react-router. Thin — it composes <code>henrioutai-ui</code> against <code>ia.ts</code>.</td><td class="ev">The web product. Thin by design: the weight lives in the two directories above.</td></tr>
+        <tr><td><code>frontend-electron/</code></td><td class="num">39</td><td class="ev">L4, the Tauri desktop shell. Own local SQLite in <code>%APPDATA%</code>, auto-login, no sync. Despite the name it is Tauri, not Electron.</td><td class="ev">The desktop product. Currently mounts 17 components and consumes no IA.</td></tr>
+        <tr><td><code>infra/</code> · <code>desktop/</code> · <code>scripts/</code></td><td class="num">12</td><td class="ev">Compose and deployment config; the desktop packaging target; two generators — <code>generate_brand_assets.py</code> (writes <code>assets/brand/</code>) and <code>generate_peppol_samples.py</code>.</td><td class="ev">Deployment and asset regeneration become manual.</td></tr>
+        <tr><td><code>assets/brand/</code></td><td class="num">1</td><td class="ev">Generated output, not a source. <code>billgen-mark.svg</code> is written by the script above from the vector geometry at <code>92e5f07</code>.</td><td class="ev">Regenerate it. Never hand-edit it.</td></tr>
+        <tr><td><code>docs/</code></td><td class="num">15</td><td class="ev">This document, four ADRs, the token standard, the IA roadmap, and three working specs. <strong>Down from 356 files.</strong></td><td class="ev">The decision record. ADRs in particular are superseded by writing new ones, never by deletion.</td></tr>
+        <tr><td><code>var/</code> · <code>backups/</code></td><td class="num">—</td><td class="ev">Runtime data. Dev SQLite and the local backup target. Gitignored.</td><td class="ev">Nothing — both are regenerated on demand.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <p><strong>The one thing to internalise from this table.</strong> Two files carry disproportionate weight: <code>frontend-react/src/scaffold/ia.ts</code> decides what the product <em>is</em>, and <code>henrioutai-ui/src/styles/tokens.css</code> decides what it <em>looks like</em>. Both are guarded by build-failing tests. Everything else in the tree is downstream of one of them.</p>
+  </div>
+
+  <h3>What the Studio AI zip actually is</h3>
+
+  <div class="note note--stop">
+    <p><strong>Correction — earlier sections described this wrongly.</strong> <code>docs/billgen---enterprise-invoicing-&amp;-financial-saas.zip</code> is <em>not</em> an early BillGen version and has no relationship to the original monolith. Its <code>metadata.json</code> and <code>README.md</code> identify it as a <strong>Google AI Studio (Gemini) app</strong>, every file stamped <strong>2026-08-25</strong> — generated the same day as this audit, from a prompt describing the intended product scope.</p>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Property</th><th>What the archive actually contains</th></tr></thead>
+      <tbody>
+        <tr><td>Provenance</td><td class="ev">Google AI Studio, app id <code>c555c4c6</code>. Declares <code>MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API</code>, though no <code>@google/genai</code> call survives in the source.</td></tr>
+        <tr><td>Stack</td><td class="ev">React 19 + Vite 6 + Tailwind 4 + <code>motion</code> + <code>canvas-confetti</code>. Not this project's stack.</td></tr>
+        <tr><td>Size</td><td class="ev">95 files — 79 <code>.tsx</code>, of which 76 are components.</td></tr>
+        <tr><td>Relationship to the design system</td><td class="ev"><strong>Seeded, not linked.</strong> It carries copies of BillGen's own <code>tokens.css</code> and <code>components.css</code> and uses <code>var(--bg-*)</code> 748 times — which is why it looks right. But it imports <strong>zero</strong> components from <code>@henrioutai/ui</code>; it reimplements all 76 from scratch.</td></tr>
+        <tr><td>Palette compliance</td><td class="ev"><span class="chip c-gap">violates</span> 53 Tailwind colour utilities and 51 distinct raw hex values. It would fail the guard test at <code>4e39460</code> if it were part of the build.</td></tr>
+        <tr><td>Backend</td><td class="ev">None. State lives in <code>src/context/BillGenContext.tsx</code> over mock data in <code>src/data/initialData.ts</code>.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>What it is good for is unchanged, and worth keeping: it is the only place the full product scope has been rendered as screens — including a <code>CustomerDrawer</code> and <code>CustomersView</code> directly relevant to the Client 360 work in §14. Treat it as a <strong>sketch of intent</strong>, never as a source to copy from. Copying would import 51 raw hex values into a repository that fails its build over four.</p>
+
+  <div class="note note--warn">
+    <p><strong>Two claims elsewhere in this document are now corrected in place.</strong> <a href="#overview">§00</a> called it "built on top of this project's own component library" and <a href="#frontends">§02</a> said it "mounts 40 library components". It mounts none. It was handed the stylesheets and rebuilt the components.</p>
+  </div>
+
+  <h3>Removal — executed 2026-08-26</h3>
+
+  <div class="grid g3">
+    <div class="stat">
+      <p class="stat__k">Files removed</p>
+      <p class="stat__v" style="color:var(--done)">341</p>
+      <p class="stat__n">783 tracked → 442</p>
+    </div>
+    <div class="stat">
+      <p class="stat__k">Readable text removed</p>
+      <p class="stat__v" style="color:var(--done)">~273<span style="font-size:16px">K</span></p>
+      <p class="stat__n">tokens · 248 files · 1.09 MB</p>
+    </div>
+    <div class="stat">
+      <p class="stat__k">Binary removed</p>
+      <p class="stat__v">6.5<span style="font-size:16px">MB</span></p>
+      <p class="stat__n">93 files · clone size only</p>
+    </div>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Removed</th><th class="num">Files</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td><code>docs/frontent build/</code></td><td class="num">119</td><td class="ev">The shadow design system — 58 components duplicating <code>henrioutai-ui/src/components/</code>. Largest single source of ambiguous search results.</td></tr>
+        <tr><td><code>docs/REF INVOICE APP TWO/</code> · <code>docs/REF Invoice Dashboard Theme/</code></td><td class="num">130</td><td class="ev">Third-party reference exports. UI is built from drawings, not extracted.</td></tr>
+        <tr><td><code>docs/Satoshi_Complete/</code> · <code>docs/Geist_Mono/</code></td><td class="num">85</td><td class="ev">Full font distributions in TTF, OTF, EOT, WOFF. The three files actually loaded are vendored in <code>henrioutai-ui/src/styles/fonts/</code>.</td></tr>
+        <tr><td>6 superseded markdown documents</td><td class="num">6</td><td class="ev">Replaced by §01–§03 of this document and never marked dead: the demo audit, the demo comparison, two component checklists, the builder blueprint, the duplicate handoff.</td></tr>
+        <tr><td><code>henrioutai-ui.zip</code></td><td class="num">1</td><td class="ev">Superseded by the <code>henrioutai-ui/</code> directory at <code>5a81cfd</code>.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <p><strong>What the 273K number means.</strong> That is the tokenisable text — markdown, TypeScript, CSS — that a search or a file read could previously surface. It is close to two full context windows, so it was never all being read at once. The saving is not that sessions got 273K cheaper; it is that <code>docs/</code> went from 356 files to 15, so a search for a component name now returns one answer instead of two, and no session can spend its budget reading an audit that this document already replaced. The 6.5 MB of fonts and images cost clone time, never tokens.</p>
+  </div>
+
+  <h3>Kept, and why</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Path</th><th>Why it stays</th></tr></thead>
+      <tbody>
+        <tr><td><code>docs/ROADMAP_IA.md</code></td><td class="ev"><strong>Load-bearing.</strong> Three live source files cite it — <code>ia.ts</code> defines the six roadmap layers by reference to it, <code>report.test.ts</code> regenerates it from the registry, <code>components.css</code> cites §7 item 1. A dependency of the source of truth, not superseded prose.</td></tr>
+        <tr><td><code>docs/ARCHITECTURE/ADR-0001..0004</code></td><td class="ev">Decision records. ADR-0001 is the three-layer rule §13 draws.</td></tr>
+        <tr><td><code>docs/BRAND_TOKENS.md</code></td><td class="ev">The palette standard the guard test enforces.</td></tr>
+        <tr><td><code>docs/billgen---enterprise-invoicing-&amp;-financial-saas.zip</code></td><td class="ev">448K, kept — the only rendering of full product scope. See the correction above for what it is not.</td></tr>
+        <tr><td><code>docs/BillGen_logo.png</code></td><td class="ev">852K raster original, the source the vector mark at <code>92e5f07</code> was traced from. Removable once the vector is final.</td></tr>
+        <tr><td><code>docs/CORE_FEATURES_AND_DATA_INTERACTIONS.md</code> · <code>ENVIRONMENT_REFERENCE.md</code> · the two <code>.txt</code> specs</td><td class="ev">Current, and not restated in §00–§15.</td></tr>
+      </tbody>
+    </table>
   </div>
 </section>
 
