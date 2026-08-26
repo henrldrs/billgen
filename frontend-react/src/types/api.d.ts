@@ -197,6 +197,33 @@ export interface paths {
         patch: operations["update_company_companies__company_id__patch"];
         trace?: never;
     };
+    "/companies/{company_id}/validation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Validate Company
+         * @description Per-field verdict on this company's own identifiers (VAT mod-97, IBAN
+         *     ISO 13616, BIC ISO 9362) plus what is still missing before it could act as a
+         *     Peppol supplier.
+         *
+         *     `core/rules/identifiers.py` has been able to answer this since the Peppol
+         *     port; nothing ever offered it to a settings form, so a VAT typo was only
+         *     discovered at export time. Supplier side only — see
+         *     `CompanyValidationResponse`.
+         */
+        get: operations["validate_company_companies__company_id__validation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/clients": {
         parameters: {
             query?: never;
@@ -231,6 +258,51 @@ export interface paths {
         head?: never;
         /** Update Client */
         patch: operations["update_client_clients__client_id__patch"];
+        trace?: never;
+    };
+    "/clients/{client_id}/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Client Stats
+         * @description Client 360's header numbers in one call, instead of the whole invoice list
+         *     plus a payments fetch per invoice.
+         */
+        get: operations["client_stats_clients__client_id__stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/clients/{client_id}/timeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Client Timeline
+         * @description The commercial history: invoices, credit notes and payments, newest first.
+         *
+         *     Not the audit log. Audit entries for an invoice carry no client id, so
+         *     `GET /activity?target_id=<client>` returns edits to the client record and can
+         *     never return what was sold to them.
+         */
+        get: operations["client_timeline_clients__client_id__timeline_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/products": {
@@ -366,6 +438,28 @@ export interface paths {
          * @description Issue a draft: consume the gapless number, freeze totals, set ISSUED.
          */
         post: operations["issue_invoice_invoices__invoice_id__issue_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/invoices/{invoice_id}/duplicate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Duplicate Invoice
+         * @description Copy an invoice into a new DRAFT dated today. No number is consumed and
+         *     nothing on the source changes — including an issued or voided source, which
+         *     is the common case (re-billing last month's work).
+         */
+        post: operations["duplicate_invoice_invoices__invoice_id__duplicate_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -537,7 +631,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Payments */
+        /**
+         * List Payments
+         * @description Payments, newest first. `invoice_id` used to be required, which made a
+         *     cross-invoice payments report impossible; every filter is now optional and
+         *     combinable (`company_id`, `client_id`, `paid_from`/`paid_to` inclusive).
+         */
         get: operations["list_payments_payments_get"];
         put?: never;
         /** Record Payment */
@@ -629,6 +728,27 @@ export interface paths {
          *     (`2026-07`). Output VAT only — see `VatReportResponse`.
          */
         get: operations["vat_reports_vat_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Invoice Report
+         * @description Counts and totals per effective status, plus a monthly series. Replaces
+         *     aggregating the full invoice list in the browser. Omit `period` for all time.
+         */
+        get: operations["invoice_report_reports_invoices_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -821,6 +941,51 @@ export interface components {
             notes: string | null;
         };
         /**
+         * ClientStatsResponse
+         * @description Client 360's header. `average_days_to_payment` covers fully-paid invoices
+         *     only — a partially paid one has no settlement date yet.
+         */
+        ClientStatsResponse: {
+            /**
+             * Client Id
+             * Format: uuid
+             */
+            client_id: string;
+            /**
+             * Company Id
+             * Format: uuid
+             */
+            company_id: string;
+            /** Currency */
+            currency: string;
+            /** Invoice Count */
+            invoice_count: number;
+            /** Draft Count */
+            draft_count: number;
+            /** Invoiced Total */
+            invoiced_total: string;
+            /** Paid Total */
+            paid_total: string;
+            /** Outstanding Total */
+            outstanding_total: string;
+            /** Credited Total */
+            credited_total: string;
+            /** Credit Note Count */
+            credit_note_count: number;
+            /** Overdue Count */
+            overdue_count: number;
+            /** Overdue Total */
+            overdue_total: string;
+            /** First Invoice Date */
+            first_invoice_date: string | null;
+            /** Last Invoice Date */
+            last_invoice_date: string | null;
+            /** Average Days To Payment */
+            average_days_to_payment: number | null;
+            /** Skipped Other Currency */
+            skipped_other_currency: number;
+        };
+        /**
          * ClientUpdateRequest
          * @description PATCH semantics: only provided fields change. company_id is immutable.
          */
@@ -992,6 +1157,32 @@ export interface components {
             /** Invoice Reference Prefix */
             invoice_reference_prefix?: string | null;
         };
+        /**
+         * CompanyValidationResponse
+         * @description Whether a company's own identifiers hold up, and whether it could act as
+         *     a Peppol supplier at all.
+         *
+         *     `peppol_ready` is about the *supplier* half only: the customer half of the
+         *     gate needs a client, and a B2C client fails it no matter how correct this
+         *     company is. So a `peppol_ready: true` company can still be refused at export
+         *     time — this endpoint exists to fix typos in a settings form, not to promise
+         *     delivery.
+         */
+        CompanyValidationResponse: {
+            /**
+             * Company Id
+             * Format: uuid
+             */
+            company_id: string;
+            /** Valid */
+            valid: boolean;
+            /** Peppol Ready */
+            peppol_ready: boolean;
+            /** Checks */
+            checks: components["schemas"]["IdentifierCheck"][];
+            /** Missing For Peppol */
+            missing_for_peppol: string[];
+        };
         /** CreditNoteIssueRequest */
         CreditNoteIssueRequest: {
             /**
@@ -1088,6 +1279,22 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * IdentifierCheck
+         * @description One identifier the Belgian checksum rules can decide on.
+         */
+        IdentifierCheck: {
+            /** Field */
+            field: string;
+            /** Value */
+            value: string | null;
+            /** Valid */
+            valid: boolean;
+            /** Normalized */
+            normalized?: string | null;
+            /** Message Key */
+            message_key?: string | null;
         };
         /** ImportEntityCounts */
         ImportEntityCounts: {
@@ -1202,6 +1409,55 @@ export interface components {
             vat_breakdown: {
                 [key: string]: string;
             };
+        };
+        /**
+         * InvoiceReportResponse
+         * @description Counts and money per **effective** status (Overdue is derived from the
+         *     due date, so it is a bucket here rather than something the caller re-derives).
+         *
+         *     Amounts are in the company's default currency; anything else is counted in
+         *     `skipped_other_currency` rather than summed at face value.
+         */
+        InvoiceReportResponse: {
+            /**
+             * Company Id
+             * Format: uuid
+             */
+            company_id: string;
+            /** Period */
+            period: string | null;
+            /** Period Start */
+            period_start: string | null;
+            /** Period End */
+            period_end: string | null;
+            /** Currency */
+            currency: string;
+            /** Statuses */
+            statuses: components["schemas"]["StatusBucketResponse"][];
+            /** By Month */
+            by_month: {
+                [key: string]: string;
+            };
+            /** Count By Month */
+            count_by_month: {
+                [key: string]: number;
+            };
+            /** Invoice Count */
+            invoice_count: number;
+            /** Invoiced Total */
+            invoiced_total: string;
+            /** Paid Total */
+            paid_total: string;
+            /** Outstanding Total */
+            outstanding_total: string;
+            /** Draft Count */
+            draft_count: number;
+            /** Overdue Count */
+            overdue_count: number;
+            /** Overdue Total */
+            overdue_total: string;
+            /** Skipped Other Currency */
+            skipped_other_currency: number;
         };
         /** InvoiceResponse */
         InvoiceResponse: {
@@ -1593,6 +1849,44 @@ export interface components {
             /** Organization Name */
             organization_name: string;
             tokens: components["schemas"]["TokenResponse"];
+        };
+        /** StatusBucketResponse */
+        StatusBucketResponse: {
+            /** Status */
+            status: string;
+            /** Count */
+            count: number;
+            /** Total Ttc */
+            total_ttc: string;
+        };
+        /**
+         * TimelineEventResponse
+         * @description One commercial event. `kind` is one of `invoice_drafted`,
+         *     `invoice_issued`, `invoice_voided`, `credit_note_issued`,
+         *     `payment_received`.
+         */
+        TimelineEventResponse: {
+            /**
+             * At
+             * Format: date
+             */
+            at: string;
+            /** Kind */
+            kind: string;
+            /** Amount */
+            amount: string;
+            /** Currency */
+            currency: string;
+            /** Invoice Id */
+            invoice_id: string | null;
+            /** Credit Note Id */
+            credit_note_id: string | null;
+            /** Payment Id */
+            payment_id: string | null;
+            /** Reference */
+            reference: string | null;
+            /** Detail */
+            detail: string | null;
         };
         /** TokenResponse */
         TokenResponse: {
@@ -2123,6 +2417,37 @@ export interface operations {
             };
         };
     };
+    validate_company_companies__company_id__validation_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                company_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyValidationResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_clients_clients_get: {
         parameters: {
             query?: {
@@ -2240,6 +2565,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ClientResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    client_stats_clients__client_id__stats_get: {
+        parameters: {
+            query?: {
+                today?: string | null;
+            };
+            header?: never;
+            path: {
+                client_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientStatsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    client_timeline_clients__client_id__timeline_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                client_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimelineEventResponse"][];
                 };
             };
             /** @description Validation Error */
@@ -2571,6 +2962,37 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    duplicate_invoice_invoices__invoice_id__duplicate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2940,8 +3362,12 @@ export interface operations {
     };
     list_payments_payments_get: {
         parameters: {
-            query: {
-                invoice_id: string;
+            query?: {
+                invoice_id?: string | null;
+                company_id?: string | null;
+                client_id?: string | null;
+                paid_from?: string | null;
+                paid_to?: string | null;
             };
             header?: never;
             path?: never;
@@ -3125,6 +3551,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VatReportResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    invoice_report_reports_invoices_get: {
+        parameters: {
+            query: {
+                company_id: string;
+                period?: string | null;
+                today?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceReportResponse"];
                 };
             };
             /** @description Validation Error */

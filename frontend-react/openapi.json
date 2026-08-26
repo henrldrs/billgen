@@ -430,6 +430,50 @@
         }
       }
     },
+    "/companies/{company_id}/validation": {
+      "get": {
+        "tags": [
+          "companies"
+        ],
+        "summary": "Validate Company",
+        "description": "Per-field verdict on this company's own identifiers (VAT mod-97, IBAN\nISO 13616, BIC ISO 9362) plus what is still missing before it could act as a\nPeppol supplier.\n\n`core/rules/identifiers.py` has been able to answer this since the Peppol\nport; nothing ever offered it to a settings form, so a VAT typo was only\ndiscovered at export time. Supplier side only \u2014 see\n`CompanyValidationResponse`.",
+        "operationId": "validate_company_companies__company_id__validation_get",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Company Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyValidationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/clients": {
       "post": {
         "tags": [
@@ -600,6 +644,127 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ClientResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clients/{client_id}/stats": {
+      "get": {
+        "tags": [
+          "clients"
+        ],
+        "summary": "Client Stats",
+        "description": "Client 360's header numbers in one call, instead of the whole invoice list\nplus a payments fetch per invoice.",
+        "operationId": "client_stats_clients__client_id__stats_get",
+        "parameters": [
+          {
+            "name": "client_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Client Id"
+            }
+          },
+          {
+            "name": "today",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Today"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientStatsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clients/{client_id}/timeline": {
+      "get": {
+        "tags": [
+          "clients"
+        ],
+        "summary": "Client Timeline",
+        "description": "The commercial history: invoices, credit notes and payments, newest first.\n\nNot the audit log. Audit entries for an invoice carry no client id, so\n`GET /activity?target_id=<client>` returns edits to the client record and can\nnever return what was sold to them.",
+        "operationId": "client_timeline_clients__client_id__timeline_get",
+        "parameters": [
+          {
+            "name": "client_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Client Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TimelineEventResponse"
+                  },
+                  "title": "Response Client Timeline Clients  Client Id  Timeline Get"
                 }
               }
             }
@@ -1134,6 +1299,50 @@
         },
         "responses": {
           "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/{invoice_id}/duplicate": {
+      "post": {
+        "tags": [
+          "invoices"
+        ],
+        "summary": "Duplicate Invoice",
+        "description": "Copy an invoice into a new DRAFT dated today. No number is consumed and\nnothing on the source changes \u2014 including an issued or voided source, which\nis the common case (re-billing last month's work).",
+        "operationId": "duplicate_invoice_invoices__invoice_id__duplicate_post",
+        "parameters": [
+          {
+            "name": "invoice_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Invoice Id"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
             "description": "Successful Response",
             "content": {
               "application/json": {
@@ -1705,16 +1914,92 @@
           "payments"
         ],
         "summary": "List Payments",
+        "description": "Payments, newest first. `invoice_id` used to be required, which made a\ncross-invoice payments report impossible; every filter is now optional and\ncombinable (`company_id`, `client_id`, `paid_from`/`paid_to` inclusive).",
         "operationId": "list_payments_payments_get",
         "parameters": [
           {
             "name": "invoice_id",
             "in": "query",
-            "required": true,
+            "required": false,
             "schema": {
-              "type": "string",
-              "format": "uuid",
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "Invoice Id"
+            }
+          },
+          {
+            "name": "company_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Company Id"
+            }
+          },
+          {
+            "name": "client_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Client Id"
+            }
+          },
+          {
+            "name": "paid_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Paid From"
+            }
+          },
+          {
+            "name": "paid_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Paid To"
             }
           }
         ],
@@ -1940,6 +2225,87 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/VatReportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/invoices": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Invoice Report",
+        "description": "Counts and totals per effective status, plus a monthly series. Replaces\naggregating the full invoice list in the browser. Omit `period` for all time.",
+        "operationId": "invoice_report_reports_invoices_get",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Company Id"
+            }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}(?:-(?:Q[1-4]|0[1-9]|1[0-2]))?$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "examples": [
+                "2026-Q3"
+              ],
+              "title": "Period"
+            }
+          },
+          {
+            "name": "today",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Today"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceReportResponse"
                 }
               }
             }
@@ -2474,6 +2840,125 @@
           "notes"
         ],
         "title": "ClientResponse"
+      },
+      "ClientStatsResponse": {
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Client Id"
+          },
+          "company_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Company Id"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "invoice_count": {
+            "type": "integer",
+            "title": "Invoice Count"
+          },
+          "draft_count": {
+            "type": "integer",
+            "title": "Draft Count"
+          },
+          "invoiced_total": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Invoiced Total"
+          },
+          "paid_total": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Paid Total"
+          },
+          "outstanding_total": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Outstanding Total"
+          },
+          "credited_total": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Credited Total"
+          },
+          "credit_note_count": {
+            "type": "integer",
+            "title": "Credit Note Count"
+          },
+          "overdue_count": {
+            "type": "integer",
+            "title": "Overdue Count"
+          },
+          "overdue_total": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Overdue Total"
+          },
+          "first_invoice_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Invoice Date"
+          },
+          "last_invoice_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Invoice Date"
+          },
+          "average_days_to_payment": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Days To Payment"
+          },
+          "skipped_other_currency": {
+            "type": "integer",
+            "title": "Skipped Other Currency"
+          }
+        },
+        "type": "object",
+        "required": [
+          "client_id",
+          "company_id",
+          "currency",
+          "invoice_count",
+          "draft_count",
+          "invoiced_total",
+          "paid_total",
+          "outstanding_total",
+          "credited_total",
+          "credit_note_count",
+          "overdue_count",
+          "overdue_total",
+          "first_invoice_date",
+          "last_invoice_date",
+          "average_days_to_payment",
+          "skipped_other_currency"
+        ],
+        "title": "ClientStatsResponse",
+        "description": "Client 360's header. `average_days_to_payment` covers fully-paid invoices\nonly \u2014 a partially paid one has no settlement date yet."
       },
       "ClientUpdateRequest": {
         "properties": {
@@ -3174,6 +3659,47 @@
         "title": "CompanyUpdateRequest",
         "description": "PATCH semantics: only provided fields change (B3).\n\n`organization_id` and `id` are immutable. `logo_key` is deliberately absent \u2014\nit is set by blob storage (B2), not by the client."
       },
+      "CompanyValidationResponse": {
+        "properties": {
+          "company_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Company Id"
+          },
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "peppol_ready": {
+            "type": "boolean",
+            "title": "Peppol Ready"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/IdentifierCheck"
+            },
+            "type": "array",
+            "title": "Checks"
+          },
+          "missing_for_peppol": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Missing For Peppol"
+          }
+        },
+        "type": "object",
+        "required": [
+          "company_id",
+          "valid",
+          "peppol_ready",
+          "checks",
+          "missing_for_peppol"
+        ],
+        "title": "CompanyValidationResponse",
+        "description": "Whether a company's own identifiers hold up, and whether it could act as\na Peppol supplier at all.\n\n`peppol_ready` is about the *supplier* half only: the customer half of the\ngate needs a client, and a B2C client fails it no matter how correct this\ncompany is. So a `peppol_ready: true` company can still be refused at export\ntime \u2014 this endpoint exists to fix typos in a settings form, not to promise\ndelivery."
+      },
       "CreditNoteIssueRequest": {
         "properties": {
           "invoice_id": {
@@ -3436,6 +3962,59 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "IdentifierCheck": {
+        "properties": {
+          "field": {
+            "type": "string",
+            "title": "Field"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "normalized": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Normalized"
+          },
+          "message_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "field",
+          "value",
+          "valid"
+        ],
+        "title": "IdentifierCheck",
+        "description": "One identifier the Belgian checksum rules can decide on."
       },
       "ImportEntityCounts": {
         "properties": {
@@ -3831,6 +4410,133 @@
           "vat_breakdown"
         ],
         "title": "InvoicePreviewResponse"
+      },
+      "InvoiceReportResponse": {
+        "properties": {
+          "company_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Company Id"
+          },
+          "period": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period"
+          },
+          "period_start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period Start"
+          },
+          "period_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period End"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "statuses": {
+            "items": {
+              "$ref": "#/components/schemas/StatusBucketResponse"
+            },
+            "type": "array",
+            "title": "Statuses"
+          },
+          "by_month": {
+            "additionalProperties": {
+              "type": "string",
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+            },
+            "type": "object",
+            "title": "By Month"
+          },
+          "count_by_month": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Count By Month"
+          },
+          "invoice_count": {
+            "type": "integer",
+            "title": "Invoice Count"
+          },
+          "invoiced_total": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Invoiced Total"
+          },
+          "paid_total": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Paid Total"
+          },
+          "outstanding_total": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Outstanding Total"
+          },
+          "draft_count": {
+            "type": "integer",
+            "title": "Draft Count"
+          },
+          "overdue_count": {
+            "type": "integer",
+            "title": "Overdue Count"
+          },
+          "overdue_total": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Overdue Total"
+          },
+          "skipped_other_currency": {
+            "type": "integer",
+            "title": "Skipped Other Currency"
+          }
+        },
+        "type": "object",
+        "required": [
+          "company_id",
+          "period",
+          "period_start",
+          "period_end",
+          "currency",
+          "statuses",
+          "by_month",
+          "count_by_month",
+          "invoice_count",
+          "invoiced_total",
+          "paid_total",
+          "outstanding_total",
+          "draft_count",
+          "overdue_count",
+          "overdue_total",
+          "skipped_other_currency"
+        ],
+        "title": "InvoiceReportResponse",
+        "description": "Counts and money per **effective** status (Overdue is derived from the\ndue date, so it is a bucket here rather than something the caller re-derives).\n\nAmounts are in the company's default currency; anything else is counted in\n`skipped_other_currency` rather than summed at face value."
       },
       "InvoiceResponse": {
         "properties": {
@@ -4942,6 +5648,124 @@
           "tokens"
         ],
         "title": "SignupResponse"
+      },
+      "StatusBucketResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "total_ttc": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Ttc"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "count",
+          "total_ttc"
+        ],
+        "title": "StatusBucketResponse"
+      },
+      "TimelineEventResponse": {
+        "properties": {
+          "at": {
+            "type": "string",
+            "format": "date",
+            "title": "At"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "amount": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "invoice_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Id"
+          },
+          "credit_note_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit Note Id"
+          },
+          "payment_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Id"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "at",
+          "kind",
+          "amount",
+          "currency",
+          "invoice_id",
+          "credit_note_id",
+          "payment_id",
+          "reference",
+          "detail"
+        ],
+        "title": "TimelineEventResponse",
+        "description": "One commercial event. `kind` is one of `invoice_drafted`,\n`invoice_issued`, `invoice_voided`, `credit_note_issued`,\n`payment_received`."
       },
       "TokenResponse": {
         "properties": {

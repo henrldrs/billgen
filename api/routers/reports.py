@@ -9,6 +9,7 @@ from core.services import ReportingService
 from core.services.reporting_service import PERIOD_PATTERN
 
 from ..deps import get_uow_factory
+from ..schemas.insights import InvoiceReportResponse
 from ..schemas.reports import (
     KpiResponse,
     RevenueByMonthResponse,
@@ -54,3 +55,16 @@ def vat(
     (`2026-07`). Output VAT only — see `VatReportResponse`."""
     report = ReportingService(uow_factory).vat_report(company_id, period)
     return VatReportResponse.model_validate(report, from_attributes=True)
+
+
+@router.get("/invoices", response_model=InvoiceReportResponse)
+def invoice_report(
+    company_id: UUID,
+    period: str | None = Query(default=None, pattern=PERIOD_PATTERN, examples=["2026-Q3"]),
+    today: date | None = None,
+    uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+):
+    """Counts and totals per effective status, plus a monthly series. Replaces
+    aggregating the full invoice list in the browser. Omit `period` for all time."""
+    report = ReportingService(uow_factory).invoice_report(company_id, period, today=today)
+    return InvoiceReportResponse.model_validate(report, from_attributes=True)

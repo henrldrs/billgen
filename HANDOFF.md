@@ -13,7 +13,7 @@ Read this instead of re-deriving context.
 | Location | `C:\Users\hdr_s\Documents\business model\BillGen BETA` |
 | Phases done | 0–9, **11** (domain → rules → DB → services → API → business routers → UI kit → SaaS shell → desktop → legacy import) + **Peppol e-invoicing** (Helger-validated Peppol BIS 3.0 + Belgian elements + pre-export validation gate; `771e903` then switched off UBL.BE). Phase 10 (billing) not yet started. |
 | UI library | **Its own package `@henrioutai/ui`** (`henrioutai-ui/`, extracted `5a81cfd`) — the design system (58 components + 14 icons + tokens/CSS/fonts), token-only, business-free, **public-ready** (MIT). `@billgen/ui` (frontend-react) keeps the business half (API client, generated types, hooks, panels) and re-exports the design system, so `import { Button } from "@billgen/ui"` still works. Both shells run TopNav-only nav (sidebar deleted), OrgSwitcher, AccountMenu, ⌘K palette, SettingsShell (Import + Backup + Activity + theme). Dark mode = one token remap, persisted pre-paint. Dep graph: `@henrioutai/ui` (leaf) ← `@billgen/ui` ← shells. `docs/frontent build/component-library/` is the archived record + preview gallery. Desktop (Tauri) shell same layout (`c09f0f7`; Tauri window not relaunched). See §3 + §9. |
-| Tests | **Python 261 passed, 0 skipped** (`python -m pytest tests`); **frontend 99 passed** (`npm run test --workspace @billgen/ui`) |
+| Tests | **Python 283 passed, 0 skipped** (`python -m pytest tests`); **frontend 105 passed** (`npm run test --workspace @billgen/ui`) |
 | Git | local only, **not pushed** — no remote yet (Henri setting up a private GitHub; this is the top safety-net gap). One commit + tag per phase (`phase-4` … `phase-9b`); later work committed on `main` without tags. CI workflow (`.github/workflows/ci.yml`) is written and waiting for that remote. Branch `main`. |
 | PDF engine | **Headless Chromium via Playwright** (primary, cross-platform incl. Windows/desktop) with **WeasyPrint** as a fallback for the Docker/SaaS image. Setup on a fresh box: `pip install playwright` then `python -m playwright install chromium`. Without any engine, `/pdf` returns a clean 503. Free-tier PDFs carry a subtle "Made with BillGen" footer + logo. |
 | Not a migration | The legacy React/Python apps (`D:\CODING\audit-v2-react-exe`, `myshop-*`) are reference only. Do not edit them. The **approved Peppol reference** is `D:\CODING\FinanceFlow Bill Generator` (the demo) — inventoried in [docs/COMPARISON_demo_vs_new.md](docs/COMPARISON_demo_vs_new.md). |
@@ -534,6 +534,49 @@ build`).
   - Also swept up so the first CI run is green: 8 pre-existing `ruff` failures
     in `scripts/`, and a stale `frontend-react/openapi.json` (regenerated, along
     with `src/types/api.d.ts`).
+- **Sprint 2b backend — DONE 2026-08-26** (`docs/ROADMAP_IA.md` §4). Six reads,
+  no schema change, no migration, no external dependency. Each replaces an
+  aggregation the browser was doing over a full-list fetch, or exposes a rule
+  the server already owned. **Still not one of them is on a screen.**
+  - `GET /payments` — `invoice_id` is now optional; `company_id`, `client_id`,
+    `paid_from`, `paid_to` filter it (bounds inclusive, newest first). There was
+    previously **no way to list payments across invoices at all**. Needed a new
+    `PaymentRepository.list()` port: `Payment` carries only `invoice_id`, so
+    filtering by company or client is a join, not a column read.
+  - `GET /reports/invoices?company_id&period` — counts and money per
+    **effective** status (Overdue derived from the due date, so it is a bucket
+    rather than something the caller re-derives), plus a monthly series. Drafts
+    are counted, never summed; voided invoices carry their total in their own
+    bucket but leave revenue alone.
+  - `GET /clients/{id}/stats` — Client 360's header in one call.
+    `average_days_to_payment` covers **fully-paid invoices only**: a partial has
+    no settlement date, and averaging it in would make the number improve when a
+    customer pays less.
+  - `GET /clients/{id}/timeline` — the **commercial** history (invoices, credit
+    notes, payments), which the audit log structurally cannot produce: audit
+    entries for an invoice carry no `client_id`, so `/activity?target_id=<client>`
+    only ever returns edits to the client record. Same-day ties sort
+    invoice → credit note → payment → void, so a payment never appears above the
+    invoice it settles.
+  - `GET /companies/{id}/validation` — per-field VAT (mod-97) / IBAN (ISO 13616)
+    / BIC (ISO 9362) verdicts with canonical forms, plus `missing_for_peppol`.
+    A blank optional field is **not** an error (that is a form state), but it
+    does block `peppol_ready`. Supplier side only: a `peppol_ready` company can
+    still be refused at export because the *client* fails the gate (no VAT =
+    B2C). Pure logic in `core/services/company_validation.py`.
+  - `POST /invoices/{id}/duplicate` — copies client, lines, discount, comments,
+    terms, template and currency into a fresh draft, and nothing that identifies
+    the source document. It routes through `create_draft`, so a copy can never
+    come out already numbered; totals are recomputed rather than copied, because
+    a stale total on a draft becomes a wrong total the moment it is issued.
+  - **Frontend plumbing, same commit:** `ApiClient` methods, generated types and
+    React Query hooks for all six — **plus the Sprint 1 + 2 endpoints that had
+    none**: `getCompany`, `updateCompany`, `validateCompany`, `vatRates`,
+    `pdfTemplates`, `vatReport`, and `status`/`billing_type` on `listProducts`.
+    `listPayments` and `listProducts` still accept a bare id, so no call site
+    changed. Every Sprint 1-2b endpoint is now one hook away from a screen.
+    `openapi.json` + `src/types/api.d.ts` regenerated; all four workspaces
+    typecheck clean.
 - Repo is **local only** — no remote. Commit + tag per phase. **This is now the
   top item on the board** (`BGEN-OPS-01`): the whole history lives on one
   machine with no backup, and `.github/workflows/ci.yml` cannot run until there

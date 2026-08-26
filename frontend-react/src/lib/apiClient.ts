@@ -11,15 +11,19 @@ import type {
   ActivityEntryResponse,
   ClientCreateRequest,
   ClientResponse,
+  ClientStatsResponse,
   ClientUpdateRequest,
   CompanyCreateRequest,
   CompanyResponse,
+  CompanyUpdateRequest,
+  CompanyValidationResponse,
   CreditNoteIssueRequest,
   CreditNoteResponse,
   ImportReport,
   InvoiceCreateRequest,
   InvoicePreviewRequest,
   InvoicePreviewResponse,
+  InvoiceReportResponse,
   InvoiceResponse,
   IssueRequest,
   KpiResponse,
@@ -29,14 +33,18 @@ import type {
   PaymentCreateRequest,
   PaymentRecordResponse,
   PaymentResponse,
+  PdfTemplatesResponse,
   ProductCreateRequest,
   ProductResponse,
   ProductUpdateRequest,
   RevenueByMonthResponse,
   SignupRequest,
   SignupResponse,
+  TimelineEventResponse,
   TokenResponse,
   UserMeResponse,
+  VatRatesResponse,
+  VatReportResponse,
 } from "../types";
 
 /** Runtime shape of POST /backup/restore's response. Hand-typed: the backup
@@ -268,6 +276,24 @@ export class ApiClient {
     return this.request("POST", "/companies", body);
   }
 
+  getCompany(companyId: string): Promise<CompanyResponse> {
+    return this.request("GET", `/companies/${companyId}`);
+  }
+
+  /** PATCH semantics: only the fields you send change. `logo_key` is not
+   *  editable here — it belongs to blob storage (B2), which does not exist. */
+  updateCompany(companyId: string, body: CompanyUpdateRequest): Promise<CompanyResponse> {
+    return this.request("PATCH", `/companies/${companyId}`, body);
+  }
+
+  /** Per-field verdict on this company's VAT / IBAN / BIC, plus what is still
+   *  missing before it could act as a Peppol supplier. Supplier side only: a
+   *  `peppol_ready` company can still be refused at export time because the
+   *  *client* fails the gate (no VAT number = B2C, which Peppol must not carry). */
+  validateCompany(companyId: string): Promise<CompanyValidationResponse> {
+    return this.request("GET", `/companies/${companyId}/validation`);
+  }
+
   // ---- clients ---------------------------------------------------------------
 
   listClients(companyId?: string): Promise<ClientResponse[]> {
@@ -287,10 +313,37 @@ export class ApiClient {
     return this.request("PATCH", `/clients/${clientId}`, body);
   }
 
+  /** Client 360's header numbers in one call — invoiced, paid, outstanding,
+   *  overdue, credited, and average days to payment. */
+  clientStats(clientId: string, today?: string): Promise<ClientStatsResponse> {
+    const query = today ? `?today=${today}` : "";
+    return this.request("GET", `/clients/${clientId}/stats${query}`);
+  }
+
+  /** The commercial history — invoices, credit notes and payments, newest
+   *  first. Distinct from `activity({ targetId })`, which is the audit log and
+   *  only ever returns edits to the client record itself. */
+  clientTimeline(clientId: string, limit?: number): Promise<TimelineEventResponse[]> {
+    const query = limit ? `?limit=${limit}` : "";
+    return this.request("GET", `/clients/${clientId}/timeline${query}`);
+  }
+
   // ---- products --------------------------------------------------------------
 
-  listProducts(companyId?: string): Promise<ProductResponse[]> {
-    const query = companyId ? `?company_id=${companyId}` : "";
+  listProducts(
+    companyIdOrParams?: string | { companyId?: string; status?: string; billingType?: string },
+  ): Promise<ProductResponse[]> {
+    const params =
+      typeof companyIdOrParams === "string"
+        ? { companyId: companyIdOrParams }
+        : (companyIdOrParams ?? {});
+    const search = new URLSearchParams();
+    if (params.companyId) search.set("company_id", params.companyId);
+    // Catalog's Services and Archived views: the server filters, so the browser
+    // stops downloading the whole catalog to hide most of it.
+    if (params.status) search.set("status", params.status);
+    if (params.billingType) search.set("billing_type", params.billingType);
+    const query = search.size > 0 ? `?${search}` : "";
     return this.request("GET", `/products${query}`);
   }
 
@@ -337,6 +390,12 @@ export class ApiClient {
   /** Hard-delete a DRAFT invoice. 409 if it has already been issued. */
   deleteInvoice(invoiceId: string): Promise<void> {
     return this.request("DELETE", `/invoices/${invoiceId}`);
+  }
+
+  /** Copy an invoice into a new DRAFT dated today. No number is consumed and
+   *  nothing on the source changes — including an issued or voided source. */
+  duplicateInvoice(invoiceId: string): Promise<InvoiceResponse> {
+    return this.request("POST", `/invoices/${invoiceId}/duplicate`);
   }
 
   voidInvoice(invoiceId: string, reason: string): Promise<InvoiceResponse> {
@@ -386,8 +445,31 @@ export class ApiClient {
     return this.request("POST", "/payments", body);
   }
 
-  listPayments(invoiceId: string): Promise<PaymentResponse[]> {
-    return this.request("GET", `/payments?invoice_id=${invoiceId}`);
+  listPayments(
+    invoiceIdOrParams:
+      | string
+      | {
+          invoiceId?: string;
+          companyId?: string;
+          clientId?: string;
+          /** Inclusive. */
+          paidFrom?: string;
+          /** Inclusive. */
+          paidTo?: string;
+        },
+  ): Promise<PaymentResponse[]> {
+    const params =
+      typeof invoiceIdOrParams === "string"
+        ? { invoiceId: invoiceIdOrParams }
+        : invoiceIdOrParams;
+    const search = new URLSearchParams();
+    if (params.invoiceId) search.set("invoice_id", params.invoiceId);
+    if (params.companyId) search.set("company_id", params.companyId);
+    if (params.clientId) search.set("client_id", params.clientId);
+    if (params.paidFrom) search.set("paid_from", params.paidFrom);
+    if (params.paidTo) search.set("paid_to", params.paidTo);
+    const query = search.size > 0 ? `?${search}` : "";
+    return this.request("GET", `/payments${query}`);
   }
 
   // ---- imports -----------------------------------------------------------------
@@ -439,5 +521,41 @@ export class ApiClient {
     if (params?.targetId) search.set("target_id", params.targetId);
     const query = search.size > 0 ? `?${search}` : "";
     return this.request("GET", `/activity${query}`);
+  }
+
+  // ---- reports (aggregations the browser used to do itself) --------------------
+
+  /** Counts and money per effective status, plus a monthly series. Replaces
+   *  fetching every invoice and grouping it client-side. `period` is a year
+   *  (`2026`), a quarter (`2026-Q3`) or a month (`2026-07`); omit for all time. */
+  invoiceReport(
+    companyId: string,
+    params?: { period?: string; today?: string },
+  ): Promise<InvoiceReportResponse> {
+    const search = new URLSearchParams({ company_id: companyId });
+    if (params?.period) search.set("period", params.period);
+    if (params?.today) search.set("today", params.today);
+    return this.request("GET", `/reports/invoices?${search}`);
+  }
+
+  /** Output VAT per (category, rate) for one declaration period.
+   *  Sales only — the response carries `covers: "output_vat_only"` and must
+   *  never be presented as a return that is ready to file. */
+  vatReport(companyId: string, period: string): Promise<VatReportResponse> {
+    const search = new URLSearchParams({ company_id: companyId, period });
+    return this.request("GET", `/reports/vat?${search}`);
+  }
+
+  // ---- reference data ------------------------------------------------------------
+
+  /** The Belgian rates and EN 16931 categories, from core/rules/vat.py.
+   *  Use this instead of hardcoding 21/12/6/0. */
+  vatRates(): Promise<VatRatesResponse> {
+    return this.request("GET", "/vat-rates");
+  }
+
+  /** The PDF templates the server can actually render, from core/pdf/registry. */
+  pdfTemplates(): Promise<PdfTemplatesResponse> {
+    return this.request("GET", "/pdf-templates");
   }
 }

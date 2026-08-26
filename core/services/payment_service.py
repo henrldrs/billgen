@@ -80,3 +80,24 @@ class PaymentService:
     def list_for_invoice(self, invoice_id: UUID) -> list[Payment]:
         with self._uow_factory() as uow:
             return uow.payments.list_for_invoice(invoice_id)
+
+    def list(
+        self,
+        *,
+        company_id: UUID | None = None,
+        client_id: UUID | None = None,
+        invoice_id: UUID | None = None,
+        paid_from: date | None = None,
+        paid_to: date | None = None,
+    ) -> list[Payment]:
+        """Payments across invoices — what the Payments report and Client 360
+        read. Every filter is optional; none of them is a substitute for the
+        tenant scope, which the repository applies unconditionally."""
+        with self._uow_factory() as uow:
+            return uow.payments.list(
+                company_id=company_id,
+                client_id=client_id,
+                invoice_id=invoice_id,
+                paid_from=paid_from,
+                paid_to=paid_to,
+            )

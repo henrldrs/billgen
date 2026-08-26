@@ -77,6 +77,96 @@ class VatReport:
 
 
 @dataclass(frozen=True)
+class StatusBucket:
+    status: str
+    count: int
+    total_ttc: Decimal
+
+
+@dataclass(frozen=True)
+class InvoiceReport:
+    """Invoice counts and money per effective status, for one company.
+
+    The Invoices report used to be aggregated in the browser from the full list,
+    which meant every filter change re-downloaded every invoice. `status` here is
+    the *effective* status (see `effective_status`), so Overdue is a bucket rather
+    than something the caller has to derive from due dates a second time.
+
+    Amounts are in the company's default currency; invoices in any other currency
+    are counted in `skipped_other_currency` rather than summed at face value.
+    """
+
+    company_id: UUID
+    period: str | None
+    period_start: date | None
+    period_end: date | None
+    currency: str
+    statuses: list[StatusBucket] = field(default_factory=list)
+    by_month: dict[str, Decimal] = field(default_factory=dict)
+    count_by_month: dict[str, int] = field(default_factory=dict)
+    invoice_count: int = 0
+    invoiced_total: Decimal = _ZERO
+    paid_total: Decimal = _ZERO
+    outstanding_total: Decimal = _ZERO
+    draft_count: int = 0
+    overdue_count: int = 0
+    overdue_total: Decimal = _ZERO
+    skipped_other_currency: int = 0
+
+
+@dataclass(frozen=True)
+class ClientStats:
+    """The numbers behind Client 360's header.
+
+    Derivable from `GET /invoices?client_id` plus a payments fetch per invoice,
+    which is exactly the N+1 the screen should not be doing.
+
+    `average_days_to_payment` is measured from issue date to the date of the
+    payment that settled the invoice, over fully-paid invoices only — a partially
+    paid invoice has no settlement date yet, and averaging it in would report a
+    number that improves when a customer pays *less*.
+    """
+
+    client_id: UUID
+    company_id: UUID
+    currency: str
+    invoice_count: int = 0
+    draft_count: int = 0
+    invoiced_total: Decimal = _ZERO
+    paid_total: Decimal = _ZERO
+    outstanding_total: Decimal = _ZERO
+    credited_total: Decimal = _ZERO
+    credit_note_count: int = 0
+    overdue_count: int = 0
+    overdue_total: Decimal = _ZERO
+    first_invoice_date: date | None = None
+    last_invoice_date: date | None = None
+    average_days_to_payment: int | None = None
+    skipped_other_currency: int = 0
+
+
+@dataclass(frozen=True)
+class TimelineEvent:
+    """One commercial event on a client's history.
+
+    Deliberately *not* the audit log. Audit entries are written against the
+    invoice and carry no client id, so `GET /activity?target_id=<client>` can
+    never return an invoice, a payment or a credit note — it returns edits to the
+    client record. This is the other timeline: what was sold, credited and paid.
+    """
+
+    at: date
+    kind: str
+    amount: Decimal
+    currency: str
+    invoice_id: UUID | None = None
+    credit_note_id: UUID | None = None
+    payment_id: UUID | None = None
+    reference: str | None = None
+    detail: str | None = None
+
+
+@dataclass(frozen=True)
 class KpiSummary:
     invoiced_total: Decimal
     paid_total: Decimal
@@ -135,6 +225,17 @@ def _grid_for(category: VATCategory, rate: Decimal) -> str | None:
     if category is VATCategory.STANDARD:
         return _STANDARD_RATE_GRIDS.get(rate.normalize())
     return _CATEGORY_GRIDS.get(category)
+
+
+# Same-day tie-break for the client timeline: an invoice sorts above the payment
+# that settles it, and a void sorts last.
+_TIMELINE_ORDER: dict[str, int] = {
+    "invoice_drafted": 0,
+    "invoice_issued": 0,
+    "credit_note_issued": 1,
+    "payment_received": 2,
+    "invoice_voided": 3,
+}
 
 
 def effective_status(invoice: Invoice, today: date) -> str:
@@ -292,3 +393,245 @@ class ReportingService:
             credit_note_count=len(credit_notes),
             skipped_other_currency=skipped,
         )
+
+    def invoice_report(
+        self,
+        company_id: UUID,
+        period: str | None = None,
+        today: date | None = None,
+    ) -> InvoiceReport:
+        """Invoice counts and totals per effective status for `company_id`,
+        optionally restricted to a period (`YYYY`, `YYYY-Qn`, `YYYY-MM`).
+
+        Money follows the same rule as everywhere else in this service: drafts
+        and voided invoices are counted but never summed into revenue.
+        """
+        today = today or date.today()
+        start, end = parse_period(period) if period else (None, None)
+
+        with self._uow_factory() as uow:
+            company = uow.companies.get(company_id)
+            if company is None:
+                raise NotFoundError(f"Company {company_id} not found")
+            currency = company.default_currency
+            invoices = [
+                inv
+                for inv in uow.invoices.list(company_id=company_id)
+                if start is None or start <= inv.issue_date <= end
+            ]
+            paid_by_invoice = {
+                inv.id: sum((p.amount for p in uow.payments.list_for_invoice(inv.id)), _ZERO)
+                for inv in invoices
+            }
+
+        in_currency = [inv for inv in invoices if inv.currency is currency]
+        skipped = len(invoices) - len(in_currency)
+
+        buckets: dict[str, list] = {}
+        by_month: dict[str, Decimal] = {}
+        count_by_month: dict[str, int] = {}
+        invoiced_total = paid_total = overdue_total = _ZERO
+        draft_count = overdue_count = 0
+
+        for invoice in in_currency:
+            status = effective_status(invoice, today)
+            slot = buckets.setdefault(status, [0, _ZERO])
+            slot[0] += 1
+            if invoice.status is InvoiceStatus.DRAFT:
+                draft_count += 1
+                continue
+            slot[1] += invoice.total_ttc
+            if invoice.status is InvoiceStatus.VOIDED:
+                continue
+
+            invoiced_total += invoice.total_ttc
+            paid_total += paid_by_invoice[invoice.id]
+            if status == InvoiceStatus.OVERDUE.value:
+                overdue_count += 1
+                overdue_total += invoice.total_ttc - paid_by_invoice[invoice.id]
+
+            month = f"{invoice.issue_date.year:04d}-{invoice.issue_date.month:02d}"
+            by_month[month] = by_month.get(month, _ZERO) + invoice.total_ttc
+            count_by_month[month] = count_by_month.get(month, 0) + 1
+
+        return InvoiceReport(
+            company_id=company_id,
+            period=period.strip().upper() if period else None,
+            period_start=start,
+            period_end=end,
+            currency=currency.value,
+            statuses=[
+                StatusBucket(status=status, count=count, total_ttc=quantize(total, currency))
+                for status, (count, total) in sorted(buckets.items())
+            ],
+            by_month=dict(sorted(by_month.items())),
+            count_by_month=dict(sorted(count_by_month.items())),
+            invoice_count=len(in_currency),
+            invoiced_total=quantize(invoiced_total, currency),
+            paid_total=quantize(paid_total, currency),
+            outstanding_total=quantize(invoiced_total - paid_total, currency),
+            draft_count=draft_count,
+            overdue_count=overdue_count,
+            overdue_total=quantize(overdue_total, currency),
+            skipped_other_currency=skipped,
+        )
+
+    def client_stats(self, client_id: UUID, today: date | None = None) -> ClientStats:
+        """Client 360's header numbers, computed server-side in one pass."""
+        today = today or date.today()
+        with self._uow_factory() as uow:
+            client = uow.clients.get(client_id)
+            if client is None:
+                raise NotFoundError(f"Client {client_id} not found")
+            company = uow.companies.get(client.company_id)
+            if company is None:
+                raise NotFoundError(f"Company {client.company_id} not found")
+            currency = company.default_currency
+            invoices = uow.invoices.list(company_id=client.company_id, client_id=client_id)
+            payments_by_invoice = {
+                inv.id: uow.payments.list_for_invoice(inv.id) for inv in invoices
+            }
+            credit_notes = [
+                cn
+                for cn in uow.credit_notes.list(company_id=client.company_id)
+                if cn.client_id == client_id
+            ]
+
+        in_currency = [inv for inv in invoices if inv.currency is currency]
+        notes_in_currency = [cn for cn in credit_notes if cn.currency is currency]
+        skipped = (len(invoices) - len(in_currency)) + (
+            len(credit_notes) - len(notes_in_currency)
+        )
+
+        invoiced_total = paid_total = overdue_total = _ZERO
+        draft_count = overdue_count = 0
+        issue_dates: list[date] = []
+        settlement_days: list[int] = []
+
+        for invoice in in_currency:
+            if invoice.status is InvoiceStatus.DRAFT:
+                draft_count += 1
+                continue
+            issue_dates.append(invoice.issue_date)
+            if invoice.status is InvoiceStatus.VOIDED:
+                continue
+
+            payments = payments_by_invoice[invoice.id]
+            paid = sum((p.amount for p in payments), _ZERO)
+            invoiced_total += invoice.total_ttc
+            paid_total += paid
+            if effective_status(invoice, today) == InvoiceStatus.OVERDUE.value:
+                overdue_count += 1
+                overdue_total += invoice.total_ttc - paid
+            if invoice.status is InvoiceStatus.PAID and payments:
+                settled_on = max(p.paid_on for p in payments)
+                settlement_days.append((settled_on - invoice.issue_date).days)
+
+        return ClientStats(
+            client_id=client_id,
+            company_id=client.company_id,
+            currency=currency.value,
+            invoice_count=len(in_currency),
+            draft_count=draft_count,
+            invoiced_total=quantize(invoiced_total, currency),
+            paid_total=quantize(paid_total, currency),
+            outstanding_total=quantize(invoiced_total - paid_total, currency),
+            credited_total=quantize(
+                sum((cn.total_ttc for cn in notes_in_currency), _ZERO), currency
+            ),
+            credit_note_count=len(notes_in_currency),
+            overdue_count=overdue_count,
+            overdue_total=quantize(overdue_total, currency),
+            first_invoice_date=min(issue_dates) if issue_dates else None,
+            last_invoice_date=max(issue_dates) if issue_dates else None,
+            average_days_to_payment=(
+                round(sum(settlement_days) / len(settlement_days)) if settlement_days else None
+            ),
+            skipped_other_currency=skipped,
+        )
+
+    def client_timeline(self, client_id: UUID, limit: int = 100) -> list[TimelineEvent]:
+        """What was sold, credited and paid for one client - newest first.
+
+        Drafts are included (as `invoice_drafted`) because a draft is a real
+        commercial intent the salesperson is looking for; it is labelled
+        distinctly so it can never be mistaken for a supply.
+        """
+        with self._uow_factory() as uow:
+            client = uow.clients.get(client_id)
+            if client is None:
+                raise NotFoundError(f"Client {client_id} not found")
+            invoices = uow.invoices.list(company_id=client.company_id, client_id=client_id)
+            payments_by_invoice = {
+                inv.id: uow.payments.list_for_invoice(inv.id) for inv in invoices
+            }
+            credit_notes = [
+                cn
+                for cn in uow.credit_notes.list(company_id=client.company_id)
+                if cn.client_id == client_id
+            ]
+
+        references = {inv.id: inv.reference for inv in invoices}
+        events: list[TimelineEvent] = []
+
+        for invoice in invoices:
+            drafted = invoice.status is InvoiceStatus.DRAFT
+            events.append(
+                TimelineEvent(
+                    at=invoice.issue_date,
+                    kind="invoice_drafted" if drafted else "invoice_issued",
+                    amount=invoice.total_ttc,
+                    currency=invoice.currency.value,
+                    invoice_id=invoice.id,
+                    reference=invoice.reference,
+                )
+            )
+            if invoice.status is InvoiceStatus.VOIDED:
+                events.append(
+                    TimelineEvent(
+                        # voided_at is a UTC timestamp; the timeline is day-grained.
+                        at=(
+                            invoice.voided_at.date()
+                            if invoice.voided_at
+                            else invoice.issue_date
+                        ),
+                        kind="invoice_voided",
+                        amount=invoice.total_ttc,
+                        currency=invoice.currency.value,
+                        invoice_id=invoice.id,
+                        reference=invoice.reference,
+                        detail=invoice.voided_reason,
+                    )
+                )
+            for payment in payments_by_invoice[invoice.id]:
+                events.append(
+                    TimelineEvent(
+                        at=payment.paid_on,
+                        kind="payment_received",
+                        amount=payment.amount,
+                        currency=payment.currency.value,
+                        invoice_id=invoice.id,
+                        payment_id=payment.id,
+                        reference=invoice.reference,
+                        detail=payment.method.value,
+                    )
+                )
+
+        for note in credit_notes:
+            events.append(
+                TimelineEvent(
+                    at=note.issue_date,
+                    kind="credit_note_issued",
+                    amount=note.total_ttc,
+                    currency=note.currency.value,
+                    invoice_id=note.invoice_id,
+                    credit_note_id=note.id,
+                    reference=note.reference,
+                    detail=references.get(note.invoice_id),
+                )
+            )
+
+        # Newest first; ties broken by kind so a payment recorded on the same day
+        # as its invoice does not sort above the invoice it settles.
+        events.sort(key=lambda e: (e.at, _TIMELINE_ORDER.get(e.kind, 9)), reverse=True)
+        return events[:limit]

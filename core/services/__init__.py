@@ -2,6 +2,7 @@ from .activity_service import ActivityService
 from .backup_service import BackupService, RestoreReport
 from .client_service import ClientService
 from .company_service import CompanyService
+from .company_validation import CompanyValidation, validate_company_identifiers
 from .credit_note_service import CreditNoteService
 from .errors import (
     BusinessRuleError,
@@ -24,6 +25,7 @@ __all__ = [
     "BusinessRuleError",
     "ClientService",
     "CompanyService",
+    "CompanyValidation",
     "CreditNoteService",
     "FieldError",
     "ImportService",
@@ -39,4 +41,5 @@ __all__ = [
     "ReportingService",
     "RestoreReport",
     "effective_status",
+    "validate_company_identifiers",
 ]

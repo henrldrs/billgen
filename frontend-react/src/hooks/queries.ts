@@ -7,6 +7,7 @@ import type {
   ClientCreateRequest,
   ClientUpdateRequest,
   CompanyCreateRequest,
+  CompanyUpdateRequest,
   CreditNoteIssueRequest,
   InvoiceCreateRequest,
   InvoicePreviewRequest,
@@ -73,11 +74,22 @@ export function useUpdateClient() {
 
 // ---- products ------------------------------------------------------------------
 
-export function useProducts(companyId?: string) {
+export function useProducts(
+  companyIdOrParams?: string | { companyId?: string; status?: string; billingType?: string },
+) {
   const api = useApi();
+  const params =
+    typeof companyIdOrParams === "string"
+      ? { companyId: companyIdOrParams }
+      : (companyIdOrParams ?? {});
   return useQuery({
-    queryKey: ["products", companyId ?? "all"],
-    queryFn: () => api.listProducts(companyId),
+    queryKey: [
+      "products",
+      params.companyId ?? "all",
+      params.status ?? "any-status",
+      params.billingType ?? "any-type",
+    ],
+    queryFn: () => api.listProducts(params),
   });
 }
 
@@ -165,6 +177,20 @@ export function useDeleteInvoice() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (invoiceId: string) => api.deleteInvoice(invoiceId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["activity"] });
+    },
+  });
+}
+
+/** Copy an invoice into a new draft. Only the invoice list changes — no number
+ *  is consumed, so nothing in the reports moves. */
+export function useDuplicateInvoice() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (invoiceId: string) => api.duplicateInvoice(invoiceId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
       queryClient.invalidateQueries({ queryKey: ["activity"] });
@@ -311,5 +337,139 @@ export function useBackupRestore() {
     mutationFn: (backup: unknown) => api.restoreBackup(backup),
     // A restore repopulates the whole organization — everything is stale.
     onSuccess: () => void queryClient.invalidateQueries(),
+  });
+}
+
+// ---- Sprint 1-3 reads --------------------------------------------------------------
+//
+// Each of these replaces work the browser was doing over a full list fetch, or a
+// server constant TypeScript was duplicating. See docs/ROADMAP_IA.md §6.
+
+/** One company by id. The list endpoint already returns full companies, so reach
+ *  for this only when a screen is addressed by company id (a settings route). */
+export function useCompany(companyId: string | undefined) {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["companies", "detail", companyId],
+    queryFn: () => api.getCompany(companyId as string),
+    enabled: Boolean(companyId),
+  });
+}
+
+/** Edit the company — the endpoint that unblocked all six partial Company areas
+ *  (B3). Invalidates the whole `companies` key: the record is embedded in every
+ *  PDF and every invoice header, so a stale copy is visible immediately. */
+export function useUpdateCompany() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ companyId, body }: { companyId: string; body: CompanyUpdateRequest }) =>
+      api.updateCompany(companyId, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["companies"] });
+      queryClient.invalidateQueries({ queryKey: ["company-validation"] });
+      queryClient.invalidateQueries({ queryKey: ["activity"] });
+    },
+  });
+}
+
+/** Per-field verdict on the company's VAT / IBAN / BIC. Supplier side of the
+ *  Peppol gate only — never render this as "your invoices will be delivered". */
+export function useCompanyValidation(companyId: string | undefined) {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["company-validation", companyId],
+    queryFn: () => api.validateCompany(companyId as string),
+    enabled: Boolean(companyId),
+  });
+}
+
+/** Client 360's header numbers. */
+export function useClientStats(clientId: string | undefined, today?: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["clients", "stats", clientId, today ?? "today"],
+    queryFn: () => api.clientStats(clientId as string, today),
+    enabled: Boolean(clientId),
+  });
+}
+
+/** The commercial timeline: what was sold, credited and paid. Not the audit log
+ *  — `useActivity({ targetId })` is that, and it can only ever return edits to
+ *  the client record itself. */
+export function useClientTimeline(clientId: string | undefined, limit?: number) {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["clients", "timeline", clientId, limit ?? 100],
+    queryFn: () => api.clientTimeline(clientId as string, limit),
+    enabled: Boolean(clientId),
+  });
+}
+
+/** Payments across invoices — the Payments report, and Client 360's payment
+ *  history. `usePayments(invoiceId)` stays the per-invoice case. */
+export function usePaymentsList(params: {
+  companyId?: string;
+  clientId?: string;
+  invoiceId?: string;
+  paidFrom?: string;
+  paidTo?: string;
+}) {
+  const api = useApi();
+  return useQuery({
+    queryKey: [
+      "payments",
+      "list",
+      params.companyId ?? "all",
+      params.clientId ?? "all",
+      params.invoiceId ?? "all",
+      params.paidFrom ?? "",
+      params.paidTo ?? "",
+    ],
+    queryFn: () => api.listPayments(params),
+  });
+}
+
+/** Invoice counts and money per effective status, plus a monthly series. */
+export function useInvoiceReport(
+  companyId: string | undefined,
+  params?: { period?: string; today?: string },
+) {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["reports", "invoices", companyId, params?.period ?? "all", params?.today ?? ""],
+    queryFn: () => api.invoiceReport(companyId as string, params),
+    enabled: Boolean(companyId),
+  });
+}
+
+/** Output VAT for one declaration period. The response's `covers` field says
+ *  `output_vat_only`: it is a preparation aid, never a filed return. */
+export function useVatReport(companyId: string | undefined, period: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["reports", "vat", companyId, period],
+    queryFn: () => api.vatReport(companyId as string, period),
+    enabled: Boolean(companyId) && Boolean(period),
+  });
+}
+
+/** Server-owned reference data. Both are constants that change only when the
+ *  backend does, hence Infinity — refetching them per mount is pure noise. */
+export function useVatRates() {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["reference", "vat-rates"],
+    queryFn: () => api.vatRates(),
+    staleTime: Infinity,
+  });
+}
+
+export function usePdfTemplates() {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["reference", "pdf-templates"],
+    queryFn: () => api.pdfTemplates(),
+    staleTime: Infinity,
   });
 }

@@ -7,6 +7,7 @@ Tenancy: every tenant-scoped query filters on core.tenancy.current_organization_
 and every write guards that the entity's organization_id matches the bound context.
 """
 
+from datetime import date
 from uuid import UUID
 
 from sqlalchemy import select
@@ -333,6 +334,34 @@ class SqlAlchemyPaymentRepository(PaymentRepository):
             .order_by(PaymentRow.paid_on)
         ).scalars()
         return [to_domain(Payment, row) for row in rows]
+
+    def list(
+        self,
+        company_id: UUID | None = None,
+        client_id: UUID | None = None,
+        invoice_id: UUID | None = None,
+        paid_from: date | None = None,
+        paid_to: date | None = None,
+    ) -> list[Payment]:
+        stmt = (
+            select(PaymentRow)
+            .where(PaymentRow.organization_id == current_organization_id())
+            .order_by(PaymentRow.paid_on.desc())
+        )
+        # company/client live on the invoice, so either filter is a join.
+        if company_id is not None or client_id is not None:
+            stmt = stmt.join(InvoiceRow, InvoiceRow.id == PaymentRow.invoice_id)
+            if company_id is not None:
+                stmt = stmt.where(InvoiceRow.company_id == company_id)
+            if client_id is not None:
+                stmt = stmt.where(InvoiceRow.client_id == client_id)
+        if invoice_id is not None:
+            stmt = stmt.where(PaymentRow.invoice_id == invoice_id)
+        if paid_from is not None:
+            stmt = stmt.where(PaymentRow.paid_on >= paid_from)
+        if paid_to is not None:
+            stmt = stmt.where(PaymentRow.paid_on <= paid_to)
+        return [to_domain(Payment, row) for row in self._s.execute(stmt).scalars()]
 
 
 class SqlAlchemySequenceRepository(SequenceRepository):

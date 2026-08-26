@@ -117,6 +117,19 @@ def issue_invoice(
     return _to_response(invoice)
 
 
+@router.post("/{invoice_id}/duplicate", response_model=InvoiceResponse, status_code=201)
+def duplicate_invoice(
+    invoice_id: UUID,
+    user_id: UUID = Depends(current_user_id),
+    uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+):
+    """Copy an invoice into a new DRAFT dated today. No number is consumed and
+    nothing on the source changes — including an issued or voided source, which
+    is the common case (re-billing last month's work)."""
+    invoice = InvoiceService(uow_factory).duplicate(invoice_id, actor_user_id=user_id)
+    return _to_response(invoice)
+
+
 @router.delete("/{invoice_id}", status_code=204)
 def delete_invoice(
     invoice_id: UUID,

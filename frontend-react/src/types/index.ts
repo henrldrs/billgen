@@ -12,7 +12,10 @@ export type UserMeResponse = components["schemas"]["UserMeResponse"];
 export type OrganizationResponse = components["schemas"]["OrganizationResponse"];
 
 export type CompanyCreateRequest = components["schemas"]["CompanyCreateRequest"];
+export type CompanyUpdateRequest = components["schemas"]["CompanyUpdateRequest"];
 export type CompanyResponse = components["schemas"]["CompanyResponse"];
+export type CompanyValidationResponse = components["schemas"]["CompanyValidationResponse"];
+export type IdentifierCheck = components["schemas"]["IdentifierCheck"];
 
 export type ClientCreateRequest = components["schemas"]["ClientCreateRequest"];
 export type ClientUpdateRequest = components["schemas"]["ClientUpdateRequest"];
@@ -44,3 +47,27 @@ export type ActivityEntryResponse = components["schemas"]["ActivityEntryResponse
 export type ImportReport = components["schemas"]["ImportReportResponse"];
 export type ImportEntityCounts = components["schemas"]["ImportEntityCounts"];
 export type ImportIssue = components["schemas"]["ImportIssue"];
+
+/** Sprint 1-3 reads. Every one of these replaces an aggregation the browser was
+ *  doing over a full list fetch — see docs/ROADMAP_IA.md sections 6.2-6.6. */
+export type InvoiceReportResponse = components["schemas"]["InvoiceReportResponse"];
+export type StatusBucketResponse = components["schemas"]["StatusBucketResponse"];
+export type ClientStatsResponse = components["schemas"]["ClientStatsResponse"];
+export type TimelineEventResponse = components["schemas"]["TimelineEventResponse"];
+export type VatReportResponse = components["schemas"]["VatReportResponse"];
+export type VatReportLineResponse = components["schemas"]["VatReportLineResponse"];
+
+/** Server-owned constants the UI has been hardcoding (21/12/6/0, template ids). */
+export type VatRatesResponse = components["schemas"]["VatRatesResponse"];
+export type VatRateOption = components["schemas"]["VatRateOption"];
+export type PdfTemplatesResponse = components["schemas"]["PdfTemplatesResponse"];
+export type PdfTemplateOption = components["schemas"]["PdfTemplateOption"];
+
+/** The kind of a client-timeline event. Widened from the server's free string
+ *  so a switch in a renderer is exhaustive. */
+export type TimelineEventKind =
+  | "invoice_drafted"
+  | "invoice_issued"
+  | "invoice_voided"
+  | "credit_note_issued"
+  | "payment_received";

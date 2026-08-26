@@ -1,15 +1,17 @@
 from collections.abc import Callable
+from datetime import date
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from core.models import Client
 from core.repository import UnitOfWork
-from core.services import ClientService
+from core.services import ClientService, ReportingService
 from core.tenancy import current_organization_id
 
 from ..deps import current_user_id, get_uow_factory
 from ..schemas.clients import ClientCreateRequest, ClientResponse, ClientUpdateRequest
+from ..schemas.insights import ClientStatsResponse, TimelineEventResponse
 
 router = APIRouter(prefix="/clients", tags=["clients"])
 
@@ -58,3 +60,30 @@ def update_client(
         return _to_response(existing)
     updated = existing.model_copy(update=changes)
     return _to_response(service.update(updated, actor_user_id=user_id))
+
+
+@router.get("/{client_id}/stats", response_model=ClientStatsResponse)
+def client_stats(
+    client_id: UUID,
+    today: date | None = None,
+    uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+):
+    """Client 360's header numbers in one call, instead of the whole invoice list
+    plus a payments fetch per invoice."""
+    stats = ReportingService(uow_factory).client_stats(client_id, today=today)
+    return ClientStatsResponse.model_validate(stats, from_attributes=True)
+
+
+@router.get("/{client_id}/timeline", response_model=list[TimelineEventResponse])
+def client_timeline(
+    client_id: UUID,
+    limit: int = Query(default=100, ge=1, le=500),
+    uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+):
+    """The commercial history: invoices, credit notes and payments, newest first.
+
+    Not the audit log. Audit entries for an invoice carry no client id, so
+    `GET /activity?target_id=<client>` returns edits to the client record and can
+    never return what was sold to them."""
+    events = ReportingService(uow_factory).client_timeline(client_id, limit=limit)
+    return [TimelineEventResponse.model_validate(e, from_attributes=True) for e in events]

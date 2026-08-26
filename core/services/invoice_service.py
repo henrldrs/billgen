@@ -176,6 +176,40 @@ class InvoiceService:
             uow.commit()
             return updated
 
+    def duplicate(
+        self,
+        invoice_id: UUID,
+        *,
+        issue_date: date | None = None,
+        actor_user_id: UUID | None = None,
+    ) -> Invoice:
+        """Copy an existing invoice into a fresh DRAFT.
+
+        Copies what describes the sale — client, lines, discount, comments,
+        payment terms, template, currency — and deliberately nothing that
+        identifies the original document: no reference, no sequence number, no
+        payments, no void state. The copy goes through ``create_draft`` rather
+        than cloning the row, so it can never come out of here already numbered.
+
+        Totals are recomputed rather than copied: the source may have been
+        issued under a different VAT rate, and a stale total on a draft becomes
+        a wrong total the moment someone issues it.
+        """
+        source = self.get(invoice_id)
+        return self.create_draft(
+            company_id=source.company_id,
+            client_id=source.client_id,
+            lines=[line.model_copy(deep=True) for line in source.lines],
+            issue_date=issue_date or date.today(),
+            due_date=None,
+            invoice_discount=source.invoice_discount,
+            comments=source.comments,
+            payment_terms=source.payment_terms,
+            pdf_template=source.pdf_template,
+            currency=source.currency,
+            actor_user_id=actor_user_id,
+        )
+
     def delete_draft(self, invoice_id: UUID, actor_user_id: UUID | None = None) -> None:
         """Hard-delete a DRAFT invoice. Issued invoices are never deleted — they
         carry a gapless number and are corrected via a credit note (ADR-0002)."""

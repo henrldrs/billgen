@@ -1,7 +1,8 @@
 from collections.abc import Callable
+from datetime import date
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from core.models import Payment, PaymentMethod
 from core.repository import UnitOfWork
@@ -50,8 +51,21 @@ def record_payment(
 
 @router.get("", response_model=list[PaymentResponse])
 def list_payments(
-    invoice_id: UUID,
+    invoice_id: UUID | None = None,
+    company_id: UUID | None = None,
+    client_id: UUID | None = None,
+    paid_from: date | None = Query(default=None),
+    paid_to: date | None = Query(default=None),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
 ):
-    payments = PaymentService(uow_factory).list_for_invoice(invoice_id)
+    """Payments, newest first. `invoice_id` used to be required, which made a
+    cross-invoice payments report impossible; every filter is now optional and
+    combinable (`company_id`, `client_id`, `paid_from`/`paid_to` inclusive)."""
+    payments = PaymentService(uow_factory).list(
+        company_id=company_id,
+        client_id=client_id,
+        invoice_id=invoice_id,
+        paid_from=paid_from,
+        paid_to=paid_to,
+    )
     return [_to_response(payment) for payment in payments]

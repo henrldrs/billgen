@@ -47,8 +47,8 @@ Measured over **114 leaf areas**:
 | | Count | Share |
 |---|---:|---:|
 | Fully wired | 22 | **19%** |
-| Partial | 31 | 27% |
-| No backend | 61 | 54% |
+| Partial | 33 | 29% |
+| No backend | 59 | 52% |
 
 **166 distinct backend capabilities** are missing. That number is not a
 criticism — it is the honest size of "a real SaaS platform" versus "a working
@@ -60,9 +60,9 @@ invoicing core", and the core is genuinely done.
 |---|---:|---:|---:|---:|
 | Dashboard | 6 | 0 | 1 | 7 |
 | Sales | 7 | 1 | 6 | 14 |
-| Clients | 2 | 1 | 4 | 7 |
+| Clients | 2 | 2 | 3 | 7 |
 | Catalog | 1 | 6 | 0 | 7 |
-| Reports | 3 | 3 | 3 | 9 |
+| Reports | 3 | 4 | 2 | 9 |
 | Company | 0 | 6 | 3 | 9 |
 | Billing | 0 | 0 | 8 | 8 |
 | Documents | 0 | 0 | 7 | 7 |
@@ -77,15 +77,21 @@ invoicing core", and the core is genuinely done.
 **Company is still 0 wired, 6 partial, 3 none — but the reason changed.** Until
 2026-08-26 every field was reachable exactly once, at creation, because there
 was no `PATCH /companies/{id}`; a typo in a VAT number was permanent. The
-endpoint now exists and every model field except `logo_key` is editable. All six
-partials are now waiting on an edit form, not on the server.
+endpoint now exists and every model field except `logo_key` is editable, and
+`GET /companies/{id}/validation` will tell a form which identifier is wrong.
+All six partials are now waiting on an edit form, not on the server.
+
+**The two movements on 2026-08-26 are both none → partial**, never → wired:
+Client history and the Payments report each got the endpoint they were
+missing and neither got a screen. That is the shape of the whole backend
+track right now — the server is ahead of the UI by six endpoints.
 
 ### By layer
 
 | Layer | Wired | Partial | None | Total |
 |---|---:|---:|---:|---:|
 | **L1 — Core** | 15 | 6 | 0 | 21 |
-| **L2 — Business** | 5 | 11 | 24 | 40 |
+| **L2 — Business** | 5 | 13 | 22 | 40 |
 | **L3 — SaaS** | 0 | 2 | 18 | 20 |
 | **L4 — Trust** | 0 | 2 | 12 | 14 |
 | **L5 — Platform** | 1 | 7 | 4 | 12 |
@@ -199,6 +205,36 @@ period keeps the supply and the later one carries the correction — which is wh
 the return wants. A bare void (`InvoiceService.void`, no credit note) is treated
 as never declared.
 
+**Sprint 2b — The reads the screens need — backend DONE, 2026-08-26**
+
+Six endpoints, no schema change, no external dependency. Each one replaces an
+aggregation the browser was doing over a full-list fetch, or exposes a rule the
+server already owned:
+
+- `GET /payments` — `invoice_id` is no longer required, and `company_id`,
+  `client_id`, `paid_from`, `paid_to` filter it. There was previously **no way
+  to list payments across invoices at all**, which is what made 6.6 Payments a
+  *none*.
+- `GET /reports/invoices?company_id&period` — counts and money per **effective**
+  status (Overdue included, derived from the due date) plus a monthly series.
+- `GET /clients/{id}/stats` — Client 360's header: invoiced, paid, outstanding,
+  overdue, credited, first/last invoice, average days to payment. Replaces one
+  invoice-list fetch plus a payments fetch per invoice.
+- `GET /clients/{id}/timeline` — the **commercial** history (invoices, credit
+  notes, payments), which the audit log structurally cannot produce.
+- `GET /companies/{id}/validation` — per-field VAT / IBAN / BIC verdicts plus
+  what is still missing for Peppol. `core/rules/identifiers.py` could always
+  answer this; nothing ever offered it to a form, so a VAT typo surfaced only at
+  export time.
+- `POST /invoices/{id}/duplicate` — copies a sale into a fresh draft. No number
+  consumed, no void or payment inherited.
+
+Also plumbed through to `@billgen/ui` — client methods, types and hooks —
+**including the Sprint 1 + 2 endpoints that had none** (`getCompany`,
+`updateCompany`, `vatRates`, `pdfTemplates`, `vatReport`, product
+status/billing-type filters). So every Sprint 1-2b endpoint is now one hook away
+from a screen, and none of them is on one yet.
+
 **Sprint 3 — Email (B1)**
 Transport, templates, then in order: password reset → email verification →
 send invoice → payment reminders. Each unlocks the next tier of features.
@@ -275,9 +311,9 @@ The largest section and the one with the most product value left in it.
   rendered as disabled tabs rather than hidden, so the missing lifecycle stays
   visible.
 - **Invoice detail & lifecycle** *(partial)* — header, totals, payments and
-  exports are real. The status timeline can only show created/issued/paid:
-  `/activity` filters by `target_type`, not `target_id`, so a true per-invoice
-  history cannot be assembled. Also needs `POST /invoices/{id}/duplicate`.
+  exports are real, `/activity?target_id` gives the per-invoice history, and
+  `POST /invoices/{id}/duplicate` ships (a copy is always an unnumbered draft,
+  even from an issued or voided source). What is left here is the screen.
 - **Credit notes** *(wired)* — create, list, get, PDF all exist. **Backend
   ready, screen not built.** This is the cheapest feature on the board.
 - **Recurring invoices** *(none)* — `Product.billing_type` already has a
@@ -291,22 +327,23 @@ The largest section and the one with the most product value left in it.
   three-step escalation (friendly reminder, formal notice, demand with
   statutory late interest); each step needs its own template and a sent-record.
 
-### 6.3 Clients — 2 wired / 1 partial / 4 none
+### 6.3 Clients — 2 wired / 2 partial / 3 none
 
 - **Clients list** *(wired)* — full CRUD except delete.
-- **Client 360** *(partial)* — `GET /invoices?client_id` and
-  `GET /activity?target_id` ship, so the Overview no longer fetches every
-  invoice and filters in the browser. Still wants `GET /clients/{id}/stats`;
-  the Quotes and Documents tabs have no backend at all.
+- **Client 360** *(partial)* — `GET /invoices?client_id`,
+  `GET /activity?target_id` and `GET /clients/{id}/stats` all ship, so the
+  Overview is one call instead of a list fetch plus a payments fetch per
+  invoice. The Quotes and Documents tabs still have no backend at all.
 - **Contacts** *(none)* — `Client` carries one flat email/phone. Multiple named
   contacts per client is a schema change.
 - **Client groups** *(none)* — new model and CRUD.
 - **Client activity** *(wired)* — `GET /activity?target_id` scopes the audit
   log to one client record.
-- **Client history** *(none)* — the commercial timeline is a different thing
-  from the audit log: invoice, payment and credit-note entries are written
-  against the invoice, carry no `client_id`, and so can never come back from
-  `?target_id`. Needs `GET /clients/{id}/timeline`.
+- **Client history** *(partial)* — `GET /clients/{id}/timeline` ships. It is
+  deliberately not the audit log: invoice, payment and credit-note entries are
+  written against the invoice and carry no `client_id`, so `?target_id` can
+  never return them. The timeline merges invoices, credit notes and payments
+  instead. No screen renders it yet.
 - **Client documents** *(none)* — blocked on **B2**.
 
 ### 6.4 Catalog — 1 wired / 6 partial / 0 none
@@ -342,17 +379,22 @@ form, not an endpoint.
 - **Branding** *(none)* — blocked on **B2**. `Company.logo_key` is a dangling
   reference today.
 - **Company documents** *(none)* — blocked on **B2**.
-- Also worth adding: `GET /companies/{id}/vat-validation`, since
-  `core/rules/identifiers.py` can already validate Belgian VAT, IBAN and BIC
-  checksums but never offers it to the UI.
+- Also now available, and not one of the nine areas above:
+  `GET /companies/{id}/validation` — per-field verdicts on VAT (mod-97), IBAN (ISO 13616) and BIC (ISO
+  9362), each with its canonical form, plus `missing_for_peppol`. Supplier side
+  only — a `peppol_ready` company can still be refused at export because the
+  *client* fails the gate (no VAT = B2C). No form reads it yet.
 
-### 6.6 Reports — 3 wired / 3 partial / 3 none
+### 6.6 Reports — 3 wired / 4 partial / 2 none
 
 - **Revenue, outstanding, overdue** *(wired)*.
-- **Invoices** *(partial)* — counts aggregated in the browser from the full
-  list; wants `GET /reports/invoices`.
-- **Payments** *(none)* — `/payments` requires an `invoice_id`. There is no way
-  to list payments across invoices at all.
+- **Invoices** *(partial)* — `GET /reports/invoices?company_id&period` ships:
+  counts and money per effective status, plus a monthly series. The browser no
+  longer has to aggregate the full list — once a screen reads it.
+- **Payments** *(partial)* — `GET /payments` no longer requires an
+  `invoice_id`; `company_id`, `client_id` and an inclusive `paid_from`/`paid_to`
+  window filter it. A cross-invoice payments report is now possible; it is not
+  built.
 - **VAT** *(partial)* — **the most valuable report in the product, and still
   screenless.** `GET /reports/vat?period` computes output VAT per (category,
   rate), invoices minus credit notes, with the Belgian grid where the mapping is
