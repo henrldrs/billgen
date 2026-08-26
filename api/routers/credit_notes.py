@@ -8,6 +8,7 @@ from core.repository import UnitOfWork
 from core.services import CreditNoteService, PdfService
 
 from ..deps import current_user_id, get_uow_factory
+from ..entitlements import pdf_branded
 from ..schemas.credit_notes import CreditNoteIssueRequest, CreditNoteResponse
 
 router = APIRouter(prefix="/credit-notes", tags=["credit-notes"])
@@ -53,8 +54,9 @@ def get_credit_note(
 def credit_note_html(
     credit_note_id: UUID,
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+    branded: bool = Depends(pdf_branded),
 ):
-    html = PdfService(uow_factory).render_credit_note_html(credit_note_id)
+    html = PdfService(uow_factory, branded=branded).render_credit_note_html(credit_note_id)
     return Response(content=html, media_type="text/html")
 
 
@@ -63,10 +65,11 @@ def credit_note_pdf(
     credit_note_id: UUID,
     user_id: UUID = Depends(current_user_id),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+    branded: bool = Depends(pdf_branded),
 ):
     service = CreditNoteService(uow_factory)
     credit_note = service.get(credit_note_id)
-    pdf = PdfService(uow_factory).render_credit_note_pdf(
+    pdf = PdfService(uow_factory, branded=branded).render_credit_note_pdf(
         credit_note_id, actor_user_id=user_id
     )
     filename = credit_note.reference.replace("/", "-")

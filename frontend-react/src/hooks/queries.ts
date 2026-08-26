@@ -473,3 +473,31 @@ export function usePdfTemplates() {
     staleTime: Infinity,
   });
 }
+
+// ---- entitlements (B4) --------------------------------------------------------------
+
+/** This tenant's plan, features and remaining allowances.
+ *
+ *  Use it to render the UI honestly — badge what the plan does not include,
+ *  show "7 of 10 invoices this month" — never as the security boundary. The
+ *  server refuses independently with a 402, which is what actually protects the
+ *  feature. Long `staleTime` because a tier changes at most a few times a year;
+ *  a successful upgrade should invalidate `["entitlements"]` explicitly. */
+export function useEntitlements() {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["entitlements"],
+    queryFn: () => api.entitlements(),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+/** The published plan matrix, for a pricing or upgrade screen. */
+export function usePlans() {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["plans"],
+    queryFn: () => api.plans(),
+    staleTime: Infinity,
+  });
+}

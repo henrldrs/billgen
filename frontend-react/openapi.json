@@ -1139,7 +1139,7 @@
           "invoices"
         ],
         "summary": "Create Invoice",
-        "description": "Create a DRAFT invoice \u2014 no number is consumed. Finalize it with\nPOST /invoices/{id}/issue.",
+        "description": "Create a DRAFT invoice \u2014 no number is consumed. Finalize it with\nPOST /invoices/{id}/issue.\n\nThe monthly invoice allowance is consumed **here**, at creation, not at\nissue. Issuing is the legally load-bearing act and must never be the step\nthat fails for a commercial reason: a Belgian sole trader who has drafted an\ninvoice has to be able to finalize it.",
         "operationId": "create_invoice_invoices_post",
         "requestBody": {
           "required": true,
@@ -1616,6 +1616,7 @@
           "invoices"
         ],
         "summary": "Invoice Peppol",
+        "description": "Peppol BIS 3.0 XML. Every tier can do this \u2014 Peppol is the Belgian\ndifferentiator, not an upsell \u2014 but the monthly document allowance applies,\ncounted from the EXPORT_PEPPOL audit entries this call writes.",
         "operationId": "invoice_peppol_invoices__invoice_id__peppol_xml_get",
         "parameters": [
           {
@@ -2066,6 +2067,49 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PdfTemplatesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/entitlements": {
+      "get": {
+        "tags": [
+          "entitlements"
+        ],
+        "summary": "Current Entitlements",
+        "operationId": "current_entitlements_entitlements_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntitlementsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/plans": {
+      "get": {
+        "tags": [
+          "entitlements"
+        ],
+        "summary": "List Plans",
+        "description": "The commercial matrix as the server holds it, so an upgrade or pricing\nscreen has one source of truth rather than a second copy in TypeScript.",
+        "operationId": "list_plans_plans_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlansResponse"
                 }
               }
             }
@@ -3950,6 +3994,53 @@
         ],
         "title": "DiscountOut"
       },
+      "EntitlementsResponse": {
+        "properties": {
+          "organization_id": {
+            "type": "string",
+            "title": "Organization Id"
+          },
+          "tier": {
+            "type": "string",
+            "title": "Tier"
+          },
+          "subscription_status": {
+            "type": "string",
+            "title": "Subscription Status"
+          },
+          "features": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Features"
+          },
+          "usage": {
+            "items": {
+              "$ref": "#/components/schemas/MeterUsageResponse"
+            },
+            "type": "array",
+            "title": "Usage"
+          }
+        },
+        "type": "object",
+        "required": [
+          "organization_id",
+          "tier",
+          "subscription_status",
+          "features",
+          "usage"
+        ],
+        "title": "EntitlementsResponse",
+        "description": "Everything the UI needs to render itself correctly for this plan.\n\nThe frontend uses this to hide or badge what the plan does not include. It\nis **not** the enforcement point \u2014 every gated endpoint re-checks\nserver-side and answers 402. A hidden button is UX; a refused request is\nthe rule."
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -4923,6 +5014,66 @@
         ],
         "title": "MembershipOut"
       },
+      "MeterUsageResponse": {
+        "properties": {
+          "meter": {
+            "type": "string",
+            "title": "Meter"
+          },
+          "used": {
+            "type": "integer",
+            "title": "Used"
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit"
+          },
+          "remaining": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remaining"
+          },
+          "period": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period"
+          },
+          "exhausted": {
+            "type": "boolean",
+            "title": "Exhausted"
+          }
+        },
+        "type": "object",
+        "required": [
+          "meter",
+          "used",
+          "limit",
+          "remaining",
+          "period",
+          "exhausted"
+        ],
+        "title": "MeterUsageResponse",
+        "description": "One allowance and how much of it is spent.\n\n`limit: null` means unlimited. `period` is set only for the meters that\nreset monthly (invoices, Peppol documents); the standing totals \u2014 clients,\nproducts, companies, seats \u2014 carry `null`."
+      },
       "OrganizationResponse": {
         "properties": {
           "id": {
@@ -5139,6 +5290,23 @@
           "default_template"
         ],
         "title": "PdfTemplatesResponse"
+      },
+      "PlansResponse": {
+        "properties": {
+          "tiers": {
+            "items": {
+              "$ref": "#/components/schemas/TierResponse"
+            },
+            "type": "array",
+            "title": "Tiers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tiers"
+        ],
+        "title": "PlansResponse",
+        "description": "The whole commercial matrix, so a pricing or upgrade screen renders from\nthe server's table instead of a second copy maintained in TypeScript."
       },
       "ProductCreateRequest": {
         "properties": {
@@ -5672,6 +5840,67 @@
           "total_ttc"
         ],
         "title": "StatusBucketResponse"
+      },
+      "TierQuotaResponse": {
+        "properties": {
+          "meter": {
+            "type": "string",
+            "title": "Meter"
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit"
+          }
+        },
+        "type": "object",
+        "required": [
+          "meter",
+          "limit"
+        ],
+        "title": "TierQuotaResponse"
+      },
+      "TierResponse": {
+        "properties": {
+          "tier": {
+            "type": "string",
+            "title": "Tier"
+          },
+          "quotas": {
+            "items": {
+              "$ref": "#/components/schemas/TierQuotaResponse"
+            },
+            "type": "array",
+            "title": "Quotas"
+          },
+          "features": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Features"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tier",
+          "quotas",
+          "features"
+        ],
+        "title": "TierResponse"
       },
       "TimelineEventResponse": {
         "properties": {

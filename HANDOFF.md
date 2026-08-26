@@ -13,7 +13,7 @@ Read this instead of re-deriving context.
 | Location | `C:\Users\hdr_s\Documents\business model\BillGen BETA` |
 | Phases done | 0–9, **11** (domain → rules → DB → services → API → business routers → UI kit → SaaS shell → desktop → legacy import) + **Peppol e-invoicing** (Helger-validated Peppol BIS 3.0 + Belgian elements + pre-export validation gate; `771e903` then switched off UBL.BE). Phase 10 (billing) not yet started. |
 | UI library | **Its own package `@henrioutai/ui`** (`henrioutai-ui/`, extracted `5a81cfd`) — the design system (58 components + 14 icons + tokens/CSS/fonts), token-only, business-free, **public-ready** (MIT). `@billgen/ui` (frontend-react) keeps the business half (API client, generated types, hooks, panels) and re-exports the design system, so `import { Button } from "@billgen/ui"` still works. Both shells run TopNav-only nav (sidebar deleted), OrgSwitcher, AccountMenu, ⌘K palette, SettingsShell (Import + Backup + Activity + theme). Dark mode = one token remap, persisted pre-paint. Dep graph: `@henrioutai/ui` (leaf) ← `@billgen/ui` ← shells. `docs/frontent build/component-library/` is the archived record + preview gallery. Desktop (Tauri) shell same layout (`c09f0f7`; Tauri window not relaunched). See §3 + §9. |
-| Tests | **Python 283 passed, 0 skipped** (`python -m pytest tests`); **frontend 105 passed** (`npm run test --workspace @billgen/ui`) |
+| Tests | **Python 298 passed, 0 skipped** (`python -m pytest tests`); **frontend 107 passed** (`npm run test --workspace @billgen/ui`) |
 | Git | local only, **not pushed** — no remote yet (Henri setting up a private GitHub; this is the top safety-net gap). One commit + tag per phase (`phase-4` … `phase-9b`); later work committed on `main` without tags. CI workflow (`.github/workflows/ci.yml`) is written and waiting for that remote. Branch `main`. |
 | PDF engine | **Headless Chromium via Playwright** (primary, cross-platform incl. Windows/desktop) with **WeasyPrint** as a fallback for the Docker/SaaS image. Setup on a fresh box: `pip install playwright` then `python -m playwright install chromium`. Without any engine, `/pdf` returns a clean 503. Free-tier PDFs carry a subtle "Made with BillGen" footer + logo. |
 | Not a migration | The legacy React/Python apps (`D:\CODING\audit-v2-react-exe`, `myshop-*`) are reference only. Do not edit them. The **approved Peppol reference** is `D:\CODING\FinanceFlow Bill Generator` (the demo) — inventoried in [docs/COMPARISON_demo_vs_new.md](docs/COMPARISON_demo_vs_new.md). |
@@ -577,6 +577,61 @@ build`).
     changed. Every Sprint 1-2b endpoint is now one hook away from a screen.
     `openapi.json` + `src/types/api.d.ts` regenerated; all four workspaces
     typecheck clean.
+- **B4 entitlement layer — DONE 2026-08-26.** The commercial half of the
+  product, minus the payment provider. Tiers settled as **free / starter /
+  business / business_pro**, carried by the **organization** (the billing
+  account that holds the seats), not the user. `PlanTier.PERSONAL` was renamed
+  → `STARTER` (data migration `c4e1a7b20f38`; the column is a plain String, so
+  no schema change) and `BUSINESS_PRO` added.
+  - **`api/entitlements/`** is the whole layer and **nothing in `core/` may
+    import it.** Three concepts kept apart on purpose: *subscription* (the
+    commercial state), *entitlement* (what it permits), *usage* (what is
+    spent). `matrix.py` is the only place a tier name maps to a capability, so
+    a price or quota change never touches domain code.
+  - **Routers declare a capability, never a plan.**
+    `Depends(require_quota(Meter.INVOICES))` / `Depends(require_feature("recurring_invoices"))`.
+    `if tier == "business"` appears nowhere.
+  - **Usage is derived, never accumulated** (`usage.py`): every number is a
+    `COUNT(*)` over rows that already exist, filtered on `created_at` for the
+    monthly meters. There is no counter to drift — a restore, an import, a
+    deleted draft or a manual fix all move it correctly. Peppol documents are
+    counted from the append-only `EXPORT_PEPPOL` audit entries. Two kinds of
+    meter: **flow** (invoices, Peppol documents — reset monthly) and **stock**
+    (clients, products, companies, seats — standing totals).
+  - **Quota checks are atomic** (`service.quota_guard`): a row lock on the
+    organization is taken *before* counting and **held while the endpoint body
+    runs**, so two concurrent requests cannot both create the 50th invoice.
+    Same SQLite-noop / Postgres-real asymmetry as the gapless numbering lock,
+    for the same reason — which is another thing only the Postgres CI run can
+    actually prove (`BGEN-OPS-01`).
+  - **402 = commercially unavailable; 403 stays authenticated-but-unauthorized.**
+    Bodies are `{error, required_tier, feature, message}` (+ `limit/used/period`
+    for a quota), so the shell needs one generic handler:
+    `isEntitlementError(err)` in the ApiClient, and no per-feature payment
+    logic in React.
+  - **The cap governs creation only.** At the invoice cap a tenant can still
+    issue, pay, credit-note, export, PDF and back up everything they already
+    have — covered by `test_hitting_the_invoice_cap_never_blocks_existing_work`.
+    A Business→Starter downgrade with three companies keeps all three, editable;
+    only a fourth is refused (`test_downgrade_over_limit_keeps_every_record`).
+    The invoice allowance is consumed at **draft creation**, never at issue:
+    issuing is legally load-bearing and must not fail for a commercial reason.
+  - **CORE is now pricing-blind.** `PdfService` no longer reads `plan_tier`; it
+    takes `branded=` (defaulting to **True**, so a forgotten call site shows a
+    footer rather than giving away the paid feature) and the API supplies it
+    from `pdf_remove_branding`. That was the last tier lookup in `core/`.
+  - **Not built, on purpose:** Stripe/Mollie/MoR, checkout, webhooks. The
+    provider is an adapter that writes `SubscriptionRow`; `resolve_tier()`
+    already prefers it over `Organization.plan_tier` when its status is
+    active/trialing/past_due. Seats are in the matrix but nothing consumes
+    them — there is no invite flow (needs **B1**).
+  - **Desktop is exempt** (`desktop_mode`): a local single-user SQLite install
+    with no subscription behind it, licensed separately via
+    `desktop/licensing.py`.
+  - New: `GET /entitlements` (this tenant's tier + features + usage) and
+    `GET /plans` (the whole matrix, so a pricing screen has no second copy in
+    TypeScript). `useEntitlements()` / `usePlans()` hooks ship. **No screen
+    reads them yet** — the upgrade modal and the usage meters are frontend work.
 - Repo is **local only** — no remote. Commit + tag per phase. **This is now the
   top item on the board** (`BGEN-OPS-01`): the whole history lives on one
   machine with no backup, and `.github/workflows/ci.yml` cannot run until there

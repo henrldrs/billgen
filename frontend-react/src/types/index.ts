@@ -71,3 +71,14 @@ export type TimelineEventKind =
   | "invoice_voided"
   | "credit_note_issued"
   | "payment_received";
+
+/** Commercial tier and allowances (B4). `EntitlementsResponse` is what the shell
+ *  reads on boot to render the right variant of each screen; enforcement is the
+ *  server's, and arrives as a 402 (see `isEntitlementError` in the ApiClient). */
+export type EntitlementsResponse = components["schemas"]["EntitlementsResponse"];
+export type MeterUsageResponse = components["schemas"]["MeterUsageResponse"];
+export type PlansResponse = components["schemas"]["PlansResponse"];
+export type TierResponse = components["schemas"]["TierResponse"];
+
+/** The four plans, in upgrade order. */
+export type PlanTierName = "free" | "starter" | "business" | "business_pro";

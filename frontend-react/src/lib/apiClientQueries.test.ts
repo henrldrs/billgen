@@ -24,7 +24,7 @@ function makeClient() {
 }
 
 /** Capture the query string of the next GET to `path`, answering with `body`. */
-function captureGet(path: string, body: unknown) {
+function captureGet(path: string, body: Record<string, unknown> | unknown[]) {
   const seen: { query: URLSearchParams | null } = { query: null };
   server.use(
     http.get(`${BASE}${path}`, ({ request }) => {
@@ -87,4 +87,53 @@ test("client stats and timeline are addressed by client id", async () => {
   const timeline = captureGet("/clients/cl-1/timeline", []);
   await makeClient().clientTimeline("cl-1", 25);
   expect(timeline.query?.get("limit")).toBe("25");
+});
+
+/** The 402 contract. One shape, one handler, no per-feature payment logic. */
+
+test("a 402 is parsed into a typed entitlement failure", async () => {
+  const { ApiError, isEntitlementError } = await import("./apiClient");
+  server.use(
+    http.post(`${BASE}/companies`, () =>
+      HttpResponse.json(
+        {
+          error: "usage_limit_reached",
+          required_tier: "business",
+          feature: "companies",
+          limit: 1,
+          used: 1,
+          period: null,
+          message: "Your plan includes 1 companies.",
+        },
+        { status: 402 },
+      ),
+    ),
+  );
+
+  const failure = makeClient().createCompany({ name: "Second SPRL" });
+  await expect(failure).rejects.toBeInstanceOf(ApiError);
+
+  const error = await failure.catch((e: unknown) => e);
+  expect(isEntitlementError(error)).toBe(true);
+  if (!isEntitlementError(error)) throw new Error("unreachable");
+  expect(error.entitlement.error).toBe("usage_limit_reached");
+  expect(error.entitlement.required_tier).toBe("business");
+  expect(error.entitlement.feature).toBe("companies");
+  expect(error.detail).toBe("Your plan includes 1 companies.");
+});
+
+test("a 403 is never treated as an upgrade prompt", async () => {
+  const { isEntitlementError } = await import("./apiClient");
+  server.use(
+    http.post(`${BASE}/companies`, () =>
+      HttpResponse.json({ detail: "Forbidden" }, { status: 403 }),
+    ),
+  );
+
+  const error = await makeClient()
+    .createCompany({ name: "Nope" })
+    .catch((e: unknown) => e);
+  // 403 means authenticated but not authorized — a different conversation from
+  // "your plan does not include this".
+  expect(isEntitlementError(error)).toBe(false);
 });

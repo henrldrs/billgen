@@ -19,6 +19,7 @@ import type {
   CompanyValidationResponse,
   CreditNoteIssueRequest,
   CreditNoteResponse,
+  EntitlementsResponse,
   ImportReport,
   InvoiceCreateRequest,
   InvoicePreviewRequest,
@@ -34,6 +35,7 @@ import type {
   PaymentRecordResponse,
   PaymentResponse,
   PdfTemplatesResponse,
+  PlansResponse,
   ProductCreateRequest,
   ProductResponse,
   ProductUpdateRequest,
@@ -98,17 +100,50 @@ export interface ApiFieldError {
   message_key: string;
 }
 
+/** The body behind a 402. One shape for every commercial refusal, so the shell
+ *  needs a single handler and no per-feature payment logic. */
+export interface EntitlementFailure {
+  /** `entitlement_required` = the plan lacks the capability outright.
+   *  `usage_limit_reached` = the plan has it and the allowance is spent. */
+  error: "entitlement_required" | "usage_limit_reached";
+  /** The cheapest plan that would allow it, for the upgrade prompt. */
+  required_tier: string | null;
+  /** Capability name or meter name (`companies`, `invoices`, …). */
+  feature: string;
+  message: string;
+  limit?: number;
+  used?: number;
+  period?: string | null;
+}
+
 export class ApiError extends Error {
   readonly status: number;
   readonly detail: string;
   readonly errors: ApiFieldError[];
+  /** Present only on 402. See `isEntitlementError`. */
+  readonly entitlement?: EntitlementFailure;
 
-  constructor(status: number, detail: string, errors: ApiFieldError[] = []) {
+  constructor(
+    status: number,
+    detail: string,
+    errors: ApiFieldError[] = [],
+    entitlement?: EntitlementFailure,
+  ) {
     super(`API ${status}: ${detail}`);
     this.status = status;
     this.detail = detail;
     this.errors = errors;
+    this.entitlement = entitlement;
   }
+}
+
+/** True when the server refused for a *commercial* reason — the one case that
+ *  should open an upgrade prompt. A 403 must never land here: that means
+ *  authenticated but not authorized, which is a different conversation. */
+export function isEntitlementError(
+  error: unknown,
+): error is ApiError & { entitlement: EntitlementFailure } {
+  return error instanceof ApiError && error.status === 402 && error.entitlement !== undefined;
 }
 
 export interface ApiClientOptions {
@@ -192,12 +227,26 @@ export class ApiClient {
     if (!response.ok) {
       let detail = response.statusText;
       let errors: ApiFieldError[] = [];
+      let entitlement: EntitlementFailure | undefined;
       try {
         const parsed = (await response.json()) as {
           detail?: unknown;
           errors?: unknown;
+          error?: unknown;
+          feature?: unknown;
+          message?: unknown;
         };
         if (typeof parsed.detail === "string") detail = parsed.detail;
+        // A 402 body has no `detail`; it carries the entitlement failure
+        // directly, which the shell turns into an upgrade prompt.
+        if (
+          response.status === 402 &&
+          (parsed.error === "entitlement_required" ||
+            parsed.error === "usage_limit_reached")
+        ) {
+          entitlement = parsed as unknown as EntitlementFailure;
+          if (typeof parsed.message === "string") detail = parsed.message;
+        }
         if (Array.isArray(parsed.errors)) {
           errors = parsed.errors.filter(
             (e): e is ApiFieldError =>
@@ -210,7 +259,7 @@ export class ApiClient {
       } catch {
         /* non-JSON error body */
       }
-      throw new ApiError(response.status, detail, errors);
+      throw new ApiError(response.status, detail, errors, entitlement);
     }
 
     if (response.status === 204) return undefined as T;
@@ -544,6 +593,21 @@ export class ApiClient {
   vatReport(companyId: string, period: string): Promise<VatReportResponse> {
     const search = new URLSearchParams({ company_id: companyId, period });
     return this.request("GET", `/reports/vat?${search}`);
+  }
+
+  // ---- entitlements --------------------------------------------------------------
+
+  /** What this tenant's plan allows, and how much of each allowance is spent.
+   *  Read once on boot to render the UI correctly. **Not** the enforcement
+   *  point — every gated endpoint re-checks and answers 402. */
+  entitlements(): Promise<EntitlementsResponse> {
+    return this.request("GET", "/entitlements");
+  }
+
+  /** The whole commercial matrix, for a pricing or upgrade screen. Served from
+   *  the server's table so there is no second copy to keep in sync. */
+  plans(): Promise<PlansResponse> {
+    return this.request("GET", "/plans");
   }
 
   // ---- reference data ------------------------------------------------------------

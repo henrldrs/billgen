@@ -10,6 +10,7 @@ from core.services import ClientService, ReportingService
 from core.tenancy import current_organization_id
 
 from ..deps import current_user_id, get_uow_factory
+from ..entitlements import Meter, require_quota
 from ..schemas.clients import ClientCreateRequest, ClientResponse, ClientUpdateRequest
 from ..schemas.insights import ClientStatsResponse, TimelineEventResponse
 
@@ -25,6 +26,7 @@ def create_client(
     body: ClientCreateRequest,
     user_id: UUID = Depends(current_user_id),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+    _quota: None = Depends(require_quota(Meter.CLIENTS)),
 ):
     client = Client(organization_id=current_organization_id(), **body.model_dump())
     return _to_response(ClientService(uow_factory).create(client, actor_user_id=user_id))

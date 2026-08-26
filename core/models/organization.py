@@ -6,9 +6,18 @@ from ._base import IdentifiedModel
 
 
 class PlanTier(str, Enum):
+    """The commercial tier an organization is on.
+
+    This is a *fact about the organization*, which is why it lives in the
+    domain. What each tier is allowed to do is **not** here: that matrix lives
+    in `api/entitlements/matrix.py`, so a price change or a quota change never
+    touches domain code. CORE must never branch on a tier.
+    """
+
     FREE = "free"
-    PERSONAL = "personal"
+    STARTER = "starter"
     BUSINESS = "business"
+    BUSINESS_PRO = "business_pro"
 
 
 class Organization(IdentifiedModel):

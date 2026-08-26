@@ -8,6 +8,7 @@ from core.repository import UnitOfWork
 from core.services import InvoiceService, PdfService, PeppolService
 
 from ..deps import current_user_id, get_uow_factory
+from ..entitlements import Meter, pdf_branded, require_quota
 from ..schemas.invoices import (
     DiscountIn,
     InvoiceCreateRequest,
@@ -80,9 +81,15 @@ def create_invoice(
     body: InvoiceCreateRequest,
     user_id: UUID = Depends(current_user_id),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+    _quota: None = Depends(require_quota(Meter.INVOICES)),
 ):
     """Create a DRAFT invoice — no number is consumed. Finalize it with
-    POST /invoices/{id}/issue."""
+    POST /invoices/{id}/issue.
+
+    The monthly invoice allowance is consumed **here**, at creation, not at
+    issue. Issuing is the legally load-bearing act and must never be the step
+    that fails for a commercial reason: a Belgian sole trader who has drafted an
+    invoice has to be able to finalize it."""
     invoice = InvoiceService(uow_factory).create_draft(
         company_id=body.company_id,
         client_id=body.client_id,
@@ -122,6 +129,7 @@ def duplicate_invoice(
     invoice_id: UUID,
     user_id: UUID = Depends(current_user_id),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+    _quota: None = Depends(require_quota(Meter.INVOICES)),
 ):
     """Copy an invoice into a new DRAFT dated today. No number is consumed and
     nothing on the source changes — including an issued or voided source, which
@@ -179,8 +187,11 @@ def invoice_html(
     invoice_id: UUID,
     template: str | None = None,
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+    branded: bool = Depends(pdf_branded),
 ):
-    html = PdfService(uow_factory).render_invoice_html(invoice_id, template)
+    html = PdfService(uow_factory, branded=branded).render_invoice_html(
+        invoice_id, template
+    )
     return Response(content=html, media_type="text/html")
 
 
@@ -190,8 +201,9 @@ def invoice_pdf(
     template: str | None = None,
     user_id: UUID = Depends(current_user_id),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+    branded: bool = Depends(pdf_branded),
 ):
-    service = PdfService(uow_factory)
+    service = PdfService(uow_factory, branded=branded)
     invoice = InvoiceService(uow_factory).get(invoice_id)
     pdf = service.render_invoice_pdf(invoice_id, template, actor_user_id=user_id)
     # Drafts have no reference yet (assigned at issue time).
@@ -209,7 +221,11 @@ def invoice_peppol(
     invoice_id: UUID,
     user_id: UUID = Depends(current_user_id),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+    _quota: None = Depends(require_quota(Meter.PEPPOL_DOCUMENTS)),
 ):
+    """Peppol BIS 3.0 XML. Every tier can do this — Peppol is the Belgian
+    differentiator, not an upsell — but the monthly document allowance applies,
+    counted from the EXPORT_PEPPOL audit entries this call writes."""
     invoice = InvoiceService(uow_factory).get(invoice_id)
     xml = PeppolService(uow_factory).generate_invoice_xml(invoice_id, actor_user_id=user_id)
     # Drafts have no reference yet (assigned at issue time).

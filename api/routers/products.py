@@ -9,6 +9,7 @@ from core.services import ProductService
 from core.tenancy import current_organization_id
 
 from ..deps import current_user_id, get_uow_factory
+from ..entitlements import Meter, require_quota
 from ..schemas.products import (
     ProductCreateRequest,
     ProductResponse,
@@ -27,6 +28,7 @@ def create_product(
     body: ProductCreateRequest,
     user_id: UUID = Depends(current_user_id),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+    _quota: None = Depends(require_quota(Meter.PRODUCTS)),
 ):
     product = Product(organization_id=current_organization_id(), **body.model_dump())
     return _to_response(ProductService(uow_factory).create(product, actor_user_id=user_id))

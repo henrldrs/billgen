@@ -17,6 +17,7 @@ from db.repositories import SqlAlchemyUnitOfWork
 from db.session import make_session_factory
 
 from .config import Settings, get_settings, validate_for_boot
+from .entitlements import EntitlementError
 from .logging_config import configure_logging
 from .middleware import RateLimitMiddleware, TenantBindingMiddleware
 from .routers import (
@@ -27,6 +28,7 @@ from .routers import (
     companies,
     credit_notes,
     desktop,
+    entitlements,
     health,
     imports,
     invoices,
@@ -41,6 +43,75 @@ from .security import AuthService, JwtCodec
 from .security.errors import AuthError
 
 _access_log = structlog.get_logger("api.access")
+
+
+def _register_exception_handlers(app: FastAPI) -> None:
+    """Every way a request can fail, and the status it becomes.
+
+    Split out of `create_app` so the factory stays readable as wiring. The
+    exception-to-status mapping is a contract worth reading on its own, and
+    it is the part most likely to grow.
+    """
+    @app.exception_handler(AuthError)
+    async def auth_error_handler(request: Request, exc: AuthError):  # noqa: ANN202
+        return JSONResponse(status_code=exc.status_code, content={"detail": str(exc)})
+
+    @app.exception_handler(NotFoundError)
+    async def not_found_handler(request: Request, exc: NotFoundError):  # noqa: ANN202
+        return JSONResponse(status_code=404, content={"detail": str(exc)})
+
+    @app.exception_handler(PeppolValidationError)
+    async def peppol_validation_handler(request: Request, exc: PeppolValidationError):  # noqa: ANN202
+        return JSONResponse(
+            status_code=422,
+            content={
+                "detail": "Invoice is not deliverable over Peppol",
+                "errors": [
+                    {"field": e.field, "message_key": e.message_key} for e in exc.errors
+                ],
+            },
+        )
+
+    @app.exception_handler(ValidationError)
+    async def domain_validation_handler(request: Request, exc: ValidationError):  # noqa: ANN202
+        # A domain model rejecting a value is a client error, not a server fault.
+        # PATCH handlers re-validate the whole model after merging the changes,
+        # so this is the natural exit for "explicit null on a non-nullable field".
+        # FastAPI's own RequestValidationError handler covers the body/query
+        # layer; this covers the layer below it.
+        return JSONResponse(
+            status_code=422,
+            content={"detail": jsonable_encoder(exc.errors(include_url=False))},
+        )
+
+    @app.exception_handler(EntitlementError)
+    async def entitlement_handler(request: Request, exc: EntitlementError):  # noqa: ANN202
+        # 402 = commercially unavailable. Distinct from 403, which means
+        # authenticated but not authorized — only 402 should open an upgrade
+        # modal, so the frontend needs one generic handler and no per-feature
+        # payment logic anywhere in React.
+        return JSONResponse(status_code=402, content=exc.body())
+
+    @app.exception_handler(BusinessRuleError)
+    async def business_rule_handler(request: Request, exc: BusinessRuleError):  # noqa: ANN202
+        return JSONResponse(status_code=409, content={"detail": str(exc)})
+
+    @app.exception_handler(TenantViolationError)
+    async def tenant_violation_handler(request: Request, exc: TenantViolationError):  # noqa: ANN202
+        return JSONResponse(status_code=403, content={"detail": "Forbidden"})
+
+    @app.exception_handler(TenantContextError)
+    async def tenant_context_handler(request: Request, exc: TenantContextError):  # noqa: ANN202
+        # Reaching a repository without a bound org is a server bug, not user error.
+        return JSONResponse(status_code=500, content={"detail": "Tenant context missing"})
+
+    @app.exception_handler(PdfEngineUnavailableError)
+    async def pdf_engine_handler(request: Request, exc: PdfEngineUnavailableError):  # noqa: ANN202
+        _access_log.error("pdf_engine_unavailable", engine_errors=str(exc))
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "PDF engine unavailable on this server"},
+        )
 
 
 def create_app(settings: Settings | None = None, engine: Engine | None = None) -> FastAPI:
@@ -97,58 +168,7 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
         allow_headers=["*"],
     )
 
-    @app.exception_handler(AuthError)
-    async def auth_error_handler(request: Request, exc: AuthError):  # noqa: ANN202
-        return JSONResponse(status_code=exc.status_code, content={"detail": str(exc)})
-
-    @app.exception_handler(NotFoundError)
-    async def not_found_handler(request: Request, exc: NotFoundError):  # noqa: ANN202
-        return JSONResponse(status_code=404, content={"detail": str(exc)})
-
-    @app.exception_handler(PeppolValidationError)
-    async def peppol_validation_handler(request: Request, exc: PeppolValidationError):  # noqa: ANN202
-        return JSONResponse(
-            status_code=422,
-            content={
-                "detail": "Invoice is not deliverable over Peppol",
-                "errors": [
-                    {"field": e.field, "message_key": e.message_key} for e in exc.errors
-                ],
-            },
-        )
-
-    @app.exception_handler(ValidationError)
-    async def domain_validation_handler(request: Request, exc: ValidationError):  # noqa: ANN202
-        # A domain model rejecting a value is a client error, not a server fault.
-        # PATCH handlers re-validate the whole model after merging the changes,
-        # so this is the natural exit for "explicit null on a non-nullable field".
-        # FastAPI's own RequestValidationError handler covers the body/query
-        # layer; this covers the layer below it.
-        return JSONResponse(
-            status_code=422,
-            content={"detail": jsonable_encoder(exc.errors(include_url=False))},
-        )
-
-    @app.exception_handler(BusinessRuleError)
-    async def business_rule_handler(request: Request, exc: BusinessRuleError):  # noqa: ANN202
-        return JSONResponse(status_code=409, content={"detail": str(exc)})
-
-    @app.exception_handler(TenantViolationError)
-    async def tenant_violation_handler(request: Request, exc: TenantViolationError):  # noqa: ANN202
-        return JSONResponse(status_code=403, content={"detail": "Forbidden"})
-
-    @app.exception_handler(TenantContextError)
-    async def tenant_context_handler(request: Request, exc: TenantContextError):  # noqa: ANN202
-        # Reaching a repository without a bound org is a server bug, not user error.
-        return JSONResponse(status_code=500, content={"detail": "Tenant context missing"})
-
-    @app.exception_handler(PdfEngineUnavailableError)
-    async def pdf_engine_handler(request: Request, exc: PdfEngineUnavailableError):  # noqa: ANN202
-        _access_log.error("pdf_engine_unavailable", engine_errors=str(exc))
-        return JSONResponse(
-            status_code=503,
-            content={"detail": "PDF engine unavailable on this server"},
-        )
+    _register_exception_handlers(app)
 
     app.include_router(health.router)
     app.include_router(auth.router)
@@ -163,6 +183,7 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
     app.include_router(credit_notes.router)
     app.include_router(payments.router)
     app.include_router(reference.router)
+    app.include_router(entitlements.router)
     app.include_router(reports.router)
     app.include_router(activity.router)
     app.include_router(backup.router)

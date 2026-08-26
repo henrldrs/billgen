@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from uuid import UUID
 
-from ..models import AuditAction, Client, Company, CreditNote, Invoice, PlanTier
+from ..models import AuditAction, Client, Company, CreditNote, Invoice
 from ..pdf import (
     UnknownTemplateError,
     build_credit_note_context,
@@ -16,8 +16,17 @@ from .errors import BusinessRuleError, NotFoundError
 
 
 class PdfService:
-    def __init__(self, uow_factory: Callable[[], UnitOfWork]) -> None:
+    def __init__(
+        self,
+        uow_factory: Callable[[], UnitOfWork],
+        *,
+        branded: bool = True,
+    ) -> None:
+        """`branded` is supplied by the API from the caller's entitlements.
+        It defaults to True so any code path that forgets to pass it produces a
+        branded document rather than silently giving away the paid feature."""
         self._uow_factory = uow_factory
+        self._branded_default = branded
 
     def _load_invoice(
         self, uow: UnitOfWork, invoice_id: UUID
@@ -32,10 +41,17 @@ class PdfService:
         return invoice, company, client
 
     def _branded(self, uow: UnitOfWork, organization_id: UUID) -> bool:
-        """BillGen branding appears on free-tier documents only, whatever the
-        template; paid tiers get unbranded output. Unknown org → branded (safe)."""
-        organization = uow.organizations.get(organization_id)
-        return organization is None or organization.plan_tier is PlanTier.FREE
+        """Whether this document carries the BillGen footer.
+
+        CORE does not decide this. Which plans remove the branding is a
+        commercial rule (`pdf_remove_branding` in the API's entitlement
+        matrix), so the caller passes the answer in via `branded=`. Defaulting
+        to branded when nobody says otherwise is the safe direction: the worst
+        case is a paying customer seeing a footer, not a free account shipping
+        unbranded invoices.
+        """
+        del uow, organization_id  # kept for signature stability
+        return self._branded_default
 
     def _invoice_html(
         self, uow: UnitOfWork, invoice_id: UUID, template_id: str | None

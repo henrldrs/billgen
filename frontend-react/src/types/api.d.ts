@@ -416,6 +416,11 @@ export interface paths {
          * Create Invoice
          * @description Create a DRAFT invoice — no number is consumed. Finalize it with
          *     POST /invoices/{id}/issue.
+         *
+         *     The monthly invoice allowance is consumed **here**, at creation, not at
+         *     issue. Issuing is the legally load-bearing act and must never be the step
+         *     that fails for a commercial reason: a Belgian sole trader who has drafted an
+         *     invoice has to be able to finalize it.
          */
         post: operations["create_invoice_invoices_post"];
         delete?: never;
@@ -545,7 +550,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Invoice Peppol */
+        /**
+         * Invoice Peppol
+         * @description Peppol BIS 3.0 XML. Every tier can do this — Peppol is the Belgian
+         *     differentiator, not an upsell — but the monthly document allowance applies,
+         *     counted from the EXPORT_PEPPOL audit entries this call writes.
+         */
         get: operations["invoice_peppol_invoices__invoice_id__peppol_xml_get"];
         put?: never;
         post?: never;
@@ -673,6 +683,44 @@ export interface paths {
         };
         /** List Pdf Templates */
         get: operations["list_pdf_templates_pdf_templates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/entitlements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Current Entitlements */
+        get: operations["current_entitlements_entitlements_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Plans
+         * @description The commercial matrix as the server holds it, so an upgrade or pricing
+         *     screen has one source of truth rather than a second copy in TypeScript.
+         */
+        get: operations["list_plans_plans_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1275,6 +1323,29 @@ export interface components {
             /** Reason */
             reason: string | null;
         };
+        /**
+         * EntitlementsResponse
+         * @description Everything the UI needs to render itself correctly for this plan.
+         *
+         *     The frontend uses this to hide or badge what the plan does not include. It
+         *     is **not** the enforcement point — every gated endpoint re-checks
+         *     server-side and answers 402. A hidden button is UX; a refused request is
+         *     the rule.
+         */
+        EntitlementsResponse: {
+            /** Organization Id */
+            organization_id: string;
+            /** Tier */
+            tier: string;
+            /** Subscription Status */
+            subscription_status: string;
+            /** Features */
+            features: {
+                [key: string]: boolean | string;
+            };
+            /** Usage */
+            usage: components["schemas"]["MeterUsageResponse"][];
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -1592,6 +1663,28 @@ export interface components {
             /** Role */
             role: string;
         };
+        /**
+         * MeterUsageResponse
+         * @description One allowance and how much of it is spent.
+         *
+         *     `limit: null` means unlimited. `period` is set only for the meters that
+         *     reset monthly (invoices, Peppol documents); the standing totals — clients,
+         *     products, companies, seats — carry `null`.
+         */
+        MeterUsageResponse: {
+            /** Meter */
+            meter: string;
+            /** Used */
+            used: number;
+            /** Limit */
+            limit: number | null;
+            /** Remaining */
+            remaining: number | null;
+            /** Period */
+            period: string | null;
+            /** Exhausted */
+            exhausted: boolean;
+        };
         /** OrganizationResponse */
         OrganizationResponse: {
             /**
@@ -1679,6 +1772,15 @@ export interface components {
             templates: components["schemas"]["PdfTemplateOption"][];
             /** Default Template */
             default_template: string;
+        };
+        /**
+         * PlansResponse
+         * @description The whole commercial matrix, so a pricing or upgrade screen renders from
+         *     the server's table instead of a second copy maintained in TypeScript.
+         */
+        PlansResponse: {
+            /** Tiers */
+            tiers: components["schemas"]["TierResponse"][];
         };
         /** ProductCreateRequest */
         ProductCreateRequest: {
@@ -1858,6 +1960,24 @@ export interface components {
             count: number;
             /** Total Ttc */
             total_ttc: string;
+        };
+        /** TierQuotaResponse */
+        TierQuotaResponse: {
+            /** Meter */
+            meter: string;
+            /** Limit */
+            limit: number | null;
+        };
+        /** TierResponse */
+        TierResponse: {
+            /** Tier */
+            tier: string;
+            /** Quotas */
+            quotas: components["schemas"]["TierQuotaResponse"][];
+            /** Features */
+            features: {
+                [key: string]: boolean | string;
+            };
         };
         /**
          * TimelineEventResponse
@@ -3464,6 +3584,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PdfTemplatesResponse"];
+                };
+            };
+        };
+    };
+    current_entitlements_entitlements_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntitlementsResponse"];
+                };
+            };
+        };
+    };
+    list_plans_plans_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlansResponse"];
                 };
             };
         };

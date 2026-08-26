@@ -53,11 +53,11 @@ def test_organization():
             "id": ORG_ID,
             "name": "Acme SPRL",
             "country_code": "BE",
-            "plan_tier": "personal",
+            "plan_tier": "starter",
         }
     )
     assert org.id == ORG_ID
-    assert org.plan_tier is PlanTier.PERSONAL
+    assert org.plan_tier is PlanTier.STARTER
 
 
 def test_user_and_membership():

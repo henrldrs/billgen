@@ -9,6 +9,7 @@ from core.services import CompanyService, validate_company_identifiers
 from core.tenancy import current_organization_id
 
 from ..deps import current_user_id, get_uow_factory
+from ..entitlements import Meter, require_quota
 from ..schemas.companies import (
     CompanyCreateRequest,
     CompanyResponse,
@@ -28,6 +29,7 @@ def create_company(
     body: CompanyCreateRequest,
     user_id: UUID = Depends(current_user_id),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+    _quota: None = Depends(require_quota(Meter.COMPANIES)),
 ):
     company = Company(
         organization_id=current_organization_id(),
