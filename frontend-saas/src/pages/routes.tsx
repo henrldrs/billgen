@@ -56,7 +56,7 @@ import {
   type Lang,
 } from "@billgen/ui";
 import type { ReactNode } from "react";
-import { Route, useNavigate, useOutletContext, useParams } from "react-router-dom";
+import { Navigate, Route, useNavigate, useOutletContext, useParams } from "react-router-dom";
 
 import { useTheme } from "../lib/theme";
 import type { ShellContext } from "./AppShell";
@@ -91,6 +91,16 @@ function IaScreen({ node }: { node: IaNode }) {
   const { companyId, lang, currency } = useOutletContext<ShellContext>();
   const Built = BUILT[node.path as string];
   const sketch = SKETCHES[node.path as string];
+
+  // A node curated out of the nav (ROADMAP_IA §11b) keeps its route: the nav
+  // stopped offering `company/vat` as a door, but a link, a bookmark or a
+  // browser's autocomplete can still ask for it, and a path that used to work
+  // must not start 404-ing because a menu was tidied. It lands where the
+  // content actually went. `replace` so Back leaves the section rather than
+  // bouncing off the redirect.
+  if (node.mergedInto !== undefined) {
+    return <Navigate to={`/app/${node.mergedInto}`} replace />;
+  }
 
   const body = Built ? (
     <Built node={node} companyId={companyId} lang={lang} currency={currency} />
@@ -300,17 +310,19 @@ function InvoicesScreen({ node, companyId, lang }: ScreenProps) {
   );
 }
 
-/** Company profile: the edit form over PATCH /companies/{id} (B3), with the
- *  create form kept underneath — the onboarding gate is the only other place a
- *  company can be created, and it only ever runs once, so dropping it here
- *  would leave a one-company-per-account product by accident. */
+/** The company section, whole: the edit form over PATCH /companies/{id} (B3)
+ *  with every field group open, the gaps that have no fields yet rendered as
+ *  scaffold blocks inside it, and the create form kept underneath — the
+ *  onboarding gate is the only other place a company can be created, and it
+ *  only ever runs once, so dropping it here would leave a one-company-per-
+ *  account product by accident. */
 function CompanyScreen({ node, companyId, lang }: ScreenProps) {
   const { data: companies } = useCompanies();
   return (
     <>
       <CompanySettingsPanel
         companyId={companyId}
-        section="profile"
+        section="all"
         lang={lang}
         title={node.label}
       />
@@ -368,7 +380,6 @@ const BUILT: Record<string, Screen> = {
   customers: SectionIndex,
   catalog: SectionIndex,
   reports: SectionIndex,
-  company: SectionIndex,
   billing: SectionIndex,
   documents: SectionIndex,
   explore: SectionIndex,
@@ -520,38 +531,13 @@ const BUILT: Record<string, Screen> = {
     <VatReportPanel companyId={companyId} lang={lang} />
   ),
 
-  // company & settings. The landing is a SectionIndex like every other
-  // section; the rail belongs to the CHILDREN (see SettingsFrame).
-  // company — five of these six areas are one PATCH against one row, so they
-  // are one panel behind a `section` prop rather than five forms that could
-  // disagree about what a company is. The IA's label is passed down so the
-  // page title matches the nav item that led here.
-  "company/profile": CompanyScreen,
-  "company/legal": ({ node, companyId, lang }) => (
-    <CompanySettingsPanel companyId={companyId} section="legal" lang={lang} title={node.label} />
-  ),
-  "company/vat": ({ node, companyId, lang }) => (
-    <CompanySettingsPanel companyId={companyId} section="vat" lang={lang} title={node.label} />
-  ),
-  "company/bank": ({ node, companyId, lang }) => (
-    <CompanySettingsPanel companyId={companyId} section="bank" lang={lang} title={node.label} />
-  ),
-  "company/numbering": ({ node, companyId, lang }) => (
-    <CompanySettingsPanel
-      companyId={companyId}
-      section="numbering"
-      lang={lang}
-      title={node.label}
-    />
-  ),
-  "company/defaults": ({ node, companyId, lang }) => (
-    <CompanySettingsPanel
-      companyId={companyId}
-      section="defaults"
-      lang={lang}
-      title={node.label}
-    />
-  ),
+  // company — NOT a SectionIndex, unlike every other section. Its nine nodes
+  // are nine views of one row, so the section landing IS the record: one
+  // CompanySettingsPanel with every section open, and the six sub-paths
+  // redirect into it (ROADMAP_IA §11b, curated 2026-08-27). They were six
+  // near-identical entries here until then, which is what six nav doors onto
+  // one PATCH costs.
+  company: CompanyScreen,
   settings: SectionIndex,
   "settings/appearance": AppearanceScreen,
   "settings/import": ({ lang }) => <ImportPanel lang={lang} />,

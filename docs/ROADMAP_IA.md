@@ -907,6 +907,65 @@ rewrite. Do this one first — it is the proof the rule is cheap.
 
 ---
 
+### Built 2026-08-27 — the mechanism, and the two decided sections
+
+`IaNode` grew two optional fields and the shells grew one predicate:
+
+- **`nav?: boolean`** — absent means `true`, so every node not named below is
+  unchanged. `false` says: keep the path, the status and the place in
+  `coverage()`, stop being a door.
+- **`mergedInto?: string`** — where a hidden node's content went. `IaScreen`
+  redirects there instead of rendering, so a bookmark to `company/vat` still
+  lands somewhere true. Omitted when the node is hidden but still worth
+  rendering on its own.
+- **`isNavDestination(node)`** (and `navNodes(surface)`, its flat form) — the
+  one spelling of the rule. `routableNodes()`, `coverage()` and
+  `missingEndpoints()` are untouched and still read the whole tree, which is
+  constraint 2 above.
+
+**Company: 9 nav entries → 1.** The section landing *is* the record —
+`CompanySettingsPanel section="all"` — and the six wired paths redirect into
+it. The three that block on a model (payment terms, branding, company
+documents) became scaffold blocks *inside* that screen, per constraint 1. Six
+near-identical `BUILT` entries came out of `routes.tsx`.
+
+**Clients: 7 popup entries → 3.** Contacts, client history and client documents
+are `nav: false` + `mergedInto: "customers/clients"` — the list, not the 360
+screen, because a redirect cannot invent a client id.
+
+**One correction to the table above, found by a guard test.** §11b said client
+activity should be "deleted as a nav item" and redirected to `activity/audit`.
+`customers/activity` is a *wired screen* over `GET /activity?target_type=client`
+— a filter neither `activity/audit` nor the 360 tab applies. It is now hidden
+but **not** merged: it renders for anyone holding the link or reaching it from
+the palette. Redirecting it would have deleted a working view to tidy a menu.
+Four guard tests now hold the mechanism: a merge target must exist and be a
+destination itself, a hidden node must keep its route, no merged path may also
+claim a screen in `BUILT`, and curating must never move a coverage number.
+
+### The rest of the app — PROPOSED, awaiting Henri
+
+Nothing below is built. It is the same rule applied to the remaining sections,
+written down so the decision is one reading rather than one session each.
+
+| Section | Keep as destinations | Merge, and where into | Why |
+|---|---|---|---|
+| **Sales** | Invoices · Credit notes · Quotes · Recurring · Pro-forma · Reminders | the 8 status paths (`draft`, `issued`, `sent`, `viewed`, `paid`, `partially_paid`, `overdue`, `voided`) → `sales/invoices` | one list with a filter, and the filter is already rendered as tabs on that screen. Keep the paths: the dashboard deep-links into them |
+| **Catalog** | Products · Invoice templates | Services, Archived → `catalog/products` (filters, once §2's server filters land) · Categories, Pricing → the product record | a category is a property of a product; a price is the product |
+| **Reports** | all nine | — | every one is its own list over its own question. The section the rule leaves alone |
+| **Billing** | Current plan · Usage · Billing history | Subscription, Payment method, Upgrade/downgrade, Cancellation → `billing/plan` | Company's disease exactly: one organisation row, six doors. Wait for the provider — the shape of the screen is the provider's |
+| **Documents** | All documents · Folders · Archived · Trash | Invoice attachments → the invoice record · Client documents → Client 360 · Company documents → the company screen (already there as a scaffold block) | three of the seven are per-record by definition. B2 blocks all of it either way |
+| **Explore** | Global search · Saved searches · **the coverage map** | Document search, Activity search → `explore/search` (scopes, not screens) | and this is where `SectionIndex` moves when it stops being the nav — a coverage map belongs in Explore |
+| **Activity** | Notifications · Audit log | User activity, Security events, System events → `activity/audit` as filters | one log, four lenses. `GET /activity` already takes the parameters |
+| **Settings** | Account · Users & permissions · Security · Notifications · Email · Integrations · API · Advanced | Cookie preferences → Data & privacy · Export → Import (one Data screen with Backup) · Localization → Appearance | the three merges are pairs that share a screen's worth of controls between them |
+| **Help** | Help center · Contact support · System status | Getting started, Tutorials, FAQ, What's new → `help/center` | they are articles in one place, not four places |
+| **Legal** | Legal (one page) | the other seven → `legal/terms` as sections | each keeps its own URL for linking from a footer or a signup form; none is a nav destination |
+
+Rough shape if all of it lands: **~100 nav entries → ~45**, with every path still
+routable and every node still counted.
+
+---
+
 ## 11c. Release hygiene — comments must not ship, and must not be deleted (added 2026-08-27)
 
 **The goal:** a published artifact should not read as a guided tour of how the

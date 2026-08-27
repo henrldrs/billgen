@@ -49,6 +49,8 @@ import {
   useUpdateCompany,
 } from "../hooks/queries";
 import { t, tPeppolError, type Lang, type MessageKey } from "../lib/translations";
+import { findByPath } from "../scaffold/ia";
+import { ScaffoldBlock, ScaffoldButton, ScaffoldField, ScaffoldNote } from "../scaffold/Scaffold";
 import type { CompanyResponse, CompanyUpdateRequest, IdentifierCheck } from "../types";
 
 /** The company record's editable fields, as the form holds them: strings, with
@@ -408,6 +410,8 @@ export function CompanySettingsPanel({
         </Card>
       ))}
 
+      {section === "all" ? <CompanyGaps /> : null}
+
       {update.isError ? <div role="alert">{t(lang, "common.error")}</div> : null}
       {saved ? (
         <Banner tone="success" onDismiss={() => setSaved(false)}>
@@ -432,5 +436,61 @@ export function CompanySettingsPanel({
         </Button>
       </div>
     </form>
+  );
+}
+
+/** The three company areas that have no fields to edit yet.
+ *
+ *  They used to be three nav destinations, which is how a settings screen ends
+ *  up with six doors onto one row (ROADMAP_IA §11b). A company is a single
+ *  record: nothing under it is a place you go before you know which record you
+ *  want, so they render here, inside the record, in the state they are actually
+ *  in — the pattern Client 360 already uses for quotes, documents and tags.
+ *  They stay in the IA either way, because the IA is the ledger of what is
+ *  missing and these three are the missing part.
+ */
+function CompanyGaps() {
+  const paymentTerms = findByPath("company/payment-terms");
+  const branding = findByPath("company/branding");
+  const documents = findByPath("company/documents");
+
+  return (
+    <>
+      {paymentTerms ? (
+        <ScaffoldBlock node={paymentTerms} title="Payment conditions">
+          <ScaffoldNote>
+            Due date is per invoice today. A default term on the company — 30
+            days end of month, and the statutory late interest that follows it —
+            needs two fields the model does not have, which is also what the
+            reminder escalation would read.
+          </ScaffoldNote>
+          <ScaffoldField label="Default payment term (days)" />
+          <ScaffoldField label="Late-fee rate" />
+        </ScaffoldBlock>
+      ) : null}
+
+      {branding ? (
+        <ScaffoldBlock node={branding} title="Branding">
+          <ScaffoldNote>
+            `Company.logo_key` is a dangling reference: the column exists, every
+            PDF template reads it, and nothing can put a file behind it. Blocked
+            on blob storage (B2) rather than on a screen — an upload control
+            here would be a control that loses your file.
+          </ScaffoldNote>
+          <ScaffoldButton wouldDo="upload a company logo">Upload logo</ScaffoldButton>
+        </ScaffoldBlock>
+      ) : null}
+
+      {documents ? (
+        <ScaffoldBlock node={documents} title="Company documents">
+          <ScaffoldNote>
+            Articles of association, insurance certificates, the VAT
+            registration itself. Same blocker as branding, and the same reason
+            not to draw an upload box over it.
+          </ScaffoldNote>
+          <ScaffoldButton wouldDo="upload a company document">Upload</ScaffoldButton>
+        </ScaffoldBlock>
+      ) : null}
+    </>
   );
 }

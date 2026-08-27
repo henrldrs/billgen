@@ -21,6 +21,8 @@ import { expect, test, vi } from "vitest";
 
 import { TopNav, type TopNavLink } from "@henrioutai/ui";
 
+import { IA, isNavDestination } from "../scaffold/ia";
+
 function navWith(links: TopNavLink[]) {
   return render(<TopNav title="ACME SRL" links={links} />);
 }
@@ -129,4 +131,39 @@ test("sub-items can carry a trailing marker and a disabled state", async () => {
   expect(disabled).toBeDisabled();
   await user.click(disabled);
   expect(blocked).not.toHaveBeenCalled();
+});
+
+test("a section curated down to one destination offers no sub-page popup", async () => {
+  // Built the way AppShell builds it, from the real IA, because the bug this
+  // guards against lives in that construction and not in TopNav: forget the
+  // isNavDestination filter and Company is back to nine doors onto one row
+  // (ROADMAP_IA §11b). Reading the IA here also means a new company node with
+  // a nav entry of its own fails this test on the day it is added.
+  const user = userEvent.setup();
+  const company = IA.find((section) => section.key === "company");
+  const subPages = (company?.children ?? []).filter(isNavDestination);
+
+  expect(subPages).toEqual([]);
+
+  navWith([
+    {
+      key: "company",
+      label: "Company",
+      ...(subPages.length > 0
+        ? {
+            items: subPages.map((child) => ({
+              key: child.key,
+              label: child.label,
+              onSelect: vi.fn(),
+            })),
+          }
+        : { onClick: vi.fn() }),
+    },
+  ]);
+
+  const trigger = screen.getByRole("button", { name: "Company" });
+  expect(trigger).not.toHaveAttribute("aria-haspopup");
+
+  await user.click(trigger);
+  expect(screen.queryByText("VAT / BCE information")).not.toBeInTheDocument();
 });

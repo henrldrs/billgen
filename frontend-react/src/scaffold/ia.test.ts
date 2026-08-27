@@ -5,7 +5,16 @@
 
 import { expect, test } from "vitest";
 
-import { IA, coverage, flattenIa, iaFor, iaTrail, missingEndpoints, routableNodes } from "./ia";
+import {
+  IA,
+  coverage,
+  flattenIa,
+  iaFor,
+  iaTrail,
+  missingEndpoints,
+  navNodes,
+  routableNodes,
+} from "./ia";
 
 test("every node key is unique", () => {
   const keys = flattenIa().map((node) => node.key);
@@ -109,4 +118,51 @@ test("a trail starts at a section and ends at the node itself", () => {
 test("an unknown path has no trail rather than throwing", () => {
   // The invoice builder is an action, not a destination — no IA node, no trail.
   expect(iaTrail("sales/invoices/new")).toEqual([]);
+});
+
+// ------------------------------------------------------- nav curation (§11b)
+
+test("a merged node points at a path that exists and is itself a destination", () => {
+  // The failure this catches is a slow one: curate a node into its parent,
+  // then later curate the PARENT into something else, and the first node
+  // redirects to a page that now redirects — or to nothing at all. Both are
+  // invisible until someone follows an old link.
+  const paths = new Set(routableNodes("both").map((node) => node.path));
+  const navPaths = new Set(navNodes("both").map((node) => node.path));
+
+  for (const node of flattenIa().filter((n) => n.mergedInto !== undefined)) {
+    expect(paths.has(node.mergedInto as string), `${node.key} -> ${node.mergedInto}`).toBe(true);
+    expect(navPaths.has(node.mergedInto as string), `${node.key} -> ${node.mergedInto}`).toBe(true);
+  }
+});
+
+test("a node curated out of the nav keeps its route", () => {
+  // The whole mechanism rests on this: `nav: false` hides a door, it does not
+  // delete an address. Deleting the node instead would also delete it from the
+  // coverage count, which is how a gap disappears by being tidied away.
+  const routable = new Set(routableNodes("both").map((node) => node.path));
+  const hidden = flattenIa().filter((node) => node.nav === false);
+
+  expect(hidden.length).toBeGreaterThan(0);
+  for (const node of hidden) {
+    expect(routable.has(node.path as string), node.key).toBe(true);
+  }
+});
+
+test("the company section is one destination over one row", () => {
+  // Nine nodes, one PATCH. If a future node under company arrives with a nav
+  // entry of its own, this fails and asks whether it is really a place you go
+  // before you know which record you want — for a single-record section the
+  // answer is always no.
+  const company = IA.find((section) => section.key === "company");
+  expect(company?.children.filter((child) => child.nav !== false)).toEqual([]);
+});
+
+test("curating the nav never changes the coverage count", () => {
+  // The ledger and the navigation are different questions (§11b constraint 2).
+  // coverage() reads the whole tree, so hiding a node must not move a number
+  // the architecture report prints.
+  const leaves = flattenIa().filter((node) => !node.children?.length);
+  expect(coverage().total).toBe(leaves.length);
+  expect(leaves.some((node) => node.nav === false)).toBe(true);
 });

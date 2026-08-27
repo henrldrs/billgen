@@ -22,11 +22,12 @@ import { join, resolve } from "node:path";
 
 import { expect, test } from "vitest";
 
-import { routableNodes } from "./ia";
+import { flattenIa, routableNodes } from "./ia";
 
 const REPO = resolve(__dirname, "../../..");
 const APP = readFileSync(join(REPO, "frontend-saas/src/App.tsx"), "utf8");
 const ROUTES = readFileSync(join(REPO, "frontend-saas/src/pages/routes.tsx"), "utf8");
+const SHELL = readFileSync(join(REPO, "frontend-saas/src/pages/AppShell.tsx"), "utf8");
 
 /** Every `path="..."` on a <Route> hand-declared in App.tsx. */
 function handDeclaredPaths(): string[] {
@@ -77,4 +78,41 @@ test("every screen in BUILT claims a real IA path", () => {
 
   expect(keys.length).toBeGreaterThan(10);
   expect(keys.filter((key) => !iaPaths.has(key))).toEqual([]);
+});
+
+// ------------------------------------------------------- nav curation (§11b)
+
+test("a curated node redirects instead of rendering its scaffold", () => {
+  // `nav: false` keeps the address alive; `mergedInto` says where it now goes.
+  // If IaScreen stops honouring it, every one of those paths silently starts
+  // rendering a yellow scaffold page again — which looks deliberate, because
+  // a scaffold page is what unbuilt is supposed to look like. That is the same
+  // failure mode as the route-shadowing bug this file was written for.
+  expect(ROUTES).toContain("node.mergedInto");
+  expect(ROUTES).toContain("<Navigate");
+});
+
+test("no curated node also claims a screen in BUILT", () => {
+  // A screen registered against a redirected path can never render. Harmless
+  // and invisible, which is exactly why it survives: it reads as wired work.
+  const merged = new Set(
+    flattenIa()
+      .filter((node) => node.mergedInto !== undefined)
+      .map((node) => node.path as string),
+  );
+  const builtBlock = ROUTES.slice(
+    ROUTES.indexOf("const BUILT"),
+    ROUTES.indexOf("// ------------------------------------------------------------------- sketches"),
+  );
+  const claimed = [...merged].filter((path) => builtBlock.includes(`"${path}":`));
+
+  expect(claimed).toEqual([]);
+});
+
+test("the shell's nav is built through the curation predicate", () => {
+  // The nav filter is three characters from being written by hand, and a
+  // hand-written `child.nav !== false` is a second spelling of a rule that has
+  // to stay single — see isNavDestination's own comment.
+  expect(SHELL).toContain("isNavDestination");
+  expect(SHELL).not.toMatch(/child\.nav\s*!==\s*false/);
 });

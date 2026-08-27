@@ -62,6 +62,27 @@ export interface IaNode {
   note?: string;
   /** Which frontend can render this. Defaults to "both". */
   surface?: Surface;
+  /**
+   * Does this node appear in the navigation? Defaults to true.
+   *
+   * The IA is two things at once: the coverage ledger the architecture report
+   * and `coverage()` read, and the source the shells build their nav from.
+   * Those stopped agreeing once the gaps started closing (ROADMAP_IA §11b): a
+   * node can be a real, routable, finished screen and still have no business
+   * being a destination, because a destination is a place you go BEFORE you
+   * know which record you want. `nav: false` says exactly that and nothing
+   * else — the node keeps its path, its status and its place in the count.
+   */
+  nav?: boolean;
+  /**
+   * Where a `nav: false` node's content actually lives now.
+   *
+   * Set it and the router redirects this path there instead of rendering it,
+   * so a bookmark to `company/vat` still lands somewhere true. Omit it when the
+   * node is hidden but still worth rendering on its own (reachable from the
+   * palette, or from the coverage map).
+   */
+  mergedInto?: string;
   children?: IaNode[];
 }
 
@@ -370,10 +391,12 @@ export const IA: IaSection[] = [
         key: "customers.contacts",
         label: "Contacts",
         path: "customers/contacts",
+        nav: false,
+        mergedInto: "customers/clients",
         status: "none",
         layer: "L2",
         missing: ["Contact model (many per client)", "CRUD /contacts"],
-        note: "Client currently carries one flat email/phone. Multiple named contacts is a schema change.",
+        note: "Client currently carries one flat email/phone. Multiple named contacts is a schema change. Curated out of the nav 2026-08-27 (§11b): contacts belong to A client, so the destination is the client list — pick the record, then read its contacts in Client 360.",
       },
       {
         key: "customers.groups",
@@ -387,27 +410,33 @@ export const IA: IaSection[] = [
         key: "customers.history",
         label: "Client history",
         path: "customers/history",
+        nav: false,
+        mergedInto: "customers/clients",
         status: "none",
         layer: "L2",
         missing: ["GET /clients/{id}/timeline (invoices + payments + credit notes)"],
-        note: "The COMMERCIAL relationship over time — what was invoiced, what was paid, what was credited. Not the audit log: invoice, payment and credit-note entries are written with target_type=\"invoice\" and target_id=<invoice id>, and carry no client_id anywhere, not even in their `after` payload. So GET /activity?target_id={client} can never return them — it returns only the three things written against a client row (created, edited, imported). That is customers.activity, one node down. This needs a join the server does not expose.",
+        note: "The COMMERCIAL relationship over time — what was invoiced, what was paid, what was credited. Not the audit log: invoice, payment and credit-note entries are written with target_type=\"invoice\" and target_id=<invoice id>, and carry no client_id anywhere, not even in their `after` payload. So GET /activity?target_id={client} can never return them — it returns only the three things written against a client row (created, edited, imported). That is customers.activity, one node down. This needs a join the server does not expose. Curated out of the nav 2026-08-27 (§11b): per-client by definition. Redirects to the list rather than to the 360 screen because that screen needs a client id and this path carries none.",
       },
       {
         key: "customers.documents",
         label: "Client documents",
         path: "customers/documents",
+        nav: false,
+        mergedInto: "customers/clients",
         status: "none",
         layer: "L2",
         missing: ["blob storage", "Document model", "CRUD /documents"],
+        note: "Curated out of the nav 2026-08-27 (§11b): a per-client document list is a 360 tab; the CROSS-client version is a different question and belongs to the Documents section.",
       },
       {
         key: "customers.activity",
         label: "Client activity",
         path: "customers/activity",
+        nav: false,
         status: "wired",
         layer: "L2",
         endpoints: ["GET /activity?target_type=client", "GET /activity?target_id"],
-        note: "Who touched this client RECORD: created, edited, imported. Deliberately narrow — the commercial timeline is customers.history, and the who-did-what-in-the-app axis is the Activity section (activity.user, filtered by actor rather than target).",
+        note: "Who touched this client RECORD: created, edited, imported. Deliberately narrow — the commercial timeline is customers.history, and the who-did-what-in-the-app axis is the Activity section (activity.user, filtered by actor rather than target). Curated out of the nav 2026-08-27 (§11b): a third door onto activity, next to activity/audit and the 360 tab. Hidden but NOT merged — it is a real screen over a real filter, so it keeps rendering for anyone who has the link or reaches it from the palette. Redirecting it would have deleted a working view to tidy a menu.",
       },
     ],
   },
@@ -591,11 +620,14 @@ export const IA: IaSection[] = [
     path: "company",
     status: "partial",
     layer: "L1",
+    note: "Nine nodes over ONE row. Every child is `nav: false` (ROADMAP_IA §11b, curated 2026-08-27): a company is a single record, so none of these is a place you go before you know which record you want — you are already in the only one there is. CompanySettingsPanel renders the six wired sections at `company`, and the three that block on a model (payment terms, branding, documents) are scaffold blocks inside it. The nodes stay because they are the ledger of what is still missing.",
     children: [
       {
         key: "company.profile",
         label: "Company profile",
         path: "company/profile",
+        nav: false,
+        mergedInto: "company",
         status: "wired",
         layer: "L1",
         endpoints: ["GET /companies", "POST /companies", "GET /companies/{id}", "PATCH /companies/{id}"],
@@ -605,6 +637,8 @@ export const IA: IaSection[] = [
         key: "company.legal",
         label: "Legal information",
         path: "company/legal",
+        nav: false,
+        mergedInto: "company",
         status: "wired",
         layer: "L1",
         endpoints: ["POST /companies", "PATCH /companies/{id}"],
@@ -614,6 +648,8 @@ export const IA: IaSection[] = [
         key: "company.vat",
         label: "VAT / BCE information",
         path: "company/vat",
+        nav: false,
+        mergedInto: "company",
         status: "wired",
         layer: "L1",
         endpoints: ["POST /companies", "PATCH /companies/{id}"],
@@ -623,6 +659,8 @@ export const IA: IaSection[] = [
         key: "company.bank",
         label: "Bank accounts",
         path: "company/bank",
+        nav: false,
+        mergedInto: "company",
         status: "partial",
         layer: "L1",
         endpoints: ["POST /companies", "PATCH /companies/{id}"],
@@ -633,6 +671,8 @@ export const IA: IaSection[] = [
         key: "company.numbering",
         label: "Invoice numbering",
         path: "company/numbering",
+        nav: false,
+        mergedInto: "company",
         status: "partial",
         layer: "L1",
         endpoints: ["POST /companies", "PATCH /companies/{id}"],
@@ -643,6 +683,8 @@ export const IA: IaSection[] = [
         key: "company.payment-terms",
         label: "Payment conditions",
         path: "company/payment-terms",
+        nav: false,
+        mergedInto: "company",
         status: "none",
         layer: "L2",
         missing: ["payment_terms_days on Company", "late-fee configuration"],
@@ -651,6 +693,8 @@ export const IA: IaSection[] = [
         key: "company.branding",
         label: "Branding",
         path: "company/branding",
+        nav: false,
+        mergedInto: "company",
         status: "none",
         layer: "L2",
         missing: ["POST /companies/{id}/logo", "blob storage", "brand colour fields"],
@@ -660,6 +704,8 @@ export const IA: IaSection[] = [
         key: "company.defaults",
         label: "Invoice defaults",
         path: "company/defaults",
+        nav: false,
+        mergedInto: "company",
         status: "partial",
         layer: "L2",
         endpoints: ["POST /companies", "PATCH /companies/{id}", "GET /pdf-templates"],
@@ -670,6 +716,8 @@ export const IA: IaSection[] = [
         key: "company.documents",
         label: "Company documents",
         path: "company/documents",
+        nav: false,
+        mergedInto: "company",
         status: "none",
         layer: "L2",
         missing: ["blob storage", "Document model"],
@@ -1372,6 +1420,26 @@ export function iaFor(surface: Surface): IaSection[] {
  */
 export function routableNodes(surface: Surface = "saas"): IaNode[] {
   return flattenIa(iaFor(surface)).filter((node) => node.path !== undefined);
+}
+
+/**
+ * Every node the NAV should offer on the given surface.
+ *
+ * The complement of `routableNodes()`, not a replacement for it: routes,
+ * `coverage()`, `missingEndpoints()` and the architecture report keep reading
+ * the whole tree, because the ledger has to stay complete (ROADMAP_IA §11b,
+ * constraint 2). Only the shells' nav construction calls this.
+ */
+export function navNodes(surface: Surface = "saas"): IaNode[] {
+  return routableNodes(surface).filter(isNavDestination);
+}
+
+/** The predicate behind `navNodes`, for callers that already hold the node —
+ *  the shells walk sections and children rather than a flat list. One rule,
+ *  written once: two spellings of "is this in the nav?" is how a curated nav
+ *  and a curated router drift apart. */
+export function isNavDestination(node: IaNode): boolean {
+  return node.path !== undefined && node.nav !== false;
 }
 
 export function findByPath(path: string, surface: Surface = "both"): IaNode | undefined {

@@ -20,6 +20,7 @@ import {
   EntitlementBoundary,
   DashboardIcon,
   iaFor,
+  isNavDestination,
   LoadingScreen,
   OrgSwitcher,
   PlusIcon,
@@ -151,7 +152,12 @@ export function AppShell() {
       </>
     );
     const active = section.path === "" ? pathname === "/app" : pathname.startsWith(to);
-    const subPages = (section.children ?? []).filter((child) => child.path !== undefined);
+    // Not every routable child is a destination. A node curated out of the nav
+    // (ROADMAP_IA §11b) keeps its path, its status and its place in the
+    // coverage count — it just stops being a door, because a door is for
+    // somewhere you go BEFORE you know which record you want. The palette
+    // below still indexes all of them.
+    const subPages = (section.children ?? []).filter(isNavDestination);
 
     if (subPages.length === 0) {
       return { key: section.key, label, icon: sectionIcon[section.key], active, onClick: () => navigate(to) };
