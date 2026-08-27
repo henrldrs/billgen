@@ -52,3 +52,6 @@ logs/
 *.key
 *.billgenlic
 backups/
+
+# Local-only working notes (LLM council sessions)
+docs/council/
