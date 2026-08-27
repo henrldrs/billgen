@@ -121,6 +121,18 @@ Untouched and blocks on nothing — see [ROADMAP_IA.md §7](ROADMAP_IA.md).
 
 ---
 
+7. **Nav curation is decided, unbuilt** — [ROADMAP_IA §11b](ROADMAP_IA.md).
+   The coverage-map nav (section overviews, full popup lists) is a build-time
+   instrument and comes out. The rule is list-vs-record, not "remove the
+   repetition". First and cheapest move: collapse the six `company/*` routes
+   into one settings screen — `CompanySettingsPanel` already has `section="all"`,
+   so it is five route deletions.
+8. **Comments must not ship, and must not be deleted** —
+   [ROADMAP_IA §11c](ROADMAP_IA.md). Strip on export, never in the tree; the
+   SaaS bundle is already clean, the Electron artifact is not. Watch the
+   docstring trap: FastAPI/Pydantic docstrings are published as the OpenAPI
+   `description` and generate `api.d.ts`.
+
 ## 4. Backend still open, in rough value order
 
 - **B1 — email.** Highest fanout in the product: password reset, verification,

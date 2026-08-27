@@ -853,6 +853,112 @@ defensible only as a *wholesale replacement*, never alongside.
 
 ---
 
+## 11b. Nav curation — the coverage map is not the navigation (decided 2026-08-27)
+
+Today `routableNodes()` generates the router straight from `ia.ts`, so "a node
+exists" and "a node is in the nav" are the same statement. That was right while
+the product was half-built: `SectionIndex` renders "3 of 7 areas fully wired"
+with ready/partial/no-backend badges, and `ScaffoldPage` names the endpoint each
+gap is waiting for. Those are **build-time instruments** — a coverage ledger
+wearing a navigation's clothes — and they stop earning their place the moment
+the gaps close.
+
+**The rule for what survives as a destination:**
+
+> A nav destination is a place you go *before* you know which record you want.
+> Anything that only means something *after* you have picked one belongs inside
+> that record.
+
+Not "remove the repetition" — repetition is the symptom. The cut is list vs
+record.
+
+### Worked example — Clients, 7 popup entries → 2
+
+| Node | Destination | Why |
+|---|---|---|
+| Clients (list) | **stays in nav** | you go there to find someone |
+| Client groups | **stays in nav** | a group is a cross-client object with its own list; it is not a property of one client |
+| Contacts | 360 tab | contacts belong to *a* client |
+| Client history | 360 tab | per-client by definition |
+| Client documents | 360 tab | *and* a cross-client document search belongs to the Documents section, which is a different question |
+| Client activity | **deleted as a nav item** | the cross-client version is already `activity/audit`; the per-client version is already a 360 tab |
+
+### Company is the same disease, and the cheapest to cure
+
+`company/profile|legal|vat|bank|numbering|defaults` are six nav entries over
+**one row**. They were wired that way on 2026-08-27 because the IA said so.
+`CompanySettingsPanel` is already a single component with a `section` prop and
+`section="all"` already works, so collapsing them is deleting five routes, not a
+rewrite. Do this one first — it is the proof the rule is cheap.
+
+### Two constraints on how, not whether
+
+1. **The re-cut does not wait for the backend.** A missing *per-record* feature
+   belongs inside the record screen as a scaffold block — exactly how Client 360
+   already quarantines quotes, documents and tags. Scaffold *pages* survive only
+   for gaps that are genuinely their own destination. On that basis Clients can
+   be re-cut today: contacts, history and documents have no models, and they are
+   precisely the entries that should not be nav items either way.
+2. **Do not lose the ledger.** `ia.ts` stays complete — the architecture report
+   and `coverage()` read it. Add an explicit nav flag so the IA keeps every node
+   while the shell renders a curated subset. Curating then costs one line per
+   node, is reversible, and the gap ledger keeps working; it moves to the Explore
+   section, where a coverage map belongs.
+
+---
+
+## 11c. Release hygiene — comments must not ship, and must not be deleted (added 2026-08-27)
+
+**The goal:** a published artifact should not read as a guided tour of how the
+product works. **The non-goal:** editing the tree. The comments in this codebase
+are why a session can pick up where the last one left off; deleting them is
+irreversible, and re-deleting them on every change is a recurring model-token
+cost for a job that is pure text processing. So: **strip on export, never in the
+source.**
+
+### Where the exposure actually is
+
+| Artifact | Exposed? | Why |
+|---|---|---|
+| Private GitHub repo (`BGEN-OPS-01`) | **No** | nobody can read it |
+| SaaS browser bundle | **Already clean** | Vite minifies with esbuild, which drops comments, and `build.sourcemap` is unset (default `false`) — verified in `frontend-saas/vite.config.ts`. Ship a sourcemap and the commented original ships with it |
+| Electron desktop | **Yes** | `app.asar` unpacks trivially; whatever lands there is readable |
+| Python backend, if bundled with the desktop | **Yes, in full** | `.py` is source. This is the actual manual |
+
+So the work is an export step for the desktop artifact, not a repo-wide edit.
+
+### The shape
+
+- `scripts/export_release.py` — copy tree → strip → build. Never writes to the
+  working tree.
+- Python stripper: `tokenize`-based (drop `COMMENT` tokens, re-emit). ~40 lines,
+  and semantics-preserving in a way a regex over `#` is not.
+- TS/TSX: the bundler already does it. Anything shipped as source goes through
+  `esbuild --minify`.
+- `scripts/extract_annotations.py` — the same pass writes the prose out to
+  `docs/ANNOTATIONS/<path>.md` with `file:line` anchors, so the reasoning
+  survives in the private tree rather than being destroyed.
+
+### The trap to know before writing a line
+
+**Docstrings here are not comments.** FastAPI and Pydantic publish them: a class
+docstring becomes the OpenAPI `description`, and `frontend-react/src/types/api.d.ts`
+is generated from that. `CompanyUpdateRequest`'s "PATCH semantics: only provided
+fields change (B3)" note in `api/schemas/companies.py` is exactly this. Strip
+`#` comments freely; strip docstrings only with a rule that spares schema and
+route classes, or accept that the API's own documentation goes silent and the
+generated types change.
+
+### The honest limit
+
+This is anti-manual, not anti-reverse-engineering. It stops someone reading a
+guided tour of the design; it does not stop them reading the code. If the goal
+is protecting the product rather than withholding the commentary, the lever is
+what gets shipped at all — server-side logic plus licensing — not comment
+removal.
+
+---
+
 ## 12. Where the full audit lives
 
 The complete cross-frontend audit — coverage matrices, repo-aligned backend
