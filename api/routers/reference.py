@@ -6,18 +6,31 @@ is that `21/12/6/0` and the template ids stop being duplicated in TypeScript,
 where they drift silently.
 """
 
-from fastapi import APIRouter
+from collections.abc import Callable
+from uuid import UUID
+
+from fastapi import APIRouter, Depends
 
 from core.models import VATCategory
 from core.pdf.registry import TEMPLATES
-from core.rules.vat import BELGIAN_STANDARD_RATES, default_rate_for_belgium
+from core.repository import UnitOfWork
+from core.rules import legal_mention_for
+from core.rules.vat import (
+    BELGIAN_STANDARD_RATES,
+    build_rate,
+    default_rate_for_belgium,
+    pick_category,
+)
+from core.services import ClientService, CompanyService
 
+from ..deps import get_uow_factory
 from ..schemas.reference import (
     PdfTemplateOption,
     PdfTemplatesResponse,
     VatCategoryOption,
     VatRateOption,
     VatRatesResponse,
+    VatTreatmentResponse,
 )
 
 router = APIRouter(tags=["reference"])
@@ -57,4 +70,57 @@ def list_pdf_templates() -> PdfTemplatesResponse:
             for spec in TEMPLATES.values()
         ],
         default_template=_DEFAULT_PDF_TEMPLATE,
+    )
+
+
+# Why a treatment applies, as a message key the frontends translate. The pair
+# (category, reason) is what an accountant reads back: "AE because intra-EU
+# B2B" is checkable, "AE" alone is not.
+_REASONS: dict[VATCategory, str] = {
+    VATCategory.STANDARD: "vat.reason.domestic",
+    VATCategory.REVERSE_CHARGE: "vat.reason.intra_eu_b2b",
+    VATCategory.EXPORT: "vat.reason.outside_eu",
+}
+
+
+@router.get("/vat-treatment", response_model=VatTreatmentResponse)
+def vat_treatment(
+    company_id: UUID,
+    client_id: UUID,
+    lang: str | None = None,
+    uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+) -> VatTreatmentResponse:
+    """Which VAT category this seller/buyer pair implies, and the mention it needs.
+
+    `core.rules.vat.pick_category` has existed since the domain was written and
+    no route called it, so every invoice line shipped `category: "S"` — correct
+    for a Belgian seller billing a Belgian customer, and wrong for the two cases
+    that make the rule worth having: intra-EU B2B, which is reverse-charged and
+    carries a mandatory Article 51 §2 mention, and export outside the EU.
+
+    Advisory on purpose. This does not overwrite what the composer sends: the
+    caller knows things the data does not (a client flagged as a business that
+    is buying privately, an exemption that turns on the service). Defaulting is
+    the job; deciding is not.
+    """
+    company = CompanyService(uow_factory).get(company_id)
+    client = ClientService(uow_factory).get(client_id)
+
+    category = pick_category(
+        client_is_business=client.is_business,
+        client_country=client.country_code,
+        client_has_vat_number=bool(client.vat_number),
+        seller_country=company.country_code,
+    )
+    rate = build_rate(category, seller_country=company.country_code)
+    language = lang or company.default_language
+
+    return VatTreatmentResponse(
+        category=category.value,
+        category_name=category.name,
+        rate=rate.rate,
+        legal_mention=legal_mention_for(category, language),
+        reason=_REASONS.get(category, "vat.reason.standard"),
+        seller_country=company.country_code.upper(),
+        buyer_country=client.country_code.upper(),
     )

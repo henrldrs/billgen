@@ -30,3 +30,20 @@ class PdfTemplateOption(BaseModel):
 class PdfTemplatesResponse(BaseModel):
     templates: list[PdfTemplateOption]
     default_template: str
+
+
+class VatTreatmentResponse(BaseModel):
+    """The VAT treatment a given seller/buyer pair implies.
+
+    Advisory, not enforced: the composer uses it to default a line, and a user
+    who knows their case better may still override. `reason` is a message key,
+    so the explanation is translated in the frontend rather than here.
+    """
+
+    category: str
+    category_name: str
+    rate: Decimal
+    legal_mention: str | None
+    reason: str
+    seller_country: str
+    buyer_country: str

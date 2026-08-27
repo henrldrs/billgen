@@ -2,7 +2,7 @@
 
 from decimal import Decimal
 
-from .conftest import bearer, signup
+from .conftest import bearer, create_client_record, create_company, signup
 
 
 async def test_vat_rates_are_the_belgian_set(client):
@@ -71,3 +71,97 @@ async def test_a_company_can_only_default_to_a_listed_template(client):
             headers=headers,
         )
         assert response.status_code == 200, template["id"]
+
+
+# ── GET /vat-treatment ─────────────────────────────────────────────────────
+#
+# The rule existed in core/rules/vat.py from the beginning and no route called
+# it, so every invoice line shipped "S". These pin the three answers a Belgian
+# seller can get, and the fact that the endpoint advises rather than decides.
+
+
+async def _pair(client, headers, **client_overrides):
+    company = await create_company(client, headers)
+    record = await create_client_record(client, headers, company["id"], **client_overrides)
+    return company, record
+
+
+async def _treatment(client, headers, company, record, **params):
+    query = "&".join(f"{k}={v}" for k, v in params.items())
+    url = f"/vat-treatment?company_id={company['id']}&client_id={record['id']}"
+    response = await client.get(f"{url}&{query}" if query else url, headers=headers)
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+async def test_a_belgian_customer_is_billed_belgian_vat(client):
+    headers = bearer(await signup(client))
+    company, record = await _pair(client, headers)
+
+    body = await _treatment(client, headers, company, record)
+
+    assert body["category"] == "S"
+    assert Decimal(str(body["rate"])) == Decimal("21")
+    assert body["legal_mention"] is None
+    assert body["reason"] == "vat.reason.domestic"
+
+
+async def test_an_intra_eu_business_is_reverse_charged(client):
+    headers = bearer(await signup(client))
+    company, record = await _pair(
+        client, headers, name="Dutch BV", country_code="NL", vat_number="NL123456789B01"
+    )
+
+    body = await _treatment(client, headers, company, record)
+
+    assert body["category"] == "AE"
+    assert Decimal(str(body["rate"])) == Decimal("0")
+    # Mandatory: an autoliquidation invoice without the article reference is
+    # not compliant, and the seller carries the VAT if it is challenged.
+    assert "51" in body["legal_mention"]
+    assert body["reason"] == "vat.reason.intra_eu_b2b"
+
+
+async def test_an_intra_eu_consumer_still_pays_belgian_vat(client):
+    """No VAT number, no reverse charge — the seller charges its own rate."""
+    headers = bearer(await signup(client))
+    company, record = await _pair(
+        client, headers, name="Dutch person", country_code="NL", vat_number=None
+    )
+
+    body = await _treatment(client, headers, company, record)
+
+    assert body["category"] == "S"
+    assert body["reason"] == "vat.reason.domestic"
+
+
+async def test_a_customer_outside_the_eu_is_an_export(client):
+    headers = bearer(await signup(client))
+    company, record = await _pair(
+        client, headers, name="US Inc", country_code="US", vat_number=None
+    )
+
+    body = await _treatment(client, headers, company, record)
+
+    assert body["category"] == "G"
+    assert Decimal(str(body["rate"])) == Decimal("0")
+    assert "39" in body["legal_mention"]
+    assert body["reason"] == "vat.reason.outside_eu"
+
+
+async def test_the_mention_follows_the_company_language(client):
+    headers = bearer(await signup(client))
+    company, record = await _pair(
+        client, headers, name="Dutch BV", country_code="NL", vat_number="NL123456789B01"
+    )
+
+    default = await _treatment(client, headers, company, record)
+    assert default["legal_mention"].startswith("Autoliquidation")
+
+    # Explicit lang wins over the company default.
+    dutch = await _treatment(client, headers, company, record, lang="nl")
+    assert dutch["legal_mention"].startswith("BTW verlegd")
+
+
+async def test_vat_treatment_requires_authentication(client):
+    assert (await client.get("/vat-treatment?company_id=x&client_id=y")).status_code == 401
