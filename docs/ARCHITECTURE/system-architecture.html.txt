@@ -416,7 +416,7 @@ footer{
     <div class="brand__row">
       <div>
         <p class="brand__name"><span class="brand__dot"></span>BillGen</p>
-        <p class="brand__sub">System Architecture · v0.9</p>
+        <p class="brand__sub">System Architecture · v0.10</p>
       </div>
       <button class="tt" id="tt" type="button" aria-label="Switch between light and dark">
         <span class="tt__light">☾</span><span class="tt__dark">☀</span>
@@ -448,7 +448,7 @@ footer{
   <div class="rail__list" id="rail-list" hidden>
     <p class="rail__group">Assessment</p>
     <a href="#overview">Overview</a>
-    <a href="#status">Status <span class="n">20%</span></a>
+    <a href="#status">Status <span class="n">26%</span></a>
     <a href="#frontends">Multi-Frontend Architecture</a>
     <a href="#components">Component &amp; Library Comparison</a>
     <a href="#backend">Backend Architecture <span class="n">55</span></a>
@@ -465,9 +465,10 @@ footer{
 
     <p class="rail__group">Deep dive</p>
     <a href="#dataflow">Data Architecture</a>
-    <a href="#debt">Backend Debt Ledger <span class="n">170</span></a>
+    <a href="#debt">Backend Debt Ledger <span class="n">159</span></a>
     <a href="#repo">Repo Map <span class="n">478</span></a>
     <a href="#entitlements">Entitlement Layer <span class="n">B4</span></a>
+    <a href="#decisions">Decisions of Record <span class="n">4</span></a>
   </div>
 </nav>
 
@@ -478,30 +479,34 @@ footer{
   <div class="sechead">
     <span class="sechead__id">§00</span>
     <h1>System Architecture</h1>
-    <p class="sechead__sub">Audit of one product across four frontend surfaces, one Python backend, and a shared design system. Regenerated 2026-08-26 against commit <code>aef79c3</code>, plus the uncommitted entitlement UI in the working tree.</p>
+    <p class="sechead__sub">Audit of one product across four frontend surfaces, one Python backend, and a shared design system. Regenerated 2026-08-27 against commit <code>2a83ccb</code> — the last <em>code</em> commit, since a document cannot name the commit that contains it.</p>
   </div>
 
   <p class="lede">BillGen is a Belgian invoicing SaaS with a finished domain core and an unfinished product wrapper. This document separates those two facts, measures each, and orders the work.</p>
 
   <div class="note">
-    <p><strong>What changed since v0.8 (2026-08-25).</strong> Four commits landed: Sprint 1 plus the VAT report engine, four record screens, six screen-unblocking reads, and <strong>the whole B4 entitlement layer</strong> — four tiers, six meters, atomic quota guards and a uniform 402 contract (<a href="#entitlements">§16</a>). Endpoints went 41 → <strong>55</strong>, backend tests 261 → <strong>298</strong>. Wired areas moved 21 → 23 of 115. <strong>The backend is now roughly twenty endpoints ahead of the UI:</strong> two sessions of server work landed and almost no screen reads any of it.</p>
+    <p><strong>What changed since v0.8 (2026-08-25).</strong> Five commits, and for the first time none of them added a backend
+    capability — every one consumed one that already existed. The entitlement UI shipped
+    (<a href="#entitlements">§16</a>); the company record got its edit form; five screens closed the
+    frontend backlog this document has carried since v0.8 — duplicate, the VAT-rate picker, catalog
+    server filters, the payments report and the invoices report; and <strong>the navigation stopped
+    being the coverage map</strong>. Coverage moved 20% → <strong>26%</strong> without a line of
+    Python. Frontend tests 107 → <strong>157</strong>, backend steady at 298.</p>
   </div>
 
   <div class="grid g3">
     <div class="stat">
       <p class="stat__k">Product areas</p>
-      <p class="stat__v">115</p>
+      <p class="stat__v">114</p>
       <p class="stat__n">leaf nodes in the IA · 130 with sections</p>
     </div>
     <div class="stat">
       <p class="stat__k">Fully wired</p>
-      <p class="stat__v" style="color:var(--done)">20%</p>
-      <p class="stat__n">23 wired · 31 partial · 61 none</p>
+      <p class="stat__v" style="color:var(--done)">26%</p> <p class="stat__n">30 wired · 26 partial · 58 none</p>
     </div>
     <div class="stat">
       <p class="stat__k">Missing capabilities</p>
-      <p class="stat__v" style="color:var(--gap)">170</p>
-      <p class="stat__n">distinct, over 85 nodes</p>
+      <p class="stat__v" style="color:var(--gap)">159</p> <p class="stat__n">distinct, over 83 nodes</p>
     </div>
     <div class="stat">
       <p class="stat__k">Library components</p>
@@ -517,7 +522,7 @@ footer{
   <h3>What this document treats as source of truth</h3>
   <ul>
     <li><strong>The IA registry</strong> — <code>frontend-react/src/scaffold/ia.ts</code>, a typed tree that drives navigation, routes, status badges, and every count below. Invariants enforced by <code>ia.test.ts</code>.</li>
-    <li><strong>The endpoint inventory</strong> — read directly from <code>api/routers/</code>, not from documentation. 17 routers, 55 endpoints as of <code>aef79c3</code>.</li>
+    <li><strong>The endpoint inventory</strong> — read directly from <code>api/routers/</code>, not from documentation. 17 routers, 55 endpoints as of <code>2a83ccb</code>.</li>
     <li><strong>The component matrix</strong> — computed by walking JSX across all frontends plus the Studio AI reference.</li>
     <li><strong>The Studio AI reference</strong> — <code>docs/billgen---enterprise-invoicing-&amp;-financial-saas.zip</code>, 95 files. A Google AI Studio (Gemini) generation dated 2026-08-25, seeded with this project&#39;s stylesheets but importing none of its components — see <a href="#repo">§15</a>.</li>
   </ul>
@@ -543,12 +548,12 @@ footer{
       <thead><tr><th>Section</th><th>Coverage</th><th class="num">Wired</th><th class="num">Partial</th><th class="num">None</th><th class="num">Total</th></tr></thead>
       <tbody>
         <tr><td>Dashboard</td><td><span class="meter"><i class="m-done" style="width:85.7%"></i><i class="m-gap" style="width:14.3%"></i></span></td><td class="num">6</td><td class="num">0</td><td class="num">1</td><td class="num">7</td></tr>
-        <tr><td>Sales</td><td><span class="meter"><i class="m-done" style="width:53.3%"></i><i class="m-partial" style="width:6.7%"></i><i class="m-gap" style="width:40.0%"></i></span></td><td class="num">8</td><td class="num">1</td><td class="num">6</td><td class="num">15</td></tr>
+        <tr><td>Sales</td><td><span class="meter"><i class="m-done" style="width:50.0%"></i><i class="m-partial" style="width:7.1%"></i><i class="m-gap" style="width:42.9%"></i></span></td><td class="num">7</td><td class="num">1</td><td class="num">6</td><td class="num">14</td></tr>
         <tr><td>Clients</td><td><span class="meter"><i class="m-done" style="width:28.6%"></i><i class="m-partial" style="width:14.3%"></i><i class="m-gap" style="width:57.1%"></i></span></td><td class="num">2</td><td class="num">1</td><td class="num">4</td><td class="num">7</td></tr>
-        <tr><td>Catalog</td><td><span class="meter"><i class="m-done" style="width:14.3%"></i><i class="m-partial" style="width:85.7%"></i></span></td><td class="num">1</td><td class="num">6</td><td class="num">0</td><td class="num">7</td></tr>
-        <tr><td>Reports</td><td><span class="meter"><i class="m-done" style="width:33.3%"></i><i class="m-partial" style="width:33.3%"></i><i class="m-gap" style="width:33.3%"></i></span></td><td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num">9</td></tr>
-        <tr><td>Company</td><td><span class="meter"><i class="m-partial" style="width:66.7%"></i><i class="m-gap" style="width:33.3%"></i></span></td><td class="num">0</td><td class="num">6</td><td class="num">3</td><td class="num">9</td></tr>
-        <tr><td><strong>Billing</strong></td><td><span class="meter"><i class="m-gap" style="width:100.0%"></i></span></td><td class="num">0</td><td class="num">0</td><td class="num">8</td><td class="num">8</td></tr>
+        <tr><td>Catalog</td><td><span class="meter"><i class="m-done" style="width:28.6%"></i><i class="m-partial" style="width:71.4%"></i></span></td><td class="num">2</td><td class="num">5</td><td class="num">0</td><td class="num">7</td></tr>
+        <tr><td><strong>Reports</strong></td><td><span class="meter"><i class="m-done" style="width:55.6%"></i><i class="m-partial" style="width:22.2%"></i><i class="m-gap" style="width:22.2%"></i></span></td><td class="num">5</td><td class="num">2</td><td class="num">2</td><td class="num">9</td></tr>
+        <tr><td><strong>Company</strong></td><td><span class="meter"><i class="m-done" style="width:33.3%"></i><i class="m-partial" style="width:33.3%"></i><i class="m-gap" style="width:33.3%"></i></span></td><td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num">9</td></tr>
+        <tr><td><strong>Billing</strong></td><td><span class="meter"><i class="m-done" style="width:25.0%"></i><i class="m-gap" style="width:75.0%"></i></span></td><td class="num">2</td><td class="num">0</td><td class="num">6</td><td class="num">8</td></tr>
         <tr><td>Documents</td><td><span class="meter"><i class="m-gap" style="width:100.0%"></i></span></td><td class="num">0</td><td class="num">0</td><td class="num">7</td><td class="num">7</td></tr>
         <tr><td>Explore</td><td><span class="meter"><i class="m-partial" style="width:40.0%"></i><i class="m-gap" style="width:60.0%"></i></span></td><td class="num">0</td><td class="num">2</td><td class="num">3</td><td class="num">5</td></tr>
         <tr><td>Activity</td><td><span class="meter"><i class="m-done" style="width:20.0%"></i><i class="m-partial" style="width:20.0%"></i><i class="m-gap" style="width:60.0%"></i></span></td><td class="num">1</td><td class="num">1</td><td class="num">3</td><td class="num">5</td></tr>
@@ -562,8 +567,16 @@ footer{
   </div>
 
   <div class="note note--warn">
-    <p><strong>Billing still reads 0 / 0 / 8, and that score is now stale.</strong> <code>GET /entitlements</code> and <code>GET /plans</code> ship the whole commercial matrix — tier, features, per-meter usage and limits — so Subscription, Plan and Usage are <em>partial</em>, not <em>none</em>. The score has not moved because it lives in <code>ia.ts</code> and nobody re-scored those nodes; the panels that consume the endpoints are in the working tree, uncommitted. Re-score with the commit that lands them, not before — the number is supposed to describe screens, not endpoints.</p>
-    <p><strong>Company is the other anomaly: 0 wired, 6 partial, 3 none.</strong> Every one of those six partials had one cause — no <code>PATCH /companies/{id}</code> — and it shipped on 2026-08-26 along with <code>GET /companies/{id}/validation</code>. What is left there is frontend work plus logo upload, which waits on B2. A section can be entirely unblocked on the server and still score zero, because <code>status</code> is about screens.</p>
+    <p><strong>Company reads 3 / 3 / 3 over nine nodes that are one database row.</strong> That is
+    the clearest case in the table of a number measuring the wrong thing: the six editable sections all
+    ship in one screen, and the three that do not (payment terms, branding, company documents) are each
+    blocked on a model rather than on a screen. They are rendered as scaffold blocks <em>inside</em> that
+    screen, which is also why Company is now one nav entry instead of nine — see §11b in
+    <code>ROADMAP_IA.md</code>.</p>
+    <p><strong>Billing's 2 / 0 / 6 is as high as it can go without a payment provider.</strong> Plan and
+    Usage are wired. The other six areas — subscription, payment method, invoices from BillGen, billing
+    history, upgrade/downgrade, cancellation — are not screens waiting to be built; they are screens with
+    nothing to show. There is nothing to subscribe to, charge, or cancel until a Merchant of Record exists.</p>
   </div>
 
   <h3>By layer</h3>
@@ -571,9 +584,9 @@ footer{
     <table>
       <thead><tr><th>Layer</th><th>Scope</th><th class="num">Wired</th><th class="num">Partial</th><th class="num">None</th><th class="num">Total</th></tr></thead>
       <tbody>
-        <tr><td><strong>L1 — Core</strong></td><td class="ev">Dashboard, clients, products, invoices, company</td><td class="num">16</td><td class="num">6</td><td class="num">0</td><td class="num">22</td></tr>
-        <tr><td><strong>L2 — Business</strong></td><td class="ev">Quotes, credit notes, recurring, payments, reports, documents</td><td class="num">5</td><td class="num">11</td><td class="num">24</td><td class="num">40</td></tr>
-        <tr><td><strong>L3 — SaaS</strong></td><td class="ev">Account, subscription, billing, usage, notifications, onboarding, support</td><td class="num">0</td><td class="num">2</td><td class="num">18</td><td class="num">20</td></tr>
+        <tr><td><strong>L1 — Core</strong></td><td class="ev">Dashboard, clients, products, invoices, company</td><td class="num">18</td><td class="num">3</td><td class="num">0</td><td class="num">21</td></tr>
+        <tr><td><strong>L2 — Business</strong></td><td class="ev">Quotes, credit notes, recurring, payments, reports, documents</td><td class="num">8</td><td class="num">9</td><td class="num">23</td><td class="num">40</td></tr>
+        <tr><td><strong>L3 — SaaS</strong></td><td class="ev">Account, subscription, billing, usage, notifications, onboarding, support</td><td class="num">2</td><td class="num">2</td><td class="num">16</td><td class="num">20</td></tr>
         <tr><td><strong>L4 — Trust</strong></td><td class="ev">Security, GDPR, privacy, cookies, audit, legal</td><td class="num">0</td><td class="num">2</td><td class="num">12</td><td class="num">14</td></tr>
         <tr><td><strong>L5 — Platform</strong></td><td class="ev">Integrations, Peppol transport, API, webhooks, offline/sync</td><td class="num">1</td><td class="num">7</td><td class="num">4</td><td class="num">12</td></tr>
         <tr><td><strong>L6 — Experience</strong></td><td class="ev">Mobile, a11y, localization, empty states, search</td><td class="num">1</td><td class="num">3</td><td class="num">3</td><td class="num">7</td></tr>
@@ -581,7 +594,11 @@ footer{
     </table>
   </div>
 
-  <p><strong>L1 contains zero unwired areas.</strong> L3 and L4 still contain zero wired ones. The product is not evenly 20% built — it is one finished layer sitting under five thinner ones. The difference from v0.8 is that L3's floor is now built in Python and simply unrendered: the entitlement service answers for every tier, and the two L3 partials are the only nodes that admit it.</p>
+  <p><strong>L1 contains zero unwired areas</strong> — 18 wired, 3 partial, none missing. L4 still
+  contains zero wired ones. The product is not evenly 26% built: it is one finished layer sitting under five
+  thinner ones, and the thin layers are thin for different reasons. L2 is work nobody has done; L3 is work
+  that is <em>done in Python and has nothing to sell</em> until a payment provider exists; L4 is paperwork,
+  not code. Reading the 26% as a single progress bar hides all three</p>
 </section>
 
 <!-- ================================================== FRONTENDS -->
@@ -684,7 +701,7 @@ footer{
   </div>
 
   <div class="note">
-    <p><strong>Measured 2026-08-26 across <code>frontend-saas/</code>, <code>frontend-electron/</code> and <code>frontend-react/</code>:</strong> 49 of 74 are mounted by an app, and <strong>25 have never been rendered anywhere</strong>. The list has shortened by half since v0.8 because the record screens brought the form and data components with them. What is left is not accidental — it clusters into three groups, and each group is blocked by the same thing: <em>preferences</em> (Switch, Checkbox, RadioGroup, LanguageSwitcher) waiting on settings that persist, <em>feedback</em> (Toast, Tooltip, SuccessState, HelpBubble, NotificationCenter) waiting on a decision rather than an endpoint, and <em>overlays</em> (Menu, ContextMenu, Kbd) parked behind the portal problem below.</p>
+    <p><strong>Re-measured 2026-08-27 across <code>frontend-saas/</code>, <code>frontend-electron/</code> and <code>frontend-react/</code> — unchanged:</strong> 49 of 74 are mounted by an app, and <strong>25 have never been rendered anywhere</strong>. The list has shortened by half since v0.8 because the record screens brought the form and data components with them. What is left is not accidental — it clusters into three groups, and each group is blocked by the same thing: <em>preferences</em> (Switch, Checkbox, RadioGroup, LanguageSwitcher) waiting on settings that persist, <em>feedback</em> (Toast, Tooltip, SuccessState, HelpBubble, NotificationCenter) waiting on a decision rather than an endpoint, and <em>overlays</em> (Menu, ContextMenu, Kbd) parked behind the portal problem below.</p>
   </div>
 
   <h3>The 25 never-rendered components</h3>
@@ -897,7 +914,19 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
     <div class="det-body">
       <p>Belgium mandates structured e-invoicing for B2B from 2026. BillGen already produces Helger-validated Peppol BIS 3.0 XML carrying the Belgian elements — EndpointIDs, OGM-VCS structured communication, KBO legal identifier, party contact — layered over the EN 16931 multi-rate engine.</p>
       <p><strong>Every part of that is done and none of it ships.</strong> The file is generated and downloaded by hand because no Access Point transmits it. This is the one place where a single integration converts finished, tested work into a headline market capability. It is not a settings toggle; treat it as a product surface.</p>
-      <p>Round-trip through a real Access Point remains untested — schematron validation has passed on BE and non-BE samples, which is necessary and not sufficient.</p>
+      <p><strong>State the gap precisely, because this document has stated it loosely.</strong> The open
+      question is <em>not</em> whether the XML is correct — the predecessor demo's PDF → Peppol path was
+      exercised with a real user, and schematron passes here on BE and non-BE samples. The gap is
+      <strong>transmission from inside the application</strong>: sending over the network the way a bank's
+      billing app does, rather than producing a file a human then hands to a portal like Doccle. Those are
+      different products to the person using them, and only the second one exists today.</p>
+      <p>Two things that follow, and neither is a coding task. <strong>You do not have to be an Access
+      Point.</strong> Resellers (Storecove, Ecosio, Unifiedpost) turn an existential interoperability risk
+      into a procurement decision — and their per-document price then sets the gross-margin floor, which
+      means it sets BillGen's price. <strong>Onboarding one is calendar-bound, not code-bound:</strong> a
+      contract, KYC, SMP registration and a company number, measured in weeks of somebody else's queue. It
+      is therefore a clock to start in parallel with everything on the roadmap below, and it cannot be
+      sequenced after any of it.</p>
     </div>
   </details>
 
@@ -1070,7 +1099,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
         <tr><td class="id">BGEN-TRUST-03</td><td>Roles &amp; permissions</td><td><span class="chip c-gap">modelled, unenforced</span></td><td class="ev"><code>core/models/user.py</code> carries <code>Role = owner | admin | member | viewer</code>, the JWT carries it and <code>api/deps.current_role</code> exposes it — read in exactly one place, <code>/users/me</code>, to display it. <strong>A <code>viewer</code> can void an invoice today.</strong> Enforcement must also be gated: <code>roles_permissions</code> is Business+ in the matrix.</td></tr>
         <tr><td class="id">BGEN-TRUST-04</td><td>GDPR lifecycle</td><td><span class="chip c-gap">gap</span></td><td class="ev">Backup export ≠ subject-access export. No deletion, consent, or retention.</td></tr>
         <tr><td class="id">BGEN-TRUST-05</td><td>Legal corpus</td><td><span class="chip c-gap">gap</span></td><td class="ev">ToS, Privacy, Cookie, DPA, subprocessors, SLA, BE legal notices — none drafted.</td></tr>
-        <tr><td class="id">BGEN-PLAT-01</td><td>Peppol transmission</td><td><span class="chip c-gap">gap</span></td><td class="ev">XML validated, never transmitted. Highest leverage integration.</td></tr>
+        <tr><td class="id">BGEN-PLAT-01</td><td>Peppol transmission</td><td><span class="chip c-gap">gap</span></td><td class="ev">XML validated, never transmitted <em>from inside the app</em> — which is the whole gap: a file handed to a portal is not the product. Reselling an Access Point makes it procurement, and procurement is weeks of lead time. Start the clock.</td></tr>
         <tr><td class="id">BGEN-PLAT-02</td><td>Banking</td><td><span class="chip c-gap">gap</span></td><td class="ev">No CODA/PSD2 link or reconciliation.</td></tr>
         <tr><td class="id">BGEN-PLAT-03</td><td>API &amp; webhooks</td><td><span class="chip c-gap">gap</span></td><td class="ev">No API keys, no delivery with retries.</td></tr>
         <tr><td class="id">BGEN-BIZ-01</td><td>Subscription</td><td><span class="chip c-partial">server done</span></td><td class="ev">B4. Tiers, features, meters, quota guards and 402 all ship (<a href="#entitlements">§16</a>). Missing: MoR/checkout, the billing UI, and a seat-invite flow — which cannot exist without B1.</td></tr>
@@ -1078,7 +1107,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
         <tr><td class="id">BGEN-BRAND-02</td><td>Navigation model</td><td><span class="chip c-done">decided</span></td><td class="ev">Top bar with a popup list per section — no sidebar. Shipped: <code>TopNavLink.items</code> renders a Menu; nav row wraps so popups are not clipped.</td></tr>
         <tr><td class="id">BGEN-BRAND-03</td><td>Icon language</td><td><span class="chip c-done">decided</span></td><td class="ev">One custom SVG grammar: 24x24, 2px stroke, round caps, currentColor, 4 interaction states as tokens. No lucide alongside, no emoji. Enforced by a guard test that also trips on an icon-library dependency.</td></tr>
         <tr><td class="id">BGEN-OPS-01</td><td>Remote &amp; CI</td><td><span class="chip c-partial">partial</span></td><td class="ev"><strong>Still the only total-loss risk on the board.</strong> The pre-push audit is done and the tree is clean — no keys or tokens in tracked content, the three tracked env files are templates, 1,146 objects / 1.48 MiB. <code>gh</code> is not installed on this machine, so the remote has to be created by hand. CI has never executed.</td></tr>
-        <tr><td class="id">BGEN-OPS-02</td><td>Test stability</td><td><span class="chip c-done">done</span></td><td class="ev"><code>vitest.config.ts</code> sets <code>testTimeout</code>/<code>hookTimeout</code> to 30s. 107 frontend tests pass, 298 Python tests pass, ruff clean, four workspaces typecheck.</td></tr>
+        <tr><td class="id">BGEN-OPS-02</td><td>Test stability</td><td><span class="chip c-done">done</span></td><td class="ev"><code>vitest.config.ts</code> sets <code>testTimeout</code>/<code>hookTimeout</code> to 30s. 157 frontend tests pass, 298 Python tests pass, ruff clean, four workspaces typecheck.</td></tr>
       </tbody>
     </table>
   </div>
@@ -1251,27 +1280,32 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
   </div>
 
   <div class="sprint">
-    <div class="sprint__h"><span class="sprint__n">STEP 2</span><span class="sprint__t">Catch the frontend up to the backend</span><span class="chip c-partial">highest value</span></div>
-    <p>Every endpoint below exists, has a typed hook, and is consumed by nothing. This is the largest single block of value on the board and it needs no server work at all:</p>
+    <div class="sprint__h"><span class="sprint__n">STEP 2</span><span class="sprint__t">Catch the frontend up to the backend</span><span class="chip c-done">done 2026-08-27</span></div>
+    <p>This step existed in v0.8 and v0.9 and is now closed. Every item on it was a screen over an
+    endpoint that already had a typed hook, which is why it could close in one session without touching
+    Python. Kept as the record of what shipped, and of one recurring failure mode:</p>
     <ul class="task">
-      <li><b>saas</b> — <b>VAT report</b> · <code>useVatReport()</code> · must render <code>covers: "output_vat_only"</code> honestly — sales only, not a filable return</li>
-      <li><b>saas</b> — <b>Company edit form</b> · <code>useUpdateCompany()</code> + <code>useCompanyValidation()</code> · per-field VAT/IBAN/BIC verdicts inline, <code>missing_for_peppol</code> shown as what blocks e-invoicing</li>
-      <li><b>saas</b> — <b>Credit notes</b> · fully wired for months; cheapest feature on the board</li>
-      <li><b>saas</b> — <b>Client 360 header</b> · <code>useClientStats()</code> + <code>useClientTimeline()</code></li>
-      <li><b>saas</b> — <b>Payments and invoice reports</b> · <code>usePaymentsList()</code>, <code>useInvoiceReport()</code> · kill the browser-side aggregation</li>
-      <li><b>saas</b> — <b>Duplicate button</b>, <b>VAT-rate and template pickers</b>, <b>Catalog Services / Archived</b> · and delete the hardcoded <code>21/12/6/0</code></li>
+      <li><b>saas</b> — <b>VAT report</b>, <b>Company edit form</b>, <b>Credit notes</b>, <b>Client 360</b> · the last two were already built when v0.9 listed them as gaps</li>
+      <li><b>saas</b> — <b>Payments report</b> · <code>usePaymentsList()</code> · prints no total, deliberately: there is no <code>/reports/payments</code>, and summing rows in a component is money arithmetic nobody tested</li>
+      <li><b>saas</b> — <b>Invoices report</b> · <code>useInvoiceReport()</code> · the node claimed this "would have to be tallied in the browser", which was true of <code>/invoices</code> and never true of <code>/reports/invoices</code></li>
+      <li><b>saas</b> — <b>Duplicate button</b>, <b>VAT-rate picker</b>, <b>Catalog server filters</b> · the hardcoded <code>21/12/6/0</code> is gone; <code>GET /vat-rates</code> owns the list</li>
     </ul>
+    <p><strong>The pattern worth naming:</strong> four of these were described in this document as blocked
+    on a backend that had already shipped. A gap ledger is only as true as its last reading, and nothing
+    re-reads it automatically. That is what §14's orphan table is for.</p>
   </div>
 
   <div class="sprint">
-    <div class="sprint__h"><span class="sprint__n">STEP 3</span><span class="sprint__t">The entitlement UI — it gates everything commercial</span></div>
-    <p>In the working tree and uncommitted as of this revision: <code>entitlements.ts</code>, <code>UsagePanel</code>, <code>PlansPanel</code>, <code>UpgradeDialog</code>, <code>FeatureValue</code>, <code>EntitlementBoundary</code>. The shape to hold to (<a href="#entitlements">§16</a>):</p>
-    <ul class="task">
-      <li><b>saas</b> — one generic 402 handler at the React Query mutation boundary, reading <code>required_tier</code>, <code>feature</code> and <code>message</code> off the error. <strong>No per-feature payment logic anywhere in React</strong> — that is the whole point of the 402 contract</li>
-      <li><b>saas</b> — usage meters from <code>useEntitlements()</code>: "7 of 10 invoices this month", shown <em>before</em> the ceiling is hit</li>
-      <li><b>saas</b> — plan badges and disabled states from <code>features</code>. UX only: the server refuses independently</li>
-      <li><b>saas</b> — pricing screen from <code>usePlans()</code>; the full matrix is served, so there is no second copy to maintain in TypeScript</li>
-    </ul>
+    <div class="sprint__h"><span class="sprint__n">STEP 3</span><span class="sprint__t">The entitlement UI</span><span class="chip c-done">done 2026-08-26</span></div>
+    <p>Shipped as described: one generic 402 handler at the React Query boundary
+    (<code>EntitlementBoundary</code>), usage meters from <code>useEntitlements()</code>, plan screen from
+    <code>GET /plans</code> so the matrix has no second copy in TypeScript. <strong>No panel, hook or button
+    in either shell contains payment logic</strong>, which was the point of the uniform 402 body.</p>
+    <p class="warn"><strong>Never seen in a browser.</strong> <code>scripts/dev_desktop_api.py</code> runs
+    with <code>DESKTOP_MODE=true</code>, and <code>_exempt()</code> exempts desktop mode from every
+    entitlement check — the same flag that provides credential-less login. The upgrade dialog is covered by
+    unit tests against a real 402 body and by nothing else. The fix is a second dev pair in non-desktop mode,
+    not a change to <code>_exempt</code>.</p>
   </div>
 
   <div class="sprint">
@@ -1360,7 +1394,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
       <text class="bt" x="54" y="153">Information architecture registry</text>
       <text class="bp" x="54" y="168">frontend-react/src/scaffold/ia.ts</text>
       <text class="bs" x="470" y="153">Drives nav, routes, status badges and the scaffold treatment.</text>
-      <text class="bs" x="470" y="168">130 nodes · 115 leaves · 23 wired · 31 partial · 61 none · 170 declared gaps</text>
+      <text class="bs" x="470" y="168">130 nodes · 114 leaves · 30 wired · 26 partial · 58 none · 159 declared gaps</text>
 
       <!-- 3 HTTP -->
       <path class="fl" d="M446 180 L446 224" marker-end="url(#ar)"/>
@@ -1464,8 +1498,8 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
   <div class="grid g3">
     <div class="stat">
       <p class="stat__k">Declared gaps</p>
-      <p class="stat__v" style="color:var(--gap)">170</p>
-      <p class="stat__n">distinct, across 181 references</p>
+      <p class="stat__v" style="color:var(--gap)">159</p>
+      <p class="stat__n">distinct, across 170 references</p>
     </div>
     <div class="stat">
       <p class="stat__k">Nodes carrying debt</p>
@@ -1481,7 +1515,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
 
   <div class="note">
     <p><strong>Where this lives, and why it was invisible.</strong> Each node in <code>frontend-react/src/scaffold/ia.ts</code> carries an optional <code>missing: string[]</code> — the endpoints the server would have to grow for that screen to be real. 85 nodes carry one, down from 93. That is machine-readable, it is enforced, and it is why a screen renders as a scaffold rather than as a lie.</p>
-    <p>What did not exist was the join. <a href="#path">§07</a> lists 38 punch items at engineering altitude — "list filters", "expose existing rules". <a href="#overview">§00</a> quotes 170 as a bare number. Neither told you which button on which screen was waiting on which endpoint. The tables below are that join, derived from <code>ia.ts</code>.</p>
+    <p>What did not exist was the join. <a href="#path">§07</a> lists 38 punch items at engineering altitude — "list filters", "expose existing rules". <a href="#overview">§00</a> quotes 159 as a bare number. Neither told you which button on which screen was waiting on which endpoint. The tables below are that join, derived from <code>ia.ts</code>.</p>
   </div>
 
   <h3>The ten endpoints that unblock the most screens</h3>
@@ -1506,7 +1540,11 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
   </div>
 
   <div class="note note--warn">
-    <p><strong>Both v0.8 orphans are closed.</strong> <code>POST /invoices/{id}/duplicate</code> shipped, and <code>GET /alerts</code> is now <code>BGEN-API-06</code> in <a href="#path">§07</a>.</p>
+    <p><strong>Re-derived 2026-08-27, and the fan-out order did not move.</strong> The top eight are
+      unchanged: blob storage and the <code>Document</code> model each block three screens, drafted legal text
+      blocks three more, and <code>POST /invoices/{id}/send</code> plus email transport block four between
+      them. What fell out of the table is <code>POST /invoices/{id}/duplicate</code> — not because the debt
+      was paid this session, but because it had been paid months ago and the screen finally consumed it</p>
     <p><strong>Read the fan-out column carefully — it fell, and not because work was done.</strong> v0.8 counted a section node's debt against each of its children, so <code>GET /alerts</code> read as seven screens. This table counts only the nodes that actually declare the capability. The debt did not shrink by six screens; the measurement got stricter. What the flattened numbers show is the real shape: <strong>no single missing endpoint blocks more than three screens any more.</strong> There is no keystone left to pull. What is left is B1, B2, and a long tail — which is a worse position for a planner and a better one for the product, because it means the structural work is finished.</p>
   </div>
 
@@ -1558,7 +1596,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
         <tr><td><code>db/</code></td><td class="num">30</td><td class="ev">SQLAlchemy models and the Alembic migration history. The concrete implementation behind <code>core/repository/</code>'s abstract ports.</td><td class="ev">Nothing persists. The domain would run entirely in memory.</td></tr>
         <tr><td><code>tests/</code></td><td class="num">51</td><td class="ev">298 backend tests. Includes the palette guard test and the icon-grammar guard test, both build-failing.</td><td class="ev">The brand decisions at <code>4e39460</code> and <code>81d2c66</code> become suggestions rather than rules.</td></tr>
         <tr><td><code>henrioutai-ui/</code></td><td class="num">87</td><td class="ev"><strong>The design system, and the only place components are edited.</strong> 74 exports, <code>tokens.css</code>, three vendored font files. Its own package, MIT, public-ready.</td><td class="ev">Every frontend loses its component vocabulary. <code>@billgen/ui</code> re-exports this; it holds nothing of its own.</td></tr>
-        <tr><td><code>frontend-react/</code></td><td class="num">61</td><td class="ev"><strong>Holds <code>src/scaffold/ia.ts</code> — the source of truth</strong> for nav, routes, status and the 170 gaps in §14. Also the scaffold kit that renders unwired areas as deliberately ugly.</td><td class="ev">No frontend knows what screens exist. This is the highest-leverage file in the repository.</td></tr>
+        <tr><td><code>frontend-react/</code></td><td class="num">61</td><td class="ev"><strong>Holds <code>src/scaffold/ia.ts</code> — the source of truth</strong> for nav, routes, status and the 159 gaps in §14. Also the scaffold kit that renders unwired areas as deliberately ugly.</td><td class="ev">No frontend knows what screens exist. This is the highest-leverage file in the repository.</td></tr>
         <tr><td><code>frontend-saas/</code></td><td class="num">20</td><td class="ev">L3, the active surface. React 19 + Vite + react-router. Thin — it composes <code>henrioutai-ui</code> against <code>ia.ts</code>.</td><td class="ev">The web product. Thin by design: the weight lives in the two directories above.</td></tr>
         <tr><td><code>frontend-electron/</code></td><td class="num">39</td><td class="ev">L4, the Tauri desktop shell. Own local SQLite in <code>%APPDATA%</code>, auto-login, no sync. Despite the name it is Tauri, not Electron.</td><td class="ev">The desktop product. Currently mounts 17 components and consumes no IA.</td></tr>
         <tr><td><code>infra/</code> · <code>desktop/</code> · <code>scripts/</code></td><td class="num">13</td><td class="ev">Compose and deployment config; the desktop packaging target; two generators — <code>generate_brand_assets.py</code> (writes <code>assets/brand/</code>) and <code>generate_peppol_samples.py</code>.</td><td class="ev">Deployment and asset regeneration become manual.</td></tr>
@@ -1778,8 +1816,82 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
   </div>
 </section>
 
+<!-- ===================================================== DECISIONS -->
+<section id="decisions">
+  <div class="sechead">
+    <span class="sechead__id">&#167;17</span>
+    <h2>Decisions of Record</h2>
+    <p class="sechead__sub">Four rulings this document had no section for. The board is <code>ROADMAP_IA.md</code>; this is the summary an architecture reader needs.</p>
+  </div>
+
+  <p class="lede">Three were taken on 2026-08-27 and one is the correction that produced them. They are here
+  because each one changes how a number elsewhere in this document should be read.</p>
+
+  <h3>&#167;11b &mdash; the navigation is not the coverage map</h3>
+  <p>Until this session, <code>routableNodes()</code> generated the router straight from <code>ia.ts</code>,
+  so <em>a node exists</em> and <em>a node is a destination</em> were one statement. That was correct while
+  the product was half-built: <code>SectionIndex</code> counting wired areas and <code>ScaffoldPage</code>
+  naming the endpoint each gap waits for are <strong>build-time instruments</strong>, and they earned their
+  place. They stop earning it as the gaps close. Company was the proof &mdash; nine nav entries over one
+  <code>PATCH</code> against one row.</p>
+
+  <div class="note">
+    <p><strong>The rule.</strong> A nav destination is a place you go <em>before</em> you know which record
+    you want. Anything that only means something <em>after</em> you have picked one belongs inside that
+    record. Not &ldquo;remove the repetition&rdquo; &mdash; repetition is the symptom; the cut is list vs
+    record.</p>
+  </div>
+
+  <p><strong>The mechanism, and why it does not move any number above.</strong> <code>IaNode</code> gained
+  <code>nav?: boolean</code> and <code>mergedInto?: string</code>. A hidden node keeps its path, its status
+  and its place in <code>coverage()</code>; it loses only the door, and <code>mergedInto</code> makes the old
+  URL redirect rather than 404. <code>routableNodes()</code>, <code>coverage()</code> and
+  <code>missingEndpoints()</code> still read the whole tree, which is why <a href="#status">&#167;01</a>
+  counts 114 leaves with 15 of them curated out of the nav. A guard test asserts exactly that: curating must
+  never change a coverage number.</p>
+
+  <p><strong>Applied to two sections, proposed for ten.</strong> Company is 9 entries &rarr; 1 (the section
+  landing <em>is</em> the record, and the three areas blocked on a model are scaffold blocks inside it).
+  Clients is 7 &rarr; 3. The remaining sections have a written proposal in &#167;11b &mdash; roughly 100 nav
+  entries down to 45 &mdash; and are built by nobody pending a decision.</p>
+
+  <p class="warn"><strong>What the rule caught on its first day.</strong> &ldquo;Client 360&rdquo; was a
+  Clients menu entry whose path is <code>customers/clients/:clientId</code>, so clicking it navigated to that
+  literal string. Invoice detail was the same, and the command palette had the bug one layer down. Nobody had
+  noticed, because the way to a record is to click a row &mdash; which is the rule, arriving as a bug before
+  it arrived as a principle.</p>
+
+  <h3>&#167;11c &mdash; comments must not ship, and must not be deleted</h3>
+  <p>The published artifact should not read as a guided tour of how the product works; the comments are also
+  the reason a session can resume where the last one stopped. So: <strong>strip on export, never in the
+  tree.</strong> The exposure is narrower than it looks &mdash; a private repo is unreadable, and the SaaS
+  bundle is already clean because Vite minifies with esbuild and ships no sourcemap. The Electron artifact is
+  the real one: <code>app.asar</code> unpacks trivially, and a bundled Python backend is source.</p>
+  <p><strong>The trap:</strong> docstrings here are not comments. FastAPI and Pydantic publish them &mdash; a
+  class docstring becomes the OpenAPI <code>description</code>, which generates <code>api.d.ts</code>. Strip
+  <code>#</code> comments freely; spare schema and route docstrings or the API documents itself into silence.</p>
+
+  <h3>&#167;11d &mdash; what &ldquo;safely deletable&rdquo; means in this tree</h3>
+  <p>Three jobs keep being bundled and belong apart: <em>not writing the code</em> (a write-time discipline),
+  <em>finding what is genuinely unused</em> (<code>knip</code> / <code>vulture</code> &mdash; zero tokens,
+  objective, repeatable), and <em>keeping comments out of the artifact</em> (&#167;11c). An over-engineering
+  audit pointed at this tree will flag the instruments the project is steered by: the scaffold kit, the
+  never-rendered components, IA nodes with no screen, the comments, and four languages with a key guard but
+  no usage guard. A deletion is safe when the guard tests stay green <em>and</em> the deleted thing is not one
+  of those five.</p>
+
+  <h3>Peppol &mdash; the gap is transmission, not validation</h3>
+  <p>Corrected 2026-08-27, and it changes how <a href="#compliance">&#167;08</a> reads. The XML is not the open
+  question: the predecessor demo's PDF &rarr; Peppol path was exercised with a real user, and schematron
+  passes here. What does not exist is <strong>sending from inside the application</strong> rather than handing
+  a file to a portal. You do not need to <em>be</em> an Access Point &mdash; reselling one turns the
+  interoperability risk into procurement, and that vendor's per-document price sets this product's price
+  floor. Onboarding is contractual and measured in weeks, so it is a clock to start in parallel with the
+  roadmap, never a step sequenced after it.</p>
+</section>
+
 <footer>
-  BillGen System Architecture v0.9 · regenerated 2026-08-26 against <code>aef79c3</code> ·
+  BillGen System Architecture v0.10 · regenerated 2026-08-27 against <code>2a83ccb</code> ·
   IA counts derived from <code>frontend-react/src/scaffold/ia.ts</code>, endpoint counts read from <code>api/routers/</code> ·
   regenerate the IA report with <code>npx vitest run --root frontend-react src/scaffold/report.test.ts</code>
 </footer>
