@@ -959,6 +959,60 @@ removal.
 
 ---
 
+## 11d. Ponytail, trimming, and what "safely deletable" means here (added 2026-08-27)
+
+**[Ponytail](https://github.com/DietrichGebert/ponytail)** is an agent plugin —
+a "lazy senior developer" discipline that makes an agent climb a ladder (does it
+need to exist? already in the codebase? in the standard library? one line?)
+before writing anything, plus `/ponytail-review` on a diff, `/ponytail-audit` on
+a repo, and `/ponytail-debt` for deferred cleanups. Its headline numbers (54%
+less code, 20% cheaper) are the project's own benchmarks, not measurements taken
+here.
+
+**Where it fits: write time, not export time.** Three jobs keep getting bundled
+together and they belong apart:
+
+| Job | Owner | Cost |
+|---|---|---|
+| Don't write the code in the first place | Ponytail, at `lite` or `full` | prompt overhead |
+| Find what is genuinely unused | `knip` / `ts-prune` (TS), `vulture` + `ruff F401` (Python) | zero tokens, objective, repeatable |
+| Keep comments out of the shipped artifact | `scripts/export_release.py` (§11c) | zero tokens |
+
+Only the first is Ponytail's. Reaching for an agent to do the second is paying
+model tokens for what a static analyser answers exactly.
+
+### The guardrail this repo specifically needs
+
+An over-engineering audit pointed at this tree will flag things that are
+deliberate, and deleting them would remove the instruments the project is
+steered by:
+
+- **`frontend-react/src/scaffold/`** — unstyled placeholders that exist to make
+  gaps loud. §13 says they go when `coverage().percent` reads 100, not before.
+- **The 31 never-rendered components** (§10) — built ahead of their screens, on
+  purpose. Unrendered is not unused.
+- **`ia.ts` nodes with no screen** — the coverage ledger. A node without a route
+  is the point, not an orphan.
+- **The long comments** — the reason a session can resume. They are stripped on
+  export (§11c) and never in the tree.
+- **Translations for languages not yet exercised** — `translations.test.ts`
+  guards keys, not usage; four languages are a product requirement.
+
+So the integration is: install it, run it at a modest level, and hand it a
+written note of what is deliberate. Treat every "delete this" as a hypothesis
+that the existing guard tests then falsify or confirm.
+
+### What actually makes a deletion safe here
+
+The safety net already exists and is cheap to run: `translations.test.ts` (every
+key any screen asks for), `ia.test.ts`, `routes.test.ts`, `tokens.test.ts`,
+`report.test.ts`, plus 132 frontend and 298 Python tests. A deletion is safe when
+those stay green **and** the deleted thing is not one of the five categories
+above. Neither half is optional: the tests do not know that an unrendered
+component is deliberate, and the list above does not know what a delete breaks.
+
+---
+
 ## 12. Where the full audit lives
 
 The complete cross-frontend audit — coverage matrices, repo-aligned backend

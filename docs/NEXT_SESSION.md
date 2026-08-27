@@ -133,6 +133,13 @@ Untouched and blocks on nothing — see [ROADMAP_IA.md §7](ROADMAP_IA.md).
    docstring trap: FastAPI/Pydantic docstrings are published as the OpenAPI
    `description` and generate `api.d.ts`.
 
+9. **Ponytail + dead-code policy** — [ROADMAP_IA §11d](ROADMAP_IA.md).
+   Ponytail is write-time discipline; finding unused code is `knip`/`vulture`'s
+   job, not an agent's. Before any audit runs, hand it the list of what is
+   deliberate here (the scaffold kit, the 31 unrendered components, IA nodes
+   with no route, the comments, the four languages) — otherwise it will
+   correctly identify the project's own instruments as waste.
+
 ## 4. Backend still open, in rough value order
 
 - **B1 — email.** Highest fanout in the product: password reset, verification,
