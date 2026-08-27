@@ -112,7 +112,19 @@ export {
 } from "./panels/InvoiceDetailPanel";
 export { ImportPanel } from "./panels/ImportPanel";
 export { InvoiceBuilderPanel } from "./panels/InvoiceBuilderPanel";
-export { ProductsPanel } from "./panels/ProductsPanel";
+export { ProductsPanel, type ProductsPanelProps } from "./panels/ProductsPanel";
+export {
+  InvoicesReportPanel,
+  type InvoicesReportPanelProps,
+} from "./panels/InvoicesReportPanel";
+export {
+  usePeriodPicker,
+  type PeriodPickerOptions,
+} from "./panels/PeriodPicker";
+export {
+  PaymentsReportPanel,
+  type PaymentsReportPanelProps,
+} from "./panels/PaymentsReportPanel";
 export {
   ReceivablesPanel,
   type ReceivablesMode,

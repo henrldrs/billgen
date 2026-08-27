@@ -1,4 +1,5 @@
 import { screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
@@ -190,4 +191,53 @@ test("a missing invoice explains itself and offers the way back", async () => {
   const alert = await screen.findByRole("alert");
   expect(within(alert).getByText(/could not be loaded/)).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Back to invoices" })).toBeInTheDocument();
+});
+
+test("duplicate copies the invoice into a new draft and follows it", async () => {
+  const user = userEvent.setup();
+  const seen: string[] = [];
+  stubDetail();
+  server.use(
+    http.post(`${BASE}/invoices/inv-1/duplicate`, () => {
+      seen.push("inv-1");
+      return HttpResponse.json(invoiceRecord("inv-2", null, { lines: [LINE] }));
+    }),
+    http.get(`${BASE}/invoices/inv-2`, () =>
+      HttpResponse.json(invoiceRecord("inv-2", null, { lines: [LINE] })),
+    ),
+  );
+
+  const followed: string[] = [];
+  renderWithProvider(
+    <InvoiceDetailPanel invoiceId="inv-1" onDuplicated={(id) => followed.push(id)} />,
+  );
+
+  await user.click(await screen.findByRole("button", { name: "Duplicate" }));
+
+  // The copy is a different record, so staying put would show the original
+  // while claiming something was created.
+  await vi.waitFor(() => expect(followed).toEqual(["inv-2"]));
+  expect(seen).toEqual(["inv-1"]);
+});
+
+test("duplicate is offered on a voided invoice, unlike every other action", async () => {
+  // Re-issuing after a void is the reason the button has no state condition:
+  // the lifecycle actions are all gone here, and copying is still the right
+  // move — arguably the only one left.
+  server.use(
+    http.get(`${BASE}/invoices/inv-1`, () =>
+      HttpResponse.json(
+        invoiceRecord("inv-1", "ACME-BC07012026", { lines: [LINE], status: "voided" }),
+      ),
+    ),
+    http.get(`${BASE}/clients/c-1`, () => HttpResponse.json(clientRecord())),
+    http.get(`${BASE}/payments`, () => HttpResponse.json([])),
+    http.get(`${BASE}/activity`, () => HttpResponse.json([])),
+  );
+
+  renderWithProvider(<InvoiceDetailPanel invoiceId="inv-1" />);
+
+  expect(await screen.findByRole("button", { name: "Duplicate" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Void" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Issue" })).not.toBeInTheDocument();
 });

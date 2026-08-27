@@ -27,8 +27,10 @@ import {
   ImportPanel,
   InvoiceBuilderPanel,
   InvoiceDetailPanel,
+  InvoicesReportPanel,
   List,
   PageHeader,
+  PaymentsReportPanel,
   PlansPanel,
   ProductsPanel,
   ReceivablesPanel,
@@ -447,6 +449,7 @@ const BUILT: Record<string, Screen> = {
         onBack={() => navigate("/app/sales/invoices")}
         onOpenClient={(clientId) => navigate(`/app/customers/clients/${clientId}`)}
         onDeleted={() => navigate("/app/sales/invoices")}
+        onDuplicated={(copyId) => navigate(`/app/sales/invoices/id/${copyId}`)}
       />
     );
   },
@@ -464,6 +467,14 @@ const BUILT: Record<string, Screen> = {
   },
   "catalog/products": ({ companyId, lang }) => (
     <ProductsPanel companyId={companyId} lang={lang} />
+  ),
+
+  // catalog — Archived is the SAME screen with the status filter preset, not a
+  // second list. GET /products?status makes that a server query; the filter
+  // control stays visible, so the view is a starting point rather than a
+  // separate place with its own idea of what a product is.
+  "catalog/archived": ({ companyId, lang }) => (
+    <ProductsPanel companyId={companyId} lang={lang} status="archived" />
   ),
 
   // customers — the audit trail for client RECORDS. Wired since /activity grew
@@ -511,6 +522,27 @@ const BUILT: Record<string, Screen> = {
           onOpenInvoice={(invoiceId) => navigate(`/app/sales/invoices/id/${invoiceId}`)}
         />
       </>
+    );
+  },
+
+  // reports — invoices. The node carried "would have to be tallied in the
+  // browser, which is why this stays scaffolded" long after /reports/invoices
+  // shipped. Every figure on the screen is that endpoint's.
+  "reports/invoices": ({ companyId, lang }) => (
+    <InvoicesReportPanel companyId={companyId} lang={lang} />
+  ),
+
+  // reports — payments. The last report over an endpoint that already existed:
+  // /payments takes company_id and a paid_on window, and nothing asked it for
+  // more than one invoice at a time until now.
+  "reports/payments": ({ companyId, lang }) => {
+    const navigate = useNavigate();
+    return (
+      <PaymentsReportPanel
+        companyId={companyId}
+        lang={lang}
+        onOpenInvoice={(invoiceId) => navigate(`/app/sales/invoices/id/${invoiceId}`)}
+      />
     );
   },
 

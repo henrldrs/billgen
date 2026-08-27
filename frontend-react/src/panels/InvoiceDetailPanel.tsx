@@ -14,7 +14,7 @@
  *  including payments (core/services/payment_service.py). So the timeline is
  *  real audit data, not a three-step fiction reconstructed from status.
  *
- *  Still not real, and still stated as such on the page: send and duplicate.
+ *  Still not real, and still stated as such on the page: send.
  *
  *  No arithmetic. subtotal/discount/VAT/total are printed exactly as the
  *  server froze them at issue time, and per-line amounts are NOT shown at all
@@ -59,6 +59,7 @@ import {
   useIssueInvoice,
   usePayments,
   useRecordPayment,
+  useDuplicateInvoice,
   useVoidInvoice,
 } from "../hooks/queries";
 import { ApiError } from "../lib/apiClient";
@@ -91,6 +92,10 @@ export interface InvoiceDetailPanelProps {
   onOpenClient?: (clientId: string) => void;
   /** Called after the draft this screen shows has been deleted. */
   onDeleted?: () => void;
+  /** Called with the new draft's id after this invoice was duplicated. The
+   *  copy is a different record, so a screen that stayed put would be showing
+   *  the original while claiming something was created. */
+  onDuplicated?: (invoiceId: string) => void;
 }
 
 export function InvoiceDetailPanel({
@@ -99,6 +104,7 @@ export function InvoiceDetailPanel({
   onBack,
   onOpenClient,
   onDeleted,
+  onDuplicated,
 }: InvoiceDetailPanelProps) {
   const api = useApi();
   const invoice = useInvoice(invoiceId);
@@ -109,6 +115,7 @@ export function InvoiceDetailPanel({
   const issueInvoice = useIssueInvoice();
   const deleteInvoice = useDeleteInvoice();
   const voidInvoice = useVoidInvoice();
+  const duplicateInvoice = useDuplicateInvoice();
   const issueCreditNote = useIssueCreditNote();
   const recordPayment = useRecordPayment();
 
@@ -219,10 +226,14 @@ export function InvoiceDetailPanel({
     issueInvoice.isPending ||
     deleteInvoice.isPending ||
     voidInvoice.isPending ||
+    duplicateInvoice.isPending ||
     issueCreditNote.isPending ||
     recordPayment.isPending;
   const actionFailed =
-    voidInvoice.isError || issueCreditNote.isError || recordPayment.isError;
+    voidInvoice.isError ||
+    duplicateInvoice.isError ||
+    issueCreditNote.isError ||
+    recordPayment.isError;
 
   return (
     <section className="bg-stack" aria-label={title}>
@@ -296,6 +307,9 @@ export function InvoiceDetailPanel({
                 onVoid={() => setAction("void")}
                 onCreditNote={() => setAction("credit_note")}
                 onPayment={() => setAction("payment")}
+                onDuplicate={() => duplicateInvoice.mutate(invoiceId, {
+                  onSuccess: (copy) => onDuplicated?.(copy.id),
+                })}
               />
             }
           />
@@ -669,6 +683,7 @@ function ActionsCard({
   onVoid,
   onCreditNote,
   onPayment,
+  onDuplicate,
 }: {
   lang: Lang;
   isDraft: boolean;
@@ -681,6 +696,7 @@ function ActionsCard({
   onVoid: () => void;
   onCreditNote: () => void;
   onPayment: () => void;
+  onDuplicate: () => void;
 }) {
   const detail = findByPath("sales/invoices/id/:invoiceId");
   return (
@@ -717,22 +733,29 @@ function ActionsCard({
             </Button>
           </>
         ) : null}
+
+        {/* The only action here that is not about this invoice's lifecycle, and
+            so the only one with no state condition: a draft, a paid invoice and
+            a voided one are all worth copying — the last one especially, since
+            re-issuing after a void is exactly why you would. It consumes no
+            number, because the copy is a draft. */}
+        <Button variant="secondary" disabled={pending} onClick={onDuplicate}>
+          {t(lang, "history.duplicate")}
+        </Button>
       </div>
 
       {detail ? (
         <>
           <Divider />
-          {/* The two actions that are still fiction stay in the scaffold kit
-              rather than becoming disabled real buttons — a greyed-out Send
-              reads as "not yet allowed", not as "does not exist". */}
+          {/* The one action still fiction stays in the scaffold kit rather than
+              becoming a disabled real button — a greyed-out Send reads as "not
+              yet allowed", not as "does not exist". Duplicate used to stand
+              beside it and no longer does: POST /invoices/{id}/duplicate had
+              shipped, so the scaffold was describing a gap that had closed. */}
           <ScaffoldBlock
             node={detail}
             title="Delivery"
-            missing={[
-              "POST /invoices/{id}/send",
-              "POST /invoices/{id}/duplicate",
-              "email transport",
-            ]}
+            missing={["POST /invoices/{id}/send", "email transport"]}
           >
             <ScaffoldNote>
               Sending needs an email transport, and InvoiceStatus has no SENT or
@@ -740,9 +763,6 @@ function ActionsCard({
               nothing for a Send button to change.
             </ScaffoldNote>
             <ScaffoldButton wouldDo="email this invoice to the client">Send</ScaffoldButton>
-            <ScaffoldButton wouldDo="copy this invoice into a new draft">
-              Duplicate
-            </ScaffoldButton>
           </ScaffoldBlock>
         </>
       ) : null}

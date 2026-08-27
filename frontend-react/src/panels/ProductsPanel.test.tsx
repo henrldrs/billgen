@@ -68,3 +68,45 @@ test("creates a product through the form", async () => {
   expect(await screen.findByText("Audit day")).toBeInTheDocument();
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 });
+
+test("the filters are query parameters, not a slice of a fetched list", async () => {
+  // The distinction the panel's own comment is about: a browser-side filter
+  // keeps working until the catalog outgrows one response and then quietly
+  // stops finding things. So the assertion is on the REQUEST.
+  const user = userEvent.setup();
+  const asked: string[] = [];
+  server.use(
+    http.get(`${BASE}/products`, ({ request }) => {
+      const url = new URL(request.url);
+      asked.push(`${url.searchParams.get("status") ?? "-"}/${url.searchParams.get("billing_type") ?? "-"}`);
+      return HttpResponse.json([productRecord("p-1", "Consulting day")]);
+    }),
+  );
+
+  renderWithProvider(<ProductsPanel companyId={COMPANY_ID} />);
+  expect(await screen.findByText("Consulting day")).toBeInTheDocument();
+
+  await user.selectOptions(screen.getByLabelText("Status"), "archived");
+  await vi.waitFor(() => expect(asked).toContain("archived/-"));
+
+  await user.selectOptions(screen.getByLabelText("Billing type"), "hourly");
+  await vi.waitFor(() => expect(asked).toContain("archived/hourly"));
+});
+
+test("the archived view is the same screen with the filter preset", async () => {
+  // Not a second list: the control is still there, so the preset is a starting
+  // point and a user can leave it without changing screens.
+  const asked: string[] = [];
+  server.use(
+    http.get(`${BASE}/products`, ({ request }) => {
+      asked.push(new URL(request.url).searchParams.get("status") ?? "-");
+      return HttpResponse.json([productRecord("p-2", "Retired offer", { status: "archived" })]);
+    }),
+  );
+
+  renderWithProvider(<ProductsPanel companyId={COMPANY_ID} status="archived" />);
+
+  expect(await screen.findByText("Retired offer")).toBeInTheDocument();
+  expect(asked).toEqual(["archived"]);
+  expect(screen.getByLabelText("Status")).toHaveValue("archived");
+});

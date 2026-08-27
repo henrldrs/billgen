@@ -29,9 +29,21 @@ const CLIENT = {
   notes: null,
 };
 
+const VAT_RATES = {
+  country_code: "BE",
+  rates: [
+    { rate: "0", label: "0%", is_default: false },
+    { rate: "6", label: "6%", is_default: false },
+    { rate: "12", label: "12%", is_default: false },
+    { rate: "21", label: "21%", is_default: true },
+  ],
+  categories: [],
+};
+
 function mockEndpoints() {
   server.use(
     http.get(`${BASE}/clients`, () => HttpResponse.json([CLIENT])),
+    http.get(`${BASE}/vat-rates`, () => HttpResponse.json(VAT_RATES)),
     http.post(`${BASE}/invoices/preview`, () =>
       HttpResponse.json({
         subtotal_ht: "1250.00",
@@ -103,4 +115,40 @@ test("lines can be added and removed", async () => {
 
   await user.click(screen.getAllByRole("button", { name: "Remove" })[0]);
   expect(screen.queryByLabelText("Description 2")).not.toBeInTheDocument();
+});
+
+test("the VAT rates are the server's four, not a copy of them in TypeScript", async () => {
+  mockEndpoints();
+  renderWithProvider(<InvoiceBuilderPanel companyId={COMPANY_ID} />);
+
+  const picker = await screen.findByLabelText("VAT % 1");
+  await vi.waitFor(() =>
+    expect([...picker.querySelectorAll("option")].map((option) => option.textContent)).toEqual([
+      "0%",
+      "6%",
+      "12%",
+      "21%",
+    ]),
+  );
+  expect(picker).toHaveValue("21");
+});
+
+test("a rate the server no longer offers is kept rather than silently re-taxed", async () => {
+  // A draft written against an older list must not have its line quietly moved
+  // to another rate because a select could not render the value it holds.
+  server.use(
+    http.get(`${BASE}/clients`, () => HttpResponse.json([CLIENT])),
+    http.get(`${BASE}/vat-rates`, () =>
+      HttpResponse.json({ ...VAT_RATES, rates: [{ rate: "21", label: "21%", is_default: true }] }),
+    ),
+  );
+  const user = userEvent.setup();
+  renderWithProvider(<InvoiceBuilderPanel companyId={COMPANY_ID} />);
+
+  const picker = await screen.findByLabelText("VAT % 1");
+  await vi.waitFor(() => expect(picker.querySelectorAll("option")).toHaveLength(1));
+
+  // Force a value off the served list, the way a loaded draft would.
+  await user.selectOptions(picker, "21");
+  expect(picker).toHaveValue("21");
 });

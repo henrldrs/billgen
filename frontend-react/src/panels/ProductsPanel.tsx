@@ -4,12 +4,13 @@
  *  screen ever called it: the catalog was create-and-forget. The record drawer
  *  below is that missing half.
  *
- *  What is deliberately NOT here: a status or billing-type filter. The model
- *  carries both fields, GET /products takes neither, and filtering a fully
- *  fetched list in the browser would be a control that lies about where the
- *  work happens — it would break the moment the catalog outgrows one response.
- *  Those filters belong to `GET /products?status&billing_type`, which does not
- *  exist yet (see catalog.services / catalog.archived in scaffold/ia.ts).
+ *  The status and billing-type filters are SERVER filters. They were left out
+ *  entirely while GET /products took no parameters, because a control that
+ *  filters one fetched page is a control that lies about where the work
+ *  happens — it keeps working right up to the day the catalog outgrows a
+ *  single response, and then quietly stops finding things. `?status` and
+ *  `?billing_type` shipped with B3, so the filter is real: changing one
+ *  re-queries, and the row count below is the server's answer, not a slice.
  */
 
 import { useMemo, useState, type FormEvent } from "react";
@@ -50,6 +51,12 @@ const PRODUCT_STATUSES = ["active", "archived", "draft"] as const;
 export interface ProductsPanelProps {
   companyId: string;
   lang?: Lang;
+  /** Preselect the status filter — `catalog/archived` is this screen with
+   *  `status="archived"`, not a second list. The control stays visible and
+   *  usable; this only says where it starts. */
+  status?: string;
+  /** Same, for billing type. */
+  billingType?: string;
 }
 
 interface ProductDraft {
@@ -84,8 +91,24 @@ function draftOf(product: ProductResponse): ProductDraft {
   };
 }
 
-export function ProductsPanel({ companyId, lang = "en" }: ProductsPanelProps) {
-  const { data: products, isLoading, isError, refetch } = useProducts(companyId);
+export function ProductsPanel({
+  companyId,
+  lang = "en",
+  status: initialStatus,
+  billingType: initialBillingType,
+}: ProductsPanelProps) {
+  const [status, setStatus] = useState(initialStatus ?? "");
+  const [billingType, setBillingType] = useState(initialBillingType ?? "");
+  const {
+    data: products,
+    isLoading,
+    isError,
+    refetch,
+  } = useProducts({
+    companyId,
+    status: status || undefined,
+    billingType: billingType || undefined,
+  });
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
 
@@ -241,6 +264,40 @@ export function ProductsPanel({ companyId, lang = "en" }: ProductsPanelProps) {
           <Button onClick={() => setCreateOpen(true)}>{t(lang, "products.add")}</Button>
         }
       />
+
+      <Card>
+        <div className="bg-companyform__grid">
+          <Field label={t(lang, "products.status")}>
+            <Select
+              value={status}
+              options={[
+                { value: "", label: t(lang, "products.anyStatus") },
+                ...PRODUCT_STATUSES.map((value) => ({ value, label: value })),
+              ]}
+              onChange={(event) => {
+                setStatus(event.target.value);
+                setPage(1);
+              }}
+            />
+          </Field>
+          <Field label={t(lang, "products.billingType")}>
+            <Select
+              value={billingType}
+              options={[
+                { value: "", label: t(lang, "products.anyBillingType") },
+                ...BILLING_TYPES.map((value) => ({ value, label: value })),
+              ]}
+              onChange={(event) => {
+                setBillingType(event.target.value);
+                setPage(1);
+              }}
+            />
+          </Field>
+        </div>
+        {status || billingType ? (
+          <p className="bg-companyform__note">{t(lang, "products.filtered")}</p>
+        ) : null}
+      </Card>
 
       <Card padded={false}>
         {isLoading ? (
