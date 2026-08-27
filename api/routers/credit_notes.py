@@ -7,6 +7,7 @@ from core.models import CreditNote
 from core.repository import UnitOfWork
 from core.services import CreditNoteService, PdfService
 
+from ..authz import Permission, require_permission
 from ..deps import current_user_id, get_uow_factory
 from ..entitlements import pdf_branded
 from ..schemas.credit_notes import CreditNoteIssueRequest, CreditNoteResponse
@@ -23,6 +24,7 @@ def issue_credit_note(
     body: CreditNoteIssueRequest,
     user_id: UUID = Depends(current_user_id),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+    _perm: None = Depends(require_permission(Permission.CREDIT_NOTE_WRITE)),
 ):
     credit_note = CreditNoteService(uow_factory).issue(
         invoice_id=body.invoice_id,

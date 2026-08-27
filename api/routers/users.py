@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from core.repository import UnitOfWork
 from core.tenancy import current_organization_id
 
+from ..authz import permissions_for
 from ..deps import current_role, current_user_id, get_uow_factory
 from ..schemas.users import UserMeResponse
 
@@ -28,4 +29,5 @@ def me(
         display_name=user.display_name,
         organization_id=current_organization_id(),
         role=role,
+        permissions=sorted(p.value for p in permissions_for(role)),
     )

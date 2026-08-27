@@ -8,6 +8,7 @@ from core.models import Payment, PaymentMethod
 from core.repository import UnitOfWork
 from core.services import PaymentService
 
+from ..authz import Permission, require_permission
 from ..deps import current_user_id, get_uow_factory
 from ..schemas.payments import (
     PaymentCreateRequest,
@@ -27,6 +28,7 @@ def record_payment(
     body: PaymentCreateRequest,
     user_id: UUID = Depends(current_user_id),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+    _perm: None = Depends(require_permission(Permission.PAYMENT_WRITE)),
 ):
     try:
         method = PaymentMethod(body.method)

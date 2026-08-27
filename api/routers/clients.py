@@ -9,6 +9,7 @@ from core.repository import UnitOfWork
 from core.services import ClientService, ReportingService
 from core.tenancy import current_organization_id
 
+from ..authz import Permission, require_permission
 from ..deps import current_user_id, get_uow_factory
 from ..entitlements import Meter, require_quota
 from ..schemas.clients import ClientCreateRequest, ClientResponse, ClientUpdateRequest
@@ -26,6 +27,7 @@ def create_client(
     body: ClientCreateRequest,
     user_id: UUID = Depends(current_user_id),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+    _perm: None = Depends(require_permission(Permission.CLIENT_WRITE)),
     _quota: None = Depends(require_quota(Meter.CLIENTS)),
 ):
     client = Client(organization_id=current_organization_id(), **body.model_dump())
@@ -54,6 +56,7 @@ def update_client(
     body: ClientUpdateRequest,
     user_id: UUID = Depends(current_user_id),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+    _perm: None = Depends(require_permission(Permission.CLIENT_WRITE)),
 ):
     service = ClientService(uow_factory)
     existing = service.get(client_id)

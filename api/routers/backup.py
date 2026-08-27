@@ -7,6 +7,7 @@ from fastapi import APIRouter, Body, Depends
 from core.repository import UnitOfWork
 from core.services import BackupService
 
+from ..authz import Permission, require_permission
 from ..deps import current_user_id, get_uow_factory
 from ..schemas.backup import RestoreReportResponse
 
@@ -17,6 +18,7 @@ router = APIRouter(prefix="/backup", tags=["backup"])
 def export_backup(
     user_id: UUID = Depends(current_user_id),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+    _perm: None = Depends(require_permission(Permission.BACKUP_EXPORT)),
 ) -> dict[str, Any]:
     """The whole organization as a restorable JSON document (ADR-0003):
     companies, clients, products, invoices, credit notes, payments, the audit
@@ -30,6 +32,7 @@ def restore_backup(
     payload: dict[str, Any] = Body(..., description="A billgen-backup document"),
     user_id: UUID = Depends(current_user_id),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+    _perm: None = Depends(require_permission(Permission.BACKUP_RESTORE)),
 ):
     """Disaster recovery: restore a backup into the current organization.
     Refuses (409) unless the organization has no companies yet — merging into

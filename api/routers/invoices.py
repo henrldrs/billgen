@@ -7,6 +7,7 @@ from core.models import Currency, Discount, Invoice, InvoiceLine, InvoiceStatus,
 from core.repository import UnitOfWork
 from core.services import InvoiceService, PdfService, PeppolService
 
+from ..authz import Permission, require_permission
 from ..deps import current_user_id, get_uow_factory
 from ..entitlements import Meter, pdf_branded, require_peppol_quota, require_quota
 from ..schemas.invoices import (
@@ -81,6 +82,7 @@ def create_invoice(
     body: InvoiceCreateRequest,
     user_id: UUID = Depends(current_user_id),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+    _perm: None = Depends(require_permission(Permission.INVOICE_WRITE)),
     _quota: None = Depends(require_quota(Meter.INVOICES)),
 ):
     """Create a DRAFT invoice — no number is consumed. Finalize it with
@@ -112,6 +114,7 @@ def issue_invoice(
     body: IssueRequest | None = None,
     user_id: UUID = Depends(current_user_id),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+    _perm: None = Depends(require_permission(Permission.INVOICE_ISSUE)),
 ):
     """Issue a draft: consume the gapless number, freeze totals, set ISSUED."""
     body = body or IssueRequest()
@@ -129,6 +132,7 @@ def duplicate_invoice(
     invoice_id: UUID,
     user_id: UUID = Depends(current_user_id),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+    _perm: None = Depends(require_permission(Permission.INVOICE_WRITE)),
     _quota: None = Depends(require_quota(Meter.INVOICES)),
 ):
     """Copy an invoice into a new DRAFT dated today. No number is consumed and
@@ -143,6 +147,7 @@ def delete_invoice(
     invoice_id: UUID,
     user_id: UUID = Depends(current_user_id),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+    _perm: None = Depends(require_permission(Permission.INVOICE_WRITE)),
 ):
     """Hard-delete a DRAFT invoice. Issued invoices return 409 (never deleted)."""
     InvoiceService(uow_factory).delete_draft(invoice_id, actor_user_id=user_id)
@@ -176,6 +181,7 @@ def void_invoice(
     body: VoidRequest,
     user_id: UUID = Depends(current_user_id),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+    _perm: None = Depends(require_permission(Permission.INVOICE_VOID)),
 ):
     return _to_response(
         InvoiceService(uow_factory).void(invoice_id, body.reason, actor_user_id=user_id)

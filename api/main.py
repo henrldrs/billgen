@@ -16,6 +16,7 @@ from db.engine import make_engine
 from db.repositories import SqlAlchemyUnitOfWork
 from db.session import make_session_factory
 
+from .authz import PermissionDeniedError
 from .config import Settings, get_settings, validate_for_boot
 from .entitlements import EntitlementError
 from .logging_config import configure_logging
@@ -91,6 +92,19 @@ def _register_exception_handlers(app: FastAPI) -> None:
         # modal, so the frontend needs one generic handler and no per-feature
         # payment logic anywhere in React.
         return JSONResponse(status_code=402, content=exc.body())
+
+    @app.exception_handler(PermissionDeniedError)
+    async def permission_denied_handler(request: Request, exc: PermissionDeniedError):  # noqa: ANN202
+        # 403 = authenticated, but this person may not do this — whatever the
+        # subscription says. The mirror of the 402 above, and never an upgrade
+        # modal: no amount of money makes a viewer an admin.
+        _access_log.info(
+            "permission_denied",
+            permission=exc.permission.value,
+            role=exc.role,
+            path=request.url.path,
+        )
+        return JSONResponse(status_code=403, content=exc.body())
 
     @app.exception_handler(BusinessRuleError)
     async def business_rule_handler(request: Request, exc: BusinessRuleError):  # noqa: ANN202

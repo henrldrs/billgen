@@ -8,6 +8,7 @@ from core.repository import UnitOfWork
 from core.services import ProductService
 from core.tenancy import current_organization_id
 
+from ..authz import Permission, require_permission
 from ..deps import current_user_id, get_uow_factory
 from ..entitlements import Meter, require_quota
 from ..schemas.products import (
@@ -28,6 +29,7 @@ def create_product(
     body: ProductCreateRequest,
     user_id: UUID = Depends(current_user_id),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+    _perm: None = Depends(require_permission(Permission.PRODUCT_WRITE)),
     _quota: None = Depends(require_quota(Meter.PRODUCTS)),
 ):
     product = Product(organization_id=current_organization_id(), **body.model_dump())
@@ -63,6 +65,7 @@ def update_product(
     body: ProductUpdateRequest,
     user_id: UUID = Depends(current_user_id),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+    _perm: None = Depends(require_permission(Permission.PRODUCT_WRITE)),
 ):
     service = ProductService(uow_factory)
     existing = service.get(product_id)

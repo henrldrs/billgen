@@ -8,6 +8,7 @@ from core.repository import UnitOfWork
 from core.services import CompanyService, validate_company_identifiers
 from core.tenancy import current_organization_id
 
+from ..authz import Permission, require_permission
 from ..deps import current_user_id, get_uow_factory
 from ..entitlements import Meter, require_quota
 from ..schemas.companies import (
@@ -29,6 +30,7 @@ def create_company(
     body: CompanyCreateRequest,
     user_id: UUID = Depends(current_user_id),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+    _perm: None = Depends(require_permission(Permission.COMPANY_WRITE)),
     _quota: None = Depends(require_quota(Meter.COMPANIES)),
 ):
     company = Company(
@@ -60,6 +62,7 @@ def update_company(
     body: CompanyUpdateRequest,
     user_id: UUID = Depends(current_user_id),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+    _perm: None = Depends(require_permission(Permission.COMPANY_WRITE)),
 ):
     service = CompanyService(uow_factory)
     existing = service.get(company_id)
