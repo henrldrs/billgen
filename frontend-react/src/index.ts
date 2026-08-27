@@ -96,6 +96,11 @@ export { BackupPanel } from "./panels/BackupPanel";
 export { Client360Panel, type Client360PanelProps } from "./panels/Client360Panel";
 export { ClientsPanel } from "./panels/ClientsPanel";
 export { CompanyForm } from "./panels/CompanyForm";
+export {
+  CompanySettingsPanel,
+  type CompanySection,
+  type CompanySettingsPanelProps,
+} from "./panels/CompanySettingsPanel";
 export { CreditNotesPanel } from "./panels/CreditNotesPanel";
 export { DashboardPanel } from "./panels/DashboardPanel";
 export { HistoryPanel } from "./panels/HistoryPanel";

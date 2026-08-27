@@ -19,6 +19,7 @@ import {
   Client360Panel,
   ClientsPanel,
   CompanyForm,
+  CompanySettingsPanel,
   CreditNotesPanel,
   DashboardPanel,
   HistoryPanel,
@@ -299,18 +300,21 @@ function InvoicesScreen({ node, companyId, lang }: ScreenProps) {
   );
 }
 
-/** Company details: the one form that exists, plus the eight sub-areas that
- *  still have no edit form. PATCH /companies/{id} shipped 2026-08-26 (B3), so
- *  the block here is the UI, not the server. */
-function CompanyScreen({ node, lang }: ScreenProps) {
+/** Company profile: the edit form over PATCH /companies/{id} (B3), with the
+ *  create form kept underneath — the onboarding gate is the only other place a
+ *  company can be created, and it only ever runs once, so dropping it here
+ *  would leave a one-company-per-account product by accident. */
+function CompanyScreen({ node, companyId, lang }: ScreenProps) {
   const { data: companies } = useCompanies();
   return (
     <>
-      <PageHeader
+      <CompanySettingsPanel
+        companyId={companyId}
+        section="profile"
+        lang={lang}
         title={node.label}
-        subtitle="Create works. PATCH /companies/{id} exists — no edit form reads it yet."
       />
-      {companies && companies.length > 0 ? (
+      {companies && companies.length > 1 ? (
         <Card title="Companies">
           <List
             items={companies.map((company) => ({
@@ -518,7 +522,36 @@ const BUILT: Record<string, Screen> = {
 
   // company & settings. The landing is a SectionIndex like every other
   // section; the rail belongs to the CHILDREN (see SettingsFrame).
+  // company — five of these six areas are one PATCH against one row, so they
+  // are one panel behind a `section` prop rather than five forms that could
+  // disagree about what a company is. The IA's label is passed down so the
+  // page title matches the nav item that led here.
   "company/profile": CompanyScreen,
+  "company/legal": ({ node, companyId, lang }) => (
+    <CompanySettingsPanel companyId={companyId} section="legal" lang={lang} title={node.label} />
+  ),
+  "company/vat": ({ node, companyId, lang }) => (
+    <CompanySettingsPanel companyId={companyId} section="vat" lang={lang} title={node.label} />
+  ),
+  "company/bank": ({ node, companyId, lang }) => (
+    <CompanySettingsPanel companyId={companyId} section="bank" lang={lang} title={node.label} />
+  ),
+  "company/numbering": ({ node, companyId, lang }) => (
+    <CompanySettingsPanel
+      companyId={companyId}
+      section="numbering"
+      lang={lang}
+      title={node.label}
+    />
+  ),
+  "company/defaults": ({ node, companyId, lang }) => (
+    <CompanySettingsPanel
+      companyId={companyId}
+      section="defaults"
+      lang={lang}
+      title={node.label}
+    />
+  ),
   settings: SectionIndex,
   "settings/appearance": AppearanceScreen,
   "settings/import": ({ lang }) => <ImportPanel lang={lang} />,

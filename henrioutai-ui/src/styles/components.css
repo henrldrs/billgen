@@ -4749,3 +4749,39 @@ hr.bg-divider {
   font-size: var(--bg-text-helper);
   color: var(--bg-ink-soft);
 }
+
+/* ---- company settings form ------------------------------------------------
+ * The company record is sixteen short fields. One column would run a settings
+ * screen well past two folds for a form that is mostly two-word inputs, so the
+ * fields flow into as many columns as the card is wide. Each section is its own
+ * card; the grid is only ever inside one. */
+.bg-companyform__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 0 1.25rem;
+}
+.bg-companyform__grid .bg-field {
+  margin-bottom: 0.9rem;
+}
+
+/* A line under a section saying what changing it does NOT do — the numbering
+   prefix does not rewrite invoices that already carry the old one. */
+.bg-companyform__note {
+  margin: 0.25rem 0 0;
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+}
+
+/* Save row. The dirty-state label sits left of the buttons so the answer to
+   "did that take?" is next to the control that would take it. */
+.bg-companyform__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+.bg-companyform__dirty {
+  margin-right: auto;
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+}

@@ -5,7 +5,7 @@ version of this file was consumed). Delete it once this one is consumed too; it
 is a handover note, not a permanent document. The permanent map is
 [HANDOFF.md](../HANDOFF.md) and the board is [ROADMAP_IA.md](ROADMAP_IA.md).
 
-**State:** Python 298 passed, frontend **123** passed, ruff clean, four
+**State:** Python 298 passed, frontend **132** passed, ruff clean, four
 workspaces typecheck.
 
 ---
@@ -67,13 +67,13 @@ Kept here only so the next session knows what exists and does not rebuild it.
 | Screen | Endpoint(s) / hook | Note |
 |---|---|---|
 | ~~**VAT report**~~ | `useVatReport()` | **Done 2026-08-26.** Month/quarter/year, honest `covers` banner, foreign-currency exclusions declared, breakdown gated on `features.vat_report` — see [§3.6](#3-open-decisions). |
-| **Company edit form** | `useUpdateCompany()`, `useCompanyValidation()` | Closes B3 on screen. Show per-field VAT/IBAN/BIC verdicts inline; `missing_for_peppol` tells the user what still blocks e-invoicing. **Now the highest-value item on this list.** |
-| **Credit notes** | already fully wired | Cheapest feature on the board — the backend has been complete for months. |
-| **Client 360** | `useClientStats()`, `useClientTimeline()` | Header numbers + commercial history. Note the timeline is **not** the audit log. |
+| ~~**Company edit form**~~ | `useUpdateCompany()`, `useCompanyValidation()` | **Done 2026-08-27.** `CompanySettingsPanel` — one panel, six sections (`profile/legal/vat/bank/numbering/defaults`), PATCH carrying only changed fields, per-field verdicts that drop themselves once the input differs from the saved value, Peppol banner from `missing_for_peppol`, template picker from `GET /pdf-templates`. Verified in the browser against a real 402-free desktop pair. |
+| ~~**Credit notes**~~ | already fully wired | **Screen exists** (`CreditNotesPanel`, routed at `sales/credit-notes`) — this row was already stale when it was written. |
+| ~~**Client 360**~~ | `useClientStats()`, `useClientTimeline()` | **Screen exists** (`Client360Panel`, routed at `customers/clients/:clientId`). Also stale as written. |
 | **Payments report** | `usePaymentsList()` | Cross-invoice listing with date window. |
 | **Invoices report** | `useInvoiceReport()` | Counts/money per effective status + monthly series. Kill the browser-side aggregation. |
 | **Duplicate button** | `useDuplicateInvoice()` | One button on invoice detail. |
-| **VAT-rate + template pickers** | `useVatRates()`, `usePdfTemplates()` | `21/12/6/0` is still hardcoded in TypeScript. Delete it. |
+| **VAT-rate picker** | `useVatRates()` | `21/12/6/0` is still hardcoded in `InvoiceBuilderPanel`. Delete it. The **template** picker is done — the company defaults screen renders `GET /pdf-templates`. |
 | **Catalog Services / Archived** | `useProducts({status, billingType})` | Server filters now; stop fetching everything. |
 
 ### 2c. Layer-6 experience work

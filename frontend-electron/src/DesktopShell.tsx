@@ -14,6 +14,7 @@ import {
   ClientsPanel,
   CommandPalette,
   CompanyForm,
+  CompanySettingsPanel,
   CompanyIcon,
   DashboardIcon,
   DashboardPanel,
@@ -219,20 +220,25 @@ export function DesktopShell() {
           onSectionChange={(key) => setSettingsSection(key as SettingsSection)}
         >
           {settingsSection === "company" ? (
-            <div>
-              <section className="bg-panel">
-                <h1 style={{ fontSize: "1.05rem", fontWeight: 600, marginBottom: "0.75rem" }}>
-                  Companies
-                </h1>
-                <ul style={{ paddingLeft: "1.25rem", fontSize: "0.9rem" }}>
-                  {companies.map((c) => (
-                    <li key={c.id}>
-                      {c.name}
-                      {c.vat_number ? ` — ${c.vat_number}` : ""}
-                    </li>
-                  ))}
-                </ul>
-              </section>
+            <div className="bg-stack">
+              {/* The whole record, one screen: the desktop settings rail has no
+                  room for the six sections the SaaS IA splits it into. */}
+              <CompanySettingsPanel companyId={companyId} lang={lang} />
+              {companies.length > 1 ? (
+                <section className="bg-panel">
+                  <h1 style={{ fontSize: "1.05rem", fontWeight: 600, marginBottom: "0.75rem" }}>
+                    Companies
+                  </h1>
+                  <ul style={{ paddingLeft: "1.25rem", fontSize: "0.9rem" }}>
+                    {companies.map((c) => (
+                      <li key={c.id}>
+                        {c.name}
+                        {c.vat_number ? ` — ${c.vat_number}` : ""}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
               <CompanyForm lang={lang} />
             </div>
           ) : settingsSection === "plan" ? (
