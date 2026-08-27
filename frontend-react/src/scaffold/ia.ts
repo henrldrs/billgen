@@ -263,6 +263,7 @@ export const IA: IaSection[] = [
         key: "sales.invoice.detail",
         label: "Invoice detail & lifecycle",
         path: "sales/invoices/id/:invoiceId",
+        nav: false,
         status: "partial",
         layer: "L2",
         endpoints: [
@@ -278,7 +279,7 @@ export const IA: IaSection[] = [
           "POST /invoices/{id}/duplicate",
         ],
         missing: ["POST /invoices/{id}/send"],
-        note: "Header, lines, frozen totals, payments, exports, duplicate and the full audit timeline are real: /activity grew target_id, and every invoice event — including payments — is written with target_type=\"invoice\" and target_id=<invoice id>. Only delivery is fiction: InvoiceStatus has no SENT or VIEWED member and there is no email transport, so Send alone stays in a scaffold block inside the screen. Duplicate left it 2026-08-27 — the endpoint had shipped and the scaffold was describing a gap that had closed.",
+        note: "Header, lines, frozen totals, payments, exports, duplicate and the full audit timeline are real: /activity grew target_id, and every invoice event — including payments — is written with target_type=\"invoice\" and target_id=<invoice id>. Only delivery is fiction: InvoiceStatus has no SENT or VIEWED member and there is no email transport, so Send alone stays in a scaffold block inside the screen. Duplicate left it 2026-08-27 — the endpoint had shipped and the scaffold was describing a gap that had closed. Not a nav destination (§11b): same :invoiceId problem as Client 360, and the same fix. Reached from the invoice list.",
       },
       {
         key: "sales.creditnotes",
@@ -369,6 +370,7 @@ export const IA: IaSection[] = [
         key: "customers.detail",
         label: "Client 360",
         path: "customers/clients/:clientId",
+        nav: false,
         status: "partial",
         layer: "L2",
         endpoints: [
@@ -383,7 +385,7 @@ export const IA: IaSection[] = [
           "ClientGroup model + CRUD /client-groups",
           "GET /reports/clients",
         ],
-        note: "Identity, invoice history and the audit trail are real. The totals strip, quotes, documents, tags and risk flags are quarantined into scaffold blocks inside the screen — each maps to a model that does not exist rather than to a screen nobody built.",
+        note: "Identity, invoice history and the audit trail are real. The totals strip, quotes, documents, tags and risk flags are quarantined into scaffold blocks inside the screen — each maps to a model that does not exist rather than to a screen nobody built. Not a nav destination (§11b): its path carries :clientId, so a menu entry for it navigates to the literal string. It was one until 2026-08-27 — a dead link nobody clicked because the record is reached by clicking a row, which is the point of the rule.",
       },
       {
         key: "customers.contacts",

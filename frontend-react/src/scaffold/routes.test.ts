@@ -109,6 +109,14 @@ test("no curated node also claims a screen in BUILT", () => {
   expect(claimed).toEqual([]);
 });
 
+test("the palette indexes hidden nodes but not parameterised paths", () => {
+  // Two rules that pull in opposite directions and are both load-bearing: the
+  // palette must still reach what the nav stopped offering (that is what makes
+  // curating safe), and it must not offer a path it cannot fill in.
+  expect(SHELL).toContain('!node.path.includes(":")');
+  expect(SHELL).not.toContain("navNodes");
+});
+
 test("the shell's nav is built through the curation predicate", () => {
   // The nav filter is three characters from being written by hand, and a
   // hand-written `child.nav !== false` is a second spelling of a rule that has

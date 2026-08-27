@@ -166,3 +166,14 @@ test("curating the nav never changes the coverage count", () => {
   expect(coverage().total).toBe(leaves.length);
   expect(leaves.some((node) => node.nav === false)).toBe(true);
 });
+
+test("no nav destination has a route parameter in its path", () => {
+  // A menu entry for `customers/clients/:clientId` navigates to that literal
+  // string. It was one until 2026-08-27, and nobody noticed, because the record
+  // is reached by clicking a row — which is the rule this whole section is
+  // about, arriving as a bug before it arrived as a principle.
+  const parameterised = navNodes("both")
+    .filter((node) => node.path?.includes(":"))
+    .map((node) => node.key);
+  expect(parameterised).toEqual([]);
+});

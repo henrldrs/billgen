@@ -205,7 +205,12 @@ export function AppShell() {
     },
     ...saasIa.flatMap((section) =>
       [section, ...(section.children ?? [])]
-        .filter((node) => node.path !== undefined)
+        // Deliberately NOT isNavDestination: a node curated out of the nav is
+        // exactly what the palette is for — it is the escape hatch that makes
+        // curating safe. A path with a route parameter is a different matter:
+        // there is no client id to fill `:clientId` with here, so the entry
+        // would navigate to that literal string.
+        .filter((node) => node.path !== undefined && !node.path.includes(":"))
         .map((node) => ({
           key: `${section.key}:${node.key}`,
           // CommandPalette interpolates label into its substring filter, so this
