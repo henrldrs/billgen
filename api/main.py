@@ -23,6 +23,7 @@ from .logging_config import configure_logging
 from .middleware import RateLimitMiddleware, TenantBindingMiddleware
 from .routers import (
     activity,
+    alerts,
     auth,
     backup,
     clients,
@@ -202,6 +203,7 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
     app.include_router(reports.router)
     app.include_router(search.router)
     app.include_router(activity.router)
+    app.include_router(alerts.router)
     app.include_router(backup.router)
     return app
 

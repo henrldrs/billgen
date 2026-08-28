@@ -1,4 +1,11 @@
 from .activity_service import ActivityService
+from .alerts_service import (
+    Alert,
+    AlertCode,
+    AlertsReport,
+    AlertsService,
+    Severity,
+)
 from .backup_service import BackupService, RestoreReport
 from .client_service import ClientService
 from .company_service import CompanyService
@@ -22,6 +29,10 @@ from .search_service import HitKind, SearchHit, SearchResults, SearchService
 
 __all__ = [
     "ActivityService",
+    "Alert",
+    "AlertCode",
+    "AlertsReport",
+    "AlertsService",
     "BackupService",
     "BusinessRuleError",
     "ClientService",
@@ -45,6 +56,7 @@ __all__ = [
     "SearchHit",
     "SearchResults",
     "SearchService",
+    "Severity",
     "effective_status",
     "validate_company_identifiers",
 ]
