@@ -8,7 +8,7 @@ from uuid import UUID
 
 from ..models import Currency, Invoice, InvoiceStatus, VATCategory
 from ..repository import UnitOfWork
-from ..rules import quantize, vat_buckets
+from ..rules import line_totals, quantize, vat_buckets
 from .errors import BusinessRuleError, NotFoundError
 
 _ZERO = Decimal(0)
@@ -151,6 +151,81 @@ class PaymentReport:
     largest: Decimal = _ZERO
     first_payment_on: date | None = None
     last_payment_on: date | None = None
+    skipped_other_currency: int = 0
+
+
+@dataclass(frozen=True)
+class ClientRow:
+    client_id: UUID
+    name: str
+    invoice_count: int
+    invoiced_total: Decimal
+    paid_total: Decimal
+    outstanding_total: Decimal
+    overdue_count: int
+    overdue_total: Decimal
+    last_invoice_date: date | None
+
+
+@dataclass(frozen=True)
+class ClientReport:
+    """Who your revenue comes from, and who owes you.
+
+    `ClientStats` answers this for one client, and a screen wanting the table
+    would otherwise call it once per client — the N+1 that report exists to
+    avoid, moved up a level.
+
+    Clients with no invoices in the period are left out rather than listed as
+    zeroes: a customer list is a different question from a revenue report, and
+    `GET /clients` already answers it.
+    """
+
+    company_id: UUID
+    period: str | None
+    period_start: date | None
+    period_end: date | None
+    currency: str
+    clients: list[ClientRow] = field(default_factory=list)
+    client_count: int = 0
+    invoiced_total: Decimal = _ZERO
+    paid_total: Decimal = _ZERO
+    outstanding_total: Decimal = _ZERO
+    skipped_other_currency: int = 0
+
+
+@dataclass(frozen=True)
+class ProductRow:
+    product_id: UUID | None
+    name: str
+    invoice_count: int
+    quantity: Decimal
+    net_ht: Decimal
+
+
+@dataclass(frozen=True)
+class ProductReport:
+    """What you actually sell, counted by line rather than by document.
+
+    Amounts are line net HT — quantity x price, less the line's own discount.
+    An invoice-level discount is *not* allocated down: it belongs to the deal,
+    not to any one product, and splitting it here would make the same product
+    read as cheaper on invoices that happened to carry one. So this is a
+    volume-and-mix report, and it will legitimately sum higher than the net
+    revenue in `/reports/invoices` wherever document discounts were given.
+
+    Lines with no `product_id` are real sales — free text is how most invoices
+    are actually written — so they are kept, grouped under one row with
+    `product_id: null` rather than dropped.
+    """
+
+    company_id: UUID
+    period: str | None
+    period_start: date | None
+    period_end: date | None
+    currency: str
+    products: list[ProductRow] = field(default_factory=list)
+    line_count: int = 0
+    net_ht: Decimal = _ZERO
     skipped_other_currency: int = 0
 
 
@@ -586,6 +661,170 @@ class ReportingService:
             largest=quantize(largest, currency),
             first_payment_on=dates[0] if dates else None,
             last_payment_on=dates[-1] if dates else None,
+            skipped_other_currency=skipped,
+        )
+
+    def client_report(
+        self,
+        company_id: UUID,
+        period: str | None = None,
+        today: date | None = None,
+    ) -> ClientReport:
+        """Revenue and debt per client, biggest first.
+
+        Drafts are counted nowhere — a draft is not a sale — and voided
+        invoices are excluded for the same reason they are excluded from every
+        other money figure in this service.
+        """
+        today = today or date.today()
+        start, end = parse_period(period) if period else (None, None)
+
+        with self._uow_factory() as uow:
+            company = uow.companies.get(company_id)
+            if company is None:
+                raise NotFoundError(f"Company {company_id} not found")
+            currency = company.default_currency
+            names = {c.id: c.name for c in uow.clients.list(company_id=company_id)}
+            invoices = [
+                inv
+                for inv in uow.invoices.list(company_id=company_id)
+                if start is None or start <= inv.issue_date <= end
+            ]
+            paid_by_invoice = {
+                inv.id: sum((p.amount for p in uow.payments.list_for_invoice(inv.id)), _ZERO)
+                for inv in invoices
+            }
+
+        in_currency = [inv for inv in invoices if inv.currency is currency]
+        skipped = len(invoices) - len(in_currency)
+
+        acc: dict[UUID, dict] = {}
+        for invoice in in_currency:
+            if invoice.status in (InvoiceStatus.DRAFT, InvoiceStatus.VOIDED):
+                continue
+            row = acc.setdefault(
+                invoice.client_id,
+                {
+                    "count": 0,
+                    "invoiced": _ZERO,
+                    "paid": _ZERO,
+                    "overdue_count": 0,
+                    "overdue": _ZERO,
+                    "last": None,
+                },
+            )
+            paid = paid_by_invoice[invoice.id]
+            row["count"] += 1
+            row["invoiced"] += invoice.total_ttc
+            row["paid"] += paid
+            if effective_status(invoice, today) == InvoiceStatus.OVERDUE.value:
+                row["overdue_count"] += 1
+                row["overdue"] += invoice.total_ttc - paid
+            if row["last"] is None or invoice.issue_date > row["last"]:
+                row["last"] = invoice.issue_date
+
+        rows = [
+            ClientRow(
+                client_id=client_id,
+                name=names.get(client_id, "(deleted client)"),
+                invoice_count=data["count"],
+                invoiced_total=quantize(data["invoiced"], currency),
+                paid_total=quantize(data["paid"], currency),
+                outstanding_total=quantize(data["invoiced"] - data["paid"], currency),
+                overdue_count=data["overdue_count"],
+                overdue_total=quantize(data["overdue"], currency),
+                last_invoice_date=data["last"],
+            )
+            for client_id, data in acc.items()
+        ]
+        # Biggest first, then by name so the order is stable when two clients
+        # have billed the same amount — a table that reshuffles on refresh is
+        # unreadable.
+        rows.sort(key=lambda r: (-r.invoiced_total, r.name))
+
+        return ClientReport(
+            company_id=company_id,
+            period=period.strip().upper() if period else None,
+            period_start=start,
+            period_end=end,
+            currency=currency.value,
+            clients=rows,
+            client_count=len(rows),
+            invoiced_total=quantize(sum((r.invoiced_total for r in rows), _ZERO), currency),
+            paid_total=quantize(sum((r.paid_total for r in rows), _ZERO), currency),
+            outstanding_total=quantize(
+                sum((r.outstanding_total for r in rows), _ZERO), currency
+            ),
+            skipped_other_currency=skipped,
+        )
+
+    def product_report(
+        self,
+        company_id: UUID,
+        period: str | None = None,
+    ) -> ProductReport:
+        """What sold, by invoice line. See `ProductReport` for what the amounts
+        are and, more importantly, what they are not."""
+        start, end = parse_period(period) if period else (None, None)
+
+        with self._uow_factory() as uow:
+            company = uow.companies.get(company_id)
+            if company is None:
+                raise NotFoundError(f"Company {company_id} not found")
+            currency = company.default_currency
+            names = {p.id: p.name for p in uow.products.list(company_id=company_id)}
+            invoices = [
+                inv
+                for inv in uow.invoices.list(company_id=company_id)
+                if start is None or start <= inv.issue_date <= end
+            ]
+
+        in_currency = [inv for inv in invoices if inv.currency is currency]
+        skipped = len(invoices) - len(in_currency)
+
+        acc: dict[UUID | None, dict] = {}
+        line_count = 0
+        for invoice in in_currency:
+            if invoice.status in (InvoiceStatus.DRAFT, InvoiceStatus.VOIDED):
+                continue
+            for line in invoice.lines:
+                row = acc.setdefault(
+                    line.product_id,
+                    {"invoices": set(), "quantity": _ZERO, "net": _ZERO},
+                )
+                row["invoices"].add(invoice.id)
+                row["quantity"] += line.quantity
+                row["net"] += line_totals(line, currency).net_ht
+                line_count += 1
+
+        rows = [
+            ProductRow(
+                product_id=product_id,
+                # A catalogue entry can be renamed or deleted after it was
+                # billed; the invoice line is the record, so an id nothing
+                # matches is labelled rather than dropped.
+                name=(
+                    "(free-text lines)"
+                    if product_id is None
+                    else names.get(product_id, "(deleted product)")
+                ),
+                invoice_count=len(data["invoices"]),
+                quantity=data["quantity"],
+                net_ht=quantize(data["net"], currency),
+            )
+            for product_id, data in acc.items()
+        ]
+        rows.sort(key=lambda r: (-r.net_ht, r.name))
+
+        return ProductReport(
+            company_id=company_id,
+            period=period.strip().upper() if period else None,
+            period_start=start,
+            period_end=end,
+            currency=currency.value,
+            products=rows,
+            line_count=line_count,
+            net_ht=quantize(sum((r.net_ht for r in rows), _ZERO), currency),
             skipped_other_currency=skipped,
         )
 
