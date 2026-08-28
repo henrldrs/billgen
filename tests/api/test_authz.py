@@ -254,3 +254,66 @@ async def test_users_me_carries_the_permission_list(client):
     body = (await client.get("/users/me", headers=admin)).json()
     assert "invoice.void" in body["permissions"]
     assert "backup.restore" not in body["permissions"]
+
+
+# ── The invariant that keeps this true ─────────────────────────────────────
+
+
+def _mutating_routes(app):
+    """Every route that changes something, and whether it declares a permission."""
+    import inspect
+
+    out = []
+    for route in app.routes:
+        methods = getattr(route, "methods", set()) - {"HEAD", "OPTIONS"}
+        if not methods & {"POST", "PATCH", "PUT", "DELETE"}:
+            continue
+        declares = any(
+            getattr(getattr(param.default, "dependency", None), "__qualname__", "").startswith(
+                "require_permission"
+            )
+            for param in inspect.signature(route.endpoint).parameters.values()
+        )
+        out.append((sorted(methods)[0], route.path, declares))
+    return out
+
+
+# The only writes that may go unguarded, each for a reason that has to still be
+# true when someone reads this list:
+#
+#   /auth/*            — unauthenticated by construction. There is no role to
+#                        check yet; that is what these endpoints are for.
+#   /invoices/preview  — computes totals and writes nothing. A viewer asking
+#                        "what would this come to" changes no record.
+#   /backup/export     — a GET, so it is not in this list at all, but it *is*
+#                        guarded: it copies the whole organization out.
+_UNGUARDED_BY_DESIGN = {
+    ("POST", "/auth/signup"),
+    ("POST", "/auth/login"),
+    ("POST", "/auth/logout"),
+    ("POST", "/auth/refresh"),
+    ("POST", "/auth/desktop-bootstrap"),
+    ("POST", "/invoices/preview"),
+}
+
+
+async def test_every_write_endpoint_declares_a_permission(client):
+    """The invariant, not a sample.
+
+    The parametrised test above checks the endpoints that existed when it was
+    written. This one checks the ones that did not: a new write route ships
+    unguarded unless its author either declares a permission or comes here and
+    argues, in writing, why it does not need one.
+    """
+    app = client._transport.app  # noqa: SLF001
+
+    unguarded = {
+        (method, path)
+        for method, path, declares in _mutating_routes(app)
+        if not declares
+    }
+
+    assert unguarded == _UNGUARDED_BY_DESIGN, (
+        "a write endpoint declares no permission — add require_permission(...) "
+        "to it, or add it to _UNGUARDED_BY_DESIGN with the reason"
+    )
