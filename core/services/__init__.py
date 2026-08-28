@@ -17,6 +17,7 @@ from .errors import (
     NotFoundError,
     PeppolValidationError,
 )
+from .expense_service import ExpenseService
 from .import_service import ImportService
 from .invoice_service import InvoiceService
 from .organization_service import OrganizationService
@@ -27,6 +28,7 @@ from .product_service import ProductService
 from .quote_service import QuoteService
 from .reporting_service import KpiSummary, ReportingService, effective_status
 from .search_service import HitKind, SearchHit, SearchResults, SearchService
+from .template_service import TemplateService
 
 __all__ = [
     "ActivityService",
@@ -40,6 +42,7 @@ __all__ = [
     "CompanyService",
     "CompanyValidation",
     "CreditNoteService",
+    "ExpenseService",
     "FieldError",
     "HitKind",
     "ImportService",
@@ -58,6 +61,7 @@ __all__ = [
     "SearchHit",
     "SearchResults",
     "SearchService",
+    "TemplateService",
     "Severity",
     "effective_status",
     "validate_company_identifiers",

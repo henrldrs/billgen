@@ -1,0 +1,546 @@
+{
+  "audit_id": "audit-003",
+  "started": "2026-08-28T16:31:37+00:00",
+  "finished": "2026-08-28T16:34:35+00:00",
+  "overall": "RED",
+  "intake": {
+    "target": "C:\\Users\\hdr_s\\Documents\\business model\\BillGen BETA",
+    "target_name": "BillGen BETA",
+    "commit": "fee420e06e4713376a1f018bfe7ee695f78faf2f",
+    "branch": "audit-engine-and-scaffolds",
+    "dirty": true,
+    "architecture_doc": "docs/ARCHITECTURE/system-architecture.html",
+    "engine_platform": "Windows-11-10.0.26200-SP0",
+    "dynamic_testing_authorized": false
+  },
+  "scores": [
+    {
+      "domain": "Legal/VAT",
+      "score": null,
+      "findings": 5,
+      "reason": "The scanner reported it could not reach a conclusion here. Any findings listed are items to confirm, not defects found."
+    },
+    {
+      "domain": "Accounting",
+      "score": 100,
+      "findings": 0,
+      "reason": ""
+    },
+    {
+      "domain": "GDPR",
+      "score": 56,
+      "findings": 3,
+      "reason": ""
+    },
+    {
+      "domain": "Architecture",
+      "score": 95,
+      "findings": 2,
+      "reason": ""
+    },
+    {
+      "domain": "Security",
+      "score": 41,
+      "findings": 5,
+      "reason": ""
+    },
+    {
+      "domain": "Document Engine",
+      "score": 100,
+      "findings": 0,
+      "reason": ""
+    },
+    {
+      "domain": "Peppol Readiness",
+      "score": 87,
+      "findings": 3,
+      "reason": ""
+    },
+    {
+      "domain": "Performance",
+      "score": null,
+      "findings": 0,
+      "reason": "No deterministic scanner covers this domain. Spec §8.6 requires an authorized environment and a load generator; running one is a human decision, so this scores n/a rather than 100."
+    },
+    {
+      "domain": "Resilience",
+      "score": 94,
+      "findings": 1,
+      "reason": ""
+    }
+  ],
+  "not_assessed": [
+    "Belgian VAT / e-invoicing: 7 rule(s) (BE-EINV-001, BE-EINV-002, BE-VAT-001, BE-VAT-002, BE-VAT-003, BE-VAT-004, BE-VAT-005) have implementation code present but unverified. A pattern match is not a legal conclusion (§1, §5), so this domain is not scored. Run the legal-vat agent over evidence/legal-rules.json to close them.",
+    "Known vulnerabilities (§8.3): this engine performs no network lookup, so no advisory database was consulted. Run the ecosystem's own advisory scanner and attach its output as evidence.",
+    "Error detection (§8.8): no error-tracking integration was found in the tree. If one is configured at the platform level instead, attach that configuration as evidence.",
+    "Dynamic testing (§8.6 performance, §8.5 restore drill, §8.2 live cross-tenant probe): not run. These mutate or load a running system and require --authorize-dynamic against an environment you are permitted to test. Performance therefore scores n/a, not 100."
+  ],
+  "evidence": {
+    "intake": "evidence/intake.json",
+    "discovery": "evidence/discovery.json",
+    "enforcement-model": "evidence/enforcement-model.json",
+    "routes": "evidence/routes.json",
+    "accounting": "evidence/accounting.json",
+    "documents": "evidence/documents.json",
+    "legal-rules": "evidence/legal-rules.json",
+    "einvoicing": "evidence/einvoicing.json",
+    "privacy": "evidence/privacy.json",
+    "secrets": "evidence/secrets.json",
+    "dependencies": "evidence/dependencies.json",
+    "resilience": "evidence/resilience.json",
+    "observability": "evidence/observability.json",
+    "architecture-doc-drift": "evidence/architecture-doc-drift.json"
+  },
+  "observations": {
+    "intake": {
+      "target": "C:\\Users\\hdr_s\\Documents\\business model\\BillGen BETA",
+      "target_name": "BillGen BETA",
+      "commit": "fee420e06e4713376a1f018bfe7ee695f78faf2f",
+      "branch": "audit-engine-and-scaffolds",
+      "dirty": true,
+      "architecture_doc": "docs/ARCHITECTURE/system-architecture.html",
+      "engine_platform": "Windows-11-10.0.26200-SP0",
+      "dynamic_testing_authorized": false
+    },
+    "components": [
+      {
+        "path": "frontend-electron",
+        "kind": "node",
+        "name": "@billgen/desktop",
+        "scripts": [
+          "build",
+          "dev",
+          "tauri",
+          "typecheck"
+        ]
+      },
+      {
+        "path": "frontend-react",
+        "kind": "node",
+        "name": "@billgen/ui",
+        "scripts": [
+          "generate:api",
+          "test",
+          "test:watch",
+          "typecheck"
+        ]
+      },
+      {
+        "path": "frontend-saas",
+        "kind": "node",
+        "name": "@billgen/saas",
+        "scripts": [
+          "build",
+          "dev",
+          "dev:desktop",
+          "preview",
+          "typecheck"
+        ]
+      },
+      {
+        "path": "henrioutai-ui",
+        "kind": "node",
+        "name": "@henrioutai/ui",
+        "scripts": [
+          "typecheck"
+        ]
+      },
+      {
+        "path": ".",
+        "kind": "node",
+        "name": "billgen-monorepo",
+        "scripts": [
+          "build",
+          "dev:electron",
+          "dev:saas",
+          "lint",
+          "test",
+          "typecheck"
+        ]
+      },
+      {
+        "path": "api",
+        "kind": "python-api",
+        "name": "api"
+      },
+      {
+        "path": "core",
+        "kind": "python-domain",
+        "name": "core"
+      },
+      {
+        "path": "desktop",
+        "kind": "desktop-shell",
+        "name": "desktop"
+      },
+      {
+        "path": "db",
+        "kind": "python-persistence",
+        "name": "db"
+      }
+    ],
+    "languages": {
+      ".py": 253,
+      ".tsx": 152,
+      ".ts": 38,
+      ".css": 8,
+      ".html": 4
+    },
+    "frameworks": [
+      "alembic",
+      "fastapi",
+      "pydantic",
+      "sqlalchemy",
+      "typescript"
+    ],
+    "database": {
+      "alembic": true,
+      "migration_count": 6,
+      "models": [
+        "__init__.py",
+        "_base.py",
+        "audit_log.py",
+        "client.py",
+        "company.py",
+        "credential.py",
+        "credit_note.py",
+        "expense.py",
+        "invoice.py",
+        "organization.py",
+        "payment.py",
+        "product.py",
+        "quote.py",
+        "sequence.py",
+        "subscription.py",
+        "template.py",
+        "user.py"
+      ],
+      "engines_referenced": [
+        "postgresql",
+        "sqlite"
+      ]
+    },
+    "ci": {
+      "configured": true,
+      "workflows": [
+        ".github/workflows/ci.yml"
+      ]
+    },
+    "environments": [
+      "development",
+      "production"
+    ],
+    "container": {
+      "dockerfile": "Dockerfile",
+      "compose": "docker-compose.yml",
+      "iac": "infra"
+    },
+    "enforcement": {
+      "auth_model": "global_middleware",
+      "auth_middleware": "api/middleware/tenant.py",
+      "public_allowlist": [
+        "/",
+        "/auth/",
+        "/docs",
+        "/healthz",
+        "/openapi.json",
+        "/readyz",
+        "/redoc"
+      ],
+      "tenant_model": "context_var",
+      "tenant_source": "core/tenancy.py",
+      "tenant_scoped_queries": [
+        "db/repositories/sqlalchemy_repositories.py:156",
+        "db/repositories/sqlalchemy_repositories.py:283",
+        "db/repositories/sqlalchemy_repositories.py:402",
+        "db/repositories/sqlalchemy_repositories.py:478",
+        "db/repositories/sqlalchemy_repositories.py:531",
+        "db/repositories/sqlalchemy_repositories.py:547",
+        "db/repositories/sqlalchemy_repositories.py:594",
+        "db/repositories/sqlalchemy_repositories.py:640",
+        "db/repositories/sqlalchemy_repositories.py:682",
+        "db/repositories/sqlalchemy_repositories.py:796",
+        "db/repositories/sqlalchemy_repositories.py:846",
+        "db/repositories/sqlalchemy_repositories.py:864",
+        "db/repositories/sqlalchemy_repositories.py:890",
+        "db/repositories/sqlalchemy_repositories.py:920"
+      ]
+    },
+    "routes": {
+      "count": 84,
+      "see": "evidence/routes.json"
+    },
+    "route_count": 84,
+    "registered_routers": [
+      "activity.router",
+      "alerts.router",
+      "auth.router",
+      "backup.router",
+      "clients.router",
+      "companies.router",
+      "credit_notes.router",
+      "desktop.router",
+      "entitlements.router",
+      "expenses.router",
+      "health.router",
+      "imports.router",
+      "invoices.router",
+      "organizations.router",
+      "payments.router",
+      "products.router",
+      "quotes.router",
+      "reference.router",
+      "reports.router",
+      "search.router",
+      "templates.router",
+      "tva.router",
+      "users.router"
+    ],
+    "auth_enforced_by": "global_middleware",
+    "public_routes": [
+      "POST /auth/desktop-bootstrap",
+      "POST /auth/login",
+      "POST /auth/logout",
+      "POST /auth/refresh",
+      "POST /auth/signup",
+      "GET /healthz",
+      "GET /readyz"
+    ],
+    "accounting": {
+      "numbering": {
+        "sequence_model": "db/models/sequence.py",
+        "unique_constraints": 27
+      },
+      "immutability_signals": 27,
+      "client_supplied_totals": [],
+      "audit_trail_model": "db/models/audit_log.py",
+      "export_endpoints": 5
+    },
+    "documents": {
+      "pdf_module": "core/pdf",
+      "einvoicing_module": "core/einvoicing",
+      "pdf_reads_domain": true,
+      "einvoicing_reads_domain": true,
+      "template_references": 26
+    },
+    "legal": {
+      "rules_loaded": 7,
+      "stale_rules": [],
+      "BE-EINV-001": {
+        "state": "NEEDS_CONFIRMATION",
+        "hits": 183,
+        "files": [
+          "api/entitlements/__init__.py",
+          "api/entitlements/deps.py",
+          "api/entitlements/matrix.py",
+          "api/entitlements/usage.py",
+          "api/main.py",
+          "api/routers/companies.py",
+          "api/routers/invoices.py",
+          "api/schemas/entitlements.py"
+        ]
+      },
+      "BE-EINV-002": {
+        "state": "NEEDS_CONFIRMATION",
+        "hits": 24,
+        "files": [
+          "core/einvoicing/ubl_builder.py",
+          "core/einvoicing/ubl_validator.py",
+          "core/rules/belgian_peppol.py",
+          "tests/core/rules/test_identifiers.py",
+          "tests/core/services/test_peppol_service.py"
+        ]
+      },
+      "BE-VAT-001": {
+        "state": "NEEDS_CONFIRMATION",
+        "hits": 18,
+        "files": [
+          "core/einvoicing/__init__.py",
+          "core/einvoicing/ubl_validator.py",
+          "core/pdf/context.py",
+          "core/rules/__init__.py",
+          "core/rules/belgian_legal.py",
+          "core/services/peppol_service.py",
+          "core/tva/validation.py",
+          "tests/core/rules/test_belgian_legal.py"
+        ]
+      },
+      "BE-VAT-002": {
+        "state": "NEEDS_CONFIRMATION",
+        "hits": 234,
+        "files": [
+          "api/entitlements/service.py",
+          "api/routers/backup.py",
+          "api/routers/expenses.py",
+          "api/routers/invoices.py",
+          "api/routers/quotes.py",
+          "api/schemas/backup.py",
+          "api/schemas/credit_notes.py",
+          "api/schemas/invoices.py"
+        ]
+      },
+      "BE-VAT-003": {
+        "state": "NEEDS_CONFIRMATION",
+        "hits": 10,
+        "files": [
+          "core/pdf/context.py",
+          "core/services/pdf_service.py",
+          "db/migrations/versions/3d8a27f7f865_initial_schema.py",
+          "db/repositories/mappers.py",
+          "tests/core/models/test_models_smoke.py",
+          "tests/core/services/test_reporting_service.py",
+          "tests/core/services/test_vat_report.py"
+        ]
+      },
+      "BE-VAT-004": {
+        "state": "NEEDS_CONFIRMATION",
+        "hits": 6,
+        "files": [
+          "core/services/company_validation.py",
+          "core/tva/classification.py",
+          "core/tva/validation.py",
+          "tests/core/services/conftest.py",
+          "tests/core/services/test_company_validation.py"
+        ]
+      },
+      "BE-VAT-005": {
+        "state": "NEEDS_CONFIRMATION",
+        "hits": 14,
+        "files": [
+          ".claude/commands/audit.md",
+          "docs/ARCHITECTURE/ADR-0002-invoice-lifecycle.md",
+          "docs/CORE_FEATURES_AND_DATA_INTERACTIONS.md",
+          "docs/NEXT_SESSION.md",
+          "docs/ROADMAP_IA.md"
+        ]
+      }
+    },
+    "einvoicing": {
+      "module": "core/einvoicing",
+      "generation": true,
+      "validation": true,
+      "transmission": false,
+      "retry_handling": true
+    },
+    "privacy": {
+      "policy_documents": {
+        "privacy_policy": null,
+        "cookie_policy": null,
+        "dpa": null,
+        "subprocessors": null,
+        "retention_policy": null,
+        "incident_response": null,
+        "security_policy": null
+      },
+      "dsr_export": false,
+      "dsr_deletion": false,
+      "pii_in_logs": [],
+      "trackers": []
+    },
+    "secrets": {
+      "hits": [],
+      "patterns_checked": [
+        "aws_access_key",
+        "generic_api_key",
+        "password_literal",
+        "private_key"
+      ]
+    },
+    "requires_python": ">=3.11",
+    "dependencies": [
+      {
+        "name": "pytest>=8",
+        "ecosystem": "python",
+        "direct": false
+      },
+      {
+        "name": "pytest-asyncio>=0.23",
+        "ecosystem": "python",
+        "direct": false
+      },
+      {
+        "name": "pytest-cov>=5",
+        "ecosystem": "python",
+        "direct": false
+      },
+      {
+        "name": "httpx>=0.27",
+        "ecosystem": "python",
+        "direct": false
+      },
+      {
+        "name": "ruff>=0.6",
+        "ecosystem": "python",
+        "direct": false
+      },
+      {
+        "name": "mypy>=1.11",
+        "ecosystem": "python",
+        "direct": false
+      },
+      {
+        "name": "eslint^9.10.0",
+        "ecosystem": "node",
+        "direct": false
+      },
+      {
+        "name": "@typescript-eslint/eslint-plugin^8.4.0",
+        "ecosystem": "node",
+        "direct": false
+      },
+      {
+        "name": "@typescript-eslint/parser^8.4.0",
+        "ecosystem": "node",
+        "direct": false
+      },
+      {
+        "name": "eslint-plugin-react-hooks^5.2.0",
+        "ecosystem": "node",
+        "direct": false
+      },
+      {
+        "name": "prettier^3.3.3",
+        "ecosystem": "node",
+        "direct": false
+      },
+      {
+        "name": "typescript^5.6.0",
+        "ecosystem": "node",
+        "direct": false
+      }
+    ],
+    "dependency_count": 12,
+    "runtime_eol_reference": "2026-08-28",
+    "lockfiles": [
+      "uv.lock",
+      "package-lock.json"
+    ],
+    "resilience": {
+      "backup_code": true,
+      "restore_code": true,
+      "restore_tested": true,
+      "rto_rpo_documented": false
+    },
+    "observability": {
+      "structured_logging": true,
+      "correlation_id": false,
+      "health_endpoint": true,
+      "error_tracking": false,
+      "metrics": true
+    },
+    "architecture_doc": {
+      "document": "docs/ARCHITECTURE/system-architecture.html",
+      "documented_but_absent": [
+        "DELETE /auth/sessions",
+        "GET /reports/export",
+        "POST /auth/password",
+        "POST /email/test",
+        "POST /invoices/{}/send",
+        "POST /privacy/delete-account",
+        "POST /privacy/export"
+      ],
+      "present_but_undocumented": [],
+      "missing_directories": []
+    }
+  }
+}

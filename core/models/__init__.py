@@ -10,9 +10,25 @@ from .payment import Payment, PaymentMethod
 from .product import BillingType, Product, ProductStatus
 from .quote import Quote, QuoteStatus
 from .tax import VATCategory, VATRate
+from .template import (
+    REQUIRED_BLOCKS,
+    BlockKind,
+    DocumentTemplate,
+    TemplateAppearance,
+    TemplateBlock,
+    TemplateSnapshot,
+    default_blocks,
+)
 from .user import OrgMembership, Role, User
 
 __all__ = [
+    "default_blocks",
+    "TemplateSnapshot",
+    "TemplateBlock",
+    "TemplateAppearance",
+    "DocumentTemplate",
+    "BlockKind",
+    "REQUIRED_BLOCKS",
     "AuditAction",
     "AuditLogEntry",
     "BillingType",

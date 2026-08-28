@@ -31,6 +31,7 @@ from .routers import (
     credit_notes,
     desktop,
     entitlements,
+    expenses,
     health,
     imports,
     invoices,
@@ -41,6 +42,8 @@ from .routers import (
     reference,
     reports,
     search,
+    templates,
+    tva,
     users,
 )
 from .security import AuthService, JwtCodec
@@ -206,6 +209,9 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
     app.include_router(search.router)
     app.include_router(activity.router)
     app.include_router(alerts.router)
+    app.include_router(expenses.router)
+    app.include_router(tva.router)
+    app.include_router(templates.router)
     app.include_router(backup.router)
     return app
 

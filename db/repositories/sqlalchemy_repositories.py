@@ -10,7 +10,7 @@ and every write guards that the entity's organization_id matches the bound conte
 from datetime import date
 from uuid import UUID
 
-from sqlalchemy import or_, select
+from sqlalchemy import delete, func, or_, select, update
 from sqlalchemy.orm import Session
 
 from core.models import (
@@ -28,25 +28,32 @@ from core.models import (
     QuoteStatus,
     User,
 )
+from core.models.template import DocumentTemplate, TemplateSnapshot
 from core.repository import (
     AuditLogRepository,
     ClientRepository,
     CompanyRepository,
     CreditNoteRepository,
+    ExpenseRepository,
     InvoiceRepository,
     OrganizationRepository,
     PaymentRepository,
     ProductRepository,
     QuoteRepository,
     SequenceRepository,
+    TemplateRepository,
     UserRepository,
 )
 from core.tenancy import current_organization_id, guard_tenant
+from core.tva.models import Expense
+from core.tva.states import ExpenseState
 from db.models import (
     AuditLogRow,
     ClientRow,
     CompanyRow,
     CreditNoteRow,
+    DocumentTemplateRow,
+    ExpenseRow,
     InvoiceRow,
     OrganizationRow,
     OrgMembershipRow,
@@ -54,17 +61,22 @@ from db.models import (
     ProductRow,
     QuoteRow,
     SequenceRow,
+    TemplateVersionRow,
     UserRow,
 )
 
 from .mappers import (
     credit_note_to_row,
+    expense_to_row,
     invoice_to_row,
     quote_to_row,
     row_kwargs,
     row_to_credit_note,
+    row_to_expense,
     row_to_invoice,
     row_to_quote,
+    row_to_template,
+    template_to_row,
     to_domain,
 )
 
@@ -634,3 +646,281 @@ class SqlAlchemyAuditLogRepository(AuditLogRepository):
         if target_id is not None:
             stmt = stmt.where(AuditLogRow.target_id == target_id)
         return [to_domain(AuditLogEntry, row) for row in self._s.execute(stmt).scalars()]
+
+
+# --- Expenses -------------------------------------------------------------
+
+# Columns `update()` may rewrite. `organization_id` and `created_at` are absent
+# for the reason every other repository omits them: an update path that can move
+# a row between tenants is a cross-tenant write waiting to be reached by a bug
+# one layer up.
+_EXPENSE_UPDATABLE = (
+    "company_id",
+    "state",
+    "source_filename",
+    "source_document_key",
+    "supplier_vat_number",
+    "supplier_invoice_number",
+    "invoice_date",
+    "detected_tva",
+    "recoverable_tva",
+    "confirmed_at",
+    "extracted",
+    "checks",
+    "classification",
+    "duplicate_of_id",
+    "failure_code",
+    "updated_at",
+)
+
+
+class SqlAlchemyExpenseRepository(ExpenseRepository):
+    def __init__(self, session: Session) -> None:
+        self._s = session
+
+    def _org_filter(self):
+        return ExpenseRow.organization_id == current_organization_id()
+
+    def _get_row(self, expense_id: UUID) -> ExpenseRow | None:
+        return self._s.execute(
+            select(ExpenseRow).where(ExpenseRow.id == expense_id, self._org_filter())
+        ).scalar_one_or_none()
+
+    def add(self, expense: Expense) -> Expense:
+        guard_tenant(expense.organization_id)
+        row = expense_to_row(expense)
+        self._s.add(row)
+        self._s.flush()
+        return row_to_expense(row)
+
+    def get(self, expense_id: UUID) -> Expense | None:
+        row = self._get_row(expense_id)
+        return row_to_expense(row) if row else None
+
+    def list(
+        self,
+        company_id: UUID | None = None,
+        state: ExpenseState | None = None,
+        needs_attention: bool | None = None,
+    ) -> list[Expense]:
+        stmt = (
+            select(ExpenseRow)
+            .where(self._org_filter())
+            .order_by(ExpenseRow.created_at.desc())
+        )
+        if company_id is not None:
+            stmt = stmt.where(ExpenseRow.company_id == company_id)
+        if state is not None:
+            stmt = stmt.where(ExpenseRow.state == state.value)
+        rows = self._s.execute(stmt).scalars()
+        expenses = [row_to_expense(row) for row in rows]
+        if needs_attention is None:
+            return expenses
+        # Filtered in Python, not SQL. `needs_attention` reads the check list and
+        # the classification, both JSON; expressing it as a WHERE would mean a
+        # second definition of the predicate that could disagree with the domain's.
+        return [e for e in expenses if e.needs_attention is needs_attention]
+
+    def update(self, expense: Expense) -> Expense:
+        row = self._get_row(expense.id)
+        if row is None:
+            raise KeyError(expense.id)
+        fresh = expense_to_row(expense)
+        for column in _EXPENSE_UPDATABLE:
+            setattr(row, column, getattr(fresh, column))
+        self._s.flush()
+        return row_to_expense(row)
+
+    def delete(self, expense_id: UUID) -> None:
+        row = self._get_row(expense_id)
+        if row is None:
+            return
+        self._s.delete(row)
+        self._s.flush()
+
+    def find_duplicate(
+        self,
+        company_id: UUID,
+        supplier_vat_number: str | None,
+        supplier_invoice_number: str | None,
+        exclude_id: UUID | None = None,
+    ) -> Expense | None:
+        # Both identifiers or nothing — see the port's docstring on why a
+        # date-and-amount heuristic is refused here.
+        if not supplier_vat_number or not supplier_invoice_number:
+            return None
+        stmt = select(ExpenseRow).where(
+            self._org_filter(),
+            ExpenseRow.company_id == company_id,
+            ExpenseRow.supplier_vat_number == supplier_vat_number,
+            ExpenseRow.supplier_invoice_number == supplier_invoice_number,
+        )
+        if exclude_id is not None:
+            stmt = stmt.where(ExpenseRow.id != exclude_id)
+        row = self._s.execute(stmt.limit(1)).scalar_one_or_none()
+        return row_to_expense(row) if row else None
+
+    def in_period(self, company_id: UUID, start: date, end: date) -> list[Expense]:
+        stmt = (
+            select(ExpenseRow)
+            .where(
+                self._org_filter(),
+                ExpenseRow.company_id == company_id,
+                ExpenseRow.invoice_date.is_not(None),
+                ExpenseRow.invoice_date >= start,
+                ExpenseRow.invoice_date <= end,
+            )
+            .order_by(ExpenseRow.invoice_date)
+        )
+        return [row_to_expense(row) for row in self._s.execute(stmt).scalars()]
+
+
+# --- Document templates ---------------------------------------------------
+
+_TEMPLATE_UPDATABLE = (
+    "name",
+    "doc_type",
+    "is_default",
+    "draft_blocks",
+    "draft_appearance",
+    "published_version",
+    "updated_at",
+)
+
+
+class SqlAlchemyTemplateRepository(TemplateRepository):
+    def __init__(self, session: Session) -> None:
+        self._s = session
+
+    def _org_filter(self):
+        return DocumentTemplateRow.organization_id == current_organization_id()
+
+    def _get_row(self, template_id: UUID) -> DocumentTemplateRow | None:
+        return self._s.execute(
+            select(DocumentTemplateRow).where(
+                DocumentTemplateRow.id == template_id, self._org_filter()
+            )
+        ).scalar_one_or_none()
+
+    def add(self, template: DocumentTemplate) -> DocumentTemplate:
+        guard_tenant(template.organization_id)
+        row = template_to_row(template)
+        self._s.add(row)
+        self._s.flush()
+        return row_to_template(row)
+
+    def get(self, template_id: UUID) -> DocumentTemplate | None:
+        row = self._get_row(template_id)
+        return row_to_template(row) if row else None
+
+    def list(self, company_id: UUID | None = None) -> list[DocumentTemplate]:
+        stmt = (
+            select(DocumentTemplateRow)
+            .where(self._org_filter())
+            .order_by(DocumentTemplateRow.is_default.desc(), DocumentTemplateRow.name)
+        )
+        if company_id is not None:
+            stmt = stmt.where(DocumentTemplateRow.company_id == company_id)
+        return [row_to_template(row) for row in self._s.execute(stmt).scalars()]
+
+    def update(self, template: DocumentTemplate) -> DocumentTemplate:
+        row = self._get_row(template.id)
+        if row is None:
+            raise KeyError(template.id)
+        fresh = template_to_row(template)
+        for column in _TEMPLATE_UPDATABLE:
+            setattr(row, column, getattr(fresh, column))
+        self._s.flush()
+        return row_to_template(row)
+
+    def delete(self, template_id: UUID) -> None:
+        row = self._get_row(template_id)
+        if row is None:
+            return
+        # Published versions go with it. Invoices keep their snapshot by value,
+        # so nothing already issued is affected — which is the only reason
+        # deleting a template can be allowed at all.
+        self._s.execute(
+            delete(TemplateVersionRow).where(
+                TemplateVersionRow.template_id == template_id,
+                TemplateVersionRow.organization_id == current_organization_id(),
+            )
+        )
+        self._s.delete(row)
+        self._s.flush()
+
+    def publish(self, template: DocumentTemplate) -> DocumentTemplate:
+        row = self._get_row(template.id)
+        if row is None:
+            raise KeyError(template.id)
+
+        # Next version, read inside this transaction. Two concurrent publishes
+        # on Postgres serialise on the unique constraint rather than both
+        # writing version 3; the loser gets an IntegrityError, which is the
+        # correct outcome for an immutable table.
+        highest = self._s.execute(
+            select(func.max(TemplateVersionRow.version)).where(
+                TemplateVersionRow.template_id == template.id,
+                TemplateVersionRow.organization_id == current_organization_id(),
+            )
+        ).scalar()
+        version = (highest or 0) + 1
+
+        self._s.add(
+            TemplateVersionRow(
+                organization_id=template.organization_id,
+                template_id=template.id,
+                version=version,
+                blocks=[block.model_dump(mode="json") for block in template.blocks],
+                appearance=template.appearance.model_dump(mode="json"),
+            )
+        )
+        row.published_version = version
+        self._s.flush()
+        return row_to_template(row)
+
+    def snapshot_of(self, template_id: UUID, version: int) -> TemplateSnapshot | None:
+        template_row = self._get_row(template_id)
+        if template_row is None:
+            return None
+        version_row = self._s.execute(
+            select(TemplateVersionRow).where(
+                TemplateVersionRow.template_id == template_id,
+                TemplateVersionRow.version == version,
+                TemplateVersionRow.organization_id == current_organization_id(),
+            )
+        ).scalar_one_or_none()
+        if version_row is None:
+            return None
+        return TemplateSnapshot.model_validate(
+            {
+                "template_id": template_id,
+                "template_name": template_row.name,
+                "version": version,
+                "taken_at": version_row.created_at,
+                "blocks": version_row.blocks,
+                "appearance": version_row.appearance,
+            }
+        )
+
+    def default_for(self, company_id: UUID) -> DocumentTemplate | None:
+        row = self._s.execute(
+            select(DocumentTemplateRow).where(
+                self._org_filter(),
+                DocumentTemplateRow.company_id == company_id,
+                DocumentTemplateRow.is_default.is_(True),
+            )
+        ).scalar_one_or_none()
+        return row_to_template(row) if row else None
+
+    def clear_default(self, company_id: UUID) -> None:
+        self._s.execute(
+            update(DocumentTemplateRow)
+            .where(
+                DocumentTemplateRow.organization_id == current_organization_id(),
+                DocumentTemplateRow.company_id == company_id,
+                DocumentTemplateRow.is_default.is_(True),
+            )
+            .values(is_default=False)
+        )
+        self._s.flush()

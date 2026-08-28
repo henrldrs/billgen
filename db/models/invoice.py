@@ -1,8 +1,10 @@
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Any
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
+    JSON,
     Date,
     DateTime,
     ForeignKey,
@@ -63,6 +65,13 @@ class InvoiceRow(TenantRowMixin, Base):
     comments: Mapped[str | None] = mapped_column(Text)
     payment_terms: Mapped[str | None] = mapped_column(Text)
     pdf_template: Mapped[str] = mapped_column(String(64), nullable=False, default="fr_standard")
+
+    #  The template as it was when this invoice was issued, by value. Rule 3 of
+    #  the template studio: editing a template must never restyle a document
+    #  already sent. Storing the template *id* instead would resolve to whatever
+    #  the template says today, which is the exact failure this prevents.
+    #  Null for every invoice issued before templates existed, and for drafts.
+    template_snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSON)
 
     subtotal_ht: Mapped[Decimal] = mapped_column(
         Numeric(MONEY_PRECISION, MONEY_SCALE), nullable=False

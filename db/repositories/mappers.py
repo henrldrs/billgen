@@ -11,10 +11,20 @@ from typing import Any, TypeVar
 
 from pydantic import BaseModel
 
-from core.models import CreditNote, CreditNoteLine, Invoice, InvoiceLine, Quote
+from core.models import (
+    CreditNote,
+    CreditNoteLine,
+    DocumentTemplate,
+    Invoice,
+    InvoiceLine,
+    Quote,
+)
+from core.tva.models import Expense
 from db.models import (
     CreditNoteLineRow,
     CreditNoteRow,
+    DocumentTemplateRow,
+    ExpenseRow,
     InvoiceLineRow,
     InvoiceRow,
     QuoteLineRow,
@@ -317,5 +327,98 @@ def row_to_quote(row: QuoteRow) -> Quote:
             "decided_at": row.decided_at,
             "decision_note": row.decision_note,
             "converted_invoice_id": row.converted_invoice_id,
+        }
+    )
+
+
+# --- Expenses -------------------------------------------------------------
+#
+# The JSON columns hold whole Pydantic sub-models, so these two are the only
+# mappers that round-trip through `model_dump(mode="json")`. `mode="json"`
+# rather than `"python"` on purpose: Decimal and date go into a JSON column,
+# and the SQLite driver has no adapter for either.
+
+
+def expense_to_row(expense: Expense) -> ExpenseRow:
+    classification = expense.classification
+    return ExpenseRow(
+        id=expense.id,
+        created_at=expense.created_at,
+        updated_at=expense.updated_at,
+        organization_id=expense.organization_id,
+        company_id=expense.company_id,
+        state=expense.state.value,
+        source_filename=expense.source_filename,
+        source_document_key=expense.source_document_key,
+        # Promoted out of `extracted` so the duplicate constraint can see them.
+        supplier_vat_number=expense.extracted.supplier_vat_number,
+        supplier_invoice_number=expense.extracted.invoice_number,
+        invoice_date=expense.extracted.invoice_date,
+        detected_tva=classification.detected_amount if classification else Decimal("0"),
+        recoverable_tva=(
+            classification.recoverable_amount if classification else Decimal("0")
+        ),
+        confirmed_at=classification.confirmed_at if classification else None,
+        extracted=expense.extracted.model_dump(mode="json"),
+        checks=[check.model_dump(mode="json") for check in expense.checks],
+        classification=classification.model_dump(mode="json") if classification else None,
+        duplicate_of_id=expense.duplicate_of_id,
+        failure_code=expense.failure_code,
+    )
+
+
+def row_to_expense(row: ExpenseRow) -> Expense:
+    return Expense.model_validate(
+        {
+            "id": row.id,
+            "created_at": row.created_at,
+            "updated_at": row.updated_at,
+            "organization_id": row.organization_id,
+            "company_id": row.company_id,
+            "state": row.state,
+            "source_filename": row.source_filename,
+            "source_document_key": row.source_document_key,
+            "extracted": row.extracted or {},
+            "checks": row.checks or [],
+            "classification": row.classification,
+            "duplicate_of_id": row.duplicate_of_id,
+            "failure_code": row.failure_code,
+        }
+    )
+
+
+# --- Document templates ---------------------------------------------------
+
+
+def template_to_row(template: DocumentTemplate) -> DocumentTemplateRow:
+    return DocumentTemplateRow(
+        id=template.id,
+        created_at=template.created_at,
+        updated_at=template.updated_at,
+        organization_id=template.organization_id,
+        company_id=template.company_id,
+        name=template.name,
+        doc_type=template.doc_type,
+        is_default=template.is_default,
+        draft_blocks=[block.model_dump(mode="json") for block in template.blocks],
+        draft_appearance=template.appearance.model_dump(mode="json"),
+        published_version=template.published_version,
+    )
+
+
+def row_to_template(row: DocumentTemplateRow) -> DocumentTemplate:
+    return DocumentTemplate.model_validate(
+        {
+            "id": row.id,
+            "created_at": row.created_at,
+            "updated_at": row.updated_at,
+            "organization_id": row.organization_id,
+            "company_id": row.company_id,
+            "name": row.name,
+            "doc_type": row.doc_type,
+            "is_default": row.is_default,
+            "blocks": row.draft_blocks or [],
+            "appearance": row.draft_appearance or {},
+            "published_version": row.published_version,
         }
     )

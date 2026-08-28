@@ -37,6 +37,9 @@ class Permission(str, Enum):
     COMPANY_WRITE = "company.write"
     CREDIT_NOTE_WRITE = "credit_note.write"
     PAYMENT_WRITE = "payment.write"
+    EXPENSE_WRITE = "expense.write"
+    TVA_REVIEW = "tva.review"
+    TEMPLATE_WRITE = "template.write"
     IMPORT_RUN = "import.run"
     BACKUP_EXPORT = "backup.export"
     BACKUP_RESTORE = "backup.restore"
@@ -54,6 +57,11 @@ _MEMBER: frozenset[Permission] = frozenset(
         Permission.PRODUCT_WRITE,
         Permission.CREDIT_NOTE_WRITE,
         Permission.PAYMENT_WRITE,
+        # Recording a supplier document and reviewing its TVA is the
+        # same job as issuing an invoice: it is the bookkeeping the
+        # member was hired to do, and it consumes nothing fiscal.
+        Permission.EXPENSE_WRITE,
+        Permission.TVA_REVIEW,
     }
 )
 
@@ -63,6 +71,9 @@ _MEMBER: frozenset[Permission] = frozenset(
 _ADMIN: frozenset[Permission] = _MEMBER | {
     Permission.INVOICE_VOID,
     Permission.COMPANY_WRITE,
+    # A template changes how every future document looks to every
+    # customer. That is the organization's own record, not its trade.
+    Permission.TEMPLATE_WRITE,
     Permission.IMPORT_RUN,
     Permission.BACKUP_EXPORT,
 }

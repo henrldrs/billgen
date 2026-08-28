@@ -7,12 +7,14 @@ from .audit_log_repo import AuditLogRepository
 from .client_repo import ClientRepository
 from .company_repo import CompanyRepository
 from .credit_note_repo import CreditNoteRepository
+from .expense_repo import ExpenseRepository
 from .invoice_repo import InvoiceRepository
 from .organization_repo import OrganizationRepository
 from .payment_repo import PaymentRepository
 from .product_repo import ProductRepository
 from .quote_repo import QuoteRepository
 from .sequence_repo import SequenceRepository
+from .template_repo import TemplateRepository
 from .user_repo import UserRepository
 
 
@@ -29,6 +31,8 @@ class UnitOfWork(ABC):
     quotes: QuoteRepository
     credit_notes: CreditNoteRepository
     payments: PaymentRepository
+    expenses: ExpenseRepository
+    templates: TemplateRepository
     sequences: SequenceRepository
     audit_log: AuditLogRepository
 

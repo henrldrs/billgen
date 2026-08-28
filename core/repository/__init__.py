@@ -2,6 +2,7 @@ from .audit_log_repo import AuditLogRepository
 from .client_repo import ClientRepository
 from .company_repo import CompanyRepository
 from .credit_note_repo import CreditNoteRepository
+from .expense_repo import ExpenseRepository
 from .invoice_repo import InvoiceRepository
 from .organization_repo import OrganizationRepository
 from .payment_repo import PaymentRepository
@@ -14,6 +15,7 @@ from .sequence_repo import (
     SequenceRepository,
     monthly_bucket,
 )
+from .template_repo import TemplateRepository
 from .unit_of_work import UnitOfWork
 from .user_repo import UserRepository
 
@@ -25,12 +27,14 @@ __all__ = [
     "ClientRepository",
     "CompanyRepository",
     "CreditNoteRepository",
+    "ExpenseRepository",
     "InvoiceRepository",
     "OrganizationRepository",
     "PaymentRepository",
     "ProductRepository",
     "QuoteRepository",
     "SequenceRepository",
+    "TemplateRepository",
     "UnitOfWork",
     "UserRepository",
     "monthly_bucket",
