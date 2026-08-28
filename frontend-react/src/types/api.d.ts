@@ -127,6 +127,39 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/desktop/plan-tier": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Set Desktop Plan Tier
+         * @description Move the local dev organization onto a tier, so the entitlement layer can
+         *     be exercised without a checkout provider.
+         *
+         *     404 unless desktop_mode, exactly like the bootstrap above: a hosted
+         *     deployment must not expose a way to grant itself a plan. That is the whole
+         *     security argument for this endpoint, and it is the same one that lets the
+         *     bootstrap mint a session.
+         *
+         *     **It deletes any SubscriptionRow.** `resolve_tier` prefers an active
+         *     subscription over `Organization.plan_tier`, so writing the column alone
+         *     would appear to do nothing the moment a subscription exists — the switch
+         *     would silently not work and the next person would go looking in the wrong
+         *     place. Checkout is the deferred half of B4 and nothing writes that row yet;
+         *     when something does, this stays honest by clearing it.
+         */
+        post: operations["set_desktop_plan_tier_desktop_plan_tier_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/users/me": {
         parameters: {
             query?: never;
@@ -138,6 +171,87 @@ export interface paths {
         get: operations["me_users_me_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Me
+         * @description Edit your own profile.
+         *
+         *     No permission is declared and none is right: this is a person changing their
+         *     own display name, which every role including `viewer` may do. The identity
+         *     it acts on comes from the token, not the request body, so there is nothing
+         *     here to authorize *against* — a user cannot address anyone else's profile.
+         */
+        patch: operations["update_me_users_me_patch"];
+        trace?: never;
+    };
+    "/users/me/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Sessions
+         * @description Live sign-ins for the caller.
+         *
+         *     Refresh tokens rotate, so this lists only what is still valid — the whole
+         *     table would show every refresh the browser has ever performed and read as a
+         *     security incident rather than a session list.
+         */
+        get: operations["my_sessions_users_me_sessions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/me/sessions/{jti}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke My Session
+         * @description Sign one session out.
+         *
+         *     404 rather than 403 when the session belongs to someone else: the caller has
+         *     no business learning that a given token id exists.
+         */
+        delete: operations["revoke_my_session_users_me_sessions__jti__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/me/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change My Password
+         * @description Change your own password, proving the current one first.
+         *
+         *     Every other session is revoked on success — someone changing a password
+         *     because they believe it was seen needs the sessions it opened closed, and
+         *     leaving them alive makes the change cosmetic. The caller's own refresh token
+         *     goes with them, so the client must sign in again.
+         */
+        post: operations["change_my_password_users_me_password_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -159,6 +273,58 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/orgs/current/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Members
+         * @description Everyone in this organization and the role each holds.
+         *
+         *     A read, so no permission: every member may see who else is in the
+         *     organization they belong to. Changing a role is the guarded half.
+         */
+        get: operations["list_members_orgs_current_members_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/current/members/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Set Member Role
+         * @description Change what one member may do.
+         *
+         *     Guarded by `company.write` — an admin permission — because a role decides
+         *     what someone may do to the organization's records, which is the same class
+         *     of act as editing the legal entity.
+         *
+         *     Refuses to change your own role. Not paternalism: the last owner demoting
+         *     themselves leaves an organization nobody can administer, and the check that
+         *     would allow it safely (is there another owner?) is one nobody remembers to
+         *     write. Ask another owner.
+         */
+        patch: operations["set_member_role_orgs_current_members__user_id__patch"];
         trace?: never;
     };
     "/companies": {
@@ -874,6 +1040,35 @@ export interface paths {
          *     the job; deciding is not.
          */
         get: operations["vat_treatment_vat_treatment_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sequences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Sequences
+         * @description Where each numbering series currently stands.
+         *
+         *     Read-only, and deliberately so: `next_value` allocates inside the
+         *     transaction that consumes it (ADR-0001's gapless rule), so anything here
+         *     that could increment a counter would mint a hole in a legal series. This
+         *     reads `snapshot`, which the backup path has used since ADR-0003.
+         *
+         *     A series absent from the table has never been used, and is reported at zero
+         *     rather than omitted — the numbering screen needs to show every series a
+         *     company has, including the ones it has not started.
+         */
+        get: operations["sequences_sequences_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1960,6 +2155,16 @@ export interface components {
          * @enum {string}
          */
         Currency: "EUR" | "USD" | "GBP" | "JPY" | "CAD" | "AUD";
+        /** DevTierRequest */
+        DevTierRequest: {
+            plan_tier: components["schemas"]["PlanTier"];
+        };
+        /** DevTierResponse */
+        DevTierResponse: {
+            plan_tier: components["schemas"]["PlanTier"];
+            /** Cleared Subscription */
+            cleared_subscription: boolean;
+        };
         /** DiscountIn */
         DiscountIn: {
             /** Type */
@@ -2466,6 +2671,24 @@ export interface components {
             /** Refresh Token */
             refresh_token: string;
         };
+        /** MemberResponse */
+        MemberResponse: {
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Email */
+            email: string;
+            /** Display Name */
+            display_name: string;
+            /** Role */
+            role: string;
+        };
+        /** MemberRoleUpdateRequest */
+        MemberRoleUpdateRequest: {
+            role: components["schemas"]["Role"];
+        };
         /** MembershipOut */
         MembershipOut: {
             /**
@@ -2520,6 +2743,13 @@ export interface components {
             country_code: string;
             /** Plan Tier */
             plan_tier: string;
+        };
+        /** PasswordChangeRequest */
+        PasswordChangeRequest: {
+            /** Current Password */
+            current_password: string;
+            /** New Password */
+            new_password: string;
         };
         /** PaymentCreateRequest */
         PaymentCreateRequest: {
@@ -2641,6 +2871,17 @@ export interface components {
             /** Default Template */
             default_template: string;
         };
+        /**
+         * PlanTier
+         * @description The commercial tier an organization is on.
+         *
+         *     This is a *fact about the organization*, which is why it lives in the
+         *     domain. What each tier is allowed to do is **not** here: that matrix lives
+         *     in `api/entitlements/matrix.py`, so a price change or a quota change never
+         *     touches domain code. CORE must never branch on a tier.
+         * @enum {string}
+         */
+        PlanTier: "free" | "starter" | "business" | "business_pro";
         /**
          * PlansResponse
          * @description The whole commercial matrix, so a pricing or upgrade screen renders from
@@ -2966,6 +3207,11 @@ export interface components {
                 [key: string]: string;
             };
         };
+        /**
+         * Role
+         * @enum {string}
+         */
+        Role: "owner" | "admin" | "member" | "viewer";
         /** SearchHitResponse */
         SearchHitResponse: {
             /** Kind */
@@ -3000,6 +3246,59 @@ export interface components {
             };
             /** Truncated */
             truncated: boolean;
+        };
+        /**
+         * SequenceEntry
+         * @description One numbering series and where it currently stands.
+         */
+        SequenceEntry: {
+            /** Scope */
+            scope: string;
+            /** Current */
+            current: number;
+            /** Next */
+            next: number;
+        };
+        /** SequencesResponse */
+        SequencesResponse: {
+            /**
+             * Company Id
+             * Format: uuid
+             */
+            company_id: string;
+            /** Series */
+            series: components["schemas"]["SequenceEntry"][];
+        };
+        /**
+         * SessionResponse
+         * @description One live sign-in.
+         *
+         *     Deliberately without device, browser or location. `audit_log` has columns
+         *     for IP and user agent and nothing writes them, so a "Chrome on Windows,
+         *     Brussels" line here would be invented rather than reported — and the privacy
+         *     inventory says that data is not collected.
+         */
+        SessionResponse: {
+            /**
+             * Jti
+             * Format: uuid
+             */
+            jti: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Current
+             * @default false
+             */
+            current?: boolean;
         };
         /** SignupRequest */
         SignupRequest: {
@@ -3386,6 +3685,20 @@ export interface components {
              */
             permissions?: string[];
         };
+        /**
+         * UserUpdateRequest
+         * @description A user editing their own profile.
+         *
+         *     Display name only. Changing an email address is an identity change, not a
+         *     profile edit — the new address has to be verified before it becomes the
+         *     login, and verification needs email transport the product does not have
+         *     (blocker B1). Accepting it here would let someone lock themselves out of
+         *     their own account with a typo.
+         */
+        UserUpdateRequest: {
+            /** Display Name */
+            display_name: string;
+        };
         /** VATIn */
         VATIn: {
             /**
@@ -3750,6 +4063,39 @@ export interface operations {
             };
         };
     };
+    set_desktop_plan_tier_desktop_plan_tier_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DevTierRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DevTierResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     me_users_me_get: {
         parameters: {
             query?: never;
@@ -3770,6 +4116,119 @@ export interface operations {
             };
         };
     };
+    update_me_users_me_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserMeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_sessions_users_me_sessions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionResponse"][];
+                };
+            };
+        };
+    };
+    revoke_my_session_users_me_sessions__jti__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                jti: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    change_my_password_users_me_password_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     current_org_orgs_current_get: {
         parameters: {
             query?: never;
@@ -3786,6 +4245,61 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OrganizationResponse"];
+                };
+            };
+        };
+    };
+    list_members_orgs_current_members_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberResponse"][];
+                };
+            };
+        };
+    };
+    set_member_role_orgs_current_members__user_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MemberRoleUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -4142,6 +4656,7 @@ export interface operations {
                 company_id?: string | null;
                 status?: components["schemas"]["ProductStatus"] | null;
                 billing_type?: components["schemas"]["BillingType"] | null;
+                category?: string | null;
             };
             header?: never;
             path?: never;
@@ -5289,6 +5804,37 @@ export interface operations {
             };
         };
     };
+    sequences_sequences_get: {
+        parameters: {
+            query: {
+                company_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SequencesResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     current_entitlements_entitlements_get: {
         parameters: {
             query?: never;
@@ -5596,6 +6142,7 @@ export interface operations {
                 limit?: number;
                 target_type?: string | null;
                 target_id?: string | null;
+                actor_user_id?: string | null;
             };
             header?: never;
             path?: never;

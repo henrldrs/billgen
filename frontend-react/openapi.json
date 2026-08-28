@@ -230,6 +230,48 @@
         }
       }
     },
+    "/desktop/plan-tier": {
+      "post": {
+        "tags": [
+          "desktop"
+        ],
+        "summary": "Set Desktop Plan Tier",
+        "description": "Move the local dev organization onto a tier, so the entitlement layer can\nbe exercised without a checkout provider.\n\n404 unless desktop_mode, exactly like the bootstrap above: a hosted\ndeployment must not expose a way to grant itself a plan. That is the whole\nsecurity argument for this endpoint, and it is the same one that lets the\nbootstrap mint a session.\n\n**It deletes any SubscriptionRow.** `resolve_tier` prefers an active\nsubscription over `Organization.plan_tier`, so writing the column alone\nwould appear to do nothing the moment a subscription exists \u2014 the switch\nwould silently not work and the next person would go looking in the wrong\nplace. Checkout is the deferred half of B4 and nothing writes that row yet;\nwhen something does, this stays honest by clearing it.",
+        "operationId": "set_desktop_plan_tier_desktop_plan_tier_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DevTierRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DevTierResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users/me": {
       "get": {
         "tags": [
@@ -244,6 +286,144 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UserMeResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Update Me",
+        "description": "Edit your own profile.\n\nNo permission is declared and none is right: this is a person changing their\nown display name, which every role including `viewer` may do. The identity\nit acts on comes from the token, not the request body, so there is nothing\nhere to authorize *against* \u2014 a user cannot address anyone else's profile.",
+        "operationId": "update_me_users_me_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserMeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/me/sessions": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "My Sessions",
+        "description": "Live sign-ins for the caller.\n\nRefresh tokens rotate, so this lists only what is still valid \u2014 the whole\ntable would show every refresh the browser has ever performed and read as a\nsecurity incident rather than a session list.",
+        "operationId": "my_sessions_users_me_sessions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SessionResponse"
+                  },
+                  "type": "array",
+                  "title": "Response My Sessions Users Me Sessions Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/me/sessions/{jti}": {
+      "delete": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Revoke My Session",
+        "description": "Sign one session out.\n\n404 rather than 403 when the session belongs to someone else: the caller has\nno business learning that a given token id exists.",
+        "operationId": "revoke_my_session_users_me_sessions__jti__delete",
+        "parameters": [
+          {
+            "name": "jti",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Jti"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/me/password": {
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Change My Password",
+        "description": "Change your own password, proving the current one first.\n\nEvery other session is revoked on success \u2014 someone changing a password\nbecause they believe it was seen needs the sessions it opened closed, and\nleaving them alive makes the change cosmetic. The caller's own refresh token\ngoes with them, so the client must sign in again.",
+        "operationId": "change_my_password_users_me_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordChangeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -265,6 +445,86 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/OrganizationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orgs/current/members": {
+      "get": {
+        "tags": [
+          "organizations"
+        ],
+        "summary": "List Members",
+        "description": "Everyone in this organization and the role each holds.\n\nA read, so no permission: every member may see who else is in the\norganization they belong to. Changing a role is the guarded half.",
+        "operationId": "list_members_orgs_current_members_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MemberResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Members Orgs Current Members Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orgs/current/members/{user_id}": {
+      "patch": {
+        "tags": [
+          "organizations"
+        ],
+        "summary": "Set Member Role",
+        "description": "Change what one member may do.\n\nGuarded by `company.write` \u2014 an admin permission \u2014 because a role decides\nwhat someone may do to the organization's records, which is the same class\nof act as editing the legal entity.\n\nRefuses to change your own role. Not paternalism: the last owner demoting\nthemselves leaves an organization nobody can administer, and the check that\nwould allow it safely (is there another owner?) is one nobody remembers to\nwrite. Ask another owner.",
+        "operationId": "set_member_role_orgs_current_members__user_id__patch",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemberRoleUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -876,6 +1136,22 @@
                 }
               ],
               "title": "Billing Type"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
             }
           }
         ],
@@ -2654,6 +2930,50 @@
         }
       }
     },
+    "/sequences": {
+      "get": {
+        "tags": [
+          "reference"
+        ],
+        "summary": "Sequences",
+        "description": "Where each numbering series currently stands.\n\nRead-only, and deliberately so: `next_value` allocates inside the\ntransaction that consumes it (ADR-0001's gapless rule), so anything here\nthat could increment a counter would mint a hole in a legal series. This\nreads `snapshot`, which the backup path has used since ADR-0003.\n\nA series absent from the table has never been used, and is reported at zero\nrather than omitted \u2014 the numbering screen needs to show every series a\ncompany has, including the ones it has not started.",
+        "operationId": "sequences_sequences_get",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Company Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SequencesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/entitlements": {
       "get": {
         "tags": [
@@ -3284,6 +3604,23 @@
                 }
               ],
               "title": "Target Id"
+            }
+          },
+          {
+            "name": "actor_user_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Actor User Id"
             }
           }
         ],
@@ -5854,6 +6191,35 @@
         ],
         "title": "Currency"
       },
+      "DevTierRequest": {
+        "properties": {
+          "plan_tier": {
+            "$ref": "#/components/schemas/PlanTier"
+          }
+        },
+        "type": "object",
+        "required": [
+          "plan_tier"
+        ],
+        "title": "DevTierRequest"
+      },
+      "DevTierResponse": {
+        "properties": {
+          "plan_tier": {
+            "$ref": "#/components/schemas/PlanTier"
+          },
+          "cleared_subscription": {
+            "type": "boolean",
+            "title": "Cleared Subscription"
+          }
+        },
+        "type": "object",
+        "required": [
+          "plan_tier",
+          "cleared_subscription"
+        ],
+        "title": "DevTierResponse"
+      },
       "DiscountIn": {
         "properties": {
           "type": {
@@ -7409,6 +7775,47 @@
         ],
         "title": "LogoutRequest"
       },
+      "MemberResponse": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "email",
+          "display_name",
+          "role"
+        ],
+        "title": "MemberResponse"
+      },
+      "MemberRoleUpdateRequest": {
+        "properties": {
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role"
+        ],
+        "title": "MemberRoleUpdateRequest"
+      },
       "MembershipOut": {
         "properties": {
           "organization_id": {
@@ -7540,6 +7947,27 @@
           "plan_tier"
         ],
         "title": "OrganizationResponse"
+      },
+      "PasswordChangeRequest": {
+        "properties": {
+          "current_password": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Current Password"
+          },
+          "new_password": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 12,
+            "title": "New Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "current_password",
+          "new_password"
+        ],
+        "title": "PasswordChangeRequest"
       },
       "PaymentCreateRequest": {
         "properties": {
@@ -7859,6 +8287,17 @@
           "default_template"
         ],
         "title": "PdfTemplatesResponse"
+      },
+      "PlanTier": {
+        "type": "string",
+        "enum": [
+          "free",
+          "starter",
+          "business",
+          "business_pro"
+        ],
+        "title": "PlanTier",
+        "description": "The commercial tier an organization is on.\n\nThis is a *fact about the organization*, which is why it lives in the\ndomain. What each tier is allowed to do is **not** here: that matrix lives\nin `api/entitlements/matrix.py`, so a price change or a quota change never\ntouches domain code. CORE must never branch on a tier."
       },
       "PlansResponse": {
         "properties": {
@@ -8824,6 +9263,16 @@
         ],
         "title": "RevenueByMonthResponse"
       },
+      "Role": {
+        "type": "string",
+        "enum": [
+          "owner",
+          "admin",
+          "member",
+          "viewer"
+        ],
+        "title": "Role"
+      },
       "SearchHitResponse": {
         "properties": {
           "kind": {
@@ -8938,6 +9387,84 @@
           "truncated"
         ],
         "title": "SearchResponse"
+      },
+      "SequenceEntry": {
+        "properties": {
+          "scope": {
+            "type": "string",
+            "title": "Scope"
+          },
+          "current": {
+            "type": "integer",
+            "title": "Current"
+          },
+          "next": {
+            "type": "integer",
+            "title": "Next"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scope",
+          "current",
+          "next"
+        ],
+        "title": "SequenceEntry",
+        "description": "One numbering series and where it currently stands."
+      },
+      "SequencesResponse": {
+        "properties": {
+          "company_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Company Id"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/SequenceEntry"
+            },
+            "type": "array",
+            "title": "Series"
+          }
+        },
+        "type": "object",
+        "required": [
+          "company_id",
+          "series"
+        ],
+        "title": "SequencesResponse"
+      },
+      "SessionResponse": {
+        "properties": {
+          "jti": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Jti"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          },
+          "current": {
+            "type": "boolean",
+            "title": "Current",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "jti",
+          "created_at",
+          "expires_at"
+        ],
+        "title": "SessionResponse",
+        "description": "One live sign-in.\n\nDeliberately without device, browser or location. `audit_log` has columns\nfor IP and user agent and nothing writes them, so a \"Chrome on Windows,\nBrussels\" line here would be invented rather than reported \u2014 and the privacy\ninventory says that data is not collected."
       },
       "SignupRequest": {
         "properties": {
@@ -9765,6 +10292,22 @@
           "role"
         ],
         "title": "UserMeResponse"
+      },
+      "UserUpdateRequest": {
+        "properties": {
+          "display_name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Display Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "display_name"
+        ],
+        "title": "UserUpdateRequest",
+        "description": "A user editing their own profile.\n\nDisplay name only. Changing an email address is an identity change, not a\nprofile edit \u2014 the new address has to be verified before it becomes the\nlogin, and verification needs email transport the product does not have\n(blocker B1). Accepting it here would let someone lock themselves out of\ntheir own account with a typo."
       },
       "VATIn": {
         "properties": {

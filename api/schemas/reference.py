@@ -1,4 +1,5 @@
 from decimal import Decimal
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -47,3 +48,22 @@ class VatTreatmentResponse(BaseModel):
     reason: str
     seller_country: str
     buyer_country: str
+
+
+class SequenceEntry(BaseModel):
+    """One numbering series and where it currently stands."""
+
+    scope: str
+    #  What the last document of this series was numbered. 0 means the series
+    #  has never been used.
+    current: int
+    #  What the next one will get. Sent rather than left as current + 1: the
+    #  screen's whole question is "what will the next invoice be called", and a
+    #  client that has to add one is a client that can add one in the wrong
+    #  place.
+    next: int
+
+
+class SequencesResponse(BaseModel):
+    company_id: UUID
+    series: list[SequenceEntry]

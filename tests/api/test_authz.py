@@ -287,6 +287,13 @@ def _mutating_routes(app):
 #                        "what would this come to" changes no record.
 #   /backup/export     — a GET, so it is not in this list at all, but it *is*
 #                        guarded: it copies the whole organization out.
+#   /users/me/password — and /users/me/sessions/{jti} (DELETE). Same argument as
+#                        the profile edit below and for the same reason: the
+#                        identity acted on is the caller's own, taken from the
+#                        token. Every role may change its own password and sign
+#                        out its own session; a permission every role holds is
+#                        not a permission. Note that changing *someone else's*
+#                        role does declare one — see PATCH /orgs/current/members.
 #   /users/me (PATCH)  — a person editing their own display name. The identity
 #                        it acts on comes from the token, never the body, so
 #                        there is nothing to authorize *against*: a user cannot
@@ -312,6 +319,8 @@ _UNGUARDED_BY_DESIGN = {
     ("POST", "/invoices/preview"),
     ("POST", "/desktop/plan-tier"),
     ("PATCH", "/users/me"),
+    ("POST", "/users/me/password"),
+    ("DELETE", "/users/me/sessions/{jti}"),
 }
 
 

@@ -14,6 +14,11 @@ from fastapi import APIRouter, Depends
 from core.models import VATCategory
 from core.pdf.registry import TEMPLATES
 from core.repository import UnitOfWork
+from core.repository.sequence_repo import (
+    CREDIT_NOTE_SERIES,
+    INVOICE_SERIES,
+    QUOTE_SERIES,
+)
 from core.rules import legal_mention_for
 from core.rules.vat import (
     BELGIAN_STANDARD_RATES,
@@ -27,6 +32,8 @@ from ..deps import get_uow_factory
 from ..schemas.reference import (
     PdfTemplateOption,
     PdfTemplatesResponse,
+    SequenceEntry,
+    SequencesResponse,
     VatCategoryOption,
     VatRateOption,
     VatRatesResponse,
@@ -123,4 +130,36 @@ def vat_treatment(
         reason=_REASONS.get(category, "vat.reason.standard"),
         seller_country=company.country_code.upper(),
         buyer_country=client.country_code.upper(),
+    )
+
+
+@router.get("/sequences", response_model=SequencesResponse)
+def sequences(
+    company_id: UUID,
+    uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+):
+    """Where each numbering series currently stands.
+
+    Read-only, and deliberately so: `next_value` allocates inside the
+    transaction that consumes it (ADR-0001's gapless rule), so anything here
+    that could increment a counter would mint a hole in a legal series. This
+    reads `snapshot`, which the backup path has used since ADR-0003.
+
+    A series absent from the table has never been used, and is reported at zero
+    rather than omitted — the numbering screen needs to show every series a
+    company has, including the ones it has not started.
+    """
+    with uow_factory() as uow:
+        counters = uow.sequences.snapshot(company_id)
+
+    return SequencesResponse(
+        company_id=company_id,
+        series=[
+            SequenceEntry(
+                scope=scope,
+                current=counters.get(scope, 0),
+                next=counters.get(scope, 0) + 1,
+            )
+            for scope in (INVOICE_SERIES, QUOTE_SERIES, CREDIT_NOTE_SERIES)
+        ],
     )

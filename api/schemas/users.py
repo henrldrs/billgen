@@ -1,6 +1,9 @@
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, Field
+
+from core.models import Role
 
 
 class UserMeResponse(BaseModel):
@@ -26,3 +29,38 @@ class UserUpdateRequest(BaseModel):
     """
 
     display_name: str = Field(min_length=1, max_length=200)
+
+
+class SessionResponse(BaseModel):
+    """One live sign-in.
+
+    Deliberately without device, browser or location. `audit_log` has columns
+    for IP and user agent and nothing writes them, so a "Chrome on Windows,
+    Brussels" line here would be invented rather than reported — and the privacy
+    inventory says that data is not collected.
+    """
+
+    jti: UUID
+    created_at: datetime
+    expires_at: datetime
+    #  True for the token that made this request, so the screen can label it and
+    #  refuse to offer "revoke" for the session you are sitting in.
+    current: bool = False
+
+
+class PasswordChangeRequest(BaseModel):
+    current_password: str = Field(min_length=1)
+    #  Same floor as signup. A change path that accepts a weaker password than
+    #  registration is a downgrade attack with extra steps.
+    new_password: str = Field(min_length=12, max_length=200)
+
+
+class MemberResponse(BaseModel):
+    user_id: UUID
+    email: str
+    display_name: str
+    role: str
+
+
+class MemberRoleUpdateRequest(BaseModel):
+    role: Role

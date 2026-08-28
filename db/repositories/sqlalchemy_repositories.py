@@ -26,6 +26,7 @@ from core.models import (
     Product,
     Quote,
     QuoteStatus,
+    Role,
     User,
 )
 from core.models.template import DocumentTemplate, TemplateSnapshot
@@ -156,6 +157,26 @@ class SqlAlchemyUserRepository(UserRepository):
             select(OrgMembershipRow).where(OrgMembershipRow.user_id == user_id)
         ).scalars()
         return [to_domain(OrgMembership, row) for row in rows]
+
+    def members_of(self, organization_id: UUID) -> list[tuple[User, OrgMembership]]:
+        rows = self._s.execute(
+            select(UserRow, OrgMembershipRow)
+            .join(OrgMembershipRow, OrgMembershipRow.user_id == UserRow.id)
+            .where(OrgMembershipRow.organization_id == organization_id)
+            .order_by(UserRow.display_name)
+        ).all()
+        return [
+            (to_domain(User, user_row), to_domain(OrgMembership, membership_row))
+            for user_row, membership_row in rows
+        ]
+
+    def set_role(self, organization_id: UUID, user_id: UUID, role: Role) -> OrgMembership:
+        row = self._s.get(OrgMembershipRow, (organization_id, user_id))
+        if row is None:
+            raise KeyError((organization_id, user_id))
+        row.role = role.value
+        self._s.flush()
+        return to_domain(OrgMembership, row)
 
 
 class _TenantCrudRepository:

@@ -49,6 +49,20 @@ class LoginResult:
     tokens: TokenPair
 
 
+@dataclass(frozen=True)
+class SessionInfo:
+    """One live refresh token, as the security screen shows it.
+
+    No IP address and no user agent: `audit_log` has columns for both and
+    nothing writes them, so inventing them here would put data on a screen that
+    the privacy inventory says does not exist.
+    """
+
+    jti: UUID
+    created_at: datetime
+    expires_at: datetime
+
+
 def _as_utc(dt: datetime) -> datetime:
     """SQLite returns naive datetimes; they were stored as UTC."""
     return dt if dt.tzinfo is not None else dt.replace(tzinfo=UTC)
@@ -208,6 +222,96 @@ class AuthService:
                         action="logout",
                         target_type="user",
                         target_id=row.user_id,
+                    )
+                )
+            session.commit()
+
+    # -- session management -------------------------------------------
+    #
+    # Rotation means a signed-in user accumulates one revoked row per refresh,
+    # so "your sessions" is the *live* set: not revoked and not expired. Showing
+    # the whole table would list every refresh the browser has ever done and
+    # read as a security incident.
+
+    def list_sessions(self, user_id: UUID) -> list[SessionInfo]:
+        now = datetime.now(UTC)
+        with self._session_factory() as session:
+            rows = session.execute(
+                select(RefreshTokenRow)
+                .where(
+                    RefreshTokenRow.user_id == user_id,
+                    RefreshTokenRow.revoked_at.is_(None),
+                    RefreshTokenRow.expires_at > now,
+                )
+                .order_by(RefreshTokenRow.created_at.desc())
+            ).scalars()
+            return [
+                SessionInfo(
+                    jti=row.jti,
+                    created_at=_as_utc(row.created_at),
+                    expires_at=_as_utc(row.expires_at),
+                )
+                for row in rows
+            ]
+
+    def revoke_session(self, user_id: UUID, jti: UUID) -> bool:
+        """Revoke one of *this user's* sessions.
+
+        Scoped by user_id rather than trusting the id alone: a jti is a bare
+        UUID in a URL, and without the ownership check any signed-in person
+        could sign out anyone else whose id they guessed or saw in a log.
+        """
+        with self._session_factory() as session:
+            row = session.get(RefreshTokenRow, jti)
+            if row is None or row.user_id != user_id or row.revoked_at is not None:
+                return False
+            row.revoked_at = datetime.now(UTC)
+            session.add(
+                AuditLogRow(
+                    organization_id=row.organization_id,
+                    actor_user_id=user_id,
+                    action="session.revoke",
+                    target_type="user",
+                    target_id=user_id,
+                )
+            )
+            session.commit()
+            return True
+
+    def change_password(self, user_id: UUID, current: str, new: str) -> None:
+        """Change a password, verifying the current one first.
+
+        Every other session is revoked on success. That is the point of the
+        feature as much as the new password is: someone changing it because they
+        believe it was seen needs the sessions it opened closed, and leaving them
+        alive makes the change cosmetic.
+        """
+        with self._session_factory() as session:
+            credential = session.get(UserCredentialRow, user_id)
+            if credential is None or not verify_password(credential.password_hash, current):
+                raise InvalidCredentialsError("Current password is incorrect")
+
+            credential.password_hash = hash_password(new)
+            now = datetime.now(UTC)
+            for row in session.execute(
+                select(RefreshTokenRow).where(
+                    RefreshTokenRow.user_id == user_id,
+                    RefreshTokenRow.revoked_at.is_(None),
+                )
+            ).scalars():
+                row.revoked_at = now
+
+            membership = session.execute(
+                select(OrgMembershipRow).where(OrgMembershipRow.user_id == user_id)
+            ).scalars().first()
+            if membership is not None:
+                session.add(
+                    AuditLogRow(
+                        organization_id=membership.organization_id,
+                        actor_user_id=user_id,
+                        action="password.change",
+                        target_type="user",
+                        target_id=user_id,
                     )
                 )
             session.commit()

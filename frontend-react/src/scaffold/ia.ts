@@ -700,11 +700,10 @@ export const IA: IaSection[] = [
         path: "company/numbering",
         nav: false,
         mergedInto: "company",
-        status: "partial",
+        status: "wired",
         layer: "L1",
-        endpoints: ["POST /companies", "PATCH /companies/{id}"],
-        missing: ["GET /sequences"],
-        note: "Wired 2026-08-27: the prefix is editable. The next-number counter in sequence_repo is still not readable, so the screen cannot show what the next invoice will be called.",
+        endpoints: ["POST /companies", "PATCH /companies/{id}", "GET /sequences"],
+        note: "Wired 2026-08-27, completed 2026-08-28. The prefix is editable and GET /sequences reports every series with its current and next value. The earlier note here said the counter was \"not readable\" — it always was: sequence_repo.snapshot has existed since ADR-0003 for backups, and only the HTTP surface was missing.",
       },
       {
         key: "company.payment-terms",
@@ -1037,7 +1036,7 @@ export const IA: IaSection[] = [
           "role model (owner/admin/accountant/employee/viewer)",
           "invitation flow",
         ],
-        note: "OrgMembership exists in core/models but is not exposed and carries no role enum.",
+        note: "Partly wired 2026-08-28. GET /orgs/current/members lists the organization with the role each person holds, and PATCH sets a role (company.write, and refuses your own — the last owner demoting themselves strands the organization). The earlier note said OrgMembership \"carries no role enum\"; it does, and has since the initial schema, with a four-role matrix in api/authz. What is genuinely missing is the invitation, which needs email (B1).",
       },
       {
         key: "settings.security",
