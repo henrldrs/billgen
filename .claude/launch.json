@@ -42,6 +42,20 @@
         "@billgen/saas"
       ],
       "port": 5183
+    },
+    {
+      "name": "billgen-site",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "../finf_siteweb",
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "3007"
+      ],
+      "port": 3007
     }
   ]
 }
