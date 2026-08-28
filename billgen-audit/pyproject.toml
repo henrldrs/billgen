@@ -1,0 +1,30 @@
+# The audit engine is a separate project from BillGen. It shares the repository
+# and nothing else: no dependency on the target, and the target has no
+# dependency on it. Kept stdlib-only so it runs wherever the target's tests do.
+[project]
+name = "billgen-audit"
+version = "1.0.0"
+description = "Evidence-driven audit engine for BillGen, built from the Professional Audit System specification"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra -q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+ignore = [
+  # UP042 wants `class Severity(str, Enum)` rewritten to StrEnum. Ruff itself
+  # classes that fix as unsafe, and here it would be: these enums are written
+  # into findings.json and interpolated into both reports, and (str, Enum)
+  # renders as "Severity.HIGH" under str() where StrEnum renders "HIGH". A
+  # silent change in how a severity stringifies changes stored audit records
+  # and breaks the baseline diff against every audit taken before it. Same
+  # reasoning, and same decision, as the target's own pyproject.
+  "UP042",
+]

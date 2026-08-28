@@ -1,0 +1,42 @@
+{
+  "registry": "Belgian structured e-invoicing and Peppol",
+  "note": "Spec §17. The 2026 Belgian B2B mandate is the rule most likely to move; treat `last_reviewed` as load-bearing and re-read the source before relying on any conclusion drawn from these.",
+  "rules": [
+    {
+      "id": "BE-EINV-001",
+      "jurisdiction": "Belgium",
+      "topic": "structured_b2b_e_invoicing",
+      "effective_from": "2026-01-01",
+      "classification": "legal_requirement",
+      "severity": "HIGH",
+      "title": "No structured e-invoice generation is visible",
+      "requirement": "Belgian established taxable persons must issue structured electronic invoices for domestic B2B supplies, in a format compliant with the European standard, exchanged over an interoperable network.",
+      "code_signal": "(?i)\\bubl\\b|peppol|bis[_ ]?billing|cross[_ ]?industry",
+      "suffixes": [".py"],
+      "expected_location": "core/einvoicing",
+      "impact": "Domestic B2B customers subject to the mandate cannot lawfully receive a PDF-only invoice. A product that cannot issue a structured invoice cannot serve them.",
+      "recommendation": "Generate a compliant structured document from the same domain model that produces the PDF, and validate it against the business rules before delivery.",
+      "verification_test": "Generate a structured invoice and validate it against the format's business-rule set.",
+      "source_url": "https://finances.belgium.be/fr/entreprises/tva/facturation/facturation-electronique",
+      "last_reviewed": "2026-08-28"
+    },
+    {
+      "id": "BE-EINV-002",
+      "jurisdiction": "Belgium",
+      "topic": "peppol_participant_identifier",
+      "effective_from": "2026-01-01",
+      "classification": "recommendation",
+      "severity": "MEDIUM",
+      "title": "No participant identifier handling is visible",
+      "requirement": "Exchange over the network requires each party to be addressed by a participant identifier in a registered scheme, and the recipient to be discoverable before an invoice is sent.",
+      "code_signal": "(?i)participant[_ ]?id|endpoint[_ ]?id|0208|scheme[_ ]?id",
+      "suffixes": [".py"],
+      "expected_location": "core/einvoicing",
+      "impact": "Without recipient lookup, delivery fails after the invoice is already issued and the customer is told it was sent.",
+      "recommendation": "Resolve and store the recipient identifier, and check registration before issuing.",
+      "verification_test": "Attempt delivery to an unregistered recipient; expect a clear pre-issue failure.",
+      "source_url": "https://docs.peppol.eu/poacc/billing/3.0/",
+      "last_reviewed": "2026-08-28"
+    }
+  ]
+}
