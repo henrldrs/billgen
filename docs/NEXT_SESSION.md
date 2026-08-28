@@ -10,7 +10,7 @@ the measured picture is
 stale.** Regenerating it is on the list below.
 
 **State:** Python **378** passed (was 298), frontend 157 passed, ruff clean,
-typecheck clean. Ten commits, **none of them pushed** — see §1.
+typecheck clean. This session's commits are **all unpushed** — see §1.
 
 Every new endpoint was also exercised live against the desktop dev pair on
 :8010 (`python scripts/dev_desktop_api.py`), not only under pytest — alerts on
@@ -43,7 +43,7 @@ blob storage — and a Postgres bug that would have failed the first CI run.
 
 The remote now exists (`origin` → `github.com/henrldrs/billgen`, and `main` was
 in sync with it at the start of this session — the previous note's "the repo has
-no remote" is out of date). **Ten commits are sitting unpushed on `main`** — eight that change behaviour and two that update the documents describing it.
+no remote" is out of date). **Everything since `e893b59` is sitting unpushed on `main`** — eight commits that change behaviour, plus the documentation ones that describe them (`git log --oneline e893b59..HEAD`).
 
 They were not pushed because pushing runs CI and publishes work Henri has not
 read, and this session ran while he was asleep. It is one command:
