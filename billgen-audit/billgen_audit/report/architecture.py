@@ -33,6 +33,7 @@ from pathlib import Path
 from ..config import AuditConfig
 from ..evidence import EvidenceStore
 from ..scanners.routes import RouteScanner
+from . import structure
 
 _BLOCK = "<!-- GENERATED:{name} -->"
 _BLOCK_END = "<!-- /GENERATED:{name} -->"
@@ -141,7 +142,14 @@ def sync(config: AuditConfig, *, check: bool = False) -> tuple[bool, list[str]]:
 
     facts, routes = collect_facts(config)
     before = doc.read_text(encoding="utf-8")
-    after = apply(before, {"endpoints": render_endpoints(routes)}, facts)
+    after = apply(
+        before,
+        {
+            "endpoints": render_endpoints(routes),
+            "structure": structure.render(config),
+        },
+        facts,
+    )
 
     notes = [
         f"{facts['endpoint_count']} endpoints across {facts['router_count']} routers",
