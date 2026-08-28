@@ -30,3 +30,6 @@ body {
   margin-bottom: 0.75rem;
   font-size: var(--bg-text-helper);
 }
+
+/* The template studio (catalog/templates). Scoped to .bg-ws-* and .bg-doc. */
+@import "@billgen/ui/src/workspace/workspace.css";

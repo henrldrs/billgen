@@ -6,6 +6,7 @@ import { SessionProvider, useSession } from "./auth/session";
 import { api } from "./lib/api";
 import { AppShell } from "./pages/AppShell";
 import { LoginPage } from "./pages/LoginPage";
+import { PreviewRoute } from "./pages/PreviewRoute";
 import {
   InvoiceBuilderRoute,
   buildAppRoutes,
@@ -27,6 +28,12 @@ export function App() {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
+
+            {/* Dev-only preview of the un-integrated scaffolds in
+                @billgen/ui/src/{workspace,tva}. Owns no IA node, appears in no
+                nav, and is absent from a production build. Delete this line and
+                pages/PreviewRoute.tsx to remove it. */}
+            {import.meta.env.DEV && <Route path="/_preview" element={<PreviewRoute />} />}
             <Route
               path="/app"
               element={

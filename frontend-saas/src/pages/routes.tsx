@@ -59,6 +59,7 @@ import {
 } from "@billgen/ui";
 import type { ReactNode } from "react";
 import { Navigate, Route, useNavigate, useOutletContext, useParams } from "react-router-dom";
+import { TemplateStudioScreen } from "./TemplateStudioScreen";
 
 import { useTheme } from "../lib/theme";
 import type { ShellContext } from "./AppShell";
@@ -390,6 +391,13 @@ const BUILT: Record<string, Screen> = {
   legal: SectionIndex,
   onboarding: SectionIndex,
   desktop: SectionIndex,
+
+  // catalog — the template studio. The IA node predates the backend by
+  // weeks; GET /pdf-templates still lists the four fixed Jinja templates
+  // and this is the editable layer above it.
+  "catalog/templates": ({ companyId, lang }) => (
+    <TemplateStudioScreen companyId={companyId} lang={lang} />
+  ),
 
   // sales
   "sales/invoices": InvoicesScreen,

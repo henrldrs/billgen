@@ -82,3 +82,16 @@ export type TierResponse = components["schemas"]["TierResponse"];
 
 /** The four plans, in upgrade order. */
 export type PlanTierName = "free" | "starter" | "business" | "business_pro";
+
+// Document templates — the visual designer's wire shapes. Business tier and up
+// for writes; reads are open so a downgraded org still sees what it built.
+export type TemplateResponse = components["schemas"]["TemplateResponse"];
+export type TemplateCreateRequest = components["schemas"]["TemplateCreateRequest"];
+export type TemplateUpdateRequest = components["schemas"]["TemplateUpdateRequest"];
+export type TemplateSnapshotResponse = components["schemas"]["TemplateSnapshotResponse"];
+
+// Expenses and the TVA position.
+export type ExpenseResponse = components["schemas"]["ExpenseResponse"];
+export type ExpenseImportRequest = components["schemas"]["ExpenseImportRequest"];
+export type ExpenseReviewRequest = components["schemas"]["ExpenseReviewRequest"];
+export type TvaPositionResponse = components["schemas"]["TvaPositionResponse"];

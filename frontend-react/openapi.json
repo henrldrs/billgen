@@ -1616,7 +1616,7 @@
           "invoices"
         ],
         "summary": "Invoice Peppol",
-        "description": "Peppol BIS 3.0 XML. Every tier can do this \u2014 Peppol is the Belgian\ndifferentiator, not an upsell \u2014 but the monthly document allowance applies,\ncounted from the EXPORT_PEPPOL audit entries this call writes.",
+        "description": "Peppol BIS 3.0 XML. Every tier can do this \u2014 Peppol is the Belgian\ndifferentiator, not an upsell \u2014 but the monthly *document* allowance\napplies: distinct invoices exported this period, counted from the\nEXPORT_PEPPOL audit entries. Re-downloading an invoice already exported\nthis period is free, even at the cap.",
         "operationId": "invoice_peppol_invoices__invoice_id__peppol_xml_get",
         "parameters": [
           {
@@ -1636,6 +1636,516 @@
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quotes": {
+      "post": {
+        "tags": [
+          "quotes"
+        ],
+        "summary": "Create Quote",
+        "description": "Create a quote. It is numbered here, from the quote series.",
+        "operationId": "create_quote_quotes_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuoteCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "quotes"
+        ],
+        "summary": "List Quotes",
+        "description": "`status` filters on the *stored* status. Expiry is derived, so filtering\non it would mean querying a value no column holds \u2014 read `effective_status`\noff each row instead.",
+        "operationId": "list_quotes_quotes_get",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Company Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "client_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Client Id"
+            }
+          },
+          {
+            "name": "today",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Today"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QuoteResponse"
+                  },
+                  "title": "Response List Quotes Quotes Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quotes/{quote_id}": {
+      "get": {
+        "tags": [
+          "quotes"
+        ],
+        "summary": "Get Quote",
+        "operationId": "get_quote_quotes__quote_id__get",
+        "parameters": [
+          {
+            "name": "quote_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Quote Id"
+            }
+          },
+          {
+            "name": "today",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Today"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "quotes"
+        ],
+        "summary": "Delete Quote",
+        "description": "Delete a quote that never became an invoice. ADR-0002 does not apply\nhere: it exists because an issued invoice consumed a gapless number, and a\nquote's series has no fiscal meaning.",
+        "operationId": "delete_quote_quotes__quote_id__delete",
+        "parameters": [
+          {
+            "name": "quote_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Quote Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quotes/{quote_id}/send": {
+      "post": {
+        "tags": [
+          "quotes"
+        ],
+        "summary": "Send Quote",
+        "description": "Record that the offer went out. Nothing is emailed \u2014 that waits on B1.\nWhat this buys today is a date, which is what \"you never replied to our\nquote of the 3rd\" is made of.",
+        "operationId": "send_quote_quotes__quote_id__send_post",
+        "parameters": [
+          {
+            "name": "quote_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Quote Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quotes/{quote_id}/accept": {
+      "post": {
+        "tags": [
+          "quotes"
+        ],
+        "summary": "Accept Quote",
+        "description": "The customer said yes. Still no invoice \u2014 POST /quotes/{id}/convert.",
+        "operationId": "accept_quote_quotes__quote_id__accept_post",
+        "parameters": [
+          {
+            "name": "quote_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Quote Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/QuoteDecisionRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quotes/{quote_id}/reject": {
+      "post": {
+        "tags": [
+          "quotes"
+        ],
+        "summary": "Reject Quote",
+        "operationId": "reject_quote_quotes__quote_id__reject_post",
+        "parameters": [
+          {
+            "name": "quote_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Quote Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/QuoteDecisionRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quotes/{quote_id}/expire": {
+      "post": {
+        "tags": [
+          "quotes"
+        ],
+        "summary": "Expire Quote",
+        "description": "Write the derived expiry down \u2014 closing out a pipeline by hand, and the\nonly way to expire an offer early.",
+        "operationId": "expire_quote_quotes__quote_id__expire_post",
+        "parameters": [
+          {
+            "name": "quote_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Quote Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quotes/{quote_id}/convert": {
+      "post": {
+        "tags": [
+          "quotes"
+        ],
+        "summary": "Convert Quote",
+        "description": "Turn an accepted quote into a DRAFT invoice, once.\n\nRequires `invoice.write`, not `quote.write`: this creates an invoice, and\nthe permission has to match what comes out rather than what went in.\n\nUnmetered, deliberately. The invoice allowance is consumed at draft\ncreation, which this performs \u2014 but refusing to convert a signed offer\nbecause a monthly counter is full would block the one thing the customer\nhas already agreed to pay for. The draft it produces is counted like any\nother the moment the next one is created.",
+        "operationId": "convert_quote_quotes__quote_id__convert_post",
+        "parameters": [
+          {
+            "name": "quote_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Quote Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/QuoteConvertRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteConvertResponse"
+                }
               }
             }
           },
@@ -2074,6 +2584,76 @@
         }
       }
     },
+    "/vat-treatment": {
+      "get": {
+        "tags": [
+          "reference"
+        ],
+        "summary": "Vat Treatment",
+        "description": "Which VAT category this seller/buyer pair implies, and the mention it needs.\n\n`core.rules.vat.pick_category` has existed since the domain was written and\nno route called it, so every invoice line shipped `category: \"S\"` \u2014 correct\nfor a Belgian seller billing a Belgian customer, and wrong for the two cases\nthat make the rule worth having: intra-EU B2B, which is reverse-charged and\ncarries a mandatory Article 51 \u00a72 mention, and export outside the EU.\n\nAdvisory on purpose. This does not overwrite what the composer sends: the\ncaller knows things the data does not (a client flagged as a business that\nis buying privately, an exemption that turns on the service). Defaulting is\nthe job; deciding is not.",
+        "operationId": "vat_treatment_vat_treatment_get",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Company Id"
+            }
+          },
+          {
+            "name": "client_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Client Id"
+            }
+          },
+          {
+            "name": "lang",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lang"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VatTreatmentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/entitlements": {
       "get": {
         "tags": [
@@ -2367,6 +2947,291 @@
         }
       }
     },
+    "/reports/payments": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Payment Report",
+        "description": "Total received, split by method and by month. Omit `period` for all time.\n\nThe payments screen deliberately printed no total until this existed:\nsumming the rows in the browser gives the total of the page, which is a\ndifferent number from the total of the filter, and the wrong one.",
+        "operationId": "payment_report_reports_payments_get",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Company Id"
+            }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}(?:-(?:Q[1-4]|0[1-9]|1[0-2]))?$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "examples": [
+                "2026-Q3"
+              ],
+              "title": "Period"
+            }
+          },
+          {
+            "name": "client_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Client Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentReportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/clients": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Client Report",
+        "description": "Revenue and debt per client, biggest first. Omit `period` for all time.\n\n`GET /clients/{id}/stats` answers this for one client; calling it once per\nrow is the N+1 that report was written to avoid.",
+        "operationId": "client_report_reports_clients_get",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Company Id"
+            }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}(?:-(?:Q[1-4]|0[1-9]|1[0-2]))?$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "examples": [
+                "2026-Q3"
+              ],
+              "title": "Period"
+            }
+          },
+          {
+            "name": "today",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Today"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientReportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/products": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Product Report",
+        "description": "What sold, by invoice line rather than by document.\n\nRead the caveat in `ProductReportResponse` before putting this beside\nrevenue: line net HT carries no share of an invoice-level discount, on\npurpose, so the two totals are answers to different questions.",
+        "operationId": "product_report_reports_products_get",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Company Id"
+            }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}(?:-(?:Q[1-4]|0[1-9]|1[0-2]))?$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "examples": [
+                "2026-Q3"
+              ],
+              "title": "Period"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductReportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search": {
+      "get": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Search",
+        "description": "Find invoices, credit notes, clients and products matching `q`.\n\nA term shorter than two characters returns nothing rather than everything:\nthe palette fires on every keystroke, and one character matches most of any\ntable. That is an empty result, not a 422 \u2014 the user is still typing, and an\nerror for an unfinished word is noise.",
+        "operationId": "search_search_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "What to look for \u2014 a reference, a name, a VAT number",
+              "title": "Q"
+            },
+            "description": "What to look for \u2014 a reference, a name, a VAT number"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 25,
+              "minimum": 1,
+              "description": "Max hits per record type",
+              "default": 5,
+              "title": "Limit"
+            },
+            "description": "Max hits per record type"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/activity": {
       "get": {
         "tags": [
@@ -2433,6 +3298,760 @@
                     "$ref": "#/components/schemas/ActivityEntryResponse"
                   },
                   "title": "Response List Activity Activity Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/alerts": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "List Alerts",
+        "description": "Overdue invoices, forgotten drafts, clients missing a VAT number, and the\ncompany's own identifiers \u2014 worst first.\n\n`today` is accepted so the answer can be asked for a given day rather than\nonly for now; without it the engine could not be tested at all.",
+        "operationId": "list_alerts_alerts_get",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Company Id"
+            }
+          },
+          {
+            "name": "today",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Today"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/expenses": {
+      "get": {
+        "tags": [
+          "expenses"
+        ],
+        "summary": "List Expenses",
+        "operationId": "list_expenses_expenses_get",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Company Id"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          },
+          {
+            "name": "needs_attention",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Needs Attention"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExpenseResponse"
+                  },
+                  "title": "Response List Expenses Expenses Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/expenses/{expense_id}": {
+      "get": {
+        "tags": [
+          "expenses"
+        ],
+        "summary": "Get Expense",
+        "operationId": "get_expense_expenses__expense_id__get",
+        "parameters": [
+          {
+            "name": "expense_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Expense Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "expenses"
+        ],
+        "summary": "Delete Expense",
+        "description": "Remove a mis-scanned document.\n\nAllowed at any state, unlike an invoice: importing an expense consumes no\ngapless number and creates no obligation.",
+        "operationId": "delete_expense_expenses__expense_id__delete",
+        "parameters": [
+          {
+            "name": "expense_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Expense Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/expenses/import": {
+      "post": {
+        "tags": [
+          "expenses"
+        ],
+        "summary": "Import Expense",
+        "description": "Record one supplier document from extraction output.\n\nThe client supplies `extracted` because extraction is a vendor decision\nnobody has made (\u00a73 of the blueprint). Keeping that an explicit request\nfield leaves the seam visible; when an extractor ships inside the product it\nfills this in and the service does not change.",
+        "operationId": "import_expense_expenses_import_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpenseImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/expenses/{expense_id}/review": {
+      "post": {
+        "tags": [
+          "expenses"
+        ],
+        "summary": "Review Expense",
+        "description": "Accept or override the suggested treatment.\n\nThe only path by which a recoverable amount becomes confirmed, and therefore\nthe only path by which it can reach `estimated_payable`.",
+        "operationId": "review_expense_expenses__expense_id__review_post",
+        "parameters": [
+          {
+            "name": "expense_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Expense Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpenseReviewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tva/position": {
+      "get": {
+        "tags": [
+          "tva"
+        ],
+        "summary": "Get Position",
+        "operationId": "get_position_tva_position_get",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Company Id"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "description": "First day of the period, inclusive",
+              "title": "Start"
+            },
+            "description": "First day of the period, inclusive"
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "description": "Last day of the period, inclusive",
+              "title": "End"
+            },
+            "description": "Last day of the period, inclusive"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TvaPositionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/templates": {
+      "get": {
+        "tags": [
+          "templates"
+        ],
+        "summary": "List Templates",
+        "operationId": "list_templates_templates_get",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Company Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TemplateResponse"
+                  },
+                  "title": "Response List Templates Templates Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "templates"
+        ],
+        "summary": "Create Template",
+        "operationId": "create_template_templates_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/templates/{template_id}": {
+      "get": {
+        "tags": [
+          "templates"
+        ],
+        "summary": "Get Template",
+        "operationId": "get_template_templates__template_id__get",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "templates"
+        ],
+        "summary": "Update Template",
+        "description": "Edit the draft. Published versions are untouched \u2014 that is the point.",
+        "operationId": "update_template_templates__template_id__patch",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "templates"
+        ],
+        "summary": "Delete Template",
+        "description": "Safe because invoices keep their template by value.\n\nRefused only for the company default: a company with templates and no\ndefault is a state the issue path has no answer for.",
+        "operationId": "delete_template_templates__template_id__delete",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/templates/{template_id}/snapshot": {
+      "get": {
+        "tags": [
+          "templates"
+        ],
+        "summary": "Get Snapshot",
+        "description": "The published version an invoice would store if issued now.\n\n404s while the template has never been published, which is the honest answer\n\u2014 there is no version to attach, and inventing one from the draft is exactly\nthe mutable-layout failure the snapshot prevents.",
+        "operationId": "get_snapshot_templates__template_id__snapshot_get",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateSnapshotResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/templates/{template_id}/publish": {
+      "post": {
+        "tags": [
+          "templates"
+        ],
+        "summary": "Publish Template",
+        "description": "Freeze the draft as an immutable version.\n\nOnly a published version can reach a document, which is what makes \"which\nlayout did this customer actually receive\" answerable a year later.",
+        "operationId": "publish_template_templates__template_id__publish_post",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/templates/{template_id}/default": {
+      "post": {
+        "tags": [
+          "templates"
+        ],
+        "summary": "Set Default Template",
+        "operationId": "set_default_template_templates__template_id__default_post",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
                 }
               }
             }
@@ -2604,6 +4223,96 @@
         ],
         "title": "ActivityEntryResponse"
       },
+      "AlertResponse": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "target_type": {
+            "type": "string",
+            "title": "Target Type"
+          },
+          "target_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Target Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "context": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "severity",
+          "target_type",
+          "target_id",
+          "title",
+          "context"
+        ],
+        "title": "AlertResponse",
+        "description": "`code` is the rule that fired and doubles as the translation key;\n`context` carries the numbers the sentence needs. No prose: the wording is\nthe frontend's, in the user's language."
+      },
+      "AlertsResponse": {
+        "properties": {
+          "company_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Company Id"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date",
+            "title": "As Of"
+          },
+          "alerts": {
+            "items": {
+              "$ref": "#/components/schemas/AlertResponse"
+            },
+            "type": "array",
+            "title": "Alerts"
+          },
+          "counts_by_severity": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts By Severity"
+          },
+          "counts_by_code": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts By Code"
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "company_id",
+          "as_of",
+          "alerts",
+          "counts_by_severity",
+          "counts_by_code",
+          "truncated"
+        ],
+        "title": "AlertsResponse"
+      },
       "BillingType": {
         "type": "string",
         "enum": [
@@ -2614,6 +4323,30 @@
           "recurring"
         ],
         "title": "BillingType"
+      },
+      "BlockKind": {
+        "type": "string",
+        "enum": [
+          "header",
+          "parties",
+          "document_meta",
+          "items",
+          "totals",
+          "payment",
+          "notes",
+          "terms",
+          "footer"
+        ],
+        "title": "BlockKind"
+      },
+      "CheckStatus": {
+        "type": "string",
+        "enum": [
+          "passed",
+          "warning",
+          "failed"
+        ],
+        "title": "CheckStatus"
       },
       "ClientCreateRequest": {
         "properties": {
@@ -2747,6 +4480,100 @@
           "name"
         ],
         "title": "ClientCreateRequest"
+      },
+      "ClientReportResponse": {
+        "properties": {
+          "company_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Company Id"
+          },
+          "period": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period"
+          },
+          "period_start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period Start"
+          },
+          "period_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period End"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "clients": {
+            "items": {
+              "$ref": "#/components/schemas/ClientRowResponse"
+            },
+            "type": "array",
+            "title": "Clients"
+          },
+          "client_count": {
+            "type": "integer",
+            "title": "Client Count"
+          },
+          "invoiced_total": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Invoiced Total"
+          },
+          "paid_total": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Paid Total"
+          },
+          "outstanding_total": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Outstanding Total"
+          },
+          "skipped_other_currency": {
+            "type": "integer",
+            "title": "Skipped Other Currency"
+          }
+        },
+        "type": "object",
+        "required": [
+          "company_id",
+          "period",
+          "period_start",
+          "period_end",
+          "currency",
+          "clients",
+          "client_count",
+          "invoiced_total",
+          "paid_total",
+          "outstanding_total",
+          "skipped_other_currency"
+        ],
+        "title": "ClientReportResponse",
+        "description": "Revenue and debt per client \u2014 see\n`core.services.reporting_service.ClientReport`. Clients with no invoices in\nthe period are absent rather than zeroed; `GET /clients` is the customer\nlist."
       },
       "ClientResponse": {
         "properties": {
@@ -2884,6 +4711,72 @@
           "notes"
         ],
         "title": "ClientResponse"
+      },
+      "ClientRowResponse": {
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Client Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "invoice_count": {
+            "type": "integer",
+            "title": "Invoice Count"
+          },
+          "invoiced_total": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Invoiced Total"
+          },
+          "paid_total": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Paid Total"
+          },
+          "outstanding_total": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Outstanding Total"
+          },
+          "overdue_count": {
+            "type": "integer",
+            "title": "Overdue Count"
+          },
+          "overdue_total": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Overdue Total"
+          },
+          "last_invoice_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Invoice Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "client_id",
+          "name",
+          "invoice_count",
+          "invoiced_total",
+          "paid_total",
+          "outstanding_total",
+          "overdue_count",
+          "overdue_total",
+          "last_invoice_date"
+        ],
+        "title": "ClientRowResponse"
       },
       "ClientStatsResponse": {
         "properties": {
@@ -3744,6 +5637,15 @@
         "title": "CompanyValidationResponse",
         "description": "Whether a company's own identifiers hold up, and whether it could act as\na Peppol supplier at all.\n\n`peppol_ready` is about the *supplier* half only: the customer half of the\ngate needs a client, and a B2C client fails it no matter how correct this\ncompany is. So a `peppol_ready: true` company can still be refused at export\ntime \u2014 this endpoint exists to fix typos in a settings form, not to promise\ndelivery."
       },
+      "Confidence": {
+        "type": "string",
+        "enum": [
+          "high",
+          "medium",
+          "low"
+        ],
+        "title": "Confidence"
+      },
       "CreditNoteIssueRequest": {
         "properties": {
           "invoice_id": {
@@ -3924,6 +5826,18 @@
         ],
         "title": "CreditNoteResponse"
       },
+      "Currency": {
+        "type": "string",
+        "enum": [
+          "EUR",
+          "USD",
+          "GBP",
+          "JPY",
+          "CAD",
+          "AUD"
+        ],
+        "title": "Currency"
+      },
       "DiscountIn": {
         "properties": {
           "type": {
@@ -3994,6 +5908,34 @@
         ],
         "title": "DiscountOut"
       },
+      "DocumentCheck": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Code"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CheckStatus"
+          },
+          "context": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "status"
+        ],
+        "title": "DocumentCheck",
+        "description": "One validation result (\u00a74).\n\n`code` and `context` only \u2014 the sentence shown to the user is the\nfrontend's, exactly as `GET /alerts` already does it. A server that ships\nprose ships it in one language."
+      },
       "EntitlementsResponse": {
         "properties": {
           "organization_id": {
@@ -4040,6 +5982,462 @@
         ],
         "title": "EntitlementsResponse",
         "description": "Everything the UI needs to render itself correctly for this plan.\n\nThe frontend uses this to hide or badge what the plan does not include. It\nis **not** the enforcement point \u2014 every gated endpoint re-checks\nserver-side and answers 402. A hidden button is UX; a refused request is\nthe rule."
+      },
+      "ExpenseImportRequest": {
+        "properties": {
+          "company_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Company Id"
+          },
+          "extracted": {
+            "$ref": "#/components/schemas/ExtractedFields-Input"
+          },
+          "source_filename": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Filename"
+          }
+        },
+        "type": "object",
+        "required": [
+          "company_id",
+          "extracted"
+        ],
+        "title": "ExpenseImportRequest"
+      },
+      "ExpenseResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Organization Id"
+          },
+          "company_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Company Id"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "source_filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Filename"
+          },
+          "source_document_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Document Key"
+          },
+          "extracted": {
+            "$ref": "#/components/schemas/ExtractedFields-Output"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentCheck"
+            },
+            "type": "array",
+            "title": "Checks"
+          },
+          "classification": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TvaClassification"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "duplicate_of_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duplicate Of Id"
+          },
+          "failure_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Code"
+          },
+          "needs_attention": {
+            "type": "boolean",
+            "title": "Needs Attention"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "organization_id",
+          "company_id",
+          "state",
+          "source_filename",
+          "source_document_key",
+          "extracted",
+          "checks",
+          "classification",
+          "duplicate_of_id",
+          "failure_code",
+          "needs_attention",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ExpenseResponse"
+      },
+      "ExpenseReviewRequest": {
+        "properties": {
+          "treatment": {
+            "$ref": "#/components/schemas/RecoveryTreatment"
+          },
+          "deductible_percent": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deductible Percent"
+          }
+        },
+        "type": "object",
+        "required": [
+          "treatment"
+        ],
+        "title": "ExpenseReviewRequest",
+        "description": "A human's decision on one expense's treatment.\n\nThere is no `recoverable_amount` field, and there will not be one. The\nservice recomputes it from the detected amount and the percentage: a client\nthat can post the figure is a client that can post the wrong figure, and\nthis number reaches a VAT return."
+      },
+      "ExtractedFields-Input": {
+        "properties": {
+          "supplier_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supplier Name"
+          },
+          "supplier_vat_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supplier Vat Number"
+          },
+          "invoice_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Number"
+          },
+          "invoice_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Date"
+          },
+          "subtotal_ht": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtotal Ht"
+          },
+          "tva_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tva Rate"
+          },
+          "tva_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tva Amount"
+          },
+          "total_ttc": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Ttc"
+          },
+          "currency": {
+            "$ref": "#/components/schemas/Currency",
+            "default": "EUR"
+          },
+          "expense_category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expense Category"
+          },
+          "document_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Type"
+          },
+          "field_confidence": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Confidence"
+            },
+            "type": "object",
+            "title": "Field Confidence"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ExtractedFields",
+        "description": "What extraction (\u00a73) believes it read off the document.\n\nEvery field is optional. A scan that yielded a supplier and nothing else is\na real outcome, and the record has to be able to hold it \u2014 an extractor\nthat must produce a total will invent one."
+      },
+      "ExtractedFields-Output": {
+        "properties": {
+          "supplier_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supplier Name"
+          },
+          "supplier_vat_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supplier Vat Number"
+          },
+          "invoice_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Number"
+          },
+          "invoice_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Date"
+          },
+          "subtotal_ht": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtotal Ht"
+          },
+          "tva_rate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tva Rate"
+          },
+          "tva_amount": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tva Amount"
+          },
+          "total_ttc": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Ttc"
+          },
+          "currency": {
+            "$ref": "#/components/schemas/Currency",
+            "default": "EUR"
+          },
+          "expense_category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expense Category"
+          },
+          "document_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Type"
+          },
+          "field_confidence": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Confidence"
+            },
+            "type": "object",
+            "title": "Field Confidence"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ExtractedFields",
+        "description": "What extraction (\u00a73) believes it read off the document.\n\nEvery field is optional. A scan that yielded a supplier and nothing else is\na real outcome, and the record has to be able to hold it \u2014 an extractor\nthat must produce a total will invent one."
       },
       "HTTPValidationError": {
         "properties": {
@@ -5074,6 +7472,30 @@
         "title": "MeterUsageResponse",
         "description": "One allowance and how much of it is spent.\n\n`limit: null` means unlimited. `period` is set only for the meters that\nreset monthly (invoices, Peppol documents); the standing totals \u2014 clients,\nproducts, companies, seats \u2014 carry `null`."
       },
+      "MethodBucketResponse": {
+        "properties": {
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "total": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "method",
+          "count",
+          "total"
+        ],
+        "title": "MethodBucketResponse"
+      },
       "OrganizationResponse": {
         "properties": {
           "id": {
@@ -5180,6 +7602,137 @@
           "invoice_status"
         ],
         "title": "PaymentRecordResponse"
+      },
+      "PaymentReportResponse": {
+        "properties": {
+          "company_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Company Id"
+          },
+          "period": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period"
+          },
+          "period_start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period Start"
+          },
+          "period_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period End"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "methods": {
+            "items": {
+              "$ref": "#/components/schemas/MethodBucketResponse"
+            },
+            "type": "array",
+            "title": "Methods"
+          },
+          "by_month": {
+            "additionalProperties": {
+              "type": "string",
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+            },
+            "type": "object",
+            "title": "By Month"
+          },
+          "count_by_month": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Count By Month"
+          },
+          "payment_count": {
+            "type": "integer",
+            "title": "Payment Count"
+          },
+          "total": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total"
+          },
+          "largest": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Largest"
+          },
+          "first_payment_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Payment On"
+          },
+          "last_payment_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Payment On"
+          },
+          "skipped_other_currency": {
+            "type": "integer",
+            "title": "Skipped Other Currency"
+          }
+        },
+        "type": "object",
+        "required": [
+          "company_id",
+          "period",
+          "period_start",
+          "period_end",
+          "currency",
+          "methods",
+          "by_month",
+          "count_by_month",
+          "payment_count",
+          "total",
+          "largest",
+          "first_payment_on",
+          "last_payment_on",
+          "skipped_other_currency"
+        ],
+        "title": "PaymentReportResponse",
+        "description": "Cash in over a period, split by method \u2014 see\n`core.services.reporting_service.PaymentReport`.\n\n`period` filters on the day the money arrived, not on the invoice it\nsettles, so this and the invoice report legitimately disagree across a\nquarter boundary."
       },
       "PaymentResponse": {
         "properties": {
@@ -5414,6 +7967,88 @@
         ],
         "title": "ProductCreateRequest"
       },
+      "ProductReportResponse": {
+        "properties": {
+          "company_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Company Id"
+          },
+          "period": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period"
+          },
+          "period_start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period Start"
+          },
+          "period_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period End"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "products": {
+            "items": {
+              "$ref": "#/components/schemas/ProductRowResponse"
+            },
+            "type": "array",
+            "title": "Products"
+          },
+          "line_count": {
+            "type": "integer",
+            "title": "Line Count"
+          },
+          "net_ht": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Net Ht"
+          },
+          "skipped_other_currency": {
+            "type": "integer",
+            "title": "Skipped Other Currency"
+          }
+        },
+        "type": "object",
+        "required": [
+          "company_id",
+          "period",
+          "period_start",
+          "period_end",
+          "currency",
+          "products",
+          "line_count",
+          "net_ht",
+          "skipped_other_currency"
+        ],
+        "title": "ProductReportResponse",
+        "description": "Volume and mix by invoice line \u2014 see\n`core.services.reporting_service.ProductReport`. Amounts are line net HT and\ncarry no share of any invoice-level discount, so this legitimately sums\nhigher than the net revenue in /reports/invoices."
+      },
       "ProductResponse": {
         "properties": {
           "id": {
@@ -5515,6 +8150,49 @@
           "tags"
         ],
         "title": "ProductResponse"
+      },
+      "ProductRowResponse": {
+        "properties": {
+          "product_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Product Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "invoice_count": {
+            "type": "integer",
+            "title": "Invoice Count"
+          },
+          "quantity": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Quantity"
+          },
+          "net_ht": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Net Ht"
+          }
+        },
+        "type": "object",
+        "required": [
+          "product_id",
+          "name",
+          "invoice_count",
+          "quantity",
+          "net_ht"
+        ],
+        "title": "ProductRowResponse"
       },
       "ProductStatus": {
         "type": "string",
@@ -5658,6 +8336,390 @@
         "type": "object",
         "title": "ProductUpdateRequest"
       },
+      "QuoteConvertRequest": {
+        "properties": {
+          "issue_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issue Date"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          }
+        },
+        "type": "object",
+        "title": "QuoteConvertRequest",
+        "description": "Dates for the draft invoice. Both optional: today, and the company's\ndefault term, when omitted."
+      },
+      "QuoteConvertResponse": {
+        "properties": {
+          "quote": {
+            "$ref": "#/components/schemas/QuoteResponse"
+          },
+          "invoice_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Invoice Id"
+          },
+          "invoice_status": {
+            "type": "string",
+            "title": "Invoice Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "quote",
+          "invoice_id",
+          "invoice_status"
+        ],
+        "title": "QuoteConvertResponse",
+        "description": "What conversion produced: the closed quote, and a DRAFT invoice.\n\nA draft, not an invoice \u2014 the gapless number is still consumed by\nPOST /invoices/{id}/issue and nowhere else."
+      },
+      "QuoteCreateRequest": {
+        "properties": {
+          "company_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Company Id"
+          },
+          "client_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Client Id"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/InvoiceLineIn"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Lines"
+          },
+          "issue_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issue Date"
+          },
+          "valid_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Until"
+          },
+          "quote_discount": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DiscountIn"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "comments": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comments"
+          },
+          "terms": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Terms"
+          },
+          "pdf_template": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pdf Template"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          }
+        },
+        "type": "object",
+        "required": [
+          "company_id",
+          "client_id",
+          "lines"
+        ],
+        "title": "QuoteCreateRequest"
+      },
+      "QuoteDecisionRequest": {
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "title": "QuoteDecisionRequest",
+        "description": "Accepting or rejecting. The note is what the customer said, kept because\n\"too expensive\" and \"wrong scope\" are different lessons."
+      },
+      "QuoteResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "company_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Company Id"
+          },
+          "client_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Client Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "sequence_global": {
+            "type": "integer",
+            "title": "Sequence Global"
+          },
+          "issue_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Issue Date"
+          },
+          "valid_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Until"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/InvoiceLineOut"
+            },
+            "type": "array",
+            "title": "Lines"
+          },
+          "quote_discount": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DiscountOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "comments": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comments"
+          },
+          "terms": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Terms"
+          },
+          "pdf_template": {
+            "type": "string",
+            "title": "Pdf Template"
+          },
+          "subtotal_ht": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Subtotal Ht"
+          },
+          "total_discount": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Discount"
+          },
+          "total_vat": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Vat"
+          },
+          "total_ttc": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Ttc"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "effective_status": {
+            "type": "string",
+            "title": "Effective Status"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          },
+          "decided_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided At"
+          },
+          "decision_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Note"
+          },
+          "converted_invoice_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Converted Invoice Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "company_id",
+          "client_id",
+          "reference",
+          "sequence_global",
+          "issue_date",
+          "valid_until",
+          "currency",
+          "lines",
+          "quote_discount",
+          "comments",
+          "terms",
+          "pdf_template",
+          "subtotal_ht",
+          "total_discount",
+          "total_vat",
+          "total_ttc",
+          "status",
+          "effective_status",
+          "sent_at",
+          "decided_at",
+          "decision_note",
+          "converted_invoice_id"
+        ],
+        "title": "QuoteResponse"
+      },
+      "RecoveryTreatment": {
+        "type": "string",
+        "enum": [
+          "recoverable",
+          "partial",
+          "non_recoverable",
+          "review_required"
+        ],
+        "title": "RecoveryTreatment",
+        "description": "\u00a75. `REVIEW_REQUIRED` is not a fifth colour \u2014 it is the absence of a\nconclusion, and it must never be silently rendered as a deduction."
+      },
       "RefreshRequest": {
         "properties": {
           "refresh_token": {
@@ -5689,6 +8751,10 @@
             "type": "integer",
             "title": "Invoices"
           },
+          "quotes": {
+            "type": "integer",
+            "title": "Quotes"
+          },
           "credit_notes": {
             "type": "integer",
             "title": "Credit Notes"
@@ -5712,6 +8778,7 @@
           "clients",
           "products",
           "invoices",
+          "quotes",
           "credit_notes",
           "payments",
           "sequences",
@@ -5740,6 +8807,121 @@
           "months"
         ],
         "title": "RevenueByMonthResponse"
+      },
+      "SearchHitResponse": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "subtitle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtitle"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "company_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "id",
+          "title"
+        ],
+        "title": "SearchHitResponse"
+      },
+      "SearchResponse": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "hits": {
+            "items": {
+              "$ref": "#/components/schemas/SearchHitResponse"
+            },
+            "type": "array",
+            "title": "Hits"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts"
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "query",
+          "hits",
+          "counts",
+          "truncated"
+        ],
+        "title": "SearchResponse"
       },
       "SignupRequest": {
         "properties": {
@@ -5840,6 +9022,319 @@
           "total_ttc"
         ],
         "title": "StatusBucketResponse"
+      },
+      "TemplateAppearance": {
+        "properties": {
+          "brand_color": {
+            "type": "string",
+            "maxLength": 7,
+            "title": "Brand Color",
+            "default": "#0f766e"
+          },
+          "text_token": {
+            "type": "string",
+            "maxLength": 64,
+            "title": "Text Token",
+            "default": "--bg-ink"
+          },
+          "border_token": {
+            "type": "string",
+            "maxLength": 64,
+            "title": "Border Token",
+            "default": "--bg-line"
+          },
+          "font_family": {
+            "type": "string",
+            "maxLength": 64,
+            "title": "Font Family",
+            "default": "Satoshi"
+          },
+          "body_size_pt": {
+            "type": "integer",
+            "maximum": 16.0,
+            "minimum": 6.0,
+            "title": "Body Size Pt",
+            "default": 10
+          },
+          "heading_size_pt": {
+            "type": "integer",
+            "maximum": 34.0,
+            "minimum": 8.0,
+            "title": "Heading Size Pt",
+            "default": 16
+          },
+          "page_size": {
+            "type": "string",
+            "pattern": "^(A4|Letter)$",
+            "title": "Page Size",
+            "default": "A4"
+          },
+          "margins": {
+            "type": "string",
+            "pattern": "^(narrow|standard|wide)$",
+            "title": "Margins",
+            "default": "standard"
+          },
+          "density": {
+            "type": "string",
+            "pattern": "^(compact|comfortable|spacious)$",
+            "title": "Density",
+            "default": "comfortable"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "TemplateAppearance",
+        "description": "One brand colour, and token names for everything else.\n\nThis started life refusing colour outright. That was right for the app's\nchrome and wrong for a *document*: an invoice is the customer's own\nstationery, and a company that cannot put its colour on it will not use the\nstudio. What survives from the original decision is the shape, which is the\npart that mattered \u2014 **one** colour in **one** field, not a hex per block,\nwhich is how a template becomes unreadable and impossible to re-skin."
+      },
+      "TemplateBlock": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/BlockKind"
+          },
+          "visible": {
+            "type": "boolean",
+            "title": "Visible",
+            "default": true
+          },
+          "properties": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Properties"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "kind"
+        ],
+        "title": "TemplateBlock"
+      },
+      "TemplateCreateRequest": {
+        "properties": {
+          "company_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Company Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "blocks": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/TemplateBlock"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blocks"
+          },
+          "appearance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TemplateAppearance"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "is_default": {
+            "type": "boolean",
+            "title": "Is Default",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "company_id",
+          "name"
+        ],
+        "title": "TemplateCreateRequest"
+      },
+      "TemplateResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Organization Id"
+          },
+          "company_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Company Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "doc_type": {
+            "type": "string",
+            "title": "Doc Type"
+          },
+          "is_default": {
+            "type": "boolean",
+            "title": "Is Default"
+          },
+          "blocks": {
+            "items": {
+              "$ref": "#/components/schemas/TemplateBlock"
+            },
+            "type": "array",
+            "title": "Blocks"
+          },
+          "appearance": {
+            "$ref": "#/components/schemas/TemplateAppearance"
+          },
+          "published_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published Version"
+          },
+          "is_published": {
+            "type": "boolean",
+            "title": "Is Published"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "organization_id",
+          "company_id",
+          "name",
+          "doc_type",
+          "is_default",
+          "blocks",
+          "appearance",
+          "published_version",
+          "is_published",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "TemplateResponse"
+      },
+      "TemplateSnapshotResponse": {
+        "properties": {
+          "template_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Template Id"
+          },
+          "template_name": {
+            "type": "string",
+            "title": "Template Name"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "taken_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Taken At"
+          },
+          "blocks": {
+            "items": {
+              "$ref": "#/components/schemas/TemplateBlock"
+            },
+            "type": "array",
+            "title": "Blocks"
+          },
+          "appearance": {
+            "$ref": "#/components/schemas/TemplateAppearance"
+          }
+        },
+        "type": "object",
+        "required": [
+          "template_id",
+          "template_name",
+          "version",
+          "taken_at",
+          "blocks",
+          "appearance"
+        ],
+        "title": "TemplateSnapshotResponse",
+        "description": "What an issued invoice stores, by value.\n\n`template_id` is present so a screen can say where a document's layout came\nfrom \u2014 it is *not* what the renderer resolves. Resolving the id would give\nwhatever the template says today, which is the failure the snapshot exists\nto prevent."
+      },
+      "TemplateUpdateRequest": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "blocks": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/TemplateBlock"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blocks"
+          },
+          "appearance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TemplateAppearance"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "TemplateUpdateRequest",
+        "description": "Every field optional \u2014 this edits the draft, and a studio that autosaves\none panel should not have to send the other three back."
       },
       "TierQuotaResponse": {
         "properties": {
@@ -6024,6 +9519,188 @@
         ],
         "title": "TokenResponse"
       },
+      "TreatmentBreakdownOut": {
+        "properties": {
+          "treatment": {
+            "$ref": "#/components/schemas/RecoveryTreatment"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "detected": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Detected"
+          },
+          "recoverable": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Recoverable"
+          }
+        },
+        "type": "object",
+        "required": [
+          "treatment",
+          "count",
+          "detected",
+          "recoverable"
+        ],
+        "title": "TreatmentBreakdownOut"
+      },
+      "TvaClassification": {
+        "properties": {
+          "treatment": {
+            "$ref": "#/components/schemas/RecoveryTreatment"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/Confidence"
+          },
+          "detected_amount": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Detected Amount",
+            "default": "0"
+          },
+          "recoverable_amount": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Recoverable Amount",
+            "default": "0"
+          },
+          "deductible_percent": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Deductible Percent",
+            "default": "100"
+          },
+          "reason_codes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reason Codes"
+          },
+          "confirmed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmed At"
+          },
+          "confirmed_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmed By"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "treatment",
+          "confidence"
+        ],
+        "title": "TvaClassification",
+        "description": "The treatment of one expense's TVA, and how much of it is a claim.\n\n`recoverable_amount` is *potentially* recoverable until `confirmed_at` is\nset. The analyzer sums the two separately (see `analyzer.TvaPosition`)\nprecisely so a period total can never quietly include a machine guess."
+      },
+      "TvaPositionResponse": {
+        "properties": {
+          "period_start": {
+            "type": "string",
+            "format": "date",
+            "title": "Period Start"
+          },
+          "period_end": {
+            "type": "string",
+            "format": "date",
+            "title": "Period End"
+          },
+          "expenses_analyzed": {
+            "type": "integer",
+            "title": "Expenses Analyzed"
+          },
+          "collected": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Collected"
+          },
+          "detected": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Detected"
+          },
+          "confirmed_recoverable": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Confirmed Recoverable"
+          },
+          "potential_recoverable": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Potential Recoverable"
+          },
+          "review_required": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Review Required"
+          },
+          "non_recoverable": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Non Recoverable"
+          },
+          "estimated_payable": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Estimated Payable"
+          },
+          "is_complete": {
+            "type": "boolean",
+            "title": "Is Complete"
+          },
+          "unresolved_exceptions": {
+            "type": "integer",
+            "title": "Unresolved Exceptions"
+          },
+          "breakdown": {
+            "items": {
+              "$ref": "#/components/schemas/TreatmentBreakdownOut"
+            },
+            "type": "array",
+            "title": "Breakdown"
+          }
+        },
+        "type": "object",
+        "required": [
+          "period_start",
+          "period_end",
+          "expenses_analyzed",
+          "collected",
+          "detected",
+          "confirmed_recoverable",
+          "potential_recoverable",
+          "review_required",
+          "non_recoverable",
+          "estimated_payable",
+          "is_complete",
+          "unresolved_exceptions",
+          "breakdown"
+        ],
+        "title": "TvaPositionResponse",
+        "description": "The period position.\n\n`confirmed_recoverable` and `potential_recoverable` are separate fields and\nthere is no combined total \u2014 the blueprint's locked decision, enforced here\nby the absence of the field rather than by a note. `estimated_payable` uses\nonly the confirmed half."
+      },
       "UserMeResponse": {
         "properties": {
           "id": {
@@ -6047,6 +9724,14 @@
           "role": {
             "type": "string",
             "title": "Role"
+          },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Permissions",
+            "default": []
           }
         },
         "type": "object",
@@ -6404,6 +10089,58 @@
         ],
         "title": "VatReportResponse",
         "description": "Output VAT only \u2014 see `core.services.reporting_service.VatReport`. The\ncaveat rides along in the payload so a UI cannot present this as a return\nready to file."
+      },
+      "VatTreatmentResponse": {
+        "properties": {
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "category_name": {
+            "type": "string",
+            "title": "Category Name"
+          },
+          "rate": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Rate"
+          },
+          "legal_mention": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legal Mention"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "seller_country": {
+            "type": "string",
+            "title": "Seller Country"
+          },
+          "buyer_country": {
+            "type": "string",
+            "title": "Buyer Country"
+          }
+        },
+        "type": "object",
+        "required": [
+          "category",
+          "category_name",
+          "rate",
+          "legal_mention",
+          "reason",
+          "seller_country",
+          "buyer_country"
+        ],
+        "title": "VatTreatmentResponse",
+        "description": "The VAT treatment a given seller/buyer pair implies.\n\nAdvisory, not enforced: the composer uses it to default a line, and a user\nwho knows their case better may still override. `reason` is a message key,\nso the explanation is translated in the frontend rather than here."
       },
       "VoidRequest": {
         "properties": {

@@ -10,15 +10,33 @@ guarantee is narrower and load-bearing:
 """
 
 import pytest
+from sqlalchemy import update
+
+from db.models import OrganizationRow
 
 from .conftest import bearer, create_company, signup
 
 
+def set_tier(client, tier: str) -> None:
+    """Move the signed-up org onto a tier. Mirrors test_entitlements.set_tier —
+    there is no upgrade endpoint yet, checkout being the deferred half of B4."""
+    engine = client._transport.app.state.session_factory.kw["bind"]  # noqa: SLF001
+    with engine.begin() as conn:
+        conn.execute(update(OrganizationRow).values(plan_tier=tier))
+
+
 @pytest.fixture()
 async def org(client):
+    """A Business-tier organization.
+
+    The designer is a Business feature, and a new signup lands on `free`, so
+    every test below would otherwise be testing the 402 rather than the rule it
+    is about. The gate itself is covered separately at the bottom of this file.
+    """
     payload = await signup(client)
     headers = bearer(payload)
     company = await create_company(client, headers)
+    set_tier(client, "business")
     return client, headers, company["id"]
 
 
@@ -215,6 +233,9 @@ async def test_a_non_default_template_can_be_deleted(org):
 async def test_templates_are_scoped_to_their_organization(client):
     alice = bearer(await signup(client))
     alice_company = (await create_company(client, alice))["id"]
+    # Both orgs need the feature; set_tier moves every org in the test database,
+    # which is what we want here — the question is tenancy, not entitlement.
+    set_tier(client, "business")
     template = (await create_template(client, alice, alice_company)).json()
 
     bob = bearer(
@@ -224,3 +245,60 @@ async def test_templates_are_scoped_to_their_organization(client):
         await client.get(f"/templates/{template['id']}", headers=bob)
     ).status_code == 404
     assert (await client.get("/templates", headers=bob)).json() == []
+
+
+# -- the plan gate ---------------------------------------------------------
+#
+# Two gates gua...rd this router and they answer different questions: the role
+# matrix says whether this *person* may edit templates (403), the entitlement
+# matrix says whether their *plan* includes the designer (402). Only the second
+# opens an upgrade modal, so blurring them would send a user to a pricing page
+# for a permission their owner has to grant instead.
+
+
+@pytest.mark.parametrize("tier", ["free", "starter"])
+async def test_the_designer_is_refused_below_business(org, tier):
+    client, headers, company_id = org
+    set_tier(client, tier)
+    response = await create_template(client, headers, company_id, name=f"On {tier}")
+    assert response.status_code == 402, response.text
+    body = response.json()
+    assert body["error"] == "entitlement_required"
+    assert body["feature"] == "pdf_templates_premium"
+    # The upgrade modal reads this to say which plan to move to.
+    assert body["required_tier"] == "business"
+
+
+@pytest.mark.parametrize("tier", ["business", "business_pro"])
+async def test_the_designer_is_allowed_from_business_up(org, tier):
+    client, headers, company_id = org
+    set_tier(client, tier)
+    response = await create_template(client, headers, company_id, name=f"On {tier}")
+    assert response.status_code == 201, response.text
+
+
+async def test_a_downgraded_org_can_still_read_its_templates(org):
+    """Reads are not gated on the plan.
+
+    Someone who downgrades keeps what they built: the settings screen shows it
+    with an upgrade prompt rather than a wall, and every invoice already issued
+    renders from its own snapshot whatever the tier.
+    """
+    client, headers, company_id = org
+    set_tier(client, "business")
+    template = (await create_template(client, headers, company_id)).json()
+    await client.post(f"/templates/{template['id']}/publish", headers=headers)
+
+    set_tier(client, "free")
+    listed = await client.get("/templates", headers=headers)
+    assert listed.status_code == 200
+    assert [t["id"] for t in listed.json()] == [template["id"]]
+
+    snapshot = await client.get(f"/templates/{template['id']}/snapshot", headers=headers)
+    assert snapshot.status_code == 200
+
+    # ...but editing it is refused until they upgrade again.
+    edit = await client.patch(
+        f"/templates/{template['id']}", headers=headers, json={"name": "Nope"}
+    )
+    assert edit.status_code == 402

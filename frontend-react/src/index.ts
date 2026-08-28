@@ -140,3 +140,12 @@ export { PlansPanel, type PlansPanelProps } from "./panels/PlansPanel";
 export { UpgradeDialog, type UpgradeDialogProps } from "./panels/UpgradeDialog";
 export { UsagePanel, type UsagePanelProps } from "./panels/UsagePanel";
 export { VatReportPanel, type VatReportPanelProps } from "./panels/VatReportPanel";
+
+// Template studio (catalog/templates). The invoice *composer* in the same
+// directory stays unexported: its shape is still under discussion, and an
+// export is what makes a component reachable enough to be wired by accident.
+export { TemplateWorkspace, type TemplateWorkspaceProps } from "./workspace/TemplateWorkspace";
+export { TemplateList, type TemplateListProps } from "./workspace/TemplateList";
+export { PresetGallery, type PresetGalleryProps } from "./workspace/PresetGallery";
+export { defaultTemplate, type InvoiceTemplate, type TemplateAppearance, type TemplateBlock } from "./workspace/templateSchema";
+export { TEMPLATE_PRESETS, templateFromPreset, type TemplatePreset } from "./workspace/templatePresets";

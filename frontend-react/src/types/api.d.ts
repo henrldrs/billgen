@@ -553,12 +553,172 @@ export interface paths {
         /**
          * Invoice Peppol
          * @description Peppol BIS 3.0 XML. Every tier can do this — Peppol is the Belgian
-         *     differentiator, not an upsell — but the monthly document allowance applies,
-         *     counted from the EXPORT_PEPPOL audit entries this call writes.
+         *     differentiator, not an upsell — but the monthly *document* allowance
+         *     applies: distinct invoices exported this period, counted from the
+         *     EXPORT_PEPPOL audit entries. Re-downloading an invoice already exported
+         *     this period is free, even at the cap.
          */
         get: operations["invoice_peppol_invoices__invoice_id__peppol_xml_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/quotes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Quotes
+         * @description `status` filters on the *stored* status. Expiry is derived, so filtering
+         *     on it would mean querying a value no column holds — read `effective_status`
+         *     off each row instead.
+         */
+        get: operations["list_quotes_quotes_get"];
+        put?: never;
+        /**
+         * Create Quote
+         * @description Create a quote. It is numbered here, from the quote series.
+         */
+        post: operations["create_quote_quotes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/quotes/{quote_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Quote */
+        get: operations["get_quote_quotes__quote_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Quote
+         * @description Delete a quote that never became an invoice. ADR-0002 does not apply
+         *     here: it exists because an issued invoice consumed a gapless number, and a
+         *     quote's series has no fiscal meaning.
+         */
+        delete: operations["delete_quote_quotes__quote_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/quotes/{quote_id}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send Quote
+         * @description Record that the offer went out. Nothing is emailed — that waits on B1.
+         *     What this buys today is a date, which is what "you never replied to our
+         *     quote of the 3rd" is made of.
+         */
+        post: operations["send_quote_quotes__quote_id__send_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/quotes/{quote_id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept Quote
+         * @description The customer said yes. Still no invoice — POST /quotes/{id}/convert.
+         */
+        post: operations["accept_quote_quotes__quote_id__accept_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/quotes/{quote_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject Quote */
+        post: operations["reject_quote_quotes__quote_id__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/quotes/{quote_id}/expire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Expire Quote
+         * @description Write the derived expiry down — closing out a pipeline by hand, and the
+         *     only way to expire an offer early.
+         */
+        post: operations["expire_quote_quotes__quote_id__expire_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/quotes/{quote_id}/convert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Convert Quote
+         * @description Turn an accepted quote into a DRAFT invoice, once.
+         *
+         *     Requires `invoice.write`, not `quote.write`: this creates an invoice, and
+         *     the permission has to match what comes out rather than what went in.
+         *
+         *     Unmetered, deliberately. The invoice allowance is consumed at draft
+         *     creation, which this performs — but refusing to convert a signed offer
+         *     because a monthly counter is full would block the one thing the customer
+         *     has already agreed to pay for. The draft it produces is counted like any
+         *     other the moment the next one is created.
+         */
+        post: operations["convert_quote_quotes__quote_id__convert_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -691,6 +851,37 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/vat-treatment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Vat Treatment
+         * @description Which VAT category this seller/buyer pair implies, and the mention it needs.
+         *
+         *     `core.rules.vat.pick_category` has existed since the domain was written and
+         *     no route called it, so every invoice line shipped `category: "S"` — correct
+         *     for a Belgian seller billing a Belgian customer, and wrong for the two cases
+         *     that make the rule worth having: intra-EU B2B, which is reverse-charged and
+         *     carries a mandatory Article 51 §2 mention, and export outside the EU.
+         *
+         *     Advisory on purpose. This does not overwrite what the composer sends: the
+         *     caller knows things the data does not (a client flagged as a business that
+         *     is buying privately, an exemption that turns on the service). Defaulting is
+         *     the job; deciding is not.
+         */
+        get: operations["vat_treatment_vat_treatment_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/entitlements": {
         parameters: {
             query?: never;
@@ -805,6 +996,102 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/reports/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Payment Report
+         * @description Total received, split by method and by month. Omit `period` for all time.
+         *
+         *     The payments screen deliberately printed no total until this existed:
+         *     summing the rows in the browser gives the total of the page, which is a
+         *     different number from the total of the filter, and the wrong one.
+         */
+        get: operations["payment_report_reports_payments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/clients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Client Report
+         * @description Revenue and debt per client, biggest first. Omit `period` for all time.
+         *
+         *     `GET /clients/{id}/stats` answers this for one client; calling it once per
+         *     row is the N+1 that report was written to avoid.
+         */
+        get: operations["client_report_reports_clients_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Product Report
+         * @description What sold, by invoice line rather than by document.
+         *
+         *     Read the caveat in `ProductReportResponse` before putting this beside
+         *     revenue: line net HT carries no share of an invoice-level discount, on
+         *     purpose, so the two totals are answers to different questions.
+         */
+        get: operations["product_report_reports_products_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search
+         * @description Find invoices, credit notes, clients and products matching `q`.
+         *
+         *     A term shorter than two characters returns nothing rather than everything:
+         *     the palette fires on every keystroke, and one character matches most of any
+         *     table. That is an empty result, not a 422 — the user is still typing, and an
+         *     error for an unfinished word is noise.
+         */
+        get: operations["search_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/activity": {
         parameters: {
             query?: never;
@@ -821,6 +1108,246 @@ export interface paths {
         get: operations["list_activity_activity_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Alerts
+         * @description Overdue invoices, forgotten drafts, clients missing a VAT number, and the
+         *     company's own identifiers — worst first.
+         *
+         *     `today` is accepted so the answer can be asked for a given day rather than
+         *     only for now; without it the engine could not be tested at all.
+         */
+        get: operations["list_alerts_alerts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/expenses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Expenses */
+        get: operations["list_expenses_expenses_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/expenses/{expense_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Expense */
+        get: operations["get_expense_expenses__expense_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Expense
+         * @description Remove a mis-scanned document.
+         *
+         *     Allowed at any state, unlike an invoice: importing an expense consumes no
+         *     gapless number and creates no obligation.
+         */
+        delete: operations["delete_expense_expenses__expense_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/expenses/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import Expense
+         * @description Record one supplier document from extraction output.
+         *
+         *     The client supplies `extracted` because extraction is a vendor decision
+         *     nobody has made (§3 of the blueprint). Keeping that an explicit request
+         *     field leaves the seam visible; when an extractor ships inside the product it
+         *     fills this in and the service does not change.
+         */
+        post: operations["import_expense_expenses_import_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/expenses/{expense_id}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Review Expense
+         * @description Accept or override the suggested treatment.
+         *
+         *     The only path by which a recoverable amount becomes confirmed, and therefore
+         *     the only path by which it can reach `estimated_payable`.
+         */
+        post: operations["review_expense_expenses__expense_id__review_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tva/position": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Position */
+        get: operations["get_position_tva_position_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Templates */
+        get: operations["list_templates_templates_get"];
+        put?: never;
+        /** Create Template */
+        post: operations["create_template_templates_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/templates/{template_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Template */
+        get: operations["get_template_templates__template_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Template
+         * @description Safe because invoices keep their template by value.
+         *
+         *     Refused only for the company default: a company with templates and no
+         *     default is a state the issue path has no answer for.
+         */
+        delete: operations["delete_template_templates__template_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Template
+         * @description Edit the draft. Published versions are untouched — that is the point.
+         */
+        patch: operations["update_template_templates__template_id__patch"];
+        trace?: never;
+    };
+    "/templates/{template_id}/snapshot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Snapshot
+         * @description The published version an invoice would store if issued now.
+         *
+         *     404s while the template has never been published, which is the honest answer
+         *     — there is no version to attach, and inventing one from the draft is exactly
+         *     the mutable-layout failure the snapshot prevents.
+         */
+        get: operations["get_snapshot_templates__template_id__snapshot_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/templates/{template_id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Publish Template
+         * @description Freeze the draft as an immutable version.
+         *
+         *     Only a published version can reach a document, which is what makes "which
+         *     layout did this customer actually receive" answerable a year later.
+         */
+        post: operations["publish_template_templates__template_id__publish_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/templates/{template_id}/default": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Set Default Template */
+        post: operations["set_default_template_templates__template_id__default_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -906,10 +1433,70 @@ export interface components {
             timestamp: string;
         };
         /**
+         * AlertResponse
+         * @description `code` is the rule that fired and doubles as the translation key;
+         *     `context` carries the numbers the sentence needs. No prose: the wording is
+         *     the frontend's, in the user's language.
+         */
+        AlertResponse: {
+            /** Code */
+            code: string;
+            /** Severity */
+            severity: string;
+            /** Target Type */
+            target_type: string;
+            /**
+             * Target Id
+             * Format: uuid
+             */
+            target_id: string;
+            /** Title */
+            title: string;
+            /** Context */
+            context: {
+                [key: string]: unknown;
+            };
+        };
+        /** AlertsResponse */
+        AlertsResponse: {
+            /**
+             * Company Id
+             * Format: uuid
+             */
+            company_id: string;
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Alerts */
+            alerts: components["schemas"]["AlertResponse"][];
+            /** Counts By Severity */
+            counts_by_severity: {
+                [key: string]: number;
+            };
+            /** Counts By Code */
+            counts_by_code: {
+                [key: string]: number;
+            };
+            /** Truncated */
+            truncated: boolean;
+        };
+        /**
          * BillingType
          * @enum {string}
          */
         BillingType: "hourly" | "fixed" | "daily" | "unit" | "recurring";
+        /**
+         * BlockKind
+         * @enum {string}
+         */
+        BlockKind: "header" | "parties" | "document_meta" | "items" | "totals" | "payment" | "notes" | "terms" | "footer";
+        /**
+         * CheckStatus
+         * @enum {string}
+         */
+        CheckStatus: "passed" | "warning" | "failed";
         /** ClientCreateRequest */
         ClientCreateRequest: {
             /**
@@ -947,6 +1534,40 @@ export interface components {
             is_business?: boolean;
             /** Notes */
             notes?: string | null;
+        };
+        /**
+         * ClientReportResponse
+         * @description Revenue and debt per client — see
+         *     `core.services.reporting_service.ClientReport`. Clients with no invoices in
+         *     the period are absent rather than zeroed; `GET /clients` is the customer
+         *     list.
+         */
+        ClientReportResponse: {
+            /**
+             * Company Id
+             * Format: uuid
+             */
+            company_id: string;
+            /** Period */
+            period: string | null;
+            /** Period Start */
+            period_start: string | null;
+            /** Period End */
+            period_end: string | null;
+            /** Currency */
+            currency: string;
+            /** Clients */
+            clients: components["schemas"]["ClientRowResponse"][];
+            /** Client Count */
+            client_count: number;
+            /** Invoiced Total */
+            invoiced_total: string;
+            /** Paid Total */
+            paid_total: string;
+            /** Outstanding Total */
+            outstanding_total: string;
+            /** Skipped Other Currency */
+            skipped_other_currency: number;
         };
         /** ClientResponse */
         ClientResponse: {
@@ -987,6 +1608,30 @@ export interface components {
             is_business: boolean;
             /** Notes */
             notes: string | null;
+        };
+        /** ClientRowResponse */
+        ClientRowResponse: {
+            /**
+             * Client Id
+             * Format: uuid
+             */
+            client_id: string;
+            /** Name */
+            name: string;
+            /** Invoice Count */
+            invoice_count: number;
+            /** Invoiced Total */
+            invoiced_total: string;
+            /** Paid Total */
+            paid_total: string;
+            /** Outstanding Total */
+            outstanding_total: string;
+            /** Overdue Count */
+            overdue_count: number;
+            /** Overdue Total */
+            overdue_total: string;
+            /** Last Invoice Date */
+            last_invoice_date: string | null;
         };
         /**
          * ClientStatsResponse
@@ -1231,6 +1876,11 @@ export interface components {
             /** Missing For Peppol */
             missing_for_peppol: string[];
         };
+        /**
+         * Confidence
+         * @enum {string}
+         */
+        Confidence: "high" | "medium" | "low";
         /** CreditNoteIssueRequest */
         CreditNoteIssueRequest: {
             /**
@@ -1305,6 +1955,11 @@ export interface components {
             /** Total Ttc */
             total_ttc: string;
         };
+        /**
+         * Currency
+         * @enum {string}
+         */
+        Currency: "EUR" | "USD" | "GBP" | "JPY" | "CAD" | "AUD";
         /** DiscountIn */
         DiscountIn: {
             /** Type */
@@ -1322,6 +1977,23 @@ export interface components {
             value: string;
             /** Reason */
             reason: string | null;
+        };
+        /**
+         * DocumentCheck
+         * @description One validation result (§4).
+         *
+         *     `code` and `context` only — the sentence shown to the user is the
+         *     frontend's, exactly as `GET /alerts` already does it. A server that ships
+         *     prose ships it in one language.
+         */
+        DocumentCheck: {
+            /** Code */
+            code: string;
+            status: components["schemas"]["CheckStatus"];
+            /** Context */
+            context?: {
+                [key: string]: string;
+            };
         };
         /**
          * EntitlementsResponse
@@ -1345,6 +2017,147 @@ export interface components {
             };
             /** Usage */
             usage: components["schemas"]["MeterUsageResponse"][];
+        };
+        /** ExpenseImportRequest */
+        ExpenseImportRequest: {
+            /**
+             * Company Id
+             * Format: uuid
+             */
+            company_id: string;
+            extracted: components["schemas"]["ExtractedFields-Input"];
+            /** Source Filename */
+            source_filename?: string | null;
+        };
+        /** ExpenseResponse */
+        ExpenseResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Organization Id
+             * Format: uuid
+             */
+            organization_id: string;
+            /**
+             * Company Id
+             * Format: uuid
+             */
+            company_id: string;
+            /** State */
+            state: string;
+            /** Source Filename */
+            source_filename: string | null;
+            /** Source Document Key */
+            source_document_key: string | null;
+            extracted: components["schemas"]["ExtractedFields-Output"];
+            /** Checks */
+            checks: components["schemas"]["DocumentCheck"][];
+            classification: components["schemas"]["TvaClassification"] | null;
+            /** Duplicate Of Id */
+            duplicate_of_id: string | null;
+            /** Failure Code */
+            failure_code: string | null;
+            /** Needs Attention */
+            needs_attention: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * ExpenseReviewRequest
+         * @description A human's decision on one expense's treatment.
+         *
+         *     There is no `recoverable_amount` field, and there will not be one. The
+         *     service recomputes it from the detected amount and the percentage: a client
+         *     that can post the figure is a client that can post the wrong figure, and
+         *     this number reaches a VAT return.
+         */
+        ExpenseReviewRequest: {
+            treatment: components["schemas"]["RecoveryTreatment"];
+            /** Deductible Percent */
+            deductible_percent?: number | null;
+        };
+        /**
+         * ExtractedFields
+         * @description What extraction (§3) believes it read off the document.
+         *
+         *     Every field is optional. A scan that yielded a supplier and nothing else is
+         *     a real outcome, and the record has to be able to hold it — an extractor
+         *     that must produce a total will invent one.
+         */
+        "ExtractedFields-Input": {
+            /** Supplier Name */
+            supplier_name?: string | null;
+            /** Supplier Vat Number */
+            supplier_vat_number?: string | null;
+            /** Invoice Number */
+            invoice_number?: string | null;
+            /** Invoice Date */
+            invoice_date?: string | null;
+            /** Subtotal Ht */
+            subtotal_ht?: number | string | null;
+            /** Tva Rate */
+            tva_rate?: number | string | null;
+            /** Tva Amount */
+            tva_amount?: number | string | null;
+            /** Total Ttc */
+            total_ttc?: number | string | null;
+            /** @default EUR */
+            currency?: components["schemas"]["Currency"];
+            /** Expense Category */
+            expense_category?: string | null;
+            /** Document Type */
+            document_type?: string | null;
+            /** Field Confidence */
+            field_confidence?: {
+                [key: string]: components["schemas"]["Confidence"];
+            };
+        };
+        /**
+         * ExtractedFields
+         * @description What extraction (§3) believes it read off the document.
+         *
+         *     Every field is optional. A scan that yielded a supplier and nothing else is
+         *     a real outcome, and the record has to be able to hold it — an extractor
+         *     that must produce a total will invent one.
+         */
+        "ExtractedFields-Output": {
+            /** Supplier Name */
+            supplier_name?: string | null;
+            /** Supplier Vat Number */
+            supplier_vat_number?: string | null;
+            /** Invoice Number */
+            invoice_number?: string | null;
+            /** Invoice Date */
+            invoice_date?: string | null;
+            /** Subtotal Ht */
+            subtotal_ht?: string | null;
+            /** Tva Rate */
+            tva_rate?: string | null;
+            /** Tva Amount */
+            tva_amount?: string | null;
+            /** Total Ttc */
+            total_ttc?: string | null;
+            /** @default EUR */
+            currency?: components["schemas"]["Currency"];
+            /** Expense Category */
+            expense_category?: string | null;
+            /** Document Type */
+            document_type?: string | null;
+            /** Field Confidence */
+            field_confidence?: {
+                [key: string]: components["schemas"]["Confidence"];
+            };
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -1685,6 +2498,15 @@ export interface components {
             /** Exhausted */
             exhausted: boolean;
         };
+        /** MethodBucketResponse */
+        MethodBucketResponse: {
+            /** Method */
+            method: string;
+            /** Count */
+            count: number;
+            /** Total */
+            total: string;
+        };
         /** OrganizationResponse */
         OrganizationResponse: {
             /**
@@ -1728,6 +2550,52 @@ export interface components {
             payment: components["schemas"]["PaymentResponse"];
             /** Invoice Status */
             invoice_status: string;
+        };
+        /**
+         * PaymentReportResponse
+         * @description Cash in over a period, split by method — see
+         *     `core.services.reporting_service.PaymentReport`.
+         *
+         *     `period` filters on the day the money arrived, not on the invoice it
+         *     settles, so this and the invoice report legitimately disagree across a
+         *     quarter boundary.
+         */
+        PaymentReportResponse: {
+            /**
+             * Company Id
+             * Format: uuid
+             */
+            company_id: string;
+            /** Period */
+            period: string | null;
+            /** Period Start */
+            period_start: string | null;
+            /** Period End */
+            period_end: string | null;
+            /** Currency */
+            currency: string;
+            /** Methods */
+            methods: components["schemas"]["MethodBucketResponse"][];
+            /** By Month */
+            by_month: {
+                [key: string]: string;
+            };
+            /** Count By Month */
+            count_by_month: {
+                [key: string]: number;
+            };
+            /** Payment Count */
+            payment_count: number;
+            /** Total */
+            total: string;
+            /** Largest */
+            largest: string;
+            /** First Payment On */
+            first_payment_on: string | null;
+            /** Last Payment On */
+            last_payment_on: string | null;
+            /** Skipped Other Currency */
+            skipped_other_currency: number;
         };
         /** PaymentResponse */
         PaymentResponse: {
@@ -1822,6 +2690,36 @@ export interface components {
             /** Tags */
             tags?: string[];
         };
+        /**
+         * ProductReportResponse
+         * @description Volume and mix by invoice line — see
+         *     `core.services.reporting_service.ProductReport`. Amounts are line net HT and
+         *     carry no share of any invoice-level discount, so this legitimately sums
+         *     higher than the net revenue in /reports/invoices.
+         */
+        ProductReportResponse: {
+            /**
+             * Company Id
+             * Format: uuid
+             */
+            company_id: string;
+            /** Period */
+            period: string | null;
+            /** Period Start */
+            period_start: string | null;
+            /** Period End */
+            period_end: string | null;
+            /** Currency */
+            currency: string;
+            /** Products */
+            products: components["schemas"]["ProductRowResponse"][];
+            /** Line Count */
+            line_count: number;
+            /** Net Ht */
+            net_ht: string;
+            /** Skipped Other Currency */
+            skipped_other_currency: number;
+        };
         /** ProductResponse */
         ProductResponse: {
             /**
@@ -1860,6 +2758,19 @@ export interface components {
             /** Tags */
             tags: string[];
         };
+        /** ProductRowResponse */
+        ProductRowResponse: {
+            /** Product Id */
+            product_id: string | null;
+            /** Name */
+            name: string;
+            /** Invoice Count */
+            invoice_count: number;
+            /** Quantity */
+            quantity: string;
+            /** Net Ht */
+            net_ht: string;
+        };
         /**
          * ProductStatus
          * @enum {string}
@@ -1888,6 +2799,138 @@ export interface components {
             /** Tags */
             tags?: string[] | null;
         };
+        /**
+         * QuoteConvertRequest
+         * @description Dates for the draft invoice. Both optional: today, and the company's
+         *     default term, when omitted.
+         */
+        QuoteConvertRequest: {
+            /** Issue Date */
+            issue_date?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+        };
+        /**
+         * QuoteConvertResponse
+         * @description What conversion produced: the closed quote, and a DRAFT invoice.
+         *
+         *     A draft, not an invoice — the gapless number is still consumed by
+         *     POST /invoices/{id}/issue and nowhere else.
+         */
+        QuoteConvertResponse: {
+            quote: components["schemas"]["QuoteResponse"];
+            /**
+             * Invoice Id
+             * Format: uuid
+             */
+            invoice_id: string;
+            /** Invoice Status */
+            invoice_status: string;
+        };
+        /** QuoteCreateRequest */
+        QuoteCreateRequest: {
+            /**
+             * Company Id
+             * Format: uuid
+             */
+            company_id: string;
+            /**
+             * Client Id
+             * Format: uuid
+             */
+            client_id: string;
+            /** Lines */
+            lines: components["schemas"]["InvoiceLineIn"][];
+            /** Issue Date */
+            issue_date?: string | null;
+            /** Valid Until */
+            valid_until?: string | null;
+            quote_discount?: components["schemas"]["DiscountIn"] | null;
+            /** Comments */
+            comments?: string | null;
+            /** Terms */
+            terms?: string | null;
+            /** Pdf Template */
+            pdf_template?: string | null;
+            /** Currency */
+            currency?: string | null;
+        };
+        /**
+         * QuoteDecisionRequest
+         * @description Accepting or rejecting. The note is what the customer said, kept because
+         *     "too expensive" and "wrong scope" are different lessons.
+         */
+        QuoteDecisionRequest: {
+            /** Note */
+            note?: string | null;
+        };
+        /** QuoteResponse */
+        QuoteResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Company Id
+             * Format: uuid
+             */
+            company_id: string;
+            /**
+             * Client Id
+             * Format: uuid
+             */
+            client_id: string;
+            /** Reference */
+            reference: string;
+            /** Sequence Global */
+            sequence_global: number;
+            /**
+             * Issue Date
+             * Format: date
+             */
+            issue_date: string;
+            /** Valid Until */
+            valid_until: string | null;
+            /** Currency */
+            currency: string;
+            /** Lines */
+            lines: components["schemas"]["InvoiceLineOut"][];
+            quote_discount: components["schemas"]["DiscountOut"] | null;
+            /** Comments */
+            comments: string | null;
+            /** Terms */
+            terms: string | null;
+            /** Pdf Template */
+            pdf_template: string;
+            /** Subtotal Ht */
+            subtotal_ht: string;
+            /** Total Discount */
+            total_discount: string;
+            /** Total Vat */
+            total_vat: string;
+            /** Total Ttc */
+            total_ttc: string;
+            /** Status */
+            status: string;
+            /** Effective Status */
+            effective_status: string;
+            /** Sent At */
+            sent_at: string | null;
+            /** Decided At */
+            decided_at: string | null;
+            /** Decision Note */
+            decision_note: string | null;
+            /** Converted Invoice Id */
+            converted_invoice_id: string | null;
+        };
+        /**
+         * RecoveryTreatment
+         * @description §5. `REVIEW_REQUIRED` is not a fifth colour — it is the absence of a
+         *     conclusion, and it must never be silently rendered as a deduction.
+         * @enum {string}
+         */
+        RecoveryTreatment: "recoverable" | "partial" | "non_recoverable" | "review_required";
         /** RefreshRequest */
         RefreshRequest: {
             /** Refresh Token */
@@ -1903,6 +2946,8 @@ export interface components {
             products: number;
             /** Invoices */
             invoices: number;
+            /** Quotes */
+            quotes: number;
             /** Credit Notes */
             credit_notes: number;
             /** Payments */
@@ -1920,6 +2965,41 @@ export interface components {
             months: {
                 [key: string]: string;
             };
+        };
+        /** SearchHitResponse */
+        SearchHitResponse: {
+            /** Kind */
+            kind: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Title */
+            title: string;
+            /** Subtitle */
+            subtitle?: string | null;
+            /** Status */
+            status?: string | null;
+            /** Amount */
+            amount?: string | null;
+            /** Currency */
+            currency?: string | null;
+            /** Company Id */
+            company_id?: string | null;
+        };
+        /** SearchResponse */
+        SearchResponse: {
+            /** Query */
+            query: string;
+            /** Hits */
+            hits: components["schemas"]["SearchHitResponse"][];
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /** Truncated */
+            truncated: boolean;
         };
         /** SignupRequest */
         SignupRequest: {
@@ -1960,6 +3040,178 @@ export interface components {
             count: number;
             /** Total Ttc */
             total_ttc: string;
+        };
+        /**
+         * TemplateAppearance
+         * @description One brand colour, and token names for everything else.
+         *
+         *     This started life refusing colour outright. That was right for the app's
+         *     chrome and wrong for a *document*: an invoice is the customer's own
+         *     stationery, and a company that cannot put its colour on it will not use the
+         *     studio. What survives from the original decision is the shape, which is the
+         *     part that mattered — **one** colour in **one** field, not a hex per block,
+         *     which is how a template becomes unreadable and impossible to re-skin.
+         */
+        TemplateAppearance: {
+            /**
+             * Brand Color
+             * @default #0f766e
+             */
+            brand_color?: string;
+            /**
+             * Text Token
+             * @default --bg-ink
+             */
+            text_token?: string;
+            /**
+             * Border Token
+             * @default --bg-line
+             */
+            border_token?: string;
+            /**
+             * Font Family
+             * @default Satoshi
+             */
+            font_family?: string;
+            /**
+             * Body Size Pt
+             * @default 10
+             */
+            body_size_pt?: number;
+            /**
+             * Heading Size Pt
+             * @default 16
+             */
+            heading_size_pt?: number;
+            /**
+             * Page Size
+             * @default A4
+             */
+            page_size?: string;
+            /**
+             * Margins
+             * @default standard
+             */
+            margins?: string;
+            /**
+             * Density
+             * @default comfortable
+             */
+            density?: string;
+        };
+        /** TemplateBlock */
+        TemplateBlock: {
+            /** Id */
+            id: string;
+            kind: components["schemas"]["BlockKind"];
+            /**
+             * Visible
+             * @default true
+             */
+            visible?: boolean;
+            /** Properties */
+            properties?: {
+                [key: string]: unknown;
+            };
+        };
+        /** TemplateCreateRequest */
+        TemplateCreateRequest: {
+            /**
+             * Company Id
+             * Format: uuid
+             */
+            company_id: string;
+            /** Name */
+            name: string;
+            /** Blocks */
+            blocks?: components["schemas"]["TemplateBlock"][] | null;
+            appearance?: components["schemas"]["TemplateAppearance"] | null;
+            /**
+             * Is Default
+             * @default false
+             */
+            is_default?: boolean;
+        };
+        /** TemplateResponse */
+        TemplateResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Organization Id
+             * Format: uuid
+             */
+            organization_id: string;
+            /**
+             * Company Id
+             * Format: uuid
+             */
+            company_id: string;
+            /** Name */
+            name: string;
+            /** Doc Type */
+            doc_type: string;
+            /** Is Default */
+            is_default: boolean;
+            /** Blocks */
+            blocks: components["schemas"]["TemplateBlock"][];
+            appearance: components["schemas"]["TemplateAppearance"];
+            /** Published Version */
+            published_version: number | null;
+            /** Is Published */
+            is_published: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * TemplateSnapshotResponse
+         * @description What an issued invoice stores, by value.
+         *
+         *     `template_id` is present so a screen can say where a document's layout came
+         *     from — it is *not* what the renderer resolves. Resolving the id would give
+         *     whatever the template says today, which is the failure the snapshot exists
+         *     to prevent.
+         */
+        TemplateSnapshotResponse: {
+            /**
+             * Template Id
+             * Format: uuid
+             */
+            template_id: string;
+            /** Template Name */
+            template_name: string;
+            /** Version */
+            version: number;
+            /**
+             * Taken At
+             * Format: date-time
+             */
+            taken_at: string;
+            /** Blocks */
+            blocks: components["schemas"]["TemplateBlock"][];
+            appearance: components["schemas"]["TemplateAppearance"];
+        };
+        /**
+         * TemplateUpdateRequest
+         * @description Every field optional — this edits the draft, and a studio that autosaves
+         *     one panel should not have to send the other three back.
+         */
+        TemplateUpdateRequest: {
+            /** Name */
+            name?: string | null;
+            /** Blocks */
+            blocks?: components["schemas"]["TemplateBlock"][] | null;
+            appearance?: components["schemas"]["TemplateAppearance"] | null;
         };
         /** TierQuotaResponse */
         TierQuotaResponse: {
@@ -2019,6 +3271,92 @@ export interface components {
             /** Expires In */
             expires_in: number;
         };
+        /** TreatmentBreakdownOut */
+        TreatmentBreakdownOut: {
+            treatment: components["schemas"]["RecoveryTreatment"];
+            /** Count */
+            count: number;
+            /** Detected */
+            detected: string;
+            /** Recoverable */
+            recoverable: string;
+        };
+        /**
+         * TvaClassification
+         * @description The treatment of one expense's TVA, and how much of it is a claim.
+         *
+         *     `recoverable_amount` is *potentially* recoverable until `confirmed_at` is
+         *     set. The analyzer sums the two separately (see `analyzer.TvaPosition`)
+         *     precisely so a period total can never quietly include a machine guess.
+         */
+        TvaClassification: {
+            treatment: components["schemas"]["RecoveryTreatment"];
+            confidence: components["schemas"]["Confidence"];
+            /**
+             * Detected Amount
+             * @default 0
+             */
+            detected_amount?: string;
+            /**
+             * Recoverable Amount
+             * @default 0
+             */
+            recoverable_amount?: string;
+            /**
+             * Deductible Percent
+             * @default 100
+             */
+            deductible_percent?: string;
+            /** Reason Codes */
+            reason_codes?: string[];
+            /** Confirmed At */
+            confirmed_at?: string | null;
+            /** Confirmed By */
+            confirmed_by?: string | null;
+        };
+        /**
+         * TvaPositionResponse
+         * @description The period position.
+         *
+         *     `confirmed_recoverable` and `potential_recoverable` are separate fields and
+         *     there is no combined total — the blueprint's locked decision, enforced here
+         *     by the absence of the field rather than by a note. `estimated_payable` uses
+         *     only the confirmed half.
+         */
+        TvaPositionResponse: {
+            /**
+             * Period Start
+             * Format: date
+             */
+            period_start: string;
+            /**
+             * Period End
+             * Format: date
+             */
+            period_end: string;
+            /** Expenses Analyzed */
+            expenses_analyzed: number;
+            /** Collected */
+            collected: string;
+            /** Detected */
+            detected: string;
+            /** Confirmed Recoverable */
+            confirmed_recoverable: string;
+            /** Potential Recoverable */
+            potential_recoverable: string;
+            /** Review Required */
+            review_required: string;
+            /** Non Recoverable */
+            non_recoverable: string;
+            /** Estimated Payable */
+            estimated_payable: string;
+            /** Is Complete */
+            is_complete: boolean;
+            /** Unresolved Exceptions */
+            unresolved_exceptions: number;
+            /** Breakdown */
+            breakdown: components["schemas"]["TreatmentBreakdownOut"][];
+        };
         /** UserMeResponse */
         UserMeResponse: {
             /**
@@ -2037,6 +3375,11 @@ export interface components {
             organization_id: string;
             /** Role */
             role: string;
+            /**
+             * Permissions
+             * @default []
+             */
+            permissions?: string[];
         };
         /** VATIn */
         VATIn: {
@@ -2169,6 +3512,30 @@ export interface components {
              * @default output_vat_only
              */
             covers?: string;
+        };
+        /**
+         * VatTreatmentResponse
+         * @description The VAT treatment a given seller/buyer pair implies.
+         *
+         *     Advisory, not enforced: the composer uses it to default a line, and a user
+         *     who knows their case better may still override. `reason` is a message key,
+         *     so the explanation is translated in the frontend rather than here.
+         */
+        VatTreatmentResponse: {
+            /** Category */
+            category: string;
+            /** Category Name */
+            category_name: string;
+            /** Rate */
+            rate: string;
+            /** Legal Mention */
+            legal_mention: string | null;
+            /** Reason */
+            reason: string;
+            /** Seller Country */
+            seller_country: string;
+            /** Buyer Country */
+            buyer_country: string;
         };
         /** VoidRequest */
         VoidRequest: {
@@ -3323,6 +4690,302 @@ export interface operations {
             };
         };
     };
+    list_quotes_quotes_get: {
+        parameters: {
+            query?: {
+                company_id?: string | null;
+                status?: string | null;
+                client_id?: string | null;
+                today?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_quote_quotes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuoteCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_quote_quotes__quote_id__get: {
+        parameters: {
+            query?: {
+                today?: string | null;
+            };
+            header?: never;
+            path: {
+                quote_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_quote_quotes__quote_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                quote_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_quote_quotes__quote_id__send_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                quote_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    accept_quote_quotes__quote_id__accept_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                quote_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["QuoteDecisionRequest"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reject_quote_quotes__quote_id__reject_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                quote_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["QuoteDecisionRequest"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    expire_quote_quotes__quote_id__expire_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                quote_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    convert_quote_quotes__quote_id__convert_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                quote_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["QuoteConvertRequest"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteConvertResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_credit_notes_credit_notes_get: {
         parameters: {
             query?: {
@@ -3588,6 +5251,39 @@ export interface operations {
             };
         };
     };
+    vat_treatment_vat_treatment_get: {
+        parameters: {
+            query: {
+                company_id: string;
+                client_id: string;
+                lang?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VatTreatmentResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     current_entitlements_entitlements_get: {
         parameters: {
             query?: never;
@@ -3757,6 +5453,138 @@ export interface operations {
             };
         };
     };
+    payment_report_reports_payments_get: {
+        parameters: {
+            query: {
+                company_id: string;
+                period?: string | null;
+                client_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentReportResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    client_report_reports_clients_get: {
+        parameters: {
+            query: {
+                company_id: string;
+                period?: string | null;
+                today?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientReportResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    product_report_reports_products_get: {
+        parameters: {
+            query: {
+                company_id: string;
+                period?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductReportResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_search_get: {
+        parameters: {
+            query: {
+                /** @description What to look for — a reference, a name, a VAT number */
+                q: string;
+                /** @description Max hits per record type */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_activity_activity_get: {
         parameters: {
             query?: {
@@ -3777,6 +5605,487 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ActivityEntryResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_alerts_alerts_get: {
+        parameters: {
+            query: {
+                company_id: string;
+                today?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_expenses_expenses_get: {
+        parameters: {
+            query?: {
+                company_id?: string | null;
+                state?: string | null;
+                needs_attention?: boolean | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_expense_expenses__expense_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                expense_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_expense_expenses__expense_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                expense_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_expense_expenses_import_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExpenseImportRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    review_expense_expenses__expense_id__review_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                expense_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExpenseReviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpenseResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_position_tva_position_get: {
+        parameters: {
+            query: {
+                company_id: string;
+                /** @description First day of the period, inclusive */
+                start: string;
+                /** @description Last day of the period, inclusive */
+                end: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TvaPositionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_templates_templates_get: {
+        parameters: {
+            query?: {
+                company_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_template_templates_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TemplateCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_template_templates__template_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_template_templates__template_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_template_templates__template_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TemplateUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_snapshot_templates__template_id__snapshot_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateSnapshotResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    publish_template_templates__template_id__publish_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_default_template_templates__template_id__default_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateResponse"];
                 };
             };
             /** @description Validation Error */

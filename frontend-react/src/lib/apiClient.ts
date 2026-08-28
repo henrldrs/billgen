@@ -8,6 +8,9 @@
  * refresh fails, tokens are cleared and onAuthLost fires. */
 
 import type {
+  TemplateCreateRequest,
+  TemplateResponse,
+  TemplateUpdateRequest,
   ActivityEntryResponse,
   ClientCreateRequest,
   ClientResponse,
@@ -378,6 +381,41 @@ export class ApiClient {
   }
 
   // ---- products --------------------------------------------------------------
+
+  // ---- document templates (Business tier and above) ------------------------
+  //
+  // Reads are open to every tier: an organization that downgrades keeps the
+  // templates it built and the screen shows them with an upgrade prompt. Every
+  // write answers 402 below Business, whatever the UI rendered.
+
+  listTemplates(companyId?: string): Promise<TemplateResponse[]> {
+    const query = companyId ? `?company_id=${companyId}` : "";
+    return this.request("GET", `/templates${query}`);
+  }
+
+  getTemplate(templateId: string): Promise<TemplateResponse> {
+    return this.request("GET", `/templates/${templateId}`);
+  }
+
+  createTemplate(body: TemplateCreateRequest): Promise<TemplateResponse> {
+    return this.request("POST", "/templates", body);
+  }
+
+  updateTemplate(templateId: string, body: TemplateUpdateRequest): Promise<TemplateResponse> {
+    return this.request("PATCH", `/templates/${templateId}`, body);
+  }
+
+  publishTemplate(templateId: string): Promise<TemplateResponse> {
+    return this.request("POST", `/templates/${templateId}/publish`, {});
+  }
+
+  setDefaultTemplate(templateId: string): Promise<TemplateResponse> {
+    return this.request("POST", `/templates/${templateId}/default`, {});
+  }
+
+  deleteTemplate(templateId: string): Promise<void> {
+    return this.request("DELETE", `/templates/${templateId}`);
+  }
 
   listProducts(
     companyIdOrParams?: string | { companyId?: string; status?: string; billingType?: string },

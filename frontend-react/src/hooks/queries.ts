@@ -14,6 +14,8 @@ import type {
   PaymentCreateRequest,
   ProductCreateRequest,
   ProductUpdateRequest,
+  TemplateCreateRequest,
+  TemplateUpdateRequest,
 } from "../types";
 import { useApi } from "../providers/BillGenProvider";
 
@@ -499,5 +501,66 @@ export function usePlans() {
     queryKey: ["plans"],
     queryFn: () => api.plans(),
     staleTime: Infinity,
+  });
+}
+
+// ---- document templates ------------------------------------------------------
+//
+// Every mutation invalidates the list rather than patching the cache. A publish
+// changes `published_version` and a set-default changes a *sibling* row's flag,
+// so a hand-rolled cache update would have to know which other rows moved —
+// which is exactly the knowledge the server already has.
+
+export function useTemplates(companyId?: string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["templates", companyId ?? "all"],
+    queryFn: () => api.listTemplates(companyId),
+  });
+}
+
+export function useCreateTemplate() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: TemplateCreateRequest) => api.createTemplate(body),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["templates"] }),
+  });
+}
+
+export function useUpdateTemplate() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: TemplateUpdateRequest }) =>
+      api.updateTemplate(id, body),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["templates"] }),
+  });
+}
+
+export function usePublishTemplate() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.publishTemplate(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["templates"] }),
+  });
+}
+
+export function useSetDefaultTemplate() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.setDefaultTemplate(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["templates"] }),
+  });
+}
+
+export function useDeleteTemplate() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.deleteTemplate(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["templates"] }),
   });
 }

@@ -12,9 +12,20 @@ Two refusals are enforced before a handler runs, by the schemas:
 * a template must **show the blocks an invoice is legally required to display**,
   so hiding totals is a 422 rather than a styling choice.
 
-Writes need `template.write`, which is an admin permission rather than a member
-one. A template changes how every future document looks to every customer —
-that is the organization's own record, not its day-to-day trade.
+Two independent gates, and they are not the same question:
+
+* **`template.write`** — an admin permission rather than a member one. A
+  template changes how every future document looks to every customer; that is
+  the organization's own record, not its day-to-day trade. Refusal is 403.
+* **`pdf_templates_premium`** — the plan. The visual designer is a Business-tier
+  feature (false on free and starter, true on business and above), which is the
+  audit specification's §10 split: standard templates for everyone, the designer
+  above. Refusal is 402 with an upgrade path.
+
+Reads are deliberately **not** gated on the plan. An organization that downgrades
+keeps the templates it built, and the settings screen has to be able to show them
+with an upgrade prompt rather than a wall — and every invoice already issued
+renders from its own snapshot regardless of tier.
 """
 
 from collections.abc import Callable
@@ -29,6 +40,7 @@ from core.tenancy import current_organization_id
 
 from ..authz import Permission, require_permission
 from ..deps import current_user_id, get_uow_factory
+from ..entitlements import require_feature
 from ..schemas.templates import (
     TemplateCreateRequest,
     TemplateResponse,
@@ -84,6 +96,7 @@ def create_template(
     body: TemplateCreateRequest,
     user_id: UUID = Depends(current_user_id),
     _: None = Depends(require_permission(Permission.TEMPLATE_WRITE)),
+    __: None = Depends(require_feature("pdf_templates_premium")),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
 ):
     template = TemplateService(uow_factory).create(
@@ -104,6 +117,7 @@ def update_template(
     body: TemplateUpdateRequest,
     user_id: UUID = Depends(current_user_id),
     _: None = Depends(require_permission(Permission.TEMPLATE_WRITE)),
+    __: None = Depends(require_feature("pdf_templates_premium")),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
 ):
     """Edit the draft. Published versions are untouched — that is the point."""
@@ -122,6 +136,7 @@ def publish_template(
     template_id: UUID,
     user_id: UUID = Depends(current_user_id),
     _: None = Depends(require_permission(Permission.TEMPLATE_WRITE)),
+    __: None = Depends(require_feature("pdf_templates_premium")),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
 ):
     """Freeze the draft as an immutable version.
@@ -137,6 +152,7 @@ def set_default_template(
     template_id: UUID,
     user_id: UUID = Depends(current_user_id),
     _: None = Depends(require_permission(Permission.TEMPLATE_WRITE)),
+    __: None = Depends(require_feature("pdf_templates_premium")),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
 ):
     return _to_response(
@@ -149,6 +165,7 @@ def delete_template(
     template_id: UUID,
     user_id: UUID = Depends(current_user_id),
     _: None = Depends(require_permission(Permission.TEMPLATE_WRITE)),
+    __: None = Depends(require_feature("pdf_templates_premium")),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
 ):
     """Safe because invoices keep their template by value.
