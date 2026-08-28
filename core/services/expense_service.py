@@ -278,9 +278,13 @@ def _collected_vat(
     is derived: a second copy of a figure that reaches a VAT return is a second
     thing that can be wrong.
     """
+    #  A draft has not been issued and a voided invoice has been undone, so
+    #  neither owes output VAT. Everything else does, whether or not it has been
+    #  paid — the liability attaches at issue, not at payment.
+    excluded = (InvoiceStatus.DRAFT, InvoiceStatus.VOIDED)
     total = Decimal("0")
     for invoice in uow.invoices.list(company_id=company_id):
-        if invoice.status in (InvoiceStatus.DRAFT, InvoiceStatus.VOID):
+        if invoice.status in excluded:
             continue
         if invoice.issue_date is None or not (start <= invoice.issue_date <= end):
             continue

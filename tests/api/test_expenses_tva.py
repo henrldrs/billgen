@@ -12,7 +12,13 @@ from decimal import Decimal
 
 import pytest
 
-from .conftest import bearer, create_company, signup
+from .conftest import (
+    bearer,
+    create_client_record,
+    create_company,
+    create_invoice,
+    signup,
+)
 
 
 async def import_expense(client, headers, company_id, **extracted):
@@ -195,3 +201,32 @@ async def test_expenses_are_scoped_to_their_organization(client):
     )
     assert (await client.get(f"/expenses/{expense_id}", headers=bob)).status_code == 404
     assert (await client.get("/expenses", headers=bob)).json() == []
+
+
+async def test_collected_vat_comes_from_issued_invoices(org):
+    """The half of the position that is NOT about expenses.
+
+    Every earlier test here ran against an organization with no invoices, so
+    `_collected_vat` looped zero times and its body was never executed. That is
+    exactly how `InvoiceStatus.VOID` — a name that does not exist; the member is
+    `VOIDED` — survived the suite and only failed when the real app asked for a
+    position against a database with an invoice in it. This test issues one.
+    """
+    client, headers, company_id = org
+    customer = await create_client_record(client, headers, company_id)
+    invoice = await create_invoice(client, headers, company_id, customer["id"])
+    assert invoice["status"] == "issued"
+
+    response = await client.get(
+        "/tva/position",
+        headers=headers,
+        params={"company_id": company_id, "start": "2020-01-01", "end": "2030-12-31"},
+    )
+    assert response.status_code == 200, response.text
+    body = response.json()
+
+    collected = Decimal(body["collected"])
+    assert collected == Decimal(invoice["total_vat"])
+    assert collected > Decimal("0")
+    # Nothing recoverable has been confirmed, so the whole of it is payable.
+    assert Decimal(body["estimated_payable"]) == collected
