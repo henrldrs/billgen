@@ -28,6 +28,17 @@ class InvoiceRepository(ABC):
     ) -> list[Invoice]: ...
 
     @abstractmethod
+    def search(self, term: str, limit: int = 10) -> list[Invoice]:
+        """Invoices whose reference contains `term`, case-insensitively.
+
+        Reference only: it is what someone types when they are holding a paper
+        invoice or reading a bank statement. Finding an invoice by *customer*
+        goes through the client hit and its list, which is one keystroke more
+        and does not need a join here.
+        """
+        ...
+
+    @abstractmethod
     def update(self, invoice: Invoice) -> Invoice: ...
 
     @abstractmethod

@@ -10,7 +10,7 @@ and every write guards that the entity's organization_id matches the bound conte
 from datetime import date
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from core.models import (
@@ -61,6 +61,23 @@ from .mappers import (
     row_to_invoice,
     to_domain,
 )
+
+_LIKE_ESCAPE = "\\"
+
+
+def _contains(term: str) -> str:
+    """A LIKE pattern matching `term` anywhere, with the wildcards defused.
+
+    Without this, a search for "50%" matches every row: `%` and `_` are LIKE
+    metacharacters, and a search box is the one place a user types them without
+    meaning them.
+    """
+    escaped = (
+        term.replace(_LIKE_ESCAPE, _LIKE_ESCAPE * 2)
+        .replace("%", _LIKE_ESCAPE + "%")
+        .replace("_", _LIKE_ESCAPE + "_")
+    )
+    return f"%{escaped}%"
 
 
 class SqlAlchemyOrganizationRepository(OrganizationRepository):
@@ -170,6 +187,23 @@ class SqlAlchemyClientRepository(_TenantCrudRepository, ClientRepository):
             stmt = stmt.where(ClientRow.company_id == company_id)
         return [to_domain(Client, row) for row in self._s.execute(stmt).scalars()]
 
+    def search(self, term: str, limit: int = 10) -> list[Client]:
+        pattern = _contains(term)
+        stmt = (
+            select(ClientRow)
+            .where(
+                self._org_filter(),
+                or_(
+                    ClientRow.name.ilike(pattern, escape=_LIKE_ESCAPE),
+                    ClientRow.email.ilike(pattern, escape=_LIKE_ESCAPE),
+                    ClientRow.vat_number.ilike(pattern, escape=_LIKE_ESCAPE),
+                ),
+            )
+            .order_by(ClientRow.name)
+            .limit(limit)
+        )
+        return [to_domain(Client, row) for row in self._s.execute(stmt).scalars()]
+
 
 class SqlAlchemyProductRepository(_TenantCrudRepository, ProductRepository):
     row_cls = ProductRow
@@ -179,6 +213,22 @@ class SqlAlchemyProductRepository(_TenantCrudRepository, ProductRepository):
         stmt = select(ProductRow).where(self._org_filter()).order_by(ProductRow.name)
         if company_id is not None:
             stmt = stmt.where(ProductRow.company_id == company_id)
+        return [to_domain(Product, row) for row in self._s.execute(stmt).scalars()]
+
+    def search(self, term: str, limit: int = 10) -> list[Product]:
+        pattern = _contains(term)
+        stmt = (
+            select(ProductRow)
+            .where(
+                self._org_filter(),
+                or_(
+                    ProductRow.name.ilike(pattern, escape=_LIKE_ESCAPE),
+                    ProductRow.category.ilike(pattern, escape=_LIKE_ESCAPE),
+                ),
+            )
+            .order_by(ProductRow.name)
+            .limit(limit)
+        )
         return [to_domain(Product, row) for row in self._s.execute(stmt).scalars()]
 
 
@@ -259,6 +309,18 @@ class SqlAlchemyInvoiceRepository(InvoiceRepository):
             stmt = stmt.where(InvoiceRow.client_id == client_id)
         return [row_to_invoice(row) for row in self._s.execute(stmt).scalars()]
 
+    def search(self, term: str, limit: int = 10) -> list[Invoice]:
+        stmt = (
+            select(InvoiceRow)
+            .where(
+                self._org_filter(),
+                InvoiceRow.reference.ilike(_contains(term), escape=_LIKE_ESCAPE),
+            )
+            .order_by(InvoiceRow.sequence_global.desc())
+            .limit(limit)
+        )
+        return [row_to_invoice(row) for row in self._s.execute(stmt).scalars()]
+
     def update(self, invoice: Invoice) -> Invoice:
         guard_tenant(invoice.organization_id)
         row = self._get_row(invoice.id)
@@ -311,6 +373,18 @@ class SqlAlchemyCreditNoteRepository(CreditNoteRepository):
         )
         if company_id is not None:
             stmt = stmt.where(CreditNoteRow.company_id == company_id)
+        return [row_to_credit_note(row) for row in self._s.execute(stmt).scalars()]
+
+    def search(self, term: str, limit: int = 10) -> list[CreditNote]:
+        stmt = (
+            select(CreditNoteRow)
+            .where(
+                self._org_filter(),
+                CreditNoteRow.reference.ilike(_contains(term), escape=_LIKE_ESCAPE),
+            )
+            .order_by(CreditNoteRow.sequence_global.desc())
+            .limit(limit)
+        )
         return [row_to_credit_note(row) for row in self._s.execute(stmt).scalars()]
 
 

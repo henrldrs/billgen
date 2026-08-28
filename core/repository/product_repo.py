@@ -15,4 +15,9 @@ class ProductRepository(ABC):
     def list(self, company_id: UUID | None = None) -> list[Product]: ...
 
     @abstractmethod
+    def search(self, term: str, limit: int = 10) -> list[Product]:
+        """Products matching `term` on name or category."""
+        ...
+
+    @abstractmethod
     def update(self, product: Product) -> Product: ...

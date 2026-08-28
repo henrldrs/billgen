@@ -13,3 +13,8 @@ class CreditNoteRepository(ABC):
 
     @abstractmethod
     def list(self, company_id: UUID | None = None) -> list[CreditNote]: ...
+
+    @abstractmethod
+    def search(self, term: str, limit: int = 10) -> list[CreditNote]:
+        """Credit notes whose reference contains `term`, case-insensitively."""
+        ...

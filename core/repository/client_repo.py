@@ -15,4 +15,9 @@ class ClientRepository(ABC):
     def list(self, company_id: UUID | None = None) -> list[Client]: ...
 
     @abstractmethod
+    def search(self, term: str, limit: int = 10) -> list[Client]:
+        """Clients matching `term` on name, email or VAT number."""
+        ...
+
+    @abstractmethod
     def update(self, client: Client) -> Client: ...

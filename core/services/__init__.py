@@ -18,6 +18,7 @@ from .pdf_service import PdfService
 from .peppol_service import PeppolService
 from .product_service import ProductService
 from .reporting_service import KpiSummary, ReportingService, effective_status
+from .search_service import HitKind, SearchHit, SearchResults, SearchService
 
 __all__ = [
     "ActivityService",
@@ -28,6 +29,7 @@ __all__ = [
     "CompanyValidation",
     "CreditNoteService",
     "FieldError",
+    "HitKind",
     "ImportService",
     "InvoiceService",
     "KpiSummary",
@@ -40,6 +42,9 @@ __all__ = [
     "ProductService",
     "ReportingService",
     "RestoreReport",
+    "SearchHit",
+    "SearchResults",
+    "SearchService",
     "effective_status",
     "validate_company_identifiers",
 ]

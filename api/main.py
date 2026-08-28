@@ -38,6 +38,7 @@ from .routers import (
     products,
     reference,
     reports,
+    search,
     users,
 )
 from .security import AuthService, JwtCodec
@@ -199,6 +200,7 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
     app.include_router(reference.router)
     app.include_router(entitlements.router)
     app.include_router(reports.router)
+    app.include_router(search.router)
     app.include_router(activity.router)
     app.include_router(backup.router)
     return app
