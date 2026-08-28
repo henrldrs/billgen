@@ -10,7 +10,7 @@ the measured picture is
 stale.** Regenerating it is on the list below.
 
 **State:** Python **378** passed (was 298), frontend 157 passed, ruff clean,
-typecheck clean. Nine commits, **none of them pushed** — see §1.
+typecheck clean. Ten commits, **none of them pushed** — see §1.
 
 Every new endpoint was also exercised live against the desktop dev pair on
 :8010 (`python scripts/dev_desktop_api.py`), not only under pytest — alerts on
@@ -43,7 +43,7 @@ blob storage — and a Postgres bug that would have failed the first CI run.
 
 The remote now exists (`origin` → `github.com/henrldrs/billgen`, and `main` was
 in sync with it at the start of this session — the previous note's "the repo has
-no remote" is out of date). **Eight commits are sitting unpushed on `main`.**
+no remote" is out of date). **Ten commits are sitting unpushed on `main`** — eight that change behaviour and two that update the documents describing it.
 
 They were not pushed because pushing runs CI and publishes work Henri has not
 read, and this session ran while he was asleep. It is one command:
@@ -63,7 +63,7 @@ One thing that *would* have made it red is now fixed — see §3.
 
 ## 2. What shipped 2026-08-28 (do not rebuild it)
 
-Eight commits, each with its reasoning in the message. In order:
+The eight that changed something, each with its reasoning in the message:
 
 1. **Roles stop being decoration** (`api/authz/`). A `viewer` could void an
    invoice; every write endpoint was open to every member. Endpoints now declare
