@@ -129,14 +129,26 @@ export type TemplateBlock = BlockProperties & {
 };
 
 export interface TemplateAppearance {
-  /** Token *names*, not colours. See rule 2 above. */
   brand: {
-    accentToken: string;
+    /** ONE brand colour, as a hex value.
+     *
+     *  The scaffold refused this outright and offered three token names. That
+     *  was too strict for a *document*: an invoice is the customer's own
+     *  stationery, and a company that cannot put its colour on it will not use
+     *  the studio. The app's chrome is a different question — the palette guard
+     *  still forbids raw colour in component code, and this never reaches it.
+     *
+     *  What survives from that decision is the shape: exactly one colour, in
+     *  one field, resolved into `--bg-brand` at render time. Not a hex per
+     *  block, which is how a template becomes unreadable and un-reskinnable.
+     */
+    color: string;
+    /** Still token names — these two carry legibility, not identity. */
     textToken: string;
     borderToken: string;
   };
   typography: {
-    fontFamily: string;
+    fontFamily: FontChoice;
     bodySizePt: number;
     headingSizePt: number;
   };
@@ -146,6 +158,52 @@ export interface TemplateAppearance {
     density: Density;
   };
 }
+
+/** Fonts a document may use.
+ *
+ *  Constrained to what the PDF renderer can actually draw. `core/pdf` renders
+ *  through Chromium with two vendored faces (Satoshi, Geist Mono) and whatever
+ *  the host has; everything else here is a family Chromium resolves on every
+ *  platform BillGen targets. Offering a font the preview shows and the PDF
+ *  silently substitutes is worse than offering six that always match.
+ */
+export type FontChoice =
+  | "Satoshi"
+  | "Geist Mono"
+  | "Helvetica"
+  | "Georgia"
+  | "Times New Roman"
+  | "Verdana";
+
+export const FONT_CHOICES: readonly { value: FontChoice; label: string; stack: string }[] = [
+  { value: "Satoshi", label: "Satoshi", stack: '"Satoshi", system-ui, sans-serif' },
+  { value: "Helvetica", label: "Helvetica", stack: 'Helvetica, Arial, sans-serif' },
+  { value: "Georgia", label: "Georgia", stack: 'Georgia, "Times New Roman", serif' },
+  { value: "Times New Roman", label: "Times", stack: '"Times New Roman", Times, serif' },
+  { value: "Verdana", label: "Verdana", stack: 'Verdana, Geneva, sans-serif' },
+  { value: "Geist Mono", label: "Geist Mono", stack: '"Geist Mono", ui-monospace, monospace' },
+];
+
+export function fontStack(choice: FontChoice): string {
+  return FONT_CHOICES.find((f) => f.value === choice)?.stack ?? FONT_CHOICES[0].stack;
+}
+
+/** Brand colours offered as swatches, so the common case is one click.
+ *
+ *  A custom hex is still allowed — these are a starting point, not the whole
+ *  range. Every one of them clears 4.5:1 against white, which is what keeps a
+ *  document legible when it is printed rather than viewed.
+ */
+export const BRAND_SWATCHES: readonly { value: string; label: string }[] = [
+  { value: "#0f766e", label: "Emerald" },
+  { value: "#1d4ed8", label: "Blue" },
+  { value: "#0f172a", label: "Ink" },
+  { value: "#7c2d12", label: "Rust" },
+  { value: "#6d28d9", label: "Violet" },
+  { value: "#be123c", label: "Crimson" },
+  { value: "#166534", label: "Forest" },
+  { value: "#a16207", label: "Ochre" },
+];
 
 export interface InvoiceTemplate {
   id: string;
@@ -215,7 +273,7 @@ export const REQUIRED_BLOCKS: readonly BlockKind[] = [
 export function defaultAppearance(): TemplateAppearance {
   return {
     brand: {
-      accentToken: "--bg-accent",
+      color: "#0f766e",
       textToken: "--bg-ink",
       borderToken: "--bg-line",
     },

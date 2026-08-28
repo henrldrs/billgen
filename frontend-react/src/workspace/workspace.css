@@ -395,3 +395,350 @@
   color: var(--bg-ink-soft);
   font-size: var(--bg-text-helper);
 }
+
+
+/* ==========================================================================
+   Template studio — reshaped 2026-08-28
+
+   Motion rules for the whole block, so it stays one system rather than five
+   opinions:
+
+   * 160-220ms, cubic-bezier(.2,.8,.2,1). Long enough to read as movement,
+     short enough that a user dragging four blocks never waits for it.
+   * transform and opacity only. Animating height or top forces layout on every
+     frame, and this list re-renders on every pointermove.
+   * every one of them is switched off under prefers-reduced-motion. A studio
+     that ignores that setting is unusable for the people who set it.
+   ========================================================================== */
+
+.bg-ws-studio__paper {
+  animation: bg-ws-paper-in 240ms cubic-bezier(.2, .8, .2, 1) both;
+}
+
+@keyframes bg-ws-paper-in {
+  from { opacity: 0; transform: translateY(8px) scale(.995); }
+  to   { opacity: 1; transform: none; }
+}
+
+.bg-ws-rail__title { margin: 0 0 var(--bg-space-1); font-size: var(--bg-text-sm); }
+
+.bg-ws-rail__hint {
+  margin: 0 0 var(--bg-space-3);
+  color: var(--bg-ink-soft);
+  font-size: var(--bg-text-xs);
+}
+
+/* -- the draggable block list -------------------------------------------- */
+
+.bg-ws-canvas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--bg-space-1);
+}
+
+.bg-ws-canvas__row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--bg-space-2);
+  padding: var(--bg-space-2);
+  border: 1px solid var(--bg-line);
+  border-radius: var(--bg-radius-md);
+  background: var(--bg-surface);
+  transition: transform 180ms cubic-bezier(.2, .8, .2, 1),
+              border-color 140ms ease,
+              box-shadow 140ms ease,
+              opacity 140ms ease;
+}
+
+.bg-ws-canvas__row.is-selected {
+  border-color: var(--bg-accent);
+  box-shadow: 0 0 0 1px var(--bg-accent);
+}
+
+.bg-ws-canvas__row.is-hidden { opacity: .55; }
+
+/* The row under the pointer. `position: relative` + z-index keeps it over its
+   neighbours; the transition is dropped so it tracks the pointer exactly
+   instead of easing behind it. */
+.bg-ws-canvas__row.is-dragging {
+  position: relative;
+  z-index: 2;
+  transition: none;
+  cursor: grabbing;
+  border-color: var(--bg-accent);
+  box-shadow: var(--bg-shadow-lg, 0 12px 24px rgb(0 0 0 / .18));
+}
+
+.bg-ws-canvas__grip {
+  border: 0;
+  background: none;
+  padding: var(--bg-space-1);
+  cursor: grab;
+  color: var(--bg-ink-soft);
+  line-height: 1;
+  touch-action: none;          /* or the browser scrolls instead of dragging */
+  border-radius: var(--bg-radius-sm);
+}
+
+.bg-ws-canvas__grip:active { cursor: grabbing; }
+.bg-ws-canvas__grip:hover { color: var(--bg-ink); background: var(--bg-surface-2); }
+
+.bg-ws-canvas__name {
+  border: 0;
+  background: none;
+  padding: 0;
+  text-align: left;
+  font: inherit;
+  color: var(--bg-ink);
+  cursor: pointer;
+  display: flex;
+  align-items: baseline;
+  gap: var(--bg-space-2);
+}
+
+.bg-ws-canvas__req {
+  font-style: normal;
+  font-size: var(--bg-text-xs);
+  color: var(--bg-ink-soft);
+}
+
+.bg-ws-canvas__toggle { position: relative; display: inline-flex; cursor: pointer; }
+.bg-ws-canvas__toggle input { position: absolute; opacity: 0; inset: 0; margin: 0; }
+.bg-ws-canvas__toggle input:disabled { cursor: not-allowed; }
+
+.bg-ws-canvas__track {
+  width: 34px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--bg-line-strong, var(--bg-line));
+  position: relative;
+  transition: background 160ms ease;
+}
+
+.bg-ws-canvas__track::after {
+  content: "";
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  transition: transform 160ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.bg-ws-canvas__toggle input:checked + .bg-ws-track,
+.bg-ws-canvas__toggle input:checked + .bg-ws-canvas__track { background: var(--bg-accent); }
+.bg-ws-canvas__toggle input:checked + .bg-ws-canvas__track::after { transform: translateX(14px); }
+.bg-ws-canvas__toggle input:disabled + .bg-ws-canvas__track { opacity: .5; }
+
+/* -- the model gallery ---------------------------------------------------- */
+
+.bg-ws-gallery { padding: var(--bg-space-5); }
+.bg-ws-gallery__head { margin-bottom: var(--bg-space-4); }
+.bg-ws-gallery__head h2 { margin: 0 0 var(--bg-space-1); }
+.bg-ws-gallery__head p { margin: 0; color: var(--bg-ink-soft); }
+
+.bg-ws-gallery__grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: var(--bg-space-4);
+}
+
+.bg-ws-preset {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--bg-space-2);
+  padding: var(--bg-space-3);
+  border: 1px solid var(--bg-line);
+  border-radius: var(--bg-radius-lg);
+  background: var(--bg-surface);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition: transform 180ms cubic-bezier(.2, .8, .2, 1),
+              border-color 140ms ease,
+              box-shadow 180ms ease;
+  animation: bg-ws-preset-in 260ms cubic-bezier(.2, .8, .2, 1) both;
+}
+
+@keyframes bg-ws-preset-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.bg-ws-preset:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--bg-shadow-md, 0 8px 20px rgb(0 0 0 / .12));
+  border-color: var(--bg-line-strong, var(--bg-line));
+}
+
+.bg-ws-preset.is-active {
+  border-color: var(--bg-accent);
+  box-shadow: 0 0 0 2px var(--bg-accent);
+}
+
+.bg-ws-preset__name { font-weight: 650; }
+.bg-ws-preset__tag { font-size: var(--bg-text-xs); color: var(--bg-ink-soft); }
+
+/* The miniature. Every dimension comes from the preset, so a preset that
+   changes redraws its own thumbnail — no screenshot to go stale. */
+.bg-ws-thumb {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  aspect-ratio: 1 / 1.414;      /* A4 */
+  background: var(--bg-surface);
+  border: 1px solid var(--bg-line);
+  border-radius: var(--bg-radius-sm);
+  overflow: hidden;
+}
+
+.bg-ws-thumb__title { display: block; width: 42%; border-radius: 2px; }
+.bg-ws-thumb__parties { display: flex; gap: 6px; }
+.bg-ws-thumb__parties span { flex: 1; height: 12px; background: var(--bg-surface-2); border-radius: 2px; }
+.bg-ws-thumb__rows { display: flex; flex-direction: column; margin-top: 2px; }
+.bg-ws-thumb__row { display: flex; gap: 4px; }
+.bg-ws-thumb__row span { height: 4px; border-radius: 1px; }
+.bg-ws-thumb__totals { margin-top: auto; height: 10px; border-top: 2px solid; }
+.bg-ws-thumb__foot { height: 6px; background: var(--bg-surface-2); border-radius: 2px; }
+
+/* -- appearance panel ----------------------------------------------------- */
+
+.bg-ws-appearance { display: flex; flex-direction: column; gap: var(--bg-space-4); }
+.bg-ws-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--bg-space-3); }
+
+.bg-ws-swatches {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: var(--bg-space-2);
+}
+
+.bg-ws-swatch {
+  aspect-ratio: 1;
+  border: 1px solid rgb(0 0 0 / .12);
+  border-radius: var(--bg-radius-sm);
+  cursor: pointer;
+  padding: 0;
+  transition: transform 160ms cubic-bezier(.2, .8, .2, 1), box-shadow 160ms ease;
+}
+
+.bg-ws-swatch:hover { transform: scale(1.12); }
+
+.bg-ws-swatch.is-active {
+  box-shadow: 0 0 0 2px var(--bg-surface), 0 0 0 4px var(--bg-accent);
+  transform: scale(1.08);
+}
+
+.bg-ws-custom-colour {
+  display: flex;
+  align-items: center;
+  gap: var(--bg-space-2);
+  margin-top: var(--bg-space-2);
+}
+
+.bg-ws-custom-colour input[type="color"] {
+  width: 34px; height: 34px; padding: 0;
+  border: 1px solid var(--bg-line);
+  border-radius: var(--bg-radius-sm);
+  background: none;
+  cursor: pointer;
+}
+
+.bg-ws-hex {
+  width: 9ch;
+  font-family: var(--bg-font-mono, ui-monospace, monospace);
+  text-transform: lowercase;
+  padding: var(--bg-space-1) var(--bg-space-2);
+  border: 1px solid var(--bg-line);
+  border-radius: var(--bg-radius-sm);
+  background: var(--bg-surface);
+  color: var(--bg-ink);
+}
+
+.bg-ws-fonts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--bg-space-2);
+}
+
+.bg-ws-font {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--bg-space-2);
+  border: 1px solid var(--bg-line);
+  border-radius: var(--bg-radius-md);
+  background: var(--bg-surface);
+  cursor: pointer;
+  transition: transform 160ms cubic-bezier(.2, .8, .2, 1), border-color 140ms ease;
+}
+
+.bg-ws-font:hover { transform: translateY(-2px); }
+.bg-ws-font.is-active { border-color: var(--bg-accent); box-shadow: 0 0 0 1px var(--bg-accent); }
+.bg-ws-font__sample { font-size: 20px; line-height: 1.1; color: var(--bg-ink); }
+.bg-ws-font__name { font-size: var(--bg-text-xs); color: var(--bg-ink-soft); }
+
+/* Shows the chosen face at document scale — the sample above is 20px, which
+   tells you nothing about how a 10pt line will actually read. */
+.bg-ws-note {
+  margin: var(--bg-space-2) 0 0;
+  padding: var(--bg-space-2);
+  border-radius: var(--bg-radius-sm);
+  background: var(--bg-surface-2);
+  color: var(--bg-ink);
+  transition: font-family 0s;
+}
+
+.bg-ws-value { font-size: var(--bg-text-xs); color: var(--bg-ink-soft); margin-left: var(--bg-space-2); }
+
+.bg-sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+
+/* -- the document, driven by the stored appearance ------------------------ */
+
+.bg-doc {
+  font-family: var(--doc-font, inherit);
+  font-size: var(--doc-body, 10pt);
+  color: var(--doc-text, var(--bg-ink));
+}
+
+/* Selectors match the markup LiveInvoicePreview actually emits — bg-doc__*
+   classes, not data-block attributes. Written against the component rather
+   than against a guess about it. */
+.bg-doc .bg-doc__title {
+  color: var(--bg-brand, var(--bg-accent));
+  font-size: var(--doc-heading, 24pt);
+}
+.bg-doc .bg-doc__brand { color: var(--bg-brand, var(--bg-accent)); }
+.bg-doc .bg-doc__totals { border-top: 2px solid var(--bg-brand, var(--bg-accent)); }
+.bg-doc table th,
+.bg-doc table td { border-bottom: 1px solid var(--doc-line, var(--bg-line)); }
+.bg-doc[data-margins="narrow"] { padding: 10mm; }
+.bg-doc[data-margins="standard"] { padding: 18mm; }
+.bg-doc[data-margins="wide"] { padding: 26mm; }
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-ws-studio__paper,
+  .bg-ws-preset,
+  .bg-ws-canvas__row,
+  .bg-ws-canvas__track::after,
+  .bg-ws-swatch,
+  .bg-ws-font {
+    animation: none !important;
+    transition: none !important;
+  }
+  .bg-ws-preset:hover,
+  .bg-ws-swatch:hover,
+  .bg-ws-font:hover { transform: none; }
+}

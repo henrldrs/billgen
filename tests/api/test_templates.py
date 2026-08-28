@@ -75,36 +75,56 @@ async def test_a_template_cannot_hide_a_legally_required_block(org):
     assert response.status_code == 422, response.text
 
 
-async def test_appearance_refuses_a_raw_colour(org):
-    """Rule 2, and the reason it lives here rather than only in the palette guard:
-    that test walks the source tree, and a hex in a database row is invisible to it."""
+async def test_a_brand_colour_is_accepted(org):
+    """Rule 2 as it stands after 2026-08-28.
+
+    The original version refused colour outright. That was right for the app's
+    chrome and wrong for a document: an invoice is the customer's stationery.
+    One colour, in one field, is allowed.
+    """
     client, headers, company_id = org
     response = await create_template(
-        client,
-        headers,
-        company_id,
-        appearance={
-            "accent_token": "#0f766e",
-            "text_token": "--bg-ink",
-            "border_token": "--bg-line",
-        },
+        client, headers, company_id, appearance={"brand_color": "#6D28D9"}
+    )
+    assert response.status_code == 201, response.text
+    # Normalised, so two templates that picked the same colour compare equal.
+    assert response.json()["appearance"]["brand_color"] == "#6d28d9"
+
+
+async def test_a_brand_colour_that_is_not_a_colour_is_refused(org):
+    """The value is interpolated into a style attribute when the document
+    renders, so anything that is not a colour is a broken document at best."""
+    client, headers, company_id = org
+    for bad in ["red", "#fff", "javascript:alert(1)", "#12345"]:
+        response = await create_template(
+            client, headers, company_id, name=f"T{bad}", appearance={"brand_color": bad}
+        )
+        assert response.status_code == 422, f"{bad!r} was accepted: {response.text}"
+
+
+async def test_text_and_rule_colours_still_refuse_a_hex(org):
+    """What did not change. These two carry legibility rather than identity, and
+    white-on-white is one keystroke away — a failure that only shows on paper."""
+    client, headers, company_id = org
+    response = await create_template(
+        client, headers, company_id, appearance={"text_token": "#ffffff"}
     )
     assert response.status_code == 422, response.text
 
 
-async def test_appearance_accepts_a_token_name(org):
+async def test_a_font_the_pdf_renderer_cannot_draw_is_refused(org):
+    """A face the preview shows and the PDF silently substitutes is worse than
+    six that always match."""
     client, headers, company_id = org
-    response = await create_template(
-        client,
-        headers,
-        company_id,
-        appearance={
-            "accent_token": "--bg-accent-strong",
-            "text_token": "--bg-ink",
-            "border_token": "--bg-line",
-        },
+    bad = await create_template(
+        client, headers, company_id, appearance={"font_family": "Comic Sans MS"}
     )
-    assert response.status_code == 201, response.text
+    assert bad.status_code == 422, bad.text
+
+    good = await create_template(
+        client, headers, company_id, name="Serif", appearance={"font_family": "Georgia"}
+    )
+    assert good.status_code == 201, good.text
 
 
 async def test_an_unpublished_template_has_no_snapshot(org):
@@ -141,7 +161,7 @@ async def test_editing_a_template_after_publishing_does_not_change_the_snapshot(
         json={
             "name": "Renamed",
             "blocks": blocks(notes=True, footer=True),
-            "appearance": {"accent_token": "--bg-danger", "body_size_pt": 14},
+            "appearance": {"brand_color": "#be123c", "body_size_pt": 14},
         },
     )
     assert edited.status_code == 200, edited.text
@@ -153,7 +173,7 @@ async def test_editing_a_template_after_publishing_does_not_change_the_snapshot(
     assert after["version"] == before["version"] == 1
     assert after["blocks"] == before["blocks"]
     assert after["appearance"] == before["appearance"]
-    assert after["appearance"]["accent_token"] != "--bg-danger"
+    assert after["appearance"]["brand_color"] != "#be123c"
 
 
 async def test_publishing_again_makes_a_new_version(org):
@@ -163,7 +183,7 @@ async def test_publishing_again_makes_a_new_version(org):
     await client.patch(
         f"/templates/{template['id']}",
         headers=headers,
-        json={"appearance": {"accent_token": "--bg-danger"}},
+        json={"appearance": {"brand_color": "#be123c"}},
     )
     second = (
         await client.post(f"/templates/{template['id']}/publish", headers=headers)
@@ -174,7 +194,7 @@ async def test_publishing_again_makes_a_new_version(org):
         await client.get(f"/templates/{template['id']}/snapshot", headers=headers)
     ).json()
     assert snapshot["version"] == 2
-    assert snapshot["appearance"]["accent_token"] == "--bg-danger"
+    assert snapshot["appearance"]["brand_color"] == "#be123c"
 
 
 async def test_the_default_template_cannot_be_deleted(org):

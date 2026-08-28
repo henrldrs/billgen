@@ -43,3 +43,6 @@ export { computeTotals, lineSubtotal, type DraftTotals, type VatSummaryRow } fro
 export { SAMPLES, sampleByKey, type SampleInvoice } from "./sampleInvoice";
 export * from "./templateSchema";
 export * from "./types";
+export { BlockCanvas, type BlockCanvasProps } from "./BlockCanvas";
+export { PresetGallery, type PresetGalleryProps } from "./PresetGallery";
+export { TEMPLATE_PRESETS, presetByKey, templateFromPreset, type TemplatePreset } from "./templatePresets";

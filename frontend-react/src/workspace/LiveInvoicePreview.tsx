@@ -16,6 +16,7 @@
  */
 
 import { formatDate, formatMoney } from "../lib/format";
+import { fontStack } from "./templateSchema";
 import type { Lang } from "../lib/translations";
 import { computeTotals } from "./totals";
 import type { InvoiceDraft } from "./types";
@@ -277,7 +278,28 @@ export function LiveInvoicePreview({
   }
 
   return (
-    <div className={`bg-doc bg-doc--${density}`} data-page={template.appearance.page.size}>
+    <div
+      className={`bg-doc bg-doc--${density}`}
+      data-page={template.appearance.page.size}
+      data-margins={template.appearance.page.margins}
+      /*  The one place a template's stored appearance becomes CSS. Everything
+          below reads var(--bg-brand) and var(--doc-font); no block carries a
+          colour of its own, which is what keeps a template re-skinnable and
+          keeps raw values out of component code. */
+      style={
+        {
+          "--bg-brand": template.appearance.brand.color,
+          "--doc-font": fontStack(template.appearance.typography.fontFamily),
+          "--doc-body": `${template.appearance.typography.bodySizePt}pt`,
+          "--doc-heading": `${template.appearance.typography.headingSizePt}pt`,
+          "--doc-text": `var(${template.appearance.brand.textToken})`,
+          "--doc-line":
+            template.appearance.brand.borderToken === "transparent"
+              ? "transparent"
+              : `var(${template.appearance.brand.borderToken})`,
+        } as React.CSSProperties
+      }
+    >
       {template.blocks
         .filter((block) => block.visible)
         .map((block) => (

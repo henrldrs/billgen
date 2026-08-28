@@ -72,7 +72,21 @@ test("no raw hex in component or panel code", () => {
   // Icons are exempt: an SVG may legitimately carry currentColor fallbacks, and
   // the scaffold kit is exempt by design — it is deliberately off-brand, and
   // using tokens there would destroy the signal it exists to send.
-  const EXEMPT = /(?:[\\/]icons[\\/]|[\\/]scaffold[\\/])/;
+  //
+  // The two workspace files below are exempt for a different and narrower
+  // reason, added 2026-08-28. This guard exists to keep colour out of the
+  // *app's chrome*, so that re-skinning the product works by remapping the
+  // `--bg-*` layer. A **document** is not chrome: an invoice is the customer's
+  // own stationery, and a company that cannot put its brand colour on it will
+  // not use the template studio at all.
+  //
+  // So these two hold document colour as *data* — the swatch list a user picks
+  // from, and each starter model's colour — and nothing else. The exemption is
+  // by exact filename rather than by directory precisely so it cannot spread:
+  // every other file under workspace/ is still scanned, and the studio's own
+  // chrome (its thumbnails, panels and rails) uses tokens like everything else.
+  const EXEMPT =
+    /(?:[\\/]icons[\\/]|[\\/]scaffold[\\/]|[\\/]workspace[\\/](?:templateSchema|templatePresets)\.ts$)/;
   const HEX = /#[0-9a-fA-F]{3,8}\b/g;
 
   const offenders: string[] = [];
@@ -84,6 +98,18 @@ test("no raw hex in component or panel code", () => {
     }
   }
   expect(offenders).toEqual([]);
+});
+
+test("the document-colour exemption stays narrow", () => {
+  // The exemption above is the kind that spreads. This pins it: only those two
+  // files may carry raw colour, and only as data. If a third file needs it, that
+  // is a decision worth making deliberately rather than by editing a regex.
+  const exempt = FILES.filter((file) =>
+    /[\\/]workspace[\\/].*\.tsx?$/.test(file) &&
+    /#[0-9a-fA-F]{3,8}\b/.test(readFileSync(join(REPO, file), "utf8")),
+  ).map((file) => file.replace(/\\/g, "/").split("/").pop());
+
+  expect(exempt.sort()).toEqual(["templatePresets.ts", "templateSchema.ts"]);
 });
 
 test("the accent token is emerald, not the reference's blue", () => {

@@ -1,16 +1,26 @@
-/** The three-column template editor (§14) — blocks · document · properties.
+/** The template studio — pick a model, then compose it by dragging.
  *
- *  Scaffold — see README.md.
+ *  Reshaped 2026-08-28 after Henri reviewed the first version at `/_preview`:
+ *  it wanted to be more animated, to compose by clicking and moving rather than
+ *  by pressing arrows, to open on models already proposed, and to allow real
+ *  colours and more fonts.
  *
- *  The middle column is `LiveInvoicePreview`, the same component the invoice
- *  composer uses. Sharing it is the point: a studio that previews through its
- *  own renderer lets a user perfect a layout the composer will draw
- *  differently, and neither of them is the PDF.
+ *  What that changed:
  *
- *  Saving is deliberately two verbs. `onSave` stores the draft; `onPublish`
- *  cuts a version. Editing a template must not restyle invoices that have
- *  already been issued — those carry a `TemplateSnapshot` — so publishing
- *  affects only what comes next, and the version list says which is which.
+ *  * the studio opens on `PresetGallery` instead of a blank document, so the
+ *    first act is a choice rather than an assembly;
+ *  * `BlockCanvas` replaces the ↑/↓ buttons with a drag grip, and rows slide
+ *    out of the way so the drop position is legible before release;
+ *  * `AppearancePanel` has a real brand colour and six typefaces.
+ *
+ *  What did **not** change, and should not: dragging reorders, it never
+ *  positions. A canvas with x/y coordinates lets a user build a document
+ *  missing a legally required mention, and `core/pdf` is a Jinja template that
+ *  could not honour arbitrary geometry anyway. Required blocks cannot be hidden.
+ *
+ *  Saving stays two verbs. `onSave` stores the draft; `onPublish` cuts a
+ *  version. Editing a template must not restyle invoices already issued — those
+ *  carry a `TemplateSnapshot` — so publishing affects only what comes next.
  */
 
 import { useState } from "react";
@@ -18,10 +28,12 @@ import { Button, Card, PageHeader, Segmented } from "@henrioutai/ui";
 
 import type { Lang } from "../lib/translations";
 import { AppearancePanel } from "./AppearancePanel";
-import { BlockLibrary } from "./BlockLibrary";
+import { BlockCanvas } from "./BlockCanvas";
 import { LiveInvoicePreview, type PreviewCompany } from "./LiveInvoicePreview";
+import { PresetGallery } from "./PresetGallery";
 import { PropertyPanel } from "./PropertyPanel";
 import { SAMPLES, sampleByKey } from "./sampleInvoice";
+import { type TemplatePreset, templateFromPreset } from "./templatePresets";
 import type { InvoiceTemplate, TemplateBlock } from "./templateSchema";
 
 export interface TemplateWorkspaceProps {
@@ -29,6 +41,9 @@ export interface TemplateWorkspaceProps {
   company: PreviewCompany;
   lang?: Lang;
   saving?: boolean;
+  /** Open straight into the editor — an existing template is being edited
+   *  rather than a new one started. */
+  skipGallery?: boolean;
   onChange: (template: InvoiceTemplate) => void;
   onSave: () => void;
   onPublish: () => void;
@@ -42,12 +57,19 @@ export function TemplateWorkspace({
   company,
   lang = "en",
   saving = false,
+  skipGallery = false,
   onChange,
   onSave,
   onPublish,
   onExit,
 }: TemplateWorkspaceProps) {
-  const [selectedId, setSelectedId] = useState<string | null>(template.blocks[0]?.id ?? null);
+  const [stage, setStage] = useState<"gallery" | "editor">(
+    skipGallery ? "editor" : "gallery",
+  );
+  const [presetKey, setPresetKey] = useState<string | undefined>(undefined);
+  const [selectedId, setSelectedId] = useState<string | null>(
+    template.blocks[0]?.id ?? null,
+  );
   const [rail, setRail] = useState<RailTab>("block");
   const [sampleKey, setSampleKey] = useState(SAMPLES[0].key);
 
@@ -61,22 +83,53 @@ export function TemplateWorkspace({
     });
   }
 
-  function moveBlock(id: string, direction: -1 | 1) {
-    const index = template.blocks.findIndex((block) => block.id === id);
-    const target = index + direction;
-    if (index < 0 || target < 0 || target >= template.blocks.length) return;
-    const blocks = [...template.blocks];
-    const [moved] = blocks.splice(index, 1);
-    blocks.splice(target, 0, moved);
-    onChange({ ...template, blocks });
+  function pickPreset(preset: TemplatePreset) {
+    setPresetKey(preset.key);
+    //  The template's identity survives the preset — a user trying models on an
+    //  existing template should not find it renamed and un-published underneath
+    //  them.
+    onChange({
+      ...templateFromPreset(preset, {
+        id: template.id,
+        name: template.name,
+        isDefault: template.isDefault,
+      }),
+      publishedVersion: template.publishedVersion,
+    });
+  }
+
+  if (stage === "gallery") {
+    return (
+      <div className="bg-ws-studio">
+        <PageHeader
+          title={template.name}
+          subtitle="Choose a starting point"
+          onBack={onExit}
+          actions={
+            <Button
+              variant="primary"
+              onClick={() => setStage("editor")}
+              disabled={!presetKey}
+            >
+              {presetKey ? "Customise →" : "Pick a model"}
+            </Button>
+          }
+        />
+        <PresetGallery selectedKey={presetKey} onPick={pickPreset} />
+      </div>
+    );
   }
 
   return (
     <div className="bg-ws-studio">
       <PageHeader
         title={template.name}
-        subtitle={`Published v${template.publishedVersion}`}
-        onBack={onExit}
+        subtitle={
+          template.publishedVersion > 0
+            ? `Published v${template.publishedVersion}`
+            : "Never published"
+        }
+        onBack={skipGallery ? onExit : () => setStage("gallery")}
         actions={
           <>
             <Button variant="secondary" onClick={onSave} disabled={saving}>
@@ -91,8 +144,9 @@ export function TemplateWorkspace({
 
       <div className="bg-ws-studio__columns">
         <aside className="bg-ws-studio__rail">
-          <h2>Blocks</h2>
-          <BlockLibrary
+          <h2 className="bg-ws-rail__title">Blocks</h2>
+          <p className="bg-ws-rail__hint">Drag to reorder. Alt + ↑ ↓ also works.</p>
+          <BlockCanvas
             blocks={template.blocks}
             selectedId={selectedId}
             onSelect={(id) => {
@@ -103,7 +157,7 @@ export function TemplateWorkspace({
               const block = template.blocks.find((candidate) => candidate.id === id);
               if (block) replaceBlock({ ...block, visible });
             }}
-            onMove={moveBlock}
+            onReorder={(blocks) => onChange({ ...template, blocks })}
           />
         </aside>
 
@@ -116,18 +170,23 @@ export function TemplateWorkspace({
               options={SAMPLES.map((entry) => ({ value: entry.key, label: entry.label }))}
             />
           </div>
-          <LiveInvoicePreview
-            draft={sample.draft}
-            company={company}
-            template={template}
-            lang={lang}
-            invoiceDiscountPercent={sample.invoiceDiscountPercent}
-            selectedBlockId={selectedId}
-            onSelectBlock={(id) => {
-              setSelectedId(id);
-              setRail("block");
-            }}
-          />
+          {/*  Keyed on the preset so switching models re-mounts the preview and
+              plays its entrance, rather than mutating in place and looking like
+              nothing happened. */}
+          <div className="bg-ws-studio__paper" key={presetKey ?? "custom"}>
+            <LiveInvoicePreview
+              draft={sample.draft}
+              company={company}
+              template={template}
+              lang={lang}
+              invoiceDiscountPercent={sample.invoiceDiscountPercent}
+              selectedBlockId={selectedId}
+              onSelectBlock={(id) => {
+                setSelectedId(id);
+                setRail("block");
+              }}
+            />
+          </div>
         </main>
 
         <aside className="bg-ws-studio__rail">

@@ -16,9 +16,10 @@ exactly the part that is load-bearing and lets the frontend own the rest:
   * every **required block** is present and visible — an invoice missing its
     parties or its totals is not a styling choice, it is an invalid document;
   * every block is a **known kind**, so a typo cannot reach the renderer;
-  * appearance carries **token names, never colours**. `#0f766e` in a database
-    row is the palette bypass the guard test forbids in component code, moved
-    somewhere no test can see it.
+  * appearance carries **one** brand colour and token names for the rest. A
+    document is the customer's stationery and needs their colour; what is
+    refused is a colour *per block*, and raw values for text and rules, where
+    one keystroke produces white-on-white that only fails on a printed page.
 
 `properties` stays an open dict on purpose. It is presentation, the frontend is
 its author, and validating it here would buy a second source of truth.
@@ -26,6 +27,7 @@ its author, and validating it here would buy a second source of truth.
 
 from __future__ import annotations
 
+import re
 from datetime import UTC, datetime
 from enum import Enum
 from uuid import UUID
@@ -68,35 +70,86 @@ class TemplateBlock(DomainModel):
     properties: dict = Field(default_factory=dict)
 
 
-class TemplateAppearance(DomainModel):
-    """Token names and typography. See the module docstring on colour."""
+#  Faces the PDF renderer can actually draw. `core/pdf` renders through
+#  Chromium with two vendored files (Satoshi, Geist Mono); the rest are families
+#  Chromium resolves on every platform BillGen targets. Offering a font the
+#  preview shows and the PDF silently substitutes is worse than offering six
+#  that always match.
+FONT_CHOICES: frozenset[str] = frozenset(
+    {"Satoshi", "Geist Mono", "Helvetica", "Georgia", "Times New Roman", "Verdana"}
+)
 
-    accent_token: str = Field(default="--bg-accent", max_length=64)
+_HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
+
+
+class TemplateAppearance(DomainModel):
+    """One brand colour, and token names for everything else.
+
+    This started life refusing colour outright. That was right for the app's
+    chrome and wrong for a *document*: an invoice is the customer's own
+    stationery, and a company that cannot put its colour on it will not use the
+    studio. What survives from the original decision is the shape, which is the
+    part that mattered — **one** colour in **one** field, not a hex per block,
+    which is how a template becomes unreadable and impossible to re-skin.
+    """
+
+    #  Resolved into `--bg-brand` when the document is rendered.
+    brand_color: str = Field(default="#0f766e", max_length=7)
+
+    #  Still tokens. These two carry legibility rather than identity, and a user
+    #  who sets them by hand sets them wrong — white-on-white is one keystroke
+    #  away and the failure only shows up on a printed page.
     text_token: str = Field(default="--bg-ink", max_length=64)
     border_token: str = Field(default="--bg-line", max_length=64)
 
     font_family: str = Field(default="Satoshi", max_length=64)
     body_size_pt: int = Field(default=10, ge=6, le=16)
-    heading_size_pt: int = Field(default=16, ge=8, le=32)
+    heading_size_pt: int = Field(default=16, ge=8, le=34)
 
     page_size: str = Field(default="A4", pattern="^(A4|Letter)$")
     margins: str = Field(default="standard", pattern="^(narrow|standard|wide)$")
     density: str = Field(default="comfortable", pattern="^(compact|comfortable|spacious)$")
 
-    @field_validator("accent_token", "text_token", "border_token")
+    @field_validator("brand_color")
+    @classmethod
+    def _must_be_a_six_digit_hex(cls, value: str) -> str:
+        """Exactly `#rrggbb`.
+
+        Not a free string: this value is interpolated into a style attribute
+        when the document renders, so anything that is not a colour is either a
+        broken document or an injection point.
+        """
+        if not _HEX.match(value):
+            raise ValueError(
+                f"brand_color must be a six-digit hex colour like '#0f766e', "
+                f"not {value!r}."
+            )
+        return value.lower()
+
+    @field_validator("text_token", "border_token")
     @classmethod
     def _must_be_a_token(cls, value: str) -> str:
         """A CSS custom property name, never a colour.
 
-        This is the guard the palette test cannot reach: a hex literal stored in
-        a database row is invisible to a test that walks the source tree, and it
-        would re-skin every document the organization sends.
+        The palette guard walks the source tree, so it cannot see a hex stored
+        in a database row. This is that guard, for the fields where it still
+        applies.
         """
-        if not value.startswith("--"):
+        if value != "transparent" and not value.startswith("--"):
             raise ValueError(
-                f"appearance takes a token name like '--bg-accent', not {value!r}. "
-                "Raw colours are refused here for the same reason the palette "
-                "guard refuses them in component code."
+                f"{value!r} is not a token name. Text and rule colours take a "
+                f"token like '--bg-ink' so a document stays legible in print and "
+                f"survives a re-skin; only brand_color is a literal colour."
+            )
+        return value
+
+    @field_validator("font_family")
+    @classmethod
+    def _must_be_a_renderable_face(cls, value: str) -> str:
+        if value not in FONT_CHOICES:
+            raise ValueError(
+                f"{value!r} is not a face the PDF renderer can draw. Choose one "
+                f"of: {', '.join(sorted(FONT_CHOICES))}."
             )
         return value
 
