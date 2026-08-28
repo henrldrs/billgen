@@ -22,6 +22,7 @@ from .numbering import (
     client_initials,
     format_credit_note_reference,
     format_display_reference,
+    format_quote_reference,
 )
 from .vat import (
     BELGIAN_STANDARD_RATES,
@@ -46,6 +47,7 @@ __all__ = [
     "discount_amount",
     "format_credit_note_reference",
     "format_display_reference",
+    "format_quote_reference",
     "invoice_totals",
     "is_iso_country_code",
     "legal_mention_for",

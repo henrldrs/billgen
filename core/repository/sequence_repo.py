@@ -4,6 +4,9 @@ from uuid import UUID
 # Well-known sequence scopes. One gapless series per (organization, company, scope).
 INVOICE_SERIES = "invoice"
 CREDIT_NOTE_SERIES = "credit_note"
+# Its own series on purpose: a quote that consumed an invoice number would
+# leave a hole in the gapless series the day the customer said no.
+QUOTE_SERIES = "quote"
 
 
 def monthly_bucket(client_id: UUID, year: int, month: int) -> str:

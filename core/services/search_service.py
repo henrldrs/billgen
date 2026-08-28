@@ -2,11 +2,11 @@
 
 The palette could navigate to pages and nothing else, which is not what people
 reach for it to do: they type an invoice number off a bank statement, or half a
-customer's name. This is that lookup — one term, four record types, ranked.
+customer's name. This is that lookup — one term, five record types, ranked.
 
 Deliberately *not* full-text search. There is no tsvector, no index beyond what
 the columns already carry, and no relevance model worth the name: a `LIKE` over
-four tables answers "find the thing I am half-remembering" for an organization
+five tables answers "find the thing I am half-remembering" for an organization
 holding a few thousand records, which is every tier the matrix sells. When a
 customer has enough data for that to hurt, the fix is a real index, and the
 shape of this service does not change.
@@ -27,6 +27,7 @@ MIN_TERM_LENGTH = 2
 
 class HitKind(str, Enum):
     INVOICE = "invoice"
+    QUOTE = "quote"
     CREDIT_NOTE = "credit_note"
     CLIENT = "client"
     PRODUCT = "product"
@@ -63,7 +64,7 @@ class SearchService:
         self._uow_factory = uow_factory
 
     def search(self, term: str, limit_per_kind: int = 5) -> SearchResults:
-        """Look `term` up across invoices, credit notes, clients and products.
+        """Look `term` up across invoices, quotes, credit notes, clients and products.
 
         Ordering is by kind, not by score. An exact-ish reference match is the
         thing people are usually after, so documents come before the records
@@ -76,6 +77,7 @@ class SearchService:
 
         with self._uow_factory() as uow:
             invoices = uow.invoices.search(term, limit=limit_per_kind)
+            quotes = uow.quotes.search(term, limit=limit_per_kind)
             credit_notes = uow.credit_notes.search(term, limit=limit_per_kind)
             clients = uow.clients.search(term, limit=limit_per_kind)
             products = uow.products.search(term, limit=limit_per_kind)
@@ -93,6 +95,19 @@ class SearchService:
                 company_id=invoice.company_id,
             )
             for invoice in invoices
+        )
+        hits.extend(
+            SearchHit(
+                kind=HitKind.QUOTE,
+                id=quote.id,
+                title=quote.reference,
+                subtitle=str(quote.issue_date),
+                status=quote.status.value,
+                amount=quote.total_ttc,
+                currency=quote.currency.value,
+                company_id=quote.company_id,
+            )
+            for quote in quotes
         )
         hits.extend(
             SearchHit(
@@ -134,6 +149,7 @@ class SearchService:
 
         counts = {
             HitKind.INVOICE.value: len(invoices),
+            HitKind.QUOTE.value: len(quotes),
             HitKind.CREDIT_NOTE.value: len(credit_notes),
             HitKind.CLIENT.value: len(clients),
             HitKind.PRODUCT.value: len(products),

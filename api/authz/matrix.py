@@ -31,6 +31,7 @@ class Permission(str, Enum):
     INVOICE_WRITE = "invoice.write"
     INVOICE_ISSUE = "invoice.issue"
     INVOICE_VOID = "invoice.void"
+    QUOTE_WRITE = "quote.write"
     CLIENT_WRITE = "client.write"
     PRODUCT_WRITE = "product.write"
     COMPANY_WRITE = "company.write"
@@ -48,6 +49,7 @@ _MEMBER: frozenset[Permission] = frozenset(
     {
         Permission.INVOICE_WRITE,
         Permission.INVOICE_ISSUE,
+        Permission.QUOTE_WRITE,
         Permission.CLIENT_WRITE,
         Permission.PRODUCT_WRITE,
         Permission.CREDIT_NOTE_WRITE,

@@ -35,6 +35,7 @@ from ..models import (
     Invoice,
     Payment,
     Product,
+    Quote,
 )
 from ..repository import UnitOfWork
 from ..tenancy import current_organization_id
@@ -42,7 +43,10 @@ from . import _audit
 from .errors import BusinessRuleError
 
 BACKUP_FORMAT = "billgen-backup"
-SCHEMA_VERSION = 1
+# 2 adds "quotes". A v1 file restores unchanged — it simply has none — so both
+# are accepted; only the newest is written.
+SCHEMA_VERSION = 2
+SUPPORTED_SCHEMA_VERSIONS = (1, 2)
 
 # The audit log is exported in full; this is only a sanity ceiling.
 _AUDIT_EXPORT_LIMIT = 1_000_000
@@ -79,10 +83,26 @@ class RestoreReport(BaseModel):
     clients: int = 0
     products: int = 0
     invoices: int = 0
+    quotes: int = 0
     credit_notes: int = 0
     payments: int = 0
     sequences: int = 0
     audit_entries: int = 0
+
+
+# What restore replays, in order: the aggregate's key in the payload, its model,
+# and the repository that takes it. A table rather than seven near-identical
+# loops — a new aggregate is one line here, and forgetting to count it is not
+# possible, because the key doubles as the RestoreReport field.
+_RESTORE_ORDER: tuple[tuple[str, type, str], ...] = (
+    ("companies", Company, "companies"),
+    ("clients", Client, "clients"),
+    ("products", Product, "products"),
+    ("invoices", Invoice, "invoices"),
+    ("quotes", Quote, "quotes"),
+    ("credit_notes", CreditNote, "credit_notes"),
+    ("payments", Payment, "payments"),
+)
 
 
 class BackupService:
@@ -97,6 +117,7 @@ class BackupService:
             clients = uow.clients.list()
             products = uow.products.list()
             invoices = uow.invoices.list()
+            quotes = uow.quotes.list()
             credit_notes = uow.credit_notes.list()
             payments = [
                 payment
@@ -124,6 +145,7 @@ class BackupService:
                 "clients": [c.model_dump(mode="json") for c in clients],
                 "products": [p.model_dump(mode="json") for p in products],
                 "invoices": [i.model_dump(mode="json") for i in invoices],
+                "quotes": [q.model_dump(mode="json") for q in quotes],
                 "credit_notes": [c.model_dump(mode="json") for c in credit_notes],
                 "payments": [p.model_dump(mode="json") for p in payments],
                 "audit_log": [e.model_dump(mode="json") for e in audit_entries],
@@ -147,7 +169,7 @@ class BackupService:
     def restore(self, payload: Any, actor_user_id: UUID | None = None) -> RestoreReport:
         if not isinstance(payload, dict) or payload.get("format") != BACKUP_FORMAT:
             raise BusinessRuleError("Not a BillGen backup file")
-        if payload.get("schema_version") != SCHEMA_VERSION:
+        if payload.get("schema_version") not in SUPPORTED_SCHEMA_VERSIONS:
             raise BusinessRuleError(
                 f"Unsupported backup schema_version: {payload.get('schema_version')!r}"
             )
@@ -165,24 +187,11 @@ class BackupService:
                     "Restore requires an empty organization — this one already has companies"
                 )
 
-            for company in self._models(payload, "companies", Company, org_id):
-                uow.companies.add(company)
-                report.companies += 1
-            for client in self._models(payload, "clients", Client, org_id):
-                uow.clients.add(client)
-                report.clients += 1
-            for product in self._models(payload, "products", Product, org_id):
-                uow.products.add(product)
-                report.products += 1
-            for invoice in self._models(payload, "invoices", Invoice, org_id):
-                uow.invoices.add(invoice)
-                report.invoices += 1
-            for credit_note in self._models(payload, "credit_notes", CreditNote, org_id):
-                uow.credit_notes.add(credit_note)
-                report.credit_notes += 1
-            for payment in self._models(payload, "payments", Payment, org_id):
-                uow.payments.add(payment)
-                report.payments += 1
+            for key, model_cls, repo_name in _RESTORE_ORDER:
+                repository = getattr(uow, repo_name)
+                for model in self._models(payload, key, model_cls, org_id):
+                    repository.add(model)
+                    setattr(report, key, getattr(report, key) + 1)
 
             for raw in self._list(payload, "sequences"):
                 try:

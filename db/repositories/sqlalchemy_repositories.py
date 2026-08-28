@@ -24,6 +24,8 @@ from core.models import (
     OrgMembership,
     Payment,
     Product,
+    Quote,
+    QuoteStatus,
     User,
 )
 from core.repository import (
@@ -35,6 +37,7 @@ from core.repository import (
     OrganizationRepository,
     PaymentRepository,
     ProductRepository,
+    QuoteRepository,
     SequenceRepository,
     UserRepository,
 )
@@ -49,6 +52,7 @@ from db.models import (
     OrgMembershipRow,
     PaymentRow,
     ProductRow,
+    QuoteRow,
     SequenceRow,
     UserRow,
 )
@@ -56,9 +60,11 @@ from db.models import (
 from .mappers import (
     credit_note_to_row,
     invoice_to_row,
+    quote_to_row,
     row_kwargs,
     row_to_credit_note,
     row_to_invoice,
+    row_to_quote,
     to_domain,
 )
 
@@ -341,6 +347,113 @@ class SqlAlchemyInvoiceRepository(InvoiceRepository):
         # never hard-deleted, even if a caller slips past the service-level check.
         if row.status != InvoiceStatus.DRAFT.value:
             raise ValueError("Refusing to hard-delete a non-draft invoice")
+        self._s.delete(row)
+        self._s.flush()
+
+
+_QUOTE_SCALAR_COLUMNS = (
+    "updated_at",
+    "client_id",
+    "issue_date",
+    "valid_until",
+    "currency",
+    "quote_discount_type",
+    "quote_discount_value",
+    "quote_discount_reason",
+    "comments",
+    "terms",
+    "pdf_template",
+    "subtotal_ht",
+    "total_discount",
+    "total_vat",
+    "total_ttc",
+    "status",
+    "sent_at",
+    "decided_at",
+    "decision_note",
+    "converted_invoice_id",
+)
+
+
+class SqlAlchemyQuoteRepository(QuoteRepository):
+    """Shaped like the invoice repository, minus the gapless guard.
+
+    `reference` and `sequence_global` are absent from the updatable columns for
+    the same reason they are on invoices: a document's number is assigned once,
+    and an update path that can rewrite it is a way to mint a duplicate.
+    """
+
+    def __init__(self, session: Session) -> None:
+        self._s = session
+
+    def _org_filter(self):
+        return QuoteRow.organization_id == current_organization_id()
+
+    def _get_row(self, quote_id: UUID) -> QuoteRow | None:
+        return self._s.execute(
+            select(QuoteRow).where(QuoteRow.id == quote_id, self._org_filter())
+        ).scalar_one_or_none()
+
+    def add(self, quote: Quote) -> Quote:
+        guard_tenant(quote.organization_id)
+        row = quote_to_row(quote)
+        self._s.add(row)
+        self._s.flush()
+        return row_to_quote(row)
+
+    def get(self, quote_id: UUID) -> Quote | None:
+        row = self._get_row(quote_id)
+        return row_to_quote(row) if row else None
+
+    def list(
+        self,
+        company_id: UUID | None = None,
+        status: QuoteStatus | None = None,
+        client_id: UUID | None = None,
+    ) -> list[Quote]:
+        stmt = (
+            select(QuoteRow)
+            .where(self._org_filter())
+            .order_by(QuoteRow.sequence_global.desc())
+        )
+        if company_id is not None:
+            stmt = stmt.where(QuoteRow.company_id == company_id)
+        if status is not None:
+            stmt = stmt.where(QuoteRow.status == status.value)
+        if client_id is not None:
+            stmt = stmt.where(QuoteRow.client_id == client_id)
+        return [row_to_quote(row) for row in self._s.execute(stmt).scalars()]
+
+    def search(self, term: str, limit: int = 10) -> list[Quote]:
+        stmt = (
+            select(QuoteRow)
+            .where(
+                self._org_filter(),
+                QuoteRow.reference.ilike(_contains(term), escape=_LIKE_ESCAPE),
+            )
+            .order_by(QuoteRow.sequence_global.desc())
+            .limit(limit)
+        )
+        return [row_to_quote(row) for row in self._s.execute(stmt).scalars()]
+
+    def update(self, quote: Quote) -> Quote:
+        guard_tenant(quote.organization_id)
+        row = self._get_row(quote.id)
+        if row is None:
+            raise LookupError(f"Quote {quote.id} not found in current organization")
+        fresh = quote_to_row(quote)
+        for column in _QUOTE_SCALAR_COLUMNS:
+            setattr(row, column, getattr(fresh, column))
+        row.lines = fresh.lines
+        self._s.flush()
+        return row_to_quote(row)
+
+    def delete(self, quote_id: UUID) -> None:
+        row = self._get_row(quote_id)
+        if row is None:
+            raise LookupError(f"Quote {quote_id} not found in current organization")
+        if row.converted_invoice_id is not None:
+            raise ValueError("Refusing to delete a quote that became an invoice")
         self._s.delete(row)
         self._s.flush()
 

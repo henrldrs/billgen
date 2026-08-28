@@ -74,3 +74,17 @@ def format_credit_note_reference(
     if not (1000 <= year <= 9999):
         raise ValueError(f"year must be 4 digits, got {year}")
     return f"CN-{prefix}{year}/{seq_global:04d}"
+
+
+def format_quote_reference(*, prefix: str, year: int, seq_global: int) -> str:
+    """Quote reference format: Q-{prefix}{YYYY}/{NNNN}.
+
+    Visibly not an invoice number. A customer holding both should never have to
+    work out which document they are looking at, and neither should the person
+    reading it back over the phone.
+    """
+    if seq_global < 1:
+        raise ValueError(f"seq_global must be >= 1, got {seq_global}")
+    if not (1000 <= year <= 9999):
+        raise ValueError(f"year must be 4 digits, got {year}")
+    return f"Q-{prefix}{year}/{seq_global:04d}"

@@ -39,7 +39,7 @@ async def test_export_shape_and_counts(client):
     _, payload = await build_source_org(client)
 
     assert payload["format"] == "billgen-backup"
-    assert payload["schema_version"] == 1
+    assert payload["schema_version"] == 2
     assert payload["organization"]["name"] == "Source Org"
     assert len(payload["companies"]) == 1
     assert len(payload["clients"]) == 1

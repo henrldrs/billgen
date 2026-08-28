@@ -11,8 +11,15 @@ from typing import Any, TypeVar
 
 from pydantic import BaseModel
 
-from core.models import CreditNote, CreditNoteLine, Invoice, InvoiceLine
-from db.models import CreditNoteLineRow, CreditNoteRow, InvoiceLineRow, InvoiceRow
+from core.models import CreditNote, CreditNoteLine, Invoice, InvoiceLine, Quote
+from db.models import (
+    CreditNoteLineRow,
+    CreditNoteRow,
+    InvoiceLineRow,
+    InvoiceRow,
+    QuoteLineRow,
+    QuoteRow,
+)
 
 M = TypeVar("M", bound=BaseModel)
 
@@ -212,5 +219,103 @@ def row_to_credit_note(row: CreditNoteRow) -> CreditNote:
             "subtotal_ht": row.subtotal_ht,
             "total_vat": row.total_vat,
             "total_ttc": row.total_ttc,
+        }
+    )
+
+
+def quote_to_row(quote: Quote) -> QuoteRow:
+    return QuoteRow(
+        id=quote.id,
+        created_at=quote.created_at,
+        updated_at=quote.updated_at,
+        organization_id=quote.organization_id,
+        company_id=quote.company_id,
+        client_id=quote.client_id,
+        reference=quote.reference,
+        sequence_global=quote.sequence_global,
+        issue_date=quote.issue_date,
+        valid_until=quote.valid_until,
+        currency=quote.currency.value,
+        comments=quote.comments,
+        terms=quote.terms,
+        pdf_template=quote.pdf_template,
+        subtotal_ht=quote.subtotal_ht,
+        total_discount=quote.total_discount,
+        total_vat=quote.total_vat,
+        total_ttc=quote.total_ttc,
+        status=quote.status.value,
+        sent_at=quote.sent_at,
+        decided_at=quote.decided_at,
+        decision_note=quote.decision_note,
+        converted_invoice_id=quote.converted_invoice_id,
+        **_discount_columns(quote.quote_discount, "quote_discount"),
+        lines=[_quote_line_to_row(quote, line) for line in quote.lines],
+    )
+
+
+def _quote_line_to_row(quote: Quote, line: InvoiceLine) -> QuoteLineRow:
+    return QuoteLineRow(
+        organization_id=quote.organization_id,
+        line_number=line.line_number,
+        description=line.description,
+        quantity=line.quantity,
+        unit_price=line.unit_price,
+        product_id=line.product_id,
+        vat_category=line.vat.category.value,
+        vat_rate=line.vat.rate,
+        vat_legal_mention=line.vat.legal_mention,
+        **_discount_columns(line.discount, "discount"),
+    )
+
+
+def row_to_quote(row: QuoteRow) -> Quote:
+    return Quote.model_validate(
+        {
+            "id": row.id,
+            "created_at": row.created_at,
+            "updated_at": row.updated_at,
+            "organization_id": row.organization_id,
+            "company_id": row.company_id,
+            "client_id": row.client_id,
+            "reference": row.reference,
+            "sequence_global": row.sequence_global,
+            "issue_date": row.issue_date,
+            "valid_until": row.valid_until,
+            "currency": row.currency,
+            "lines": [
+                {
+                    "line_number": line.line_number,
+                    "description": line.description,
+                    "quantity": line.quantity,
+                    "unit_price": line.unit_price,
+                    "product_id": line.product_id,
+                    "vat": {
+                        "category": line.vat_category,
+                        "rate": line.vat_rate,
+                        "legal_mention": line.vat_legal_mention,
+                    },
+                    "discount": _discount_dict(
+                        line.discount_type, line.discount_value, line.discount_reason
+                    ),
+                }
+                for line in row.lines
+            ],
+            "quote_discount": _discount_dict(
+                row.quote_discount_type,
+                row.quote_discount_value,
+                row.quote_discount_reason,
+            ),
+            "comments": row.comments,
+            "terms": row.terms,
+            "pdf_template": row.pdf_template,
+            "subtotal_ht": row.subtotal_ht,
+            "total_discount": row.total_discount,
+            "total_vat": row.total_vat,
+            "total_ttc": row.total_ttc,
+            "status": row.status,
+            "sent_at": row.sent_at,
+            "decided_at": row.decided_at,
+            "decision_note": row.decision_note,
+            "converted_invoice_id": row.converted_invoice_id,
         }
     )

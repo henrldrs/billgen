@@ -6,9 +6,11 @@ from .invoice_repo import InvoiceRepository
 from .organization_repo import OrganizationRepository
 from .payment_repo import PaymentRepository
 from .product_repo import ProductRepository
+from .quote_repo import QuoteRepository
 from .sequence_repo import (
     CREDIT_NOTE_SERIES,
     INVOICE_SERIES,
+    QUOTE_SERIES,
     SequenceRepository,
     monthly_bucket,
 )
@@ -18,6 +20,7 @@ from .user_repo import UserRepository
 __all__ = [
     "CREDIT_NOTE_SERIES",
     "INVOICE_SERIES",
+    "QUOTE_SERIES",
     "AuditLogRepository",
     "ClientRepository",
     "CompanyRepository",
@@ -26,6 +29,7 @@ __all__ = [
     "OrganizationRepository",
     "PaymentRepository",
     "ProductRepository",
+    "QuoteRepository",
     "SequenceRepository",
     "UnitOfWork",
     "UserRepository",

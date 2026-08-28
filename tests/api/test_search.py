@@ -144,7 +144,13 @@ async def test_another_organizations_records_are_invisible(client):
     body = await search(client, intruder, issued["reference"])
 
     assert body["hits"] == []
-    assert body["counts"] == {"invoice": 0, "credit_note": 0, "client": 0, "product": 0}
+    assert body["counts"] == {
+        "invoice": 0,
+        "quote": 0,
+        "credit_note": 0,
+        "client": 0,
+        "product": 0,
+    }
 
 
 async def test_like_metacharacters_are_data_not_wildcards(client):

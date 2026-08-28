@@ -7,6 +7,7 @@ from .sqlalchemy_repositories import (
     SqlAlchemyOrganizationRepository,
     SqlAlchemyPaymentRepository,
     SqlAlchemyProductRepository,
+    SqlAlchemyQuoteRepository,
     SqlAlchemySequenceRepository,
     SqlAlchemyUserRepository,
 )
@@ -21,6 +22,7 @@ __all__ = [
     "SqlAlchemyOrganizationRepository",
     "SqlAlchemyPaymentRepository",
     "SqlAlchemyProductRepository",
+    "SqlAlchemyQuoteRepository",
     "SqlAlchemySequenceRepository",
     "SqlAlchemyUnitOfWork",
     "SqlAlchemyUserRepository",

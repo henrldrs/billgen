@@ -24,6 +24,7 @@ from .payment_service import PaymentService
 from .pdf_service import PdfService
 from .peppol_service import PeppolService
 from .product_service import ProductService
+from .quote_service import QuoteService
 from .reporting_service import KpiSummary, ReportingService, effective_status
 from .search_service import HitKind, SearchHit, SearchResults, SearchService
 
@@ -51,6 +52,7 @@ __all__ = [
     "PeppolService",
     "PeppolValidationError",
     "ProductService",
+    "QuoteService",
     "ReportingService",
     "RestoreReport",
     "SearchHit",

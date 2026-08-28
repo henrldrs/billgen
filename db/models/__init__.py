@@ -8,6 +8,7 @@ from .invoice import InvoiceLineRow, InvoiceRow
 from .organization import OrganizationRow
 from .payment import PaymentRow
 from .product import ProductRow
+from .quote import QuoteLineRow, QuoteRow
 from .sequence import SequenceRow
 from .subscription import SubscriptionRow
 from .user import OrgMembershipRow, UserRow
@@ -25,6 +26,8 @@ __all__ = [
     "OrganizationRow",
     "PaymentRow",
     "ProductRow",
+    "QuoteLineRow",
+    "QuoteRow",
     "RefreshTokenRow",
     "SequenceRow",
     "SubscriptionRow",

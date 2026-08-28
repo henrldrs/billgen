@@ -13,6 +13,7 @@ from .sqlalchemy_repositories import (
     SqlAlchemyOrganizationRepository,
     SqlAlchemyPaymentRepository,
     SqlAlchemyProductRepository,
+    SqlAlchemyQuoteRepository,
     SqlAlchemySequenceRepository,
     SqlAlchemyUserRepository,
 )
@@ -32,6 +33,7 @@ class SqlAlchemyUnitOfWork(UnitOfWork):
         self.clients = SqlAlchemyClientRepository(s)
         self.products = SqlAlchemyProductRepository(s)
         self.invoices = SqlAlchemyInvoiceRepository(s)
+        self.quotes = SqlAlchemyQuoteRepository(s)
         self.credit_notes = SqlAlchemyCreditNoteRepository(s)
         self.payments = SqlAlchemyPaymentRepository(s)
         self.sequences = SqlAlchemySequenceRepository(s)

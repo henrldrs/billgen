@@ -11,6 +11,7 @@ from .invoice_repo import InvoiceRepository
 from .organization_repo import OrganizationRepository
 from .payment_repo import PaymentRepository
 from .product_repo import ProductRepository
+from .quote_repo import QuoteRepository
 from .sequence_repo import SequenceRepository
 from .user_repo import UserRepository
 
@@ -25,6 +26,7 @@ class UnitOfWork(ABC):
     clients: ClientRepository
     products: ProductRepository
     invoices: InvoiceRepository
+    quotes: QuoteRepository
     credit_notes: CreditNoteRepository
     payments: PaymentRepository
     sequences: SequenceRepository
