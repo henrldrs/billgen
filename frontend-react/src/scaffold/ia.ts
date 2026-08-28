@@ -23,10 +23,18 @@
  *              POST id/void,POST preview,GET id/html,GET id/pdf,
  *              GET id/peppol.xml]
  *    /credit-notes[POST,GET,GET id,GET id/html,GET id/pdf]
- *    /payments[POST,GET?invoice_id]  /reports/{kpi,revenue,vat?period}
- *    /vat-rates  /pdf-templates
+ *    /quotes[POST,GET?company_id&status&client_id,GET id,DELETE id,
+ *            POST id/{send,accept,reject,expire,convert}]
+ *    /payments[POST,GET?invoice_id]
+ *    /reports/{kpi,revenue,vat?period,invoices,payments}
+ *    /vat-rates  /pdf-templates  /vat-treatment?company_id&client_id
+ *    /alerts?company_id  /search?q
  *    /activity?limit&target_type&target_id  /backup/{export,restore}
  *    /imports/legacy/{preview,commit}  /healthz  /readyz
+ *
+ *  Re-checked against api/routers/ on 2026-08-28. Reading this list is the only
+ *  thing that stops a node from claiming a backend gap that was closed weeks
+ *  ago — which has already happened twice.
  */
 
 export type BackendStatus = "wired" | "partial" | "none";
@@ -150,8 +158,8 @@ export const IA: IaSection[] = [
         label: "Alerts & tasks",
         status: "none",
         layer: "L2",
-        missing: ["GET /alerts"],
-        note: "Needs a server-side rules engine (overdue, incomplete clients, plan limits). Cannot be faked from /reports/kpi.",
+        endpoints: ["GET /alerts?company_id&today&limit"],
+        note: "The rules engine landed 2026-08-28: overdue invoices (a partial payment leaves only the remainder), forgotten drafts, business clients with no VAT number, and the company's own identifiers — each a code plus a context dict, severity-ranked, with counts covering everything that fired while the list is capped. `status` stays `none` because no screen consumes it yet: this is a screen to build, not a backend to write.",
       },
     ],
   },
@@ -313,12 +321,16 @@ export const IA: IaSection[] = [
         path: "sales/quotes",
         status: "none",
         layer: "L2",
-        missing: [
-          "Quote model + numbering series",
-          "CRUD /quotes",
-          "POST /quotes/{id}/convert-to-invoice",
-          "PDF template",
+        endpoints: [
+          "POST /quotes",
+          "GET /quotes?company_id&status&client_id",
+          "GET /quotes/{id}",
+          "POST /quotes/{id}/{send,accept,reject,expire}",
+          "POST /quotes/{id}/convert",
+          "DELETE /quotes/{id}",
         ],
+        missing: ["PDF template"],
+        note: "Backend landed 2026-08-28. Its own numbering series (Q-{prefix}{YYYY}/{NNNN}, sequence scope 'quote'), never the invoice one — a refused offer must not leave a hole in a gapless series. Converting produces a DRAFT invoice: the gapless number is still consumed by POST /invoices/{id}/issue and nowhere else. Expiry is derived, so the response carries `effective_status` beside `status`. What is left is the screen, plus a quote PDF template — the latter is wording, which is a decision rather than a coding gap.",
       },
       {
         key: "sales.proforma",
@@ -380,7 +392,6 @@ export const IA: IaSection[] = [
         ],
         missing: [
           "GET /clients/{id}/stats",
-          "Quote model + CRUD /quotes",
           "Document model + CRUD /documents",
           "ClientGroup model + CRUD /client-groups",
           "GET /reports/clients",
@@ -554,9 +565,13 @@ export const IA: IaSection[] = [
         path: "reports/payments",
         status: "wired",
         layer: "L2",
-        endpoints: ["GET /payments?company_id&paid_from&paid_to", "GET /invoices", "GET /clients"],
-        missing: ["GET /reports/payments (totals per period, per method)"],
-        note: "Wired 2026-08-27: PaymentsReportPanel lists payments across invoices with a server-side date window. Deliberately prints NO total — there is no /reports/payments to print one, and summing the rows here would be money arithmetic in a React component, wrong the moment the window holds two currencies. The invoice list and client list are read as a LOOKUP (a payment carries only invoice_id), never as a filter.",
+        endpoints: [
+          "GET /payments?company_id&paid_from&paid_to",
+          "GET /reports/payments?company_id&period&client_id",
+          "GET /invoices",
+          "GET /clients",
+        ],
+        note: "Wired 2026-08-27: PaymentsReportPanel lists payments across invoices with a server-side date window, and prints no total because none existed — summing the rows here would be money arithmetic in a React component, wrong the moment the window holds two currencies. GET /reports/payments landed 2026-08-28 and prints one: total, per method, per month, largest, first and last payment date, other currencies counted rather than summed. The panel does not read it yet. Its period is the day the money ARRIVED, so it and /reports/invoices legitimately disagree across a quarter boundary. The invoice list and client list are read as a LOOKUP (a payment carries only invoice_id), never as a filter.",
       },
       {
         key: "reports.outstanding",
@@ -887,8 +902,8 @@ export const IA: IaSection[] = [
         path: "explore/search",
         status: "none",
         layer: "L6",
-        missing: ["GET /search?q (cross-entity)"],
-        note: "The ⌘K palette navigates between pages; it cannot find an invoice by number or a client by VAT.",
+        endpoints: ["GET /search?q&limit"],
+        note: "The endpoint landed 2026-08-28: invoices, quotes and credit notes by reference, clients by name/email/VAT, products by name/category — capped per kind, with `truncated` when a kind hit its cap. The ⌘K palette still only navigates between pages; wiring it to this is the remaining work, and it is frontend work.",
       },
       {
         key: "explore.filters",
