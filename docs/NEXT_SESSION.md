@@ -10,7 +10,21 @@ the measured picture is
 stale.** Regenerating it is on the list below.
 
 **State:** Python **378** passed (was 298), frontend 157 passed, ruff clean,
-typecheck clean. Eight commits, **none of them pushed** — see §1.
+typecheck clean. Nine commits, **none of them pushed** — see §1.
+
+Every new endpoint was also exercised live against the desktop dev pair on
+:8010 (`python scripts/dev_desktop_api.py`), not only under pytest — alerts on
+the seeded data, a quote created, sent, accepted and converted to a draft
+invoice. That quote is still in `var/billgen.desktopdev.db` if you want
+something to look at; that database is disposable and rebuilds itself.
+
+**Your own `var/billgen.dev.db` needs a migration.** The desktop dev DB uses
+`create_all` and picked the quote tables up on its own; the day-to-day one does
+not:
+
+```bash
+python -m alembic upgrade head
+```
 
 ---
 
