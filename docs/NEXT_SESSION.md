@@ -1,163 +1,176 @@
 # Next session — TODO
 
-Rewritten 2026-08-27 at the end of the nav-curation + screens session; the
-previous version was consumed. Delete it once this one is consumed too. It is a
-handover note, not a permanent document. The permanent map is
-[HANDOFF.md](../HANDOFF.md), the board is [ROADMAP_IA.md](ROADMAP_IA.md), and the
-measured picture is
+Rewritten 2026-08-28 at the end of an unattended backend session; the previous
+version was consumed. Delete it once this one is consumed too. It is a handover
+note, not a permanent document. The permanent map is
+[HANDOFF.md](../HANDOFF.md), the board is [ROADMAP_IA.md](ROADMAP_IA.md), and
+the measured picture is
 [ARCHITECTURE/system-architecture.html](ARCHITECTURE/system-architecture.html)
-(v0.10, regenerated against this session's HEAD).
+— **v0.10, generated against the previous session's HEAD and now one session
+stale.** Regenerating it is on the list below.
 
-**State:** Python 298 passed, frontend **157** passed, ruff clean, four
-workspaces typecheck. Coverage 20% → **26%** with no backend work.
+**State:** Python **378** passed (was 298), frontend 157 passed, ruff clean,
+typecheck clean. Eight commits, **none of them pushed** — see §1.
 
 ---
 
 ## 0. The one-line summary
 
-**The frontend backlog is empty, and that is the news.** Every screen that was
-waiting on an endpoint which already existed has been built. What is left on
-this board is not code you can write in an afternoon — it is a repo with no
-remote, a company that does not exist yet, and an Access Point nobody has
-contacted.
+**The backend backlog is now the part that needs other people.** Everything on
+the previous list that could be written without an SMTP server, an Access Point
+contract or a payment provider has been written: roles are enforced, the VAT
+rule is wired, search, alerts and the payments total exist, and quotes have
+their own numbering series. What is left is B1 (email), transport, checkout and
+blob storage — and a Postgres bug that would have failed the first CI run.
 
 ---
 
-## 1. FIRST — push the repo (`BGEN-OPS-01`) · blocked on Henri
+## 1. FIRST — push (`BGEN-OPS-01`) · one command, needs Henri
 
-Unchanged, still the only total-loss risk, and now the only thing on this page
-that gates everything else. `git remote -v` is empty; five sessions of work sit
-on one disk.
+The remote now exists (`origin` → `github.com/henrldrs/billgen`, and `main` was
+in sync with it at the start of this session — the previous note's "the repo has
+no remote" is out of date). **Eight commits are sitting unpushed on `main`.**
 
-GitHub account **`henrldrs`**. `gh` is not installed here, so a session cannot
-create the repo. Either:
+They were not pushed because pushing runs CI and publishes work Henri has not
+read, and this session ran while he was asleep. It is one command:
 
-- **A.** Create an empty **private** repo `billgen` (no README, no gitignore, no
-  licence) at github.com/new and paste the URL → next session adds the remote,
-  pushes `main` plus the phase tags, and watches CI.
-- **B.** `winget install --id GitHub.cli`, then `gh auth login` (opens a browser,
-  so Henri must run it) → next session does all of it.
+```bash
+git push origin main
+```
 
 **Expect the first CI run to be an experiment.** `.github/workflows/ci.yml` has
-never executed. Its Postgres leg is the first real test of the gapless-numbering
-row lock and of `quota_guard`'s lock — both no-ops on SQLite. A red first run is
-information, not a regression.
+still never executed. Its Postgres leg is the first real test of the
+gapless-numbering row lock and of `quota_guard`'s lock — both no-ops on SQLite.
+A red first run is information, not a regression.
+
+One thing that *would* have made it red is now fixed — see §3.
 
 ---
 
-## 2. The three clocks (from the council, 2026-08-27)
+## 2. What shipped 2026-08-28 (do not rebuild it)
 
-Full transcript: `docs/council/council-transcript-20260827-110414.md` — **local
-only**, `docs/council/` is gitignored as working notes, so it will not survive a
-clone. Five advisors, anonymised peer review, chairman synthesis. What survived
-review:
+Eight commits, each with its reasoning in the message. In order:
 
-1. **Push the repo.** Unanimous, unprompted, as the first sentence of all five.
-2. **Start the two external clocks the same week.** (a) Register the
-   eenmanszaak via an ondernemingsloket (~€100, about a day, VAT number
-   follows). (b) Email two or three Access Point **resellers** for pricing and
-   onboarding requirements. Both are other people's queues; starting them costs
-   an afternoon and buys weeks.
-3. **When the AP contract lands, send one real invoice to a real recipient.**
-4. **Then** wire the Merchant of Record (Paddle / Lemon Squeezy — entity, EU VAT
-   and checkout in one move). By then the AP's per-document cost tells you your
-   price floor, which is information the product does not have.
-
-**The clash the peer review dissolved:** "validate first" and "incorporate
-first" are the same path. An Access Point needs a company number, so the
-validation the majority demanded cannot happen before the entity the executor
-demanded. Incorporating here is not a monetization step; it is test equipment.
-
-**One correction to the framing, from Henri and now in the docs.** The demo's
-PDF → Peppol path was already exercised with a real user. The gap is
-**transmission from inside the app** — sending over the network the way KBC's
-billing app does, rather than handing a file to Doccle. And you do not need to
-*be* an Access Point: reselling one turns an existential interop risk into
-procurement.
-
-**What the council flagged and nobody here has answered:** runway. Non-employed,
-months in, zero revenue. How many months can this be funded? That, not the
-mandate, sets the real deadline — and it decides whether the weeks-long "blocked
-on a four-minute task" state is avoidance or burnout, which have opposite
-treatments.
+1. **Roles stop being decoration** (`api/authz/`). A `viewer` could void an
+   invoice; every write endpoint was open to every member. Endpoints now declare
+   a *permission*, never a role name — the sibling of `api/entitlements` and
+   shaped like it. 403 and 402 stay apart, and the permission check is declared
+   **before** the quota check so a viewer on a spent allowance is told the true
+   thing. `/users/me` carries the permission list so the UI can hide the button;
+   hiding is UX, the server refuses regardless.
+2. **`GET /vat-treatment`.** `core/rules/vat.pick_category` had existed since the
+   domain was written and no route called it, so every line shipped `category:
+   "S"`. Intra-EU B2B (reverse charge, Article 51 §2 mention) and export outside
+   the EU are now answerable. Advisory, not enforced — the caller knows things
+   the data does not. Nothing downstream needed changing: the PDF context already
+   derives mentions from line categories and the UBL builder already emits
+   `TaxExemptionReason`.
+3. **`GET /search?q`.** Invoices, quotes and credit notes by reference, clients
+   by name/email/VAT, products by name/category. LIKE metacharacters are escaped
+   — unescaped, a typed `%` returns the whole database.
+4. **`GET /reports/payments`.** The total the payments screen deliberately
+   refused to print. Its period is the day the money *arrived*, so it and
+   `/reports/invoices` legitimately disagree across a quarter boundary.
+5. **`GET /alerts`.** Four rules on the server: overdue (partial payments leave
+   only the remainder), forgotten drafts, business clients with no VAT number,
+   and the company's own identifiers. Codes and context dicts, no prose — the
+   sentence is the frontend's. Stores nothing, schedules nothing.
+6. **The Postgres constraint fix** — see §3.
+7. **Quotes.** Own series (`Q-{prefix}{YYYY}/{NNNN}`, sequence scope `quote`),
+   full state machine, derived expiry, and `convert` producing a **DRAFT**
+   invoice so the gapless number is still consumed only by `issue()`. Wired into
+   the authz matrix, the backup (schema_version 2, v1 files still restore) and
+   search. Migration `165748c8c55f`; `alembic revision --autogenerate` reports no
+   drift.
+8. **The gap ledger re-read.** Four `ia.ts` nodes claimed backend gaps this
+   session closed — the exact failure mode the last note ended on.
 
 ---
 
-## 3. What shipped 2026-08-27 (do not rebuild it)
+## 3. The bug that was about to eat the first CI run
 
-- **Nav curation, the mechanism** — `nav?: boolean` + `mergedInto?: string` on
-  `IaNode`, `isNavDestination()` / `navNodes()` beside `routableNodes()`. A
-  hidden node keeps its path, its status and its place in `coverage()`; old URLs
-  redirect. Company 9 nav entries → 1, Clients 7 → 3. The cut for the other ten
-  sections is written into [ROADMAP_IA §11b](ROADMAP_IA.md) as a proposal and
-  built by nobody — **it needs Henri's yes**.
-- **Five screens** — duplicate button, VAT-rate picker (the hardcoded
-  `21/12/6/0` is gone), catalog server filters + Archived as a preset view,
-  payments report, invoices report. All over endpoints and hooks that already
-  existed.
-- **Two dead links** found by checking the running app: "Client 360" and
-  "Invoice detail" were nav entries whose paths carry route parameters, so they
-  navigated to the literal `:clientId`. Same bug in the command palette.
-- **Architecture v0.10** — regenerated, plus a new §17 "Decisions of Record"
-  carrying §11b/§11c/§11d and the Peppol correction.
+`invoices` and `credit_notes` each declare two unique constraints whose first
+column is `organization_id`. The `uq` naming convention keys off the first
+column only, so **both came out with the same name**:
+
+    CONSTRAINT uq_invoices_organization_id UNIQUE (organization_id, company_id, reference),
+    CONSTRAINT uq_invoices_organization_id UNIQUE (organization_id, company_id, sequence_global),
+
+SQLite accepts that. PostgreSQL rejects the statement outright, so `create_all`
+in the CI Postgres leg and the initial migration on the first Postgres
+deployment would both have failed. Renamed in the models and in the initial
+migration, which has only ever been applied to SQLite development databases
+where the names are cosmetic.
+
+**Not verified against a real Postgres** — `docker` is not installed on this
+machine, so the evidence is the compiled DDL, not a green run. That verification
+is what the first CI run buys.
 
 ---
 
 ## 4. Open decisions — cheap now, expensive later
 
-1. **Approve or redraw the §11b nav cut for the remaining ten sections.** One
-   reading, then a session of route work. Proposal is ~100 entries → ~45.
-2. **Tier naming final?** `free / starter / business / business_pro`. A rename
-   is a server change plus four translation keys until a real subscription row
-   references the string.
-3. **The Business Pro shell — decided in principle, unbuilt.** The top tier's
-   differentiator is an administration surface for the billing owner, encoded as
-   `team_administration: True` and `vat_report: "consolidated"`. Nothing renders
-   either. Needs design: seats, per-entity usage, consolidated reporting,
-   member management.
+Carried over, minus the two this session settled (roles are now enforced; the
+VAT category has a route). Still needing Henri:
+
+1. **Approve or redraw the §11b nav cut for the remaining ten sections.**
+   One reading, then a session of route work. Proposal ~100 entries → ~45.
+2. **Tier naming final?** `free / starter / business / business_pro`.
+3. **The Business Pro shell — decided in principle, unbuilt.** Needs design:
+   seats, per-entity usage, consolidated reporting, member management.
 4. **Seats are declared and unenforced.** `Meter.SEATS` is metered and visible;
-   nothing consumes it, and there can be no invite flow without **B1** (email).
-5. **Roles are modelled and unenforced.** `Role = owner | admin | member |
-   viewer` rides in the JWT and is read in exactly one place (`/users/me`, to
-   display it). **A `viewer` can void an invoice today.**
-6. **Graded features are presentation only — decide.** `vat_report`,
+   nothing consumes it, and there can be no invite flow without **B1**.
+   *Related:* role enforcement now exists, but there is still no way to create a
+   second user — so every organization is one owner, and the matrix is correct
+   but unexercised in production.
+5. **Graded features are presentation only — still undecided.** `vat_report`,
    `dashboard`, `search`, `pdf_customization`, `import_legacy`,
-   `accountant_export` are read by the UI to pick a variant and refused by **no
-   endpoint**. Anyone calling `GET /reports/vat` directly gets the whole report
-   on Free. Either add a graded server check or accept it; the product is
-   silently choosing the second.
-7. **The VAT category is hardcoded.** `core/rules/vat.py` has `pick_category()`
-   — buyer country, buyer VAT number, seller country — and **no route calls
-   it**. Every invoice line ships `category: "S"`. Reverse-charge (intra-EU B2B)
-   and export lines cannot be composed at all. This is the first real gap in the
-   Belgian VAT story now that the rate picker is honest.
+   `accountant_export` are read by the UI and refused by **no endpoint**. Anyone
+   calling `GET /reports/vat` or the new `GET /search` directly gets the full
+   thing on Free. `GET /search` was left ungated on purpose rather than by
+   oversight; the note is in `api/routers/search.py`.
+6. **Are quotes metered?** Shipped unmetered. `Meter.INVOICES` counts invoices,
+   and billing someone for offers they did not win is a pricing decision, not a
+   default. If quotes should have an allowance it is one line in the matrix plus
+   a dependency on the create route.
+7. **A quote PDF template.** The only entry still in `sales.quotes.missing`.
+   It is wording (what a Belgian offer must say, in fr/nl/en), not code.
 8. **Downgrade / lapsed-subscription contract.** Code behaviour is settled and
-   tested (over-limit keeps every record, refuses only new creation). The legal
-   treatment — retention after cancellation — belongs in the DPA before a
-   cancellation flow is built.
+   tested. The legal treatment — retention after cancellation — belongs in the
+   DPA before a cancellation flow is built.
 
 ---
 
-## 5. Backend still open, in rough value order
+## 5. Backend still open — everything left needs someone else
 
-- **B1 — email.** Highest fan-out: password reset, verification, send invoice,
-  payment reminders (BE three-step escalation), team invites, support inbox.
-  Unblocks §4.4.
-- **Peppol transport.** See §2 — a procurement clock, not a coding task.
+- **B1 — email.** Highest fan-out, and now the single biggest unblock: password
+  reset, verification, sending an invoice, sending a *quote*, payment reminders,
+  team invites, support inbox.
+- **Peppol transport.** A procurement clock, not a coding task. See the previous
+  note's §2: contact Access Point resellers, and you do not need to *be* one.
 - **Checkout / Merchant-of-Record.** The provider is an adapter that writes
   `SubscriptionRow`; `resolve_tier()` already prefers it over
-  `Organization.plan_tier`. Until it exists, six of the eight Billing areas have
-  nothing to show.
+  `Organization.plan_tier`.
 - **B2 — blob storage.** All 7 Documents areas, company branding, company
-  documents. `Company.logo_key` is a dangling reference right now.
-- `GET /alerts` — server-side rules engine (overdue, clients missing VAT).
-- `GET /search?q` — the palette navigates pages; it cannot find an invoice by
-  number, which is what people reach for it to do.
-- `GET /reports/payments` — the payments screen deliberately prints no total
-  because this does not exist.
-- **Quotes** — own numbering series, must not touch the invoice sequence.
-- Recurring invoices — Starter+ in the matrix, with no model, scheduler or job
-  runner behind it.
+  documents. `Company.logo_key` is still a dangling reference.
+- **Recurring invoices** — Starter+ in the matrix, with no model, scheduler or
+  job runner behind it. The first thing here that needs a *runner*, not an
+  endpoint.
+- **Pro-forma invoices** — same shape as quotes and now much cheaper: the
+  precedent for a second series that must not touch the invoice sequence is
+  written, tested, and one migration old.
+
+## 5b. Frontend work the backend just unblocked
+
+Not backend, but this is where the value now is — four screens over endpoints
+that exist:
+
+- The alerts panel on the dashboard (`GET /alerts`).
+- The ⌘K palette wired to `GET /search` (it still only navigates pages).
+- A total on the payments report (`GET /reports/payments`).
+- The whole quotes section (`sales.quotes`), which is now backend-complete.
+- And the composer defaulting its VAT category from `GET /vat-treatment`,
+  which is the one that changes what the product is legally capable of.
 
 ---
 
@@ -166,16 +179,22 @@ treatments.
 - **`quota_guard`'s concurrency guarantee is unproven** until CI runs against
   Postgres (§1). On SQLite `with_for_update()` is a no-op.
 - **The dev pair cannot produce a 402.** `scripts/dev_desktop_api.py` runs with
-  `DESKTOP_MODE=true` and `_exempt()` skips every entitlement check — the same
-  flag that gives credential-less login. The upgrade dialog has never been seen
-  in a browser. The fix is a second dev pair in non-desktop mode with an
-  ordinary signup, not a change to `_exempt`.
+  `DESKTOP_MODE=true` and `_exempt()` skips every entitlement check. The fix is
+  a second dev pair in non-desktop mode with an ordinary signup, not a change to
+  `_exempt`. **The same flag does *not* hide the new 403s** — `api/authz` has no
+  desktop exemption, because the desktop build bootstraps its single user as
+  `owner`, which holds every permission.
+- **`QuoteService.convert` spans two transactions.** The draft invoice is
+  written by `InvoiceService`, then the quote is marked converted. If the second
+  fails, the visible outcome is a draft beside a quote still reading `accepted`;
+  the fix is to delete the draft and convert again.
 - **`PdfService(branded=...)` defaults to `True`.** A call site that forgets it
   shows a footer rather than silently giving away the paid feature.
 - **The invoice allowance is consumed at draft creation, not at issue** —
-  deliberate, because issuing is legally load-bearing and must never fail for a
-  commercial reason. A deleted draft frees its slot.
-- **This document's own failure mode.** Four screens closed this session were
-  described here and in the architecture report as blocked on a backend that had
-  already shipped. A gap ledger is only as true as its last reading, and nothing
-  re-reads it automatically.
+  deliberate. `POST /quotes/{id}/convert` creates a draft and is *unmetered*, so
+  a signed offer is never refused for a commercial reason.
+- **The architecture report is one session stale** (v0.10, previous HEAD). It
+  will now under-report the backend by five endpoints and a whole aggregate.
+- **This document's own failure mode.** A gap ledger is only as true as its last
+  reading, and nothing re-reads it automatically. `ia.ts` was re-read on
+  2026-08-28; `docs/ARCHITECTURE/` was not.
