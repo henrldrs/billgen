@@ -20,6 +20,8 @@ Execution
 
 Deep dive
 
+Assurance
+
 System Architecture
 ===================
 
@@ -2556,3 +2558,604 @@ billgen-audit/ appears in the directory table and in no layer, which is
  nothing in it. henrioutai-ui/ sits outside the layers for the opposite
  reason — it is the design system, consumed by every frontend and depending on none of
  them.
+
+Folded in 2026-09-09 from commit fde1edc (written 2026-08-28 against 2a83ccb on the remote branch claude/billgen-audit-framework-dk2325), kept as written at Henri’s request when the branches were consolidated. Two things postdate it and partly answer it: the audit engine in billgen-audit/ (Audit System) is the review-agent framework §18 below proposes, built the same day; and the Template Studio backend (2026-08-28) is the typed, versioned document model §20 asks for — template_snapshot is still unwired (T-09). The §18–§20 numbering below is the block’s own and collides with the current §18–§20 above.
+
+Assurance Layer — the four review agents
+----------------------------------------
+
+How this document stops being a snapshot: four specialist reviewers, one finding schema, one orchestrator that correlates them.
+
+Everything above was measured by hand, once, against commit 2a83ccb. That is a
+ document with a half-life. This section specifies the review system that regenerates it — four
+ agents with named scopes, explicit checklists and an evidence requirement, so that a re-run after any
+ architectural change produces a diff rather than a fresh opinion.
+
+Why four and not three. Legal, accounting and privacy are three professional
+ perspectives on the same product; system architecture is the substrate all three make claims about. Fold
+ architecture into any one of them and it inherits that agent's bias — the legal agent will call
+ a missing index a compliance risk. Keeping it fourth is what lets the orchestrator say “the
+ legal requirement is X, the accounting consequence is Y, and the code path that violates both is
+ Z” as one finding rather than three.
+
+AG-1 · 🇧🇪 Belgian Legal & VAT
+    The one question it owns: Is what this software issues a legally valid Belgian document?
+    Reads: core/rules/ (vat, belgian_legal, identifiers, numbering), core/einvoicing/,
+    core/pdf/templates/, sample output
+    Deliverable: Findings + a mandatory-mentions matrix per document type and language
+
+AG-2 · 🧾 Accounting systems
+    The one question it owns: Would an accountant trust these records and reconcile from
+    them?
+    Reads: core/services/, core/models/, lifecycle transitions, reports, exports, audit log
+    Deliverable: Findings + a lifecycle state diagram with every illegal transition named
+
+AG-3 · 🔐 GDPR / DPO
+    The one question it owns: Is personal data processed lawfully, and does the code match
+    the policy?
+    Reads: db/ schema, api/routers/, logging, third-party calls, the legal corpus, the
+    frontends' network surface
+    Deliverable: Findings + a data map and a records-of-processing draft
+
+AG-4 · 🏗️ System architect
+    The one question it owns: Is it sound, secure, maintainable and recoverable?
+    Reads: The whole tree, Dockerfile, infra/, CI, lockfiles, the ADRs
+    Deliverable: Findings + this document, regenerated
+
+The rule that keeps the legal agent honest
+
+Every finding from AG-1 and AG-3 must carry one of four force values, and an agent that
+ cannot choose must pick the last one:
+
+REQUIRED · A statutory obligation, citable to a named source
+    Consequence if unmet: Blocks release. Cite the article or the FPS Finance page, not a
+    blog.
+
+RECOMMENDED · Professional practice, not law
+    Consequence if unmet: Roadmap item with a rationale.
+
+PRODUCT · A design choice with no external constraint
+    Consequence if unmet: Recorded in §17, argued on merits.
+
+CONFIRM · Plausibly required; the agent is not authoritative
+    Consequence if unmet: Goes to a Belgian accountant or counsel before code is written
+    against it.
+
+This is the failure mode to design against. An unconstrained agent asked “is this
+ compliant?” will return every accounting convention it has ever seen, uniformly labelled as Belgian
+ law, and the roadmap will fill with obligations that do not exist. The force field is cheap; without it
+ the whole assurance layer is worse than no audit, because it is a confident one.
+
+The finding schema — one shape, four producers
+
+Findings are only correlatable if they are one record type. Evidence is a file path and a line, never a
+ paraphrase: a finding that cannot point at code is a question, and questions go in a different list.
+
+finding:
+  id:            LEGAL-014            # AGENT-nnn, stable across re-runs
+  agent:         legal | accounting | gdpr | architecture
+  severity:      critical | high | medium | low
+  force:         REQUIRED | RECOMMENDED | PRODUCT | CONFIRM   # legal + gdpr only
+  category:      vat | numbering | lifecycle | consent | tenancy | resilience | …
+  location:      core/services/invoice_service.py:212         # file:line, or a route
+  claim:         one sentence, falsifiable
+  evidence:      the code or the absence of it — quoted, not described
+  requirement:   what must be true, with its source
+  recommendation: the smallest change that makes it true
+  confidence:    high | medium | low
+  source:        FPS Finance / EN 16931 / GDPR Art. 30 / — (none, for PRODUCT)
+  correlates:    [ACCT-007, ARCH-022]                          # filled by the orchestrator
+  status:        open | accepted | fixed | wont-fix + why
+
+The orchestrator — and what it is actually for
+
+Four agents run independently and then a fifth pass looks for the same location, or the
+ same domain object, appearing in more than one agent's output. That intersection is where systemic
+ problems live. A live example from this repository, which each agent would report as a minor gap and which
+ is not minor once joined:
+
+AG-4 · SEC-11 — membership carries no role; every member is effectively an owner.
+    On its own reads as: Medium. A missing feature.
+
+AG-2 · A viewer can void an issued invoice — a bookkeeping-altering action with no authorisation boundary.
+    On its own reads as: High, but abstract without AG-4.
+
+AG-3 · The audit log records who, never under what authority; access to client personal data is unsegmented within an org.
+    On its own reads as: Medium. A logging nicety.
+
+AG-1 · The fiscal trail must show who altered a legally-binding document; a role-free org cannot evidence internal control.
+    On its own reads as: CONFIRM, alone.
+
+∑ · One finding: the organization has no authorisation model, and three separate obligations depend on one. It is also gated commercially (roles_permissions is Business+, §16), so enforcement and entitlement must ship together or the fix leaks a paid feature to Free.
+    On its own reads as: critical
+
+The report shape — counted, not scored
+
+No 0–100 scores. A “72/100 on VAT” is a number with no denominator
+ and no way to be wrong; it also averages a blocking statutory gap against nine cosmetic ones. This
+ document already carries the honest form — a count over a named checklist — and the assurance
+ layer inherits it. The columns below are read straight from the tables above, so any of them can be
+ audited by re-counting.
+
+🇧🇪 Legal / VAT engine · EN 16931 multi-rate, numbering, mandatory mentions
+    Met: —
+    Partial: —
+    Gap: —
+    Blocking item: No checklist exists yet — AG-1's first deliverable is to write one
+
+🇧🇪 Compliance surface · §05, CMP-01…16
+    Met: 3
+    Partial: 1
+    Gap: 12
+    Blocking item: CMP-13 Peppol transmission
+
+🧾 Accounting · §05 + lifecycle (ADR-0002)
+    Met: —
+    Partial: —
+    Gap: —
+    Blocking item: Immutability and gapless numbering hold; reconciliation and bank matching
+    absent (CMP-14)
+
+🔐 GDPR · CMP-01…05, 09…11
+    Met: 0
+    Partial: 1
+    Gap: 7
+    Blocking item: CMP-10 DPA — blocks the cancellation flow
+
+🏗️ Security · §10, SEC-01…15
+    Met: 6
+    Partial: 2
+    Gap: 7
+    Blocking item: SEC-11 roles · SEC-10 rate limiting
+
+🏗️ Deployment · ADR-0004 implementation status
+    Met: 6
+    Partial: 3
+    Gap: 7
+    Blocking item: BGEN-OPS-01 — no git remote, so CI has never run
+
+📄 Document engine · §20
+    Met: —
+    Partial: —
+    Gap: —
+    Blocking item: Four templates in code; no per-organization customization model
+
+The audit pack — what an agent needs, and what this repo already has
+
+The reviewers analyse the tree directly, so most of the classic “send us your documentation”
+ list is answered by files that already exist. What is genuinely missing is missing from the product,
+ not from the pack.
+
+P-01 · Source, all layers and frontends
+    State: have
+    Where: the repository
+
+P-02 · Environment reference — no secrets
+    State: have
+    Where: .env.example, docs/ENVIRONMENT_REFERENCE.md
+
+P-03 · Architecture of record
+    State: have
+    Where: this document + ADR-0001…0004
+
+P-04 · Schema & migrations
+    State: have
+    Where: db/, Alembic revisions
+
+P-05 · Endpoint surface
+    State: have
+    Where: api/routers/ — 17 routers, 55 endpoints; openapi.json
+
+P-06 · Invoice / credit-note / lifecycle implementation
+    State: have
+    Where: core/services/, ADR-0002
+
+P-07 · Sample documents — PDF and Peppol XML, per language
+    State: generate
+    Where: Producible today; not committed as golden files. AG-1 needs them as artefacts.
+
+P-08 · Tier / pricing structure
+    State: have
+    Where: api/entitlements/matrix.py, §16
+
+P-09 · Third-party service inventory
+    State: derivable
+    Where: Lockfiles + api/integrations/; never written down as a subprocessor list — see
+    §19 Q3
+
+P-10 · Auth architecture
+    State: have
+    Where: api/security/, ADR-0004 context
+
+P-11 · Terms of service · privacy policy · cookie policy
+    State: absent
+    Where: CMP-09, CMP-11 — the product has no legal corpus at all
+
+P-12 · DPA · subprocessor register · records of processing
+    State: absent
+    Where: CMP-05, CMP-10
+
+P-13 · Retention, incident-response and security policies
+    State: absent
+    Where: SEC-12; no incident procedure exists — §19 Q7
+
+P-14 · Company legal identity for the entity selling this
+    State: absent
+    Where: CMP-11. Blocks the public site and the Peppol Access Point contract alike.
+
+Never in the pack. Production secrets, API keys, private certificates, database
+ credentials, or any real customer personal data. An audit that requires live personal data to run is
+ itself a processing activity, and BillGen's data is other businesses' bookkeeping. Fixtures and
+ generated samples only.
+
+The Data-Architect Questions
+----------------------------
+
+Seven questions AG-4 must answer on every run. Answered here against 2a83ccb, so the next run has a baseline to diff.
+
+These are the questions a reviewer asks before looking at a single line of business logic.
+ Five are the standard set; two — detection and recovery — are added because a system nobody
+ watches has no operational state, only a last-known one.
+
+Q1 — What is the deployment structure, and who hosts each part?
+
+Answer: designed in full, running nowhere. ADR-0004 fixes the topology; the VPS, the
+ DNS and the database do not exist yet, and neither image has ever been built.
+
+Reverse proxy · Caddy — TLS, auto-renew, serves the SPA bundle
+    Host (planned): VPS
+    State: config written, never run
+
+API · uvicorn + FastAPI under /api/*, same origin
+    Host (planned): VPS, Docker Compose
+    State: Dockerfile unbuilt
+
+SPA bundle · frontend-saas/, static
+    Host (planned): served by Caddy
+    State: builds locally
+
+Database · Postgres — managed, off-box, PITR
+    Host (planned): provider TBD
+    State: not provisioned · open cost decision in ADR-0004
+
+Redis · Rate-limit window — not cache, not queue
+    Host (planned): VPS
+    State: limiter still in process memory
+
+Job runner · Recurring invoices, reminders
+    Host (planned): —
+    State: no component exists
+
+Blob storage · Documents, attachments (B2)
+    Host (planned): —
+    State: no component exists
+
+Email transport · Send, reminders, password reset (B1)
+    Host (planned): Postmark anticipated
+    State: no component exists
+
+Desktop · Tauri shell, local SQLite in %APPDATA%
+    Host (planned): the user's machine
+    State: unsigned installer
+
+CI/CD · GitHub Actions, tag-triggered, GHCR, SSH deploy
+    Host (planned): GitHub
+    State: BGEN-OPS-01 — no remote, never executed
+
+One task gates the entire deployment layer. Every item above routes through CI, and
+ CI cannot run without a push target. Until the repo has a remote, “the deployment is designed”
+ and “the deployment is unverified” are the same sentence — and every “written but
+ not verified” row in ADR-0004 stays that way.
+
+Q2 — How is authentication handled, and how is my data kept from you?
+
+Answer: self-rolled JWT with argon2, deliberately, and the isolation is the strongest thing in
+ the codebase. Signup, login, refresh with single-use rotation and logout all exist
+ (api/security/); refresh tokens are stored and revocable as rows; passwords are argon2-hashed;
+ a boot guard refuses to start hosted on the development JWT secret.
+
+Managed identity (Clerk, Auth0, Entra) was rejected in ADR-0004 and the choice stands, but it is not
+ free: everything a provider would have handed over is now unbuilt work — password
+ reset, email verification, MFA, session enumeration, brute-force lockout. A hosted product where a
+ forgotten password is a permanent lockout is not shippable, which is why B1 email is a dependency of the
+ deploy stage rather than a later nicety.
+
+On the second half of the question — can I see someone else's data — the answer
+ is the four-layer defence recorded as SEC-01: a ContextVar carries the org for the request,
+ guard_tenant enforces it, every business table carries organization_id, and the
+ repository layer scopes queries rather than trusting callers. The naive failure the reviewer looks for
+ — GET /invoices/{id} loading by primary key and never comparing the org — does not
+ occur here, and the tests assert it.
+
+Where isolation stops. It is between organizations, not within one.
+ Every member of an org is effectively an owner (SEC-11): a viewer can void an issued invoice and read
+ every client record. That is the correlated critical finding in §18, and it
+ is the honest answer to “only I can see my data” — true of tenants, not yet true of
+ colleagues.
+
+Q3 — What does this depend on, and what happens when a version goes end-of-life?
+
+Answer: pinned and frozen, but nothing scans them and no one owns the upgrade clock.
+ uv.lock holds 77 Python packages and CI installs frozen; npm audit and
+ pip-audit are wired as advisory, deliberately — a gate hands a third party a veto
+ over hotfix deploys. But CI has never run (Q1), so in practice SEC-14 is a gap: no scan has ever executed.
+
+python ≥3.11 · Runtime
+    Lifecycle exposure: Security support to late 2027; 3.11 is not the floor forever
+    Risk: low
+
+FastAPI · Pydantic 2 · uvicorn · HTTP boundary
+    Lifecycle exposure: Fast-moving minors; no LTS. Pinned, upgraded by choice.
+    Risk: low
+
+SQLAlchemy 2.x · Alembic · Persistence
+    Lifecycle exposure: A 3.x would be a real migration — but core/ never imports it, so the
+    blast radius is db/ only
+    Risk: medium
+
+Playwright / Chromium · Primary PDF engine
+    Lifecycle exposure: Browser pinning; ~1 GB in the image; version drift changes rendering
+    Risk: medium — needs the golden-file test ADR-0004 specifies
+
+WeasyPrint · Fallback PDF engine
+    Lifecycle exposure: GTK/Pango native deps; a second visual output for the same legal
+    document
+    Risk: medium
+
+lxml · UBL / Peppol XML
+    Lifecycle exposure: Native, stable, security-relevant
+    Risk: low
+
+React 19 · Vite · TypeScript 5 · Frontends
+    Lifecycle exposure: Ecosystem churn; three surfaces share one design system, so one
+    upgrade moves all
+    Risk: medium
+
+Tauri · Desktop shell
+    Lifecycle exposure: Rust toolchain + platform webview; the least-exercised surface
+    Risk: medium
+
+stripe, httpx · Outbound
+    Lifecycle exposure: Stripe is a dependency with no call site yet — checkout is deferred
+    (§16)
+    Risk: low
+
+Peppol Access Point · Outbound, contractual
+    Lifecycle exposure: A reseller sets the per-document price, which sets the gross-margin
+    floor
+    Risk: the one vendor decision that prices the product
+
+The structural answer to the end-of-life question is already in the architecture rather than in a policy
+ document: core/ imports no framework. A FastAPI or SQLAlchemy major bump
+ cannot reach the VAT engine, the numbering lock or the UBL builder, because dependencies point inward and
+ never back out (ADR-0001). The upgrade surface is api/ and db/, and the 298
+ domain tests keep running through it without a server or a database.
+
+What is missing is not a scanner, it is an owner. Two things convert this table into
+ an operational control: a remote so the advisory audits actually run, and a named review cadence
+ — quarterly is enough at this size — whose output is a decision per row, not a report.
+ A subprocessor list (P-09, CMP-05) falls out of the same review for free.
+
+Q4 — What shape is the data, and in what formats?
+
+Answer: overwhelmingly structured, with two semi-structured contracts and one unstructured
+ category that has nowhere to live.
+
+STRUCTURED — relational, the system of record
+  organizations · users · memberships · credentials · refresh tokens
+  companies · clients · products · invoices + lines · credit notes + lines
+  payments · sequence counters · audit log · subscriptions
+  Postgres (SaaS) │ SQLite (desktop) — same domain code, abstract ports
+
+SEMI-STRUCTURED — contracts with the outside world
+  UBL 2.1 / Peppol BIS 3.0 XML   core/einvoicing/  → validated, generated on demand
+  JSON backup envelope           ADR-0003          → schema_version 1, restorable
+  JSON over HTTP                 Pydantic in and out, openapi.json generated
+  Legacy import payloads         core/imports/     → FinanceFlow parser, preview → commit
+
+UNSTRUCTURED — no storage component exists (B2)
+  Rendered PDFs        generated per request, never persisted
+  Logos, attachments   no blob store
+  Outbound email       no transport
+  Logs                 structlog to a console, not retained anywhere
+
+The load-bearing decision, and it is already the right one. The invoice
+ domain object is the source of truth. The PDF and the Peppol XML are both renderings
+ of it, produced on demand from the same validated data — neither is stored, so neither can drift
+ from the record or become the record. Systems that persist the PDF and reconstruct meaning from it later
+ cannot answer “what was invoiced” without parsing their own output. See
+ §20, where this is the rule the document engine is built on.
+
+Two consequences a reviewer should carry: nothing in the product currently stores a file, which
+ is why every Documents-section gap in §14 resolves to one missing component rather
+ than fifteen missing screens; and the audit log is structured relational data, not text, which is what
+ makes it usable as fiscal evidence and as the Peppol-document meter (E-01).
+
+Q5 — How sensitive is this to downtime and data loss, and is the deployment sized for it?
+
+Answer: the targets have never been written down. Here they are, argued rather than assumed.
+
+BillGen is not a bank and not an authenticator — nothing cascades into another product's
+ availability. But it is not a content site either: an invoice has statutory deadlines, and a business that
+ cannot issue at month-end has a real problem, not an inconvenience. The asymmetry that decides the numbers
+ is that downtime is recoverable and data loss is not — a lost issued invoice breaks
+ a gapless series that cannot legally be renumbered.
+
+RTO — SaaS · 4 h
+    Why that number: Within a working day. Month-end and quarter-end are the load-bearing
+    dates; a morning of unavailability costs annoyance, a day costs a filing.
+    Current capability: unmeasured — one VPS, redeploy by hand
+
+RPO — SaaS · ≤5 min
+    Why that number: Not hours. Any issued invoice lost after its number was minted leaves a
+    gap in a legally gapless series — the one failure mode with no clean repair.
+    Current capability: PITR is the reason ADR-0004 chose managed Postgres — not provisioned
+
+RTO — desktop · user-paced
+    Why that number: Reinstall plus restore from the JSON backup.
+    Current capability: ADR-0003 export/restore ships
+
+RPO — desktop · last backup
+    Why that number: The SQLite file in %APPDATA% is the only copy of the business's books.
+    The user is the backup schedule, which means the product must nag.
+    Current capability: manual export only — no reminder, no automatic copy
+
+On the failover instance: no, and not yet. Active-active across regions at one node and
+ one engineer buys a nine that nothing in this product needs, and costs a permanent complexity tax on every
+ deploy. The correct posture at this scale is: managed Postgres with point-in-time recovery, off-box; an
+ application tier that is a stateless image and can therefore be re-created on a new box from a tag; and
+ object storage with versioning once B2 exists. That is a restorable system rather than a
+ redundant one, and it meets a 4-hour RTO comfortably.
+
+What matters far more than a second instance, and is genuinely absent:
+
+RES-01 · Off-box database backups with PITR
+    State: gap
+    Note: The whole reason ADR-0004 pays for managed Postgres. Undecided on cost grounds —
+    the open decision at the end of that ADR.
+
+RES-02 · A rehearsed restore
+    State: gap
+    Note: A backup that has never been restored is a hypothesis. Restore into a scratch
+    database, boot the API against it, issue one invoice, confirm the sequence continues.
+
+RES-03 · Application-level export (ADR-0003)
+    State: done
+    Note: Org-scoped JSON, sequence counters verbatim, restore only into an empty org. A
+    product feature — explicitly not a substitute for RES-01.
+
+RES-04 · Reproducible infrastructure
+    State: partial
+    Note: Compose + Caddyfile + Dockerfile are in the repo; the box itself is hand-built and
+    unbuilt.
+
+RES-05 · Rollback path
+    State: partial
+    Note: Re-deploy the previous tag — which requires migrations to stay backward-compatible
+    within a release pair. Nothing enforces that yet.
+
+RES-06 · Desktop automatic local backup
+    State: gap
+    Note: VACUUM INTO on exit, kept as a rolling few copies. Cheap, and it removes the user
+    from the backup schedule.
+
+Q6 — How would you know something broke, before a customer tells you?
+
+Answer: you would not. Observability today is structlog writing key-value
+ lines to a console that nothing collects. ADR-0004 names the floor — Sentry plus a request-id
+ middleware, with full OpenTelemetry deferred as team-scale overhead — and neither exists yet.
+
+The signals worth having, in the order they become necessary: unhandled errors with a request id;
+ liveness on the API and the database; failed logins and lockouts as security events rather than log
+ lines (SEC-15); and then, as each component lands, the ones specific to this product — failed email
+ sends, failed Peppol transmissions, failed payment webhooks, stuck recurring jobs. A failed Peppol
+ transmission that nobody is told about is a legally undelivered invoice that the sender believes was
+ delivered, which is the single most expensive silent failure in the system.
+
+Q7 — How do you recover from an incident?
+
+Answer: no procedure exists. Detection, containment, investigation, recovery, data
+ verification, notification, post-mortem — none of it is written, and at solo-operator scale the
+ procedure matters more than at team scale, because there is no second person to remember what to do.
+
+Where this splits across two agents. AG-4 owns the technical capability — can
+ the system be contained, restored and verified. AG-3 owns the legal consequence: a personal-data breach
+ carries a notification obligation with a clock measured in hours, and the clock starts at awareness, not
+ at resolution. A product with no detection (Q6) has a defensible-sounding but useless position: it will
+ become aware late and be unable to evidence when. The two gaps compound.
+
+The minimum honest version is one page: who is called, how the app is taken offline, where the backups
+ are and how to restore one, how to confirm the restore is complete (invoice count, sequence counters, audit
+ log continuity), what gets told to whom, and a template for writing down what happened. It is an afternoon
+ of writing that only has value if it exists before the incident.
+
+Document Engine
+---------------
+
+One engine, three document types, two renderings. Why “customizable invoice templates” is an architecture decision before it is a paid feature.
+
+Today core/pdf/registry.py holds four Jinja templates chosen at render time by
+ id — fr_standard, fr_detailed, nl_minimal,
+ credit_note. That is a fixed catalogue in code: no organization can change one, and adding a
+ fifth means shipping a release. The feature everyone means by “let me design my own invoice” is
+ the thing that turns this catalogue into data.
+
+The mistake to avoid, stated once. Do not build an invoice template editor. Build a
+ document template engine and give it a type. Quotes, invoices and credit notes differ in their
+ mandatory mentions, their totals block and their references — not in their layout system. Three
+ editors means three places to fix a logo alignment bug and three places where a Belgian mandatory mention
+ can go missing.
+
+                    Invoice / CreditNote / Quote   ← domain object, source of truth
+                                 │
+                        validated document data
+                                 │
+                       ┌─────────┴─────────┐
+                       ↓                   ↓
+                  PDF renderer        UBL renderer
+              (Chromium │ WeasyPrint)  (core/einvoicing)
+                       ↓                   ↓
+                    PDF file           Peppol BIS 3.0 XML
+                       ↓                   ↓
+                     email              access point
+
+DocumentTemplate                     ← today: 4 rows of code. Target: a row per org.
+  ├── type          QUOTE │ INVOICE │ CREDIT_NOTE
+  ├── language      fr │ nl │ en │ de
+  ├── layout, typography, logo, colours
+  ├── sections and field visibility
+  ├── conditional blocks   (reverse charge, intra-EU, deposit, discount)
+  └── organization_id      ← what makes it customizable at all
+
+DOC-01 · The PDF is never the source of truth
+    Why: Both renderers read the same validated domain object. A template can change how an
+    invoice looks and can never change what it says — which is also what keeps a customized
+    template from producing a non-compliant document.
+
+DOC-02 · Mandatory mentions are engine-level, not template-level
+    Why: Belgian required elements — VAT numbers, exemption wording, reverse-charge notice,
+    credit-note reference to its original — are injected and verified by the engine. A
+    user-designed template may reposition them; it may not omit them. This is the single
+    control that makes user-editable templates safe to sell.
+
+DOC-03 · One template model, three types
+    Why: The type selects which blocks are required and which are illegal; it does not
+    select a different engine. Quotes are the type this repo does not yet have — adding them
+    should be a type, not a subsystem.
+
+DOC-04 · Templates are versioned and pinned per issued document
+    Why: Re-rendering an invoice issued two years ago must reproduce the document as issued,
+    not as the template looks now. The rendering is derived, but it must be reproducibly
+    derived.
+
+DOC-05 · Both PDF engines must agree
+    Why: Chromium on desktop, WeasyPrint as the image fallback: two engines rendering the
+    same legally-binding document. ADR-0004 requires a golden-file test proving agreement
+    before the fallback is ever relied on. A per-org template surface multiplies what that
+    test has to cover.
+
+Where it sits commercially
+
+The tier matrix (§16) already draws this line once:
+ pdf_remove_branding is the free/paid boundary today, and the visual designer is its natural
+ extension. The engine is infrastructure on every tier — free users render through it too — and
+ only the authoring surface is gated.
+
+Free · The shipped templates, branded footer. Credit notes and Peppol export included — correcting an invoice is not an upsell (E-03 reasoning).
+    Matrix key: —
+
+Starter · Branding removed; logo, colours, basic identity
+    Matrix key: pdf_remove_branding ✓ exists
+
+Business · The visual designer: custom layouts per document type, multiple saved templates, custom fields, conditional sections
+    Matrix key: document_designer — not in the matrix yet
+
+Business Pro · Brand kits across companies, template sharing across the org
+    Matrix key: rides multi_company
+
+Sequencing. This is not next. The engine only becomes urgent once documents are
+ delivered — a beautifully customized invoice that still leaves the product as a manual
+ download is worth nothing over the shipped templates. B1 email and CMP-13 Peppol transmission come first;
+ the template model is the right thing to build immediately after, because it is the last structural change
+ the rendering path needs, and retrofitting per-org templates onto a persisted-PDF design would be the
+ expensive version of this work.
