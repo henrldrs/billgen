@@ -5,6 +5,17 @@ Revises:
 Create Date: 2026-07-04 17:43:03.225048
 
 """
+
+# 2026-08-28: the two unique constraints on `invoices` and on `credit_notes`
+# were both named `uq_<table>_organization_id` — the "uq" naming convention keys
+# off the first column only, so a pair sharing that column collides. SQLite
+# tolerates two same-named constraints in one CREATE TABLE; PostgreSQL refuses
+# the statement, which would have failed this migration on the first Postgres
+# deployment and `create_all` on the first Postgres CI run. Renamed in place
+# rather than in a follow-up migration because this DDL has only ever been
+# applied to SQLite development databases, where the names are cosmetic and
+# nothing reads them. An existing SQLite file keeps the old names; a fresh
+# database of either engine gets the new ones.
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -208,8 +219,8 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['company_id'], ['companies.id'], name=op.f('fk_invoices_company_id_companies')),
     sa.ForeignKeyConstraint(['organization_id'], ['organizations.id'], name=op.f('fk_invoices_organization_id_organizations')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_invoices')),
-    sa.UniqueConstraint('organization_id', 'company_id', 'reference', name=op.f('uq_invoices_organization_id')),
-    sa.UniqueConstraint('organization_id', 'company_id', 'sequence_global', name=op.f('uq_invoices_organization_id'))
+    sa.UniqueConstraint('organization_id', 'company_id', 'reference', name=op.f('uq_invoices_reference')),
+    sa.UniqueConstraint('organization_id', 'company_id', 'sequence_global', name=op.f('uq_invoices_sequence_global'))
     )
     with op.batch_alter_table('invoices', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_invoices_client_id'), ['client_id'], unique=False)
@@ -239,8 +250,8 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['invoice_id'], ['invoices.id'], name=op.f('fk_credit_notes_invoice_id_invoices')),
     sa.ForeignKeyConstraint(['organization_id'], ['organizations.id'], name=op.f('fk_credit_notes_organization_id_organizations')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_credit_notes')),
-    sa.UniqueConstraint('organization_id', 'company_id', 'reference', name=op.f('uq_credit_notes_organization_id')),
-    sa.UniqueConstraint('organization_id', 'company_id', 'sequence_global', name=op.f('uq_credit_notes_organization_id'))
+    sa.UniqueConstraint('organization_id', 'company_id', 'reference', name=op.f('uq_credit_notes_reference')),
+    sa.UniqueConstraint('organization_id', 'company_id', 'sequence_global', name=op.f('uq_credit_notes_sequence_global'))
     )
     with op.batch_alter_table('credit_notes', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_credit_notes_client_id'), ['client_id'], unique=False)

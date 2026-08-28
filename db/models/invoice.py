@@ -21,8 +21,19 @@ from ._base import MONEY_PRECISION, MONEY_SCALE, Base, TenantRowMixin
 class InvoiceRow(TenantRowMixin, Base):
     __tablename__ = "invoices"
     __table_args__ = (
-        UniqueConstraint("organization_id", "company_id", "reference"),
-        UniqueConstraint("organization_id", "company_id", "sequence_global"),
+        # Named explicitly. The "uq" convention keys off the first column only,
+        # so both of these would come out as `uq_invoices_organization_id` — one
+        # CREATE TABLE with two constraints of the same name, which SQLite
+        # tolerates and PostgreSQL refuses outright.
+        UniqueConstraint(
+            "organization_id", "company_id", "reference", name="uq_invoices_reference"
+        ),
+        UniqueConstraint(
+            "organization_id",
+            "company_id",
+            "sequence_global",
+            name="uq_invoices_sequence_global",
+        ),
     )
 
     company_id: Mapped[UUID] = mapped_column(
