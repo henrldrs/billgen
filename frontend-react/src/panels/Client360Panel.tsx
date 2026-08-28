@@ -265,8 +265,10 @@ function IdentityRail({
         body={
           <ScaffoldNote>
             Average days-to-payment, share of invoices paid late, outstanding
-            beyond terms. Every input is already in the database — what is
-            missing is the report that aggregates them, not the data.
+            beyond terms. GET /reports/clients now aggregates the money half —
+            invoiced, paid, outstanding, overdue — and none of the risk half.
+            Every input is in the database; what is missing is the aggregation,
+            not the data.
           </ScaffoldNote>
         }
       />

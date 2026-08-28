@@ -91,9 +91,14 @@ The eight that changed something, each with its reasoning in the message:
 3. **`GET /search?q`.** Invoices, quotes and credit notes by reference, clients
    by name/email/VAT, products by name/category. LIKE metacharacters are escaped
    — unescaped, a typed `%` returns the whole database.
-4. **`GET /reports/payments`.** The total the payments screen deliberately
-   refused to print. Its period is the day the money *arrived*, so it and
-   `/reports/invoices` legitimately disagree across a quarter boundary.
+4. **Three report endpoints.** `GET /reports/payments` — the total the payments
+   screen deliberately refused to print; its period is the day the money
+   *arrived*, so it and `/reports/invoices` legitimately disagree across a
+   quarter boundary. `GET /reports/clients` — the table
+   `/clients/{id}/stats` would be called once per row to build.
+   `GET /reports/products` — volume and mix by invoice *line*, free-text lines
+   included, deliberately carrying no share of any invoice-level discount, so
+   it sums higher than net revenue and must not be shown beside it unlabelled.
 5. **`GET /alerts`.** Four rules on the server: overdue (partial payments leave
    only the remainder), forgotten drafts, business clients with no VAT number,
    and the company's own identifiers. Codes and context dicts, no prose — the
@@ -192,7 +197,9 @@ that exist:
 
 - The alerts panel on the dashboard (`GET /alerts`).
 - The ⌘K palette wired to `GET /search` (it still only navigates pages).
-- A total on the payments report (`GET /reports/payments`).
+- A total on the payments report (`GET /reports/payments`), and the two report
+  screens that now have endpoints behind them (`/reports/clients`,
+  `/reports/products`).
 - The whole quotes section (`sales.quotes`), which is now backend-complete.
 - And the composer defaulting its VAT category from `GET /vat-treatment`,
   which is the one that changes what the product is legally capable of.

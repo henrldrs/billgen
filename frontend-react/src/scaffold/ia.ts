@@ -26,7 +26,7 @@
  *    /quotes[POST,GET?company_id&status&client_id,GET id,DELETE id,
  *            POST id/{send,accept,reject,expire,convert}]
  *    /payments[POST,GET?invoice_id]
- *    /reports/{kpi,revenue,vat?period,invoices,payments}
+ *    /reports/{kpi,revenue,vat?period,invoices,payments,clients,products}
  *    /vat-rates  /pdf-templates  /vat-treatment?company_id&client_id
  *    /alerts?company_id  /search?q
  *    /activity?limit&target_type&target_id  /backup/{export,restore}
@@ -605,7 +605,9 @@ export const IA: IaSection[] = [
         path: "reports/clients",
         status: "none",
         layer: "L2",
-        missing: ["GET /reports/clients"],
+        endpoints: ["GET /reports/clients?company_id&period&today"],
+        missing: ["risk signals on GET /reports/clients"],
+        note: "Endpoint landed 2026-08-28: revenue, paid, outstanding and overdue per client, biggest first — the table /clients/{id}/stats would be called once per row to build. What it does NOT carry is the risk half Client 360 promises: average days-to-payment and the share of invoices paid late. Those exist per client in /clients/{id}/stats and are not aggregated anywhere. The screen is missing too.",
       },
       {
         key: "reports.products",
@@ -613,7 +615,8 @@ export const IA: IaSection[] = [
         path: "reports/products",
         status: "none",
         layer: "L2",
-        missing: ["GET /reports/products"],
+        endpoints: ["GET /reports/products?company_id&period"],
+        note: "Endpoint landed 2026-08-28: volume and mix by invoice LINE, free-text lines included under product_id null. Amounts are line net HT carrying no share of an invoice-level discount, so this legitimately sums higher than net revenue in /reports/invoices — whatever renders it must not put the two side by side unlabelled. The screen is what is missing.",
       },
       {
         key: "reports.export",

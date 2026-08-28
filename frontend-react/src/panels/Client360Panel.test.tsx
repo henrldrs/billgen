@@ -103,7 +103,11 @@ test("everything without a backend renders as scaffold, never as data", async ()
   expect(within(tags).getByText("ClientGroup model")).toBeInTheDocument();
 
   const risk = screen.getByRole("region", { name: /Risk flags/ });
-  expect(within(risk).getByText("GET /reports/clients")).toBeInTheDocument();
+  // The endpoint exists as of 2026-08-28; the risk signals on it do not, and
+  // the chip names the half that is still missing rather than the whole thing.
+  expect(
+    within(risk).getByText("risk signals on GET /reports/clients"),
+  ).toBeInTheDocument();
 
   const totals = screen.getByRole("region", { name: /Totals for this client/ });
   expect(within(totals).getByText("GET /clients/{id}/stats")).toBeInTheDocument();
