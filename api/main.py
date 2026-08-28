@@ -193,6 +193,7 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
     app.include_router(health.router)
     app.include_router(auth.router)
     app.include_router(desktop.router)
+    app.include_router(desktop.dev_router)
     app.include_router(users.router)
     app.include_router(organizations.router)
     app.include_router(companies.router)

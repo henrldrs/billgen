@@ -382,6 +382,16 @@ export class ApiClient {
 
   // ---- products --------------------------------------------------------------
 
+  /** Move the local dev organization onto a tier.
+   *
+   *  404s unless the API was started with desktop_mode. There is no checkout
+   *  yet (the deferred half of B4), so this is the only way to exercise the
+   *  entitlement layer — and it is a dev affordance, not a product one.
+   */
+  setDesktopPlanTier(tier: string): Promise<{ plan_tier: string }> {
+    return this.request("POST", "/desktop/plan-tier", { plan_tier: tier });
+  }
+
   // ---- document templates (Business tier and above) ------------------------
   //
   // Reads are open to every tier: an organization that downgrades keeps the

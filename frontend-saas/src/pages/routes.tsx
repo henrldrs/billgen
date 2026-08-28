@@ -59,6 +59,7 @@ import {
 } from "@billgen/ui";
 import type { ReactNode } from "react";
 import { Navigate, Route, useNavigate, useOutletContext, useParams } from "react-router-dom";
+import { DevTierSwitch } from "./DevTierSwitch";
 import { TemplateStudioScreen } from "./TemplateStudioScreen";
 
 import { useTheme } from "../lib/theme";
@@ -561,7 +562,15 @@ const BUILT: Record<string, Screen> = {
     const navigate = useNavigate();
     return <UsagePanel lang={lang} onSeePlans={() => navigate("/app/billing/plan")} />;
   },
-  "billing/plan": ({ lang }) => <PlansPanel lang={lang} />,
+  "billing/plan": ({ lang }) => (
+    <>
+      {/* Dev-only, and it removes itself from a production build. Here rather
+          than in a hidden corner because this is the screen a person is already
+          on when they want to see what another tier looks like. */}
+      <DevTierSwitch />
+      <PlansPanel lang={lang} />
+    </>
+  ),
 
   // reports - VAT. The most valuable report in a Belgian invoicing product and
   // the last one without a screen; the endpoint has existed for months.

@@ -287,6 +287,16 @@ def _mutating_routes(app):
 #                        "what would this come to" changes no record.
 #   /backup/export     — a GET, so it is not in this list at all, but it *is*
 #                        guarded: it copies the whole organization out.
+#   /desktop/plan-tier — a dev affordance, not a product action, so there is no
+#                        permission that fits: no role should be able to grant
+#                        its own organization a paid plan, and inventing
+#                        `plan.write` would imply some role can. Its guard is
+#                        `desktop_mode`, which the API refuses to start with in
+#                        production (see api/config.validate_for_boot), so on a
+#                        hosted deployment the endpoint 404s for everyone
+#                        regardless of role. Delete this entry the day checkout
+#                        exists — a real upgrade path is a product action and
+#                        will need a real permission.
 _UNGUARDED_BY_DESIGN = {
     ("POST", "/auth/signup"),
     ("POST", "/auth/login"),
@@ -294,6 +304,7 @@ _UNGUARDED_BY_DESIGN = {
     ("POST", "/auth/refresh"),
     ("POST", "/auth/desktop-bootstrap"),
     ("POST", "/invoices/preview"),
+    ("POST", "/desktop/plan-tier"),
 }
 
 

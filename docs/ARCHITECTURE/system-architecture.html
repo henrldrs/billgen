@@ -451,7 +451,7 @@ footer{
     <a href="#status">Status <span class="n">26%</span></a>
     <a href="#frontends">Multi-Frontend Architecture</a>
     <a href="#components">Component &amp; Library Comparison</a>
-    <a href="#backend">Backend Architecture <span class="n"><span data-fact="endpoint_count">84</span></span></a>
+    <a href="#backend">Backend Architecture <span class="n"><span data-fact="endpoint_count">85</span></span></a>
     <a href="#compliance">Compliance Architecture</a>
 
     <p class="rail__group">Execution</p>
@@ -466,7 +466,7 @@ footer{
     <p class="rail__group">Deep dive</p>
     <a href="#dataflow">Data Architecture</a>
     <a href="#debt">Backend Debt Ledger <span class="n">159</span></a>
-    <a href="#repo">Repo Map <span class="n"><span data-fact="tracked_files">635</span></span></a>
+    <a href="#repo">Repo Map <span class="n"><span data-fact="tracked_files">636</span></span></a>
     <a href="#entitlements">Entitlement Layer <span class="n">B4</span></a>
     <a href="#decisions">Decisions of Record <span class="n">4</span></a>
     <a href="#scaffolds">Scaffolded, Not Wired <span class="n">2</span></a>
@@ -493,7 +493,7 @@ footer{
     <em>scaffolded and deliberately left unwired</em> (<a href="#scaffolds">§18</a>), and a parallel
     audit engine was built from the specification in <code>docs/</code>
     (<a href="#audit">§19</a>). Backend tests 392 → <strong>423</strong>; the surface is now
-    <span data-fact="endpoint_count">84</span> endpoints across
+    <span data-fact="endpoint_count">85</span> endpoints across
     <span data-fact="router_count">23</span> routers.</p>
     <p><strong>And this document stopped being hand-maintained where it kept going wrong.</strong> The
     audit engine found eight endpoints documented here that no longer existed and fifty that were never
@@ -822,7 +822,7 @@ footer{
 └── utils/                 money · dates · jsonsafe
 
 api/                       Layer 2 — FastAPI
-├── routers/               <span data-fact="router_count">23</span> routers, <span data-fact="endpoint_count">84</span> endpoints
+├── routers/               <span data-fact="router_count">23</span> routers, <span data-fact="endpoint_count">85</span> endpoints
 ├── entitlements/          matrix(tiers) · service(resolve, quota_guard) · usage · deps · errors
 │                          the ONLY place a tier maps to a capability — core/ may not import it
 ├── security/              auth_service · jwt
@@ -866,7 +866,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
         <tr><td><code>clients</code></td><td class="num">6</td><td class="ev"><code>GET /clients</code> · <code>POST /clients</code> · <code>GET /clients/{client_id}</code> · <code>PATCH /clients/{client_id}</code> · <code>GET /clients/{client_id}/stats</code> · <code>GET /clients/{client_id}/timeline</code></td></tr>
         <tr><td><code>companies</code></td><td class="num">5</td><td class="ev"><code>GET /companies</code> · <code>POST /companies</code> · <code>GET /companies/{company_id}</code> · <code>PATCH /companies/{company_id}</code> · <code>GET /companies/{company_id}/validation</code></td></tr>
         <tr><td><code>credit_notes</code></td><td class="num">5</td><td class="ev"><code>GET /credit-notes</code> · <code>POST /credit-notes</code> · <code>GET /credit-notes/{credit_note_id}</code> · <code>GET /credit-notes/{credit_note_id}/html</code> · <code>GET /credit-notes/{credit_note_id}/pdf</code></td></tr>
-        <tr><td><code>desktop</code></td><td class="num">1</td><td class="ev"><code>POST /auth/desktop-bootstrap</code></td></tr>
+        <tr><td><code>desktop</code></td><td class="num">2</td><td class="ev"><code>POST /auth/desktop-bootstrap</code> · <code>POST /auth/plan-tier</code></td></tr>
         <tr><td><code>entitlements</code></td><td class="num">2</td><td class="ev"><code>GET /entitlements</code> · <code>GET /plans</code></td></tr>
         <tr><td><code>expenses</code></td><td class="num">5</td><td class="ev"><code>GET /expenses</code> · <code>POST /expenses/import</code> · <code>DELETE /expenses/{expense_id}</code> · <code>GET /expenses/{expense_id}</code> · <code>POST /expenses/{expense_id}/review</code></td></tr>
         <tr><td><code>health</code></td><td class="num">2</td><td class="ev"><code>GET /healthz</code> · <code>GET /readyz</code></td></tr>
@@ -1621,7 +1621,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
   <div class="sechead">
     <span class="sechead__id">§15</span>
     <h2>Repo Map</h2>
-    <p class="sechead__sub">What every directory is for, and the record of what was removed on 2026-08-26. <span data-fact="tracked_files">635</span> tracked files.</p>
+    <p class="sechead__sub">What every directory is for, and the record of what was removed on 2026-08-26. <span data-fact="tracked_files">636</span> tracked files.</p>
   </div>
 
   <p class="lede">A repository that cannot be read cheaply is a repository that gets misread. This section names the purpose of every top-level directory, so nothing in the tree is unexplained, and records what left.</p>
@@ -1634,8 +1634,8 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
       <thead><tr><th>Path</th><th class="num">Files</th><th>What it is</th><th>What breaks without it</th></tr></thead>
       <tbody>
         <tr><td><code>core/</code></td><td class="num"><span data-fact="files_core">98</span></td><td class="ev"><strong>Layer 1 — the product's actual logic.</strong> Money arithmetic, Belgian VAT, gapless invoice numbering, legal mentions, Peppol XML, PDF rendering, the legacy importer. Imports no web framework and no ORM.</td><td class="ev">Everything. This is the finished half of the product and the reason §01 reads 20% rather than 0%.</td></tr>
-        <tr><td><code>api/</code></td><td class="num"><span data-fact="files_api">75</span></td><td class="ev"><strong>Layer 2 — the HTTP boundary.</strong> <span data-fact="router_count">23</span> routers, <span data-fact="endpoint_count">84</span> endpoints, JWT auth, middleware — and <code>api/entitlements/</code>, the commercial matrix. Translates JSON into domain calls and back, and decides whether the caller's plan permits the call.</td><td class="ev">No frontend can reach the domain. <code>core/</code> would still pass its tests.</td></tr>
-        <tr><td><code>db/</code></td><td class="num"><span data-fact="files_db">35</span></td><td class="ev">SQLAlchemy models and the Alembic migration history. The concrete implementation behind <code>core/repository/</code>'s abstract ports.</td><td class="ev">Nothing persists. The domain would run entirely in memory.</td></tr>
+        <tr><td><code>api/</code></td><td class="num"><span data-fact="files_api">75</span></td><td class="ev"><strong>Layer 2 — the HTTP boundary.</strong> <span data-fact="router_count">23</span> routers, <span data-fact="endpoint_count">85</span> endpoints, JWT auth, middleware — and <code>api/entitlements/</code>, the commercial matrix. Translates JSON into domain calls and back, and decides whether the caller's plan permits the call.</td><td class="ev">No frontend can reach the domain. <code>core/</code> would still pass its tests.</td></tr>
+        <tr><td><code>db/</code></td><td class="num"><span data-fact="files_db">36</span></td><td class="ev">SQLAlchemy models and the Alembic migration history. The concrete implementation behind <code>core/repository/</code>'s abstract ports.</td><td class="ev">Nothing persists. The domain would run entirely in memory.</td></tr>
         <tr><td><code>tests/</code></td><td class="num"><span data-fact="files_tests">63</span></td><td class="ev">423 backend tests. Includes the palette guard test and the icon-grammar guard test, both build-failing.</td><td class="ev">The brand decisions at <code>4e39460</code> and <code>81d2c66</code> become suggestions rather than rules.</td></tr>
         <tr><td><code>henrioutai-ui/</code></td><td class="num"><span data-fact="files_henrioutai_ui">87</span></td><td class="ev"><strong>The design system, and the only place components are edited.</strong> 74 exports, <code>tokens.css</code>, three vendored font files. Its own package, MIT, public-ready.</td><td class="ev">Every frontend loses its component vocabulary. <code>@billgen/ui</code> re-exports this; it holds nothing of its own.</td></tr>
         <tr><td><code>frontend-react/</code></td><td class="num"><span data-fact="files_frontend_react">114</span></td><td class="ev"><strong>Holds <code>src/scaffold/ia.ts</code> — the source of truth</strong> for nav, routes, status and the 159 gaps in §14. Also the scaffold kit that renders unwired areas as deliberately ugly.</td><td class="ev">No frontend knows what screens exist. This is the highest-leverage file in the repository.</td></tr>

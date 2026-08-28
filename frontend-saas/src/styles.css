@@ -35,3 +35,9 @@ body {
 @import "@billgen/ui/src/workspace/workspace.css";
 
 .bg-ws-doc-kinds { margin: var(--bg-space-3, 12px) 0; }
+
+.bg-dev-tier { display: flex; flex-direction: column; gap: 12px; }
+.bg-dev-tier__head { display: flex; gap: 12px; align-items: flex-start; }
+.bg-dev-tier__head p { margin: 4px 0 0; color: var(--bg-ink-soft); font-size: var(--bg-text-helper); max-width: 60ch; }
+.bg-dev-tier__options { display: flex; flex-wrap: wrap; gap: 8px; }
+.bg-dev-tier__error { color: var(--bg-danger); font-size: var(--bg-text-helper); margin: 0; }

@@ -32,7 +32,7 @@ from datetime import UTC, datetime
 from enum import Enum
 from uuid import UUID
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
 from ._base import DomainModel, TenantModel
 
@@ -49,10 +49,18 @@ class BlockKind(str, Enum):
     FOOTER = "footer"
 
 
-#  Without these a generated document can omit a mention Belgian law requires.
-#  `REQUIRED_BLOCKS` in templateSchema.ts is the same list; this is the copy
-#  that is enforced, because the frontend's can be bypassed by any other client.
-REQUIRED_BLOCKS: frozenset[BlockKind] = frozenset(
+#  What each document type must show.
+#
+#  Per type rather than one list, because the list is a legal claim about a
+#  *kind* of document and they differ. An invoice without its totals is invalid;
+#  a contract has no totals at all, and demanding them would make the type
+#  unusable. That distinction is why this is a mapping today rather than the day
+#  a non-billing document is added.
+#
+#  `REQUIRED_BLOCKS` in templateSchema.ts mirrors the invoicing set; this is the
+#  copy that is *enforced*, because the frontend's can be bypassed by any other
+#  client.
+_BILLING_REQUIRED: frozenset[BlockKind] = frozenset(
     {
         BlockKind.HEADER,
         BlockKind.PARTIES,
@@ -61,6 +69,27 @@ REQUIRED_BLOCKS: frozenset[BlockKind] = frozenset(
         BlockKind.TOTALS,
     }
 )
+
+REQUIRED_BLOCKS_BY_TYPE: dict[str, frozenset[BlockKind]] = {
+    "invoice": _BILLING_REQUIRED,
+    "quote": _BILLING_REQUIRED,
+    "credit_note": _BILLING_REQUIRED,
+}
+
+#  The set an unknown type falls back to. Deliberately the smallest thing that
+#  is still a document addressed by someone to someone: a contract needs a
+#  header and the two parties, and nothing else here applies to it.
+_MINIMUM_REQUIRED: frozenset[BlockKind] = frozenset(
+    {BlockKind.HEADER, BlockKind.PARTIES}
+)
+
+
+def required_blocks(doc_type: str) -> frozenset[BlockKind]:
+    return REQUIRED_BLOCKS_BY_TYPE.get(doc_type, _MINIMUM_REQUIRED)
+
+
+#  Kept as the invoicing set for the callers that predate the mapping.
+REQUIRED_BLOCKS: frozenset[BlockKind] = _BILLING_REQUIRED
 
 
 class TemplateBlock(DomainModel):
@@ -170,6 +199,11 @@ def default_blocks() -> list[TemplateBlock]:
 class DocumentTemplate(TenantModel):
     company_id: UUID
     name: str = Field(min_length=1, max_length=120)
+    #  Closed on purpose — a typo becomes a document type nobody can find. To
+    #  add one (contracts, delivery notes, order confirmations): extend this
+    #  pattern, add an entry to REQUIRED_BLOCKS_BY_TYPE if it needs more than
+    #  the minimum, and add it to DOC_KINDS in templatePresets.ts. No migration:
+    #  the column is a string and the constraint already includes it.
     doc_type: str = Field(default="invoice", pattern="^(invoice|quote|credit_note)$")
     is_default: bool = False
 
@@ -177,23 +211,26 @@ class DocumentTemplate(TenantModel):
     appearance: TemplateAppearance = Field(default_factory=TemplateAppearance)
     published_version: int | None = None
 
-    @field_validator("blocks")
-    @classmethod
-    def _required_blocks_present_and_visible(
-        cls, blocks: list[TemplateBlock]
-    ) -> list[TemplateBlock]:
+    @model_validator(mode="after")
+    def _required_blocks_present_and_visible(self) -> DocumentTemplate:
+        #  A model validator rather than a field one: which blocks are required
+        #  depends on `doc_type`, and a field validator cannot see a sibling
+        #  field. That dependency is the whole reason a contract can be added
+        #  here without touching this method.
+        blocks = self.blocks
         visible = {b.kind for b in blocks if b.visible}
-        missing = REQUIRED_BLOCKS - visible
+        missing = required_blocks(self.doc_type) - visible
         if missing:
             names = ", ".join(sorted(k.value for k in missing))
             raise ValueError(
-                f"a template must show {names}. These carry mentions an invoice "
-                f"is required to display, so hiding them is not a styling choice."
+                f"a {self.doc_type.replace('_', ' ')} template must show {names}. "
+                f"These carry mentions the document is required to display, so "
+                f"hiding them is not a styling choice."
             )
         ids = [b.id for b in blocks]
         if len(ids) != len(set(ids)):
             raise ValueError("block ids must be unique within a template")
-        return blocks
+        return self
 
     @property
     def is_published(self) -> bool:
