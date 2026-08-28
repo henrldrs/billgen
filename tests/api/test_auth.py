@@ -130,3 +130,32 @@ async def test_logout_revokes_refresh(client):
 
     replay = await client.post("/auth/refresh", json={"refresh_token": refresh_token})
     assert replay.status_code == 401
+
+
+async def test_a_user_can_rename_themselves(client):
+    headers = bearer(await signup(client))
+    response = await client.patch(
+        "/users/me", headers=headers, json={"display_name": "Henri Outai"}
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["display_name"] == "Henri Outai"
+    assert (await client.get("/users/me", headers=headers)).json()["display_name"] == (
+        "Henri Outai"
+    )
+
+
+async def test_the_profile_edit_cannot_change_an_email(client):
+    """Not an oversight — an identity change needs the new address verified
+    before it becomes the login, and verification needs email transport the
+    product does not have (B1). Accepting it here would let someone lock
+    themselves out with a typo."""
+    headers = bearer(await signup(client))
+    before = (await client.get("/users/me", headers=headers)).json()["email"]
+
+    response = await client.patch(
+        "/users/me",
+        headers=headers,
+        json={"display_name": "Still Me", "email": "someone.else@example.com"},
+    )
+    assert response.status_code == 200
+    assert response.json()["email"] == before

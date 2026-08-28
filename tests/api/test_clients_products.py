@@ -135,3 +135,28 @@ async def test_client_for_unknown_company_404(client):
         headers=bearer(alice),
     )
     assert response.status_code == 404
+
+
+async def test_products_filter_by_category(client):
+    """The Catalog > Categories view. Case-insensitive because a category is
+    free text somebody typed, and "Services" and "services" are one category to
+    everyone except a comparison."""
+    headers = bearer(await signup(client))
+    company = await create_company(client, headers)
+
+    await _make_product(client, headers, company["id"], "Audit", category="Services")
+    await _make_product(client, headers, company["id"], "Licence", category="software")
+
+    services = await client.get(
+        "/products", headers=headers, params={"category": "services"}
+    )
+    assert [p["name"] for p in services.json()] == ["Audit"]
+
+    software = await client.get(
+        "/products", headers=headers, params={"category": "SOFTWARE"}
+    )
+    assert [p["name"] for p in software.json()] == ["Licence"]
+
+    assert (
+        await client.get("/products", headers=headers, params={"category": "none"})
+    ).json() == []

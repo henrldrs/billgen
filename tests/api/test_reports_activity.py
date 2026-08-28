@@ -302,3 +302,32 @@ async def test_payment_report_rejects_a_malformed_period(client):
     )
 
     assert response.status_code == 422
+
+
+async def test_activity_filters_by_actor(client):
+    """Settings > Activity asks "what did this person do".
+
+    Filtered in SQL rather than in Python: an audit log is the one table that
+    grows without bound, so slicing it after the fact would read the whole
+    organization's history to show one user's.
+    """
+    alice = await signup(client)
+    headers = bearer(alice)
+    company = await create_company(client, headers)
+    await create_client_record(client, headers, company["id"])
+
+    everything = (await client.get("/activity", headers=headers)).json()
+    assert len(everything) >= 2
+
+    mine = await client.get(
+        "/activity", headers=headers, params={"actor_user_id": alice["user_id"]}
+    )
+    assert mine.status_code == 200
+    assert len(mine.json()) == len(everything)
+    assert all(e["actor_user_id"] == alice["user_id"] for e in mine.json())
+
+    import uuid
+    nobody = await client.get(
+        "/activity", headers=headers, params={"actor_user_id": str(uuid.uuid4())}
+    )
+    assert nobody.json() == []

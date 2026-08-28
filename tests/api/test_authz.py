@@ -287,6 +287,12 @@ def _mutating_routes(app):
 #                        "what would this come to" changes no record.
 #   /backup/export     — a GET, so it is not in this list at all, but it *is*
 #                        guarded: it copies the whole organization out.
+#   /users/me (PATCH)  — a person editing their own display name. The identity
+#                        it acts on comes from the token, never the body, so
+#                        there is nothing to authorize *against*: a user cannot
+#                        address anyone else's profile, and every role including
+#                        `viewer` may rename itself. A permission here would have
+#                        to be one every role holds, which is not a permission.
 #   /desktop/plan-tier — a dev affordance, not a product action, so there is no
 #                        permission that fits: no role should be able to grant
 #                        its own organization a paid plan, and inventing
@@ -305,6 +311,7 @@ _UNGUARDED_BY_DESIGN = {
     ("POST", "/auth/desktop-bootstrap"),
     ("POST", "/invoices/preview"),
     ("POST", "/desktop/plan-tier"),
+    ("PATCH", "/users/me"),
 }
 
 

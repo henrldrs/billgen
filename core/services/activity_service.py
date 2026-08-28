@@ -17,11 +17,15 @@ class ActivityService:
         limit: int = 50,
         target_type: str | None = None,
         target_id: UUID | None = None,
+        actor_user_id: UUID | None = None,
     ) -> list[AuditLogEntry]:
         """`target_id` scopes the log to one record — the per-client and
         per-invoice history screens. It is orthogonal to `target_type`: an id is
         unique across types, so passing both is a narrowing, never a widening."""
         with self._uow_factory() as uow:
             return uow.audit_log.list(
-                limit=limit, target_type=target_type, target_id=target_id
+                limit=limit,
+                target_type=target_type,
+                target_id=target_id,
+                actor_user_id=actor_user_id,
             )

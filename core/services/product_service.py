@@ -39,6 +39,7 @@ class ProductService:
         company_id: UUID | None = None,
         status: ProductStatus | None = None,
         billing_type: BillingType | None = None,
+        category: str | None = None,
     ) -> list[Product]:
         """Catalog's Services and Archived views are `billing_type` and `status`
         slices. Filtered in Python, like ReportingService: fine at SMB catalog
@@ -49,6 +50,15 @@ class ProductService:
             products = [p for p in products if p.status is status]
         if billing_type is not None:
             products = [p for p in products if p.billing_type is billing_type]
+        if category is not None:
+            #  Case-insensitive: categories are free text a user typed, so
+            #  "Services" and "services" are the same category to everyone
+            #  except a comparison.
+            products = [
+                p
+                for p in products
+                if p.category and p.category.casefold() == category.casefold()
+            ]
         return products
 
     def update(self, product: Product, actor_user_id: UUID | None = None) -> Product:

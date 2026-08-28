@@ -112,9 +112,24 @@ class SqlAlchemyOrganizationRepository(OrganizationRepository):
         return to_domain(Organization, row) if row else None
 
 
+#  Columns a user may change about themselves. `email` is absent on purpose —
+#  see the port's docstring; `email_verified` and `is_active` are administrative
+#  state rather than profile, and a user must not be able to set either.
+_USER_UPDATABLE = ("display_name", "updated_at")
+
+
 class SqlAlchemyUserRepository(UserRepository):
     def __init__(self, session: Session) -> None:
         self._s = session
+
+    def update(self, user: User) -> User:
+        row = self._s.get(UserRow, user.id)
+        if row is None:
+            raise KeyError(user.id)
+        for column in _USER_UPDATABLE:
+            setattr(row, column, getattr(user, column))
+        self._s.flush()
+        return to_domain(User, row)
 
     def add(self, user: User) -> User:
         self._s.add(UserRow(**row_kwargs(user)))
@@ -634,6 +649,7 @@ class SqlAlchemyAuditLogRepository(AuditLogRepository):
         limit: int = 50,
         target_type: str | None = None,
         target_id: UUID | None = None,
+        actor_user_id: UUID | None = None,
     ) -> list[AuditLogEntry]:
         stmt = (
             select(AuditLogRow)
@@ -645,6 +661,8 @@ class SqlAlchemyAuditLogRepository(AuditLogRepository):
             stmt = stmt.where(AuditLogRow.target_type == target_type)
         if target_id is not None:
             stmt = stmt.where(AuditLogRow.target_id == target_id)
+        if actor_user_id is not None:
+            stmt = stmt.where(AuditLogRow.actor_user_id == actor_user_id)
         return [to_domain(AuditLogEntry, row) for row in self._s.execute(stmt).scalars()]
 
 

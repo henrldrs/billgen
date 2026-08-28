@@ -41,12 +41,14 @@ def list_products(
     company_id: UUID | None = None,
     status: ProductStatus | None = None,
     billing_type: BillingType | None = None,
+    category: str | None = None,
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
 ):
     products = ProductService(uow_factory).list(
         company_id=company_id,
         status=status,
         billing_type=billing_type,
+        category=category,
     )
     return [_to_response(p) for p in products]
 
