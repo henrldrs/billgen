@@ -3123,6 +3123,11 @@ export interface components {
             company_id: string;
             /** Name */
             name: string;
+            /**
+             * Doc Type
+             * @default invoice
+             */
+            doc_type?: string;
             /** Blocks */
             blocks?: components["schemas"]["TemplateBlock"][] | null;
             appearance?: components["schemas"]["TemplateAppearance"] | null;
@@ -5851,6 +5856,7 @@ export interface operations {
         parameters: {
             query?: {
                 company_id?: string | null;
+                doc_type?: string | null;
             };
             header?: never;
             path?: never;

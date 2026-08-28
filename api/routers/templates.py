@@ -61,11 +61,13 @@ def _to_response(template: DocumentTemplate) -> TemplateResponse:
 @router.get("", response_model=list[TemplateResponse])
 def list_templates(
     company_id: UUID | None = None,
+    doc_type: str | None = None,
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
 ):
-    return [
-        _to_response(t) for t in TemplateService(uow_factory).list(company_id=company_id)
-    ]
+    templates = TemplateService(uow_factory).list(
+        company_id=company_id, doc_type=doc_type
+    )
+    return [_to_response(t) for t in templates]
 
 
 @router.get("/{template_id}", response_model=TemplateResponse)
@@ -103,6 +105,7 @@ def create_template(
         organization_id=current_organization_id(),
         company_id=body.company_id,
         name=body.name,
+        doc_type=body.doc_type,
         blocks=body.blocks,
         appearance=body.appearance,
         is_default=body.is_default,

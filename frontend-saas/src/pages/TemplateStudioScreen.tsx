@@ -26,6 +26,7 @@ import {
   List,
   LoadingScreen,
   PageHeader,
+  Segmented,
 } from "@henrioutai/ui";
 import {
   hasFeature,
@@ -37,8 +38,12 @@ import {
   type TemplateUpdateRequest,
 } from "@billgen/ui";
 import {
+  DOC_KINDS,
   TemplateWorkspace,
   defaultTemplate,
+  templateFromPreset,
+  TEMPLATE_PRESETS,
+  type DocKind,
   type InvoiceTemplate,
   type PreviewCompany,
 } from "@billgen/ui/src/workspace";
@@ -127,8 +132,12 @@ export function TemplateStudioScreen({
   company,
   lang = "en",
 }: TemplateStudioScreenProps) {
+  const [docKind, setDocKind] = useState<DocKind>("invoice");
+
   const entitlements = useEntitlements();
-  const templates = useTemplates(companyId);
+  //  Filtered server-side: a quote template and an invoice template are
+  //  different documents, not two rows to sort through in the browser.
+  const templates = useTemplates(companyId, docKind);
   const create = useCreateTemplate();
   const update = useUpdateTemplate();
   const publish = usePublishTemplate();
@@ -148,6 +157,7 @@ export function TemplateStudioScreen({
         template={editing}
         company={company ?? { name: "Your company" }}
         lang={lang}
+        docKind={docKind}
         skipGallery={Boolean(editingId)}
         saving={update.isPending || create.isPending || publish.isPending}
         onChange={setEditing}
@@ -162,6 +172,7 @@ export function TemplateStudioScreen({
                 company_id: companyId,
                 ...fromStudio(editing),
                 name: editing.name,
+                doc_type: docKind,
               },
               { onSuccess: (row) => setEditingId(row.id) },
             );
@@ -182,10 +193,10 @@ export function TemplateStudioScreen({
   return (
     <>
       <PageHeader
-        title="Invoice templates"
+        title="Document templates"
         subtitle={
           included
-            ? "Design the document your customers receive."
+            ? "Design the documents your customers receive."
             : "Available on Business and above."
         }
         actions={
@@ -194,7 +205,15 @@ export function TemplateStudioScreen({
               variant="primary"
               onClick={() => {
                 setEditingId(null);
-                setEditing(defaultTemplate());
+                //  Seeded from the first model so the studio's gallery has
+                //  something to show *this document type* rather than an
+                //  invoice with the wrong word at the top.
+                setEditing(
+                  templateFromPreset(TEMPLATE_PRESETS[0], {
+                    name: defaultTemplate().name,
+                    docKind,
+                  }),
+                );
               }}
             >
               New template
@@ -202,6 +221,15 @@ export function TemplateStudioScreen({
           ) : undefined
         }
       />
+
+      <div className="bg-ws-doc-kinds">
+        <Segmented
+          ariaLabel="Document type"
+          value={docKind}
+          onChange={(value) => setDocKind(value as DocKind)}
+          options={DOC_KINDS.map((kind) => ({ value: kind.value, label: kind.label }))}
+        />
+      </div>
 
       {!included && (
         <Banner tone="info">
@@ -214,7 +242,7 @@ export function TemplateStudioScreen({
       <Card padded={false}>
         {rows.length === 0 ? (
           <EmptyState
-            title="No templates yet"
+            title={`No ${DOC_KINDS.find((k) => k.value === docKind)?.label.toLowerCase() ?? ""} templates yet`}
             description={
               included
                 ? "Start from one of five models and change anything."

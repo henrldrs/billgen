@@ -20,7 +20,9 @@ class TemplateRepository(ABC):
     def get(self, template_id: UUID) -> DocumentTemplate | None: ...
 
     @abstractmethod
-    def list(self, company_id: UUID | None = None) -> list[DocumentTemplate]: ...
+    def list(
+        self, company_id: UUID | None = None, doc_type: str | None = None
+    ) -> list[DocumentTemplate]: ...
 
     @abstractmethod
     def update(self, template: DocumentTemplate) -> DocumentTemplate: ...
@@ -50,11 +52,19 @@ class TemplateRepository(ABC):
         ...
 
     @abstractmethod
-    def default_for(self, company_id: UUID) -> DocumentTemplate | None: ...
+    def default_for(
+        self, company_id: UUID, doc_type: str = "invoice"
+    ) -> DocumentTemplate | None:
+        """Each document type has its own default.
+
+        A company needs a default invoice template *and* a default quote
+        template; one flag across both would mean issuing a quote picked
+        the invoice's layout, wording included."""
+        ...
 
     @abstractmethod
-    def clear_default(self, company_id: UUID) -> None:
-        """Unset the default flag across a company's templates.
+    def clear_default(self, company_id: UUID, doc_type: str = "invoice") -> None:
+        """Unset the default flag across a company's templates of one type.
 
         Exactly one default is enforced here rather than by a partial unique
         index: SQLite's support for those is version-dependent, and the desktop

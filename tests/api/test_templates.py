@@ -302,3 +302,79 @@ async def test_a_downgraded_org_can_still_read_its_templates(org):
         f"/templates/{template['id']}", headers=headers, json={"name": "Nope"}
     )
     assert edit.status_code == 402
+
+
+# -- one studio, three document types --------------------------------------
+#
+# A quote rendered through an invoice template says "INVOICE" to a customer who
+# has not bought anything yet. That is why doc_type is part of the identity of a
+# template rather than a label on it: the name is unique per type, the default
+# is per type, and the list is filtered by type.
+
+
+async def test_each_document_type_keeps_its_own_default(org):
+    client, headers, company_id = org
+    invoice = (await create_template(client, headers, company_id, name="House style")).json()
+    quote = (
+        await create_template(
+            client, headers, company_id, name="House style", doc_type="quote"
+        )
+    ).json()
+
+    # The same name is allowed twice, because they are different documents.
+    assert invoice["name"] == quote["name"] == "House style"
+    assert invoice["doc_type"] == "invoice"
+    assert quote["doc_type"] == "quote"
+
+    # Each is the first of its type, so each became its own default.
+    assert invoice["is_default"] is True
+    assert quote["is_default"] is True
+
+
+async def test_the_same_name_twice_within_one_type_is_refused(org):
+    client, headers, company_id = org
+    first = await create_template(client, headers, company_id, name="House style")
+    assert first.status_code == 201
+    again = await create_template(client, headers, company_id, name="House style")
+    assert again.status_code in (409, 422), again.text
+
+
+async def test_setting_a_quote_default_leaves_the_invoice_default_alone(org):
+    client, headers, company_id = org
+    await create_template(client, headers, company_id, name="Invoice A")
+    await create_template(client, headers, company_id, name="Quote A", doc_type="quote")
+    quote_b = (
+        await create_template(
+            client, headers, company_id, name="Quote B", doc_type="quote"
+        )
+    ).json()
+
+    promoted = await client.post(f"/templates/{quote_b['id']}/default", headers=headers)
+    assert promoted.status_code == 200
+
+    listed = (await client.get("/templates", headers=headers)).json()
+    defaults = {t["doc_type"]: t["name"] for t in listed if t["is_default"]}
+    assert defaults == {"invoice": "Invoice A", "quote": "Quote B"}
+
+
+async def test_the_list_filters_by_document_type(org):
+    client, headers, company_id = org
+    await create_template(client, headers, company_id, name="Inv")
+    await create_template(client, headers, company_id, name="Quo", doc_type="quote")
+    await create_template(client, headers, company_id, name="CN", doc_type="credit_note")
+
+    for doc_type, expected in [("invoice", ["Inv"]), ("quote", ["Quo"]), ("credit_note", ["CN"])]:
+        response = await client.get(
+            "/templates", headers=headers, params={"doc_type": doc_type}
+        )
+        assert [t["name"] for t in response.json()] == expected
+
+    assert len((await client.get("/templates", headers=headers)).json()) == 3
+
+
+async def test_an_unknown_document_type_is_refused(org):
+    client, headers, company_id = org
+    response = await create_template(
+        client, headers, company_id, name="Nope", doc_type="receipt"
+    )
+    assert response.status_code == 422, response.text

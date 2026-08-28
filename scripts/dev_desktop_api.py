@@ -18,6 +18,7 @@ VITE_API_URL here.
 """
 
 import os
+import pathlib
 import sys
 from pathlib import Path
 
@@ -37,19 +38,46 @@ os.environ.setdefault("DATABASE_URL", DB)
 os.environ.setdefault("CORS_ORIGINS", f"{SAAS_ORIGIN},http://127.0.0.1:5183")
 os.environ.setdefault("ENVIRONMENT", "dev")
 
+from alembic import command  # noqa: E402
+from alembic.config import Config  # noqa: E402
+from sqlalchemy import inspect  # noqa: E402
+
 from db.engine import make_engine  # noqa: E402  (must follow the env setup)
-from db.models import Base  # noqa: E402
+
+
+def _alembic_config() -> Config:
+    root = pathlib.Path(__file__).resolve().parent.parent
+    config = Config(str(root / "alembic.ini"))
+    config.set_main_option("script_location", str(root / "db" / "migrations"))
+    config.set_main_option("sqlalchemy.url", DB)
+    return config
 
 
 def main() -> None:
     import uvicorn  # noqa: PLC0415 - deferred so `--help` works without the server extra
 
-    # The dev DB is disposable, so create the schema directly rather than
-    # running Alembic. Never do this against a database you care about:
-    # create_all knows the current models and nothing about migration history.
+    # Alembic, not create_all.
+    #
+    # `create_all` was the original choice because this database is disposable.
+    # The trouble is that it creates *missing tables* and never alters existing
+    # ones, so a schema change to a table that already exists silently does not
+    # happen here — and the failure surfaces as a 500 from a running app rather
+    # than as anything a test could catch. That bit twice in one afternoon:
+    # `invoices.template_snapshot` and then the templates' unique constraint.
+    #
+    # Running the migrations means this database and a hosted one are built the
+    # same way, which is also the only way the migrations get exercised outside
+    # a scratch file nobody keeps.
     engine = make_engine(DB)
-    Base.metadata.create_all(engine)
+    inspector = inspect(engine)
+    if not inspector.has_table("alembic_version") and inspector.has_table("invoices"):
+        # A database built by the old create_all path has every table and no
+        # revision. Stamp it so the migrations that follow are the only ones
+        # that run; an empty database just gets built from nothing instead.
+        print("stamping a pre-Alembic dev database; delete it if migrations fail")
+        command.stamp(_alembic_config(), "head")
     engine.dispose()
+    command.upgrade(_alembic_config(), "head")
 
     print(f"desktop-mode API on http://{HOST}:{PORT} · db {DB}")
     uvicorn.run("api.main:app", host=HOST, port=PORT)

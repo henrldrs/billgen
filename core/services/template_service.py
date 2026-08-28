@@ -39,9 +39,11 @@ class TemplateService:
 
     # -- reads ---------------------------------------------------------
 
-    def list(self, company_id: UUID | None = None) -> list[DocumentTemplate]:
+    def list(
+        self, company_id: UUID | None = None, doc_type: str | None = None
+    ) -> list[DocumentTemplate]:
         with self._uow_factory() as uow:
-            return uow.templates.list(company_id=company_id)
+            return uow.templates.list(company_id=company_id, doc_type=doc_type)
 
     def get(self, template_id: UUID) -> DocumentTemplate:
         with self._uow_factory() as uow:
@@ -77,6 +79,7 @@ class TemplateService:
         company_id: UUID,
         *,
         name: str,
+        doc_type: str = "invoice",
         blocks: list[TemplateBlock] | None = None,
         appearance: TemplateAppearance | None = None,
         is_default: bool = False,
@@ -86,19 +89,33 @@ class TemplateService:
             organization_id=organization_id,
             company_id=company_id,
             name=name,
+            doc_type=doc_type,
             is_default=is_default,
             **({"blocks": blocks} if blocks is not None else {}),
             **({"appearance": appearance} if appearance is not None else {}),
         )
         with self._uow_factory() as uow:
-            #  The first template for a company becomes its default whatever the
-            #  caller asked for. A company with templates and no default is a
-            #  state the issue path cannot resolve.
-            existing = uow.templates.list(company_id=company_id)
+            #  The first template *of this document type* becomes its default
+            #  whatever the caller asked for. Scoped by type: a company with
+            #  three invoice templates and no quote template still needs its
+            #  first quote template to be the quote default.
+            existing = uow.templates.list(company_id=company_id, doc_type=doc_type)
+
+            #  Checked here rather than left to the unique constraint. The
+            #  database is the backstop and its IntegrityError would reach the
+            #  user as a 500; a name clash is an ordinary thing to do by
+            #  accident and deserves a sentence saying so.
+            if any(t.name.casefold() == name.casefold() for t in existing):
+                raise BusinessRuleError(
+                    f"This company already has a {doc_type.replace('_', ' ')} "
+                    f"template called {name!r}. Names are unique per document "
+                    f"type — the same name on a quote template is fine."
+                )
+
             if not existing:
                 template.is_default = True
             elif template.is_default:
-                uow.templates.clear_default(company_id)
+                uow.templates.clear_default(company_id, doc_type)
 
             stored = uow.templates.add(template)
             _audit.record(
@@ -107,7 +124,11 @@ class TemplateService:
                 action=AuditAction.CREATE,
                 target_type="document_template",
                 target_id=stored.id,
-                after={"name": stored.name, "is_default": stored.is_default},
+                after={
+                    "name": stored.name,
+                    "doc_type": stored.doc_type,
+                    "is_default": stored.is_default,
+                },
             )
             uow.commit()
         return stored
@@ -170,7 +191,7 @@ class TemplateService:
             template = uow.templates.get(template_id)
             if template is None:
                 raise NotFoundError(f"Template {template_id} not found")
-            uow.templates.clear_default(template.company_id)
+            uow.templates.clear_default(template.company_id, template.doc_type)
             template.is_default = True
             stored = uow.templates.update(template)
             _audit.record(
@@ -191,9 +212,10 @@ class TemplateService:
                 raise NotFoundError(f"Template {template_id} not found")
             if template.is_default:
                 raise BusinessRuleError(
-                    "The default template cannot be deleted. Make another template "
-                    "the default first — a company with no default has no answer "
-                    "for the next invoice it issues."
+                    f"The default {template.doc_type.replace('_', ' ')} template "
+                    f"cannot be deleted. Make another the default first — a "
+                    f"document type with no default has no answer for the next "
+                    f"document of that type."
                 )
             uow.templates.delete(template_id)
             _audit.record(

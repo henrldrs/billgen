@@ -47,8 +47,15 @@ class DocumentTemplateRow(TenantRowMixin, Base):
         # Explicit names, same trap as quotes and expenses: the "uq" convention
         # keys off the first column, so both of these would be
         # `uq_document_templates_organization_id`.
+        #  `doc_type` is part of the key: "Standard" is a reasonable name for
+        #  an invoice template AND for a quote template, and a company that
+        #  cannot use it twice will end up with "Standard (quote)".
         UniqueConstraint(
-            "organization_id", "company_id", "name", name="uq_document_templates_name"
+            "organization_id",
+            "company_id",
+            "doc_type",
+            "name",
+            name="uq_document_templates_name",
         ),
     )
 

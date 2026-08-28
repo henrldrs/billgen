@@ -388,9 +388,12 @@ export class ApiClient {
   // templates it built and the screen shows them with an upgrade prompt. Every
   // write answers 402 below Business, whatever the UI rendered.
 
-  listTemplates(companyId?: string): Promise<TemplateResponse[]> {
-    const query = companyId ? `?company_id=${companyId}` : "";
-    return this.request("GET", `/templates${query}`);
+  listTemplates(companyId?: string, docType?: string): Promise<TemplateResponse[]> {
+    const params = new URLSearchParams();
+    if (companyId) params.set("company_id", companyId);
+    if (docType) params.set("doc_type", docType);
+    const query = params.toString();
+    return this.request("GET", `/templates${query ? `?${query}` : ""}`);
   }
 
   getTemplate(templateId: string): Promise<TemplateResponse> {

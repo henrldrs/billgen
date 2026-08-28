@@ -17,6 +17,11 @@ from core.models.template import TemplateAppearance, TemplateBlock
 class TemplateCreateRequest(BaseModel):
     company_id: UUID
     name: str = Field(min_length=1, max_length=120)
+    #  Which document this template prints. Quotes and credit notes carry
+    #  different wording from an invoice, so a quote rendered through an invoice
+    #  template says the wrong thing to a customer — the reason each type has
+    #  its own templates and its own default.
+    doc_type: str = Field(default="invoice", pattern="^(invoice|quote|credit_note)$")
     blocks: list[TemplateBlock] | None = None
     appearance: TemplateAppearance | None = None
     is_default: bool = False

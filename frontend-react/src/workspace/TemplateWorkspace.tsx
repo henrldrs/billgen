@@ -33,7 +33,7 @@ import { LiveInvoicePreview, type PreviewCompany } from "./LiveInvoicePreview";
 import { PresetGallery } from "./PresetGallery";
 import { PropertyPanel } from "./PropertyPanel";
 import { SAMPLES, sampleByKey } from "./sampleInvoice";
-import { type TemplatePreset, templateFromPreset } from "./templatePresets";
+import { type DocKind, type TemplatePreset, templateFromPreset } from "./templatePresets";
 import type { InvoiceTemplate, TemplateBlock } from "./templateSchema";
 
 export interface TemplateWorkspaceProps {
@@ -41,6 +41,9 @@ export interface TemplateWorkspaceProps {
   company: PreviewCompany;
   lang?: Lang;
   saving?: boolean;
+  /** Which document this template prints. Decides the title the models stamp
+   *  into the header, and nothing else — a look is a look on any document. */
+  docKind?: DocKind;
   /** Open straight into the editor — an existing template is being edited
    *  rather than a new one started. */
   skipGallery?: boolean;
@@ -57,6 +60,7 @@ export function TemplateWorkspace({
   company,
   lang = "en",
   saving = false,
+  docKind = "invoice",
   skipGallery = false,
   onChange,
   onSave,
@@ -93,6 +97,7 @@ export function TemplateWorkspace({
         id: template.id,
         name: template.name,
         isDefault: template.isDefault,
+        docKind,
       }),
       publishedVersion: template.publishedVersion,
     });

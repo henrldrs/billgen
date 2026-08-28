@@ -813,14 +813,22 @@ class SqlAlchemyTemplateRepository(TemplateRepository):
         row = self._get_row(template_id)
         return row_to_template(row) if row else None
 
-    def list(self, company_id: UUID | None = None) -> list[DocumentTemplate]:
+    def list(
+        self, company_id: UUID | None = None, doc_type: str | None = None
+    ) -> list[DocumentTemplate]:
         stmt = (
             select(DocumentTemplateRow)
             .where(self._org_filter())
-            .order_by(DocumentTemplateRow.is_default.desc(), DocumentTemplateRow.name)
+            .order_by(
+                DocumentTemplateRow.doc_type,
+                DocumentTemplateRow.is_default.desc(),
+                DocumentTemplateRow.name,
+            )
         )
         if company_id is not None:
             stmt = stmt.where(DocumentTemplateRow.company_id == company_id)
+        if doc_type is not None:
+            stmt = stmt.where(DocumentTemplateRow.doc_type == doc_type)
         return [row_to_template(row) for row in self._s.execute(stmt).scalars()]
 
     def update(self, template: DocumentTemplate) -> DocumentTemplate:
@@ -903,22 +911,26 @@ class SqlAlchemyTemplateRepository(TemplateRepository):
             }
         )
 
-    def default_for(self, company_id: UUID) -> DocumentTemplate | None:
+    def default_for(
+        self, company_id: UUID, doc_type: str = "invoice"
+    ) -> DocumentTemplate | None:
         row = self._s.execute(
             select(DocumentTemplateRow).where(
                 self._org_filter(),
                 DocumentTemplateRow.company_id == company_id,
+                DocumentTemplateRow.doc_type == doc_type,
                 DocumentTemplateRow.is_default.is_(True),
             )
         ).scalar_one_or_none()
         return row_to_template(row) if row else None
 
-    def clear_default(self, company_id: UUID) -> None:
+    def clear_default(self, company_id: UUID, doc_type: str = "invoice") -> None:
         self._s.execute(
             update(DocumentTemplateRow)
             .where(
                 DocumentTemplateRow.organization_id == current_organization_id(),
                 DocumentTemplateRow.company_id == company_id,
+                DocumentTemplateRow.doc_type == doc_type,
                 DocumentTemplateRow.is_default.is_(True),
             )
             .values(is_default=False)

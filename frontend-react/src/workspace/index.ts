@@ -45,4 +45,12 @@ export * from "./templateSchema";
 export * from "./types";
 export { BlockCanvas, type BlockCanvasProps } from "./BlockCanvas";
 export { PresetGallery, type PresetGalleryProps } from "./PresetGallery";
-export { TEMPLATE_PRESETS, presetByKey, templateFromPreset, type TemplatePreset } from "./templatePresets";
+export {
+  DOC_KINDS,
+  TEMPLATE_PRESETS,
+  docTitle,
+  presetByKey,
+  templateFromPreset,
+  type DocKind,
+  type TemplatePreset,
+} from "./templatePresets";

@@ -148,4 +148,11 @@ export { TemplateWorkspace, type TemplateWorkspaceProps } from "./workspace/Temp
 export { TemplateList, type TemplateListProps } from "./workspace/TemplateList";
 export { PresetGallery, type PresetGalleryProps } from "./workspace/PresetGallery";
 export { defaultTemplate, type InvoiceTemplate, type TemplateAppearance, type TemplateBlock } from "./workspace/templateSchema";
-export { TEMPLATE_PRESETS, templateFromPreset, type TemplatePreset } from "./workspace/templatePresets";
+export {
+  DOC_KINDS,
+  TEMPLATE_PRESETS,
+  docTitle,
+  templateFromPreset,
+  type DocKind,
+  type TemplatePreset,
+} from "./workspace/templatePresets";

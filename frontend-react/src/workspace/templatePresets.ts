@@ -20,6 +20,25 @@ import {
   defaultBlocks,
 } from "./templateSchema";
 
+/** Which document a template prints.
+ *
+ *  Mirrors the server's `doc_type`. It is part of a template's identity rather
+ *  than a label on it: the name is unique per type, the default is per type,
+ *  and a quote printed through an invoice template says "INVOICE" to a customer
+ *  who has not bought anything yet.
+ */
+export type DocKind = "invoice" | "quote" | "credit_note";
+
+export const DOC_KINDS: readonly { value: DocKind; label: string; title: string }[] = [
+  { value: "invoice", label: "Invoices", title: "INVOICE" },
+  { value: "quote", label: "Quotes", title: "QUOTE" },
+  { value: "credit_note", label: "Credit notes", title: "CREDIT NOTE" },
+];
+
+export function docTitle(kind: DocKind): string {
+  return DOC_KINDS.find((d) => d.value === kind)?.title ?? "INVOICE";
+}
+
 export interface TemplatePreset {
   key: string;
   name: string;
@@ -124,15 +143,25 @@ export function presetByKey(key: string): TemplatePreset {
  */
 export function templateFromPreset(
   preset: TemplatePreset,
-  overrides: Partial<Pick<InvoiceTemplate, "id" | "name" | "isDefault">> = {},
+  overrides: Partial<Pick<InvoiceTemplate, "id" | "name" | "isDefault">> & {
+    docKind?: DocKind;
+  } = {},
 ): InvoiceTemplate {
+  const kind = overrides.docKind ?? "invoice";
   const visible = new Set<BlockKind>(preset.visible);
   const blocks: TemplateBlock[] = defaultBlocks().map((block) => {
     const extra = preset.properties?.[block.id] ?? {};
+    //  The header's title comes from the document type, not the preset: a
+    //  preset describes a *look*, and "Editorial" is a look a quote can have
+    //  too. Only the preset's own casing survives.
+    const titled =
+      block.kind === "header"
+        ? { documentTitle: matchCase(docTitle(kind), (extra.documentTitle as string) ?? "") }
+        : {};
     return {
       ...block,
       visible: visible.has(block.kind),
-      properties: { ...block.properties, ...extra },
+      properties: { ...block.properties, ...extra, ...titled },
     } as TemplateBlock;
   });
 
@@ -145,6 +174,15 @@ export function templateFromPreset(
     publishedVersion: 0,
     updatedAt: new Date().toISOString(),
   };
+}
+
+/** Keep a preset's typographic choice about case while changing the word.
+ *  "Classic" shouts INVOICE and "Modern" says Invoice; both should stay
+ *  themselves when the document becomes a quote. */
+function matchCase(word: string, sample: string): string {
+  if (!sample) return word;
+  const isUpper = sample === sample.toUpperCase();
+  return isUpper ? word.toUpperCase() : word.charAt(0) + word.slice(1).toLowerCase();
 }
 
 export { defaultAppearance };

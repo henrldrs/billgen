@@ -3739,6 +3739,22 @@
               ],
               "title": "Company Id"
             }
+          },
+          {
+            "name": "doc_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Doc Type"
+            }
           }
         ],
         "responses": {
@@ -9129,6 +9145,12 @@
             "maxLength": 120,
             "minLength": 1,
             "title": "Name"
+          },
+          "doc_type": {
+            "type": "string",
+            "pattern": "^(invoice|quote|credit_note)$",
+            "title": "Doc Type",
+            "default": "invoice"
           },
           "blocks": {
             "anyOf": [

@@ -511,11 +511,11 @@ export function usePlans() {
 // so a hand-rolled cache update would have to know which other rows moved —
 // which is exactly the knowledge the server already has.
 
-export function useTemplates(companyId?: string) {
+export function useTemplates(companyId?: string, docType?: string) {
   const api = useApi();
   return useQuery({
-    queryKey: ["templates", companyId ?? "all"],
-    queryFn: () => api.listTemplates(companyId),
+    queryKey: ["templates", companyId ?? "all", docType ?? "all"],
+    queryFn: () => api.listTemplates(companyId, docType),
   });
 }
 

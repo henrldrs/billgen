@@ -33,3 +33,5 @@ body {
 
 /* The template studio (catalog/templates). Scoped to .bg-ws-* and .bg-doc. */
 @import "@billgen/ui/src/workspace/workspace.css";
+
+.bg-ws-doc-kinds { margin: var(--bg-space-3, 12px) 0; }
