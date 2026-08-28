@@ -96,6 +96,36 @@ but absent is fiction someone will plan against; an endpoint present but
 undocumented means the map has stopped being complete, which is how a document
 stops being read.
 
+### Removing the cause, not just reporting it
+
+Reporting drift every run and expecting a person to fix it by hand is how the
+drift happened. So `sync-architecture` writes the computable parts of the
+document:
+
+```bash
+python -m billgen_audit sync-architecture          # rewrite
+python -m billgen_audit sync-architecture --check  # exit 1 if stale
+```
+
+It touches exactly two kinds of thing and leaves everything else byte-for-byte
+alone:
+
+| Marker | What it holds |
+|---|---|
+| `<!-- GENERATED:endpoints -->…<!-- /GENERATED:endpoints -->` | the complete registered surface, grouped by router |
+| `<span data-fact="endpoint_count">70</span>` | one number, replaced in place wherever it appears |
+
+The split it enforces: **a fact a machine can compute is generated; a judgement
+is written by a person.** The endpoint table drifted; the verdicts beside it
+("still no UI", "B3 closed") did not, because a verdict does not go stale the
+way a route table does.
+
+Once the markers are present the scanner changes what it reports: "present but
+undocumented" is suppressed (structurally impossible), "documented but absent"
+drops to INFORMATIONAL (those are usually deliberate gap mentions), and a new
+MEDIUM fires when the generated blocks are stale — which is the condition that
+actually matters.
+
 ## Commands
 
 ```bash
@@ -106,6 +136,7 @@ python -m billgen_audit list                 # every audit held
 python -m billgen_audit show audit-001       # one audit's report
 python -m billgen_audit evidence audit-001   # what was collected
 python -m billgen_audit diff audit-001 audit-002
+python -m billgen_audit sync-architecture           # regenerate the architecture doc
 python -m billgen_audit run --target ../other-checkout
 ```
 

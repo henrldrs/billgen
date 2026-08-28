@@ -33,6 +33,7 @@ import html
 import re
 
 from ..findings import Finding, Location, RequirementType, Severity
+from ..report import architecture as archsync
 from .base import Scanner, ScanResult
 
 _TAG = re.compile(r"<[^>]+>")
@@ -95,13 +96,64 @@ class ArchitectureDocScanner(Scanner):
         }
 
         seq = 0
+
+        #  Once the document carries generator markers, the generated block is
+        #  the authoritative statement of what exists, and the two findings
+        #  below change meaning:
+        #
+        #    - every real route is in the block, so "present but undocumented"
+        #      is structurally impossible and reporting it would be noise.
+        #    - an endpoint named only in the prose is usually a *deliberate gap
+        #      mention* ("no POST /email/test yet"), not a false claim. It drops
+        #      to INFORMATIONAL: worth a human eye, not worth a MEDIUM.
+        #
+        #  What replaces them is a real check — whether the generated block is
+        #  still in sync with the tree.
+        generated = archsync.markers_present(doc)
+        if generated:
+            in_sync, notes = archsync.sync(self.config, check=True)
+            summary["generated_block_in_sync"] = in_sync
+            if not in_sync:
+                seq += 1
+                res.findings.append(
+                    Finding(
+                        id=f"ARCH-DOC-{seq:03d}",
+                        agent="architecture",
+                        severity=Severity.MEDIUM,
+                        category="documentation_drift",
+                        title="The document's generated blocks are stale",
+                        location=Location(rel),
+                        evidence="; ".join(notes),
+                        impact=(
+                            "The endpoint inventory and the file counts are "
+                            "generated precisely so they cannot drift. Stale means "
+                            "someone edited the tree and did not re-run the "
+                            "generator, so the document is lying again in exactly "
+                            "the place this mechanism was built to prevent."
+                        ),
+                        requirement_type=RequirementType.RECOMMENDATION,
+                        recommendation=(
+                            "Run `python -m billgen_audit sync-architecture`, and "
+                            "consider running it in the same hook that runs the "
+                            "tests."
+                        ),
+                        confidence=1.0,
+                        verification_test=(
+                            "`python -m billgen_audit sync-architecture --check` "
+                            "exits 0."
+                        ),
+                    )
+                )
+
         if documented_absent:
             seq += 1
             res.findings.append(
                 Finding(
                     id=f"ARCH-DOC-{seq:03d}",
                     agent="architecture",
-                    severity=Severity.MEDIUM,
+                    severity=(
+                        Severity.INFORMATIONAL if generated else Severity.MEDIUM
+                    ),
                     category="documentation_drift",
                     title=(
                         f"{len(documented_absent)} endpoint(s) documented in "
@@ -115,10 +167,21 @@ class ArchitectureDocScanner(Scanner):
                         + ("..." if len(documented_absent) > 20 else "")
                     ),
                     impact=(
-                        "The architecture document is the stated source of truth for "
-                        "planning. Endpoints it describes that nobody can call turn "
-                        "into roadmap items believed to be done, and into frontend "
-                        "work written against a contract that was never shipped."
+                        (
+                            "These appear only in prose, not in the generated "
+                            "inventory, so most will be deliberate gap mentions "
+                            "rather than false claims. Each still deserves one "
+                            "human glance: a route named with the wrong path reads "
+                            "exactly the same as a route that does not exist yet."
+                        )
+                        if generated
+                        else (
+                            "The architecture document is the stated source of truth "
+                            "for planning. Endpoints it describes that nobody can "
+                            "call turn into roadmap items believed to be done, and "
+                            "into frontend work written against a contract that was "
+                            "never shipped."
+                        )
                     ),
                     requirement_type=RequirementType.RECOMMENDATION,
                     recommendation=(
@@ -126,7 +189,7 @@ class ArchitectureDocScanner(Scanner):
                         "A document that mixes both without saying which is which "
                         "cannot be used for either purpose."
                     ),
-                    confidence=0.75,
+                    confidence=0.3 if generated else 0.75,
                     verification_test=(
                         "Re-run this audit; documented_but_absent should be empty or "
                         "explicitly annotated as planned."
@@ -134,7 +197,9 @@ class ArchitectureDocScanner(Scanner):
                 )
             )
 
-        if undocumented:
+        #  Suppressed once the inventory is generated: every registered route is
+        #  in the block by construction, so this can only fire as a false alarm.
+        if undocumented and not generated:
             seq += 1
             res.findings.append(
                 Finding(

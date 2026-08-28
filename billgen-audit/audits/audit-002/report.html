@@ -1,0 +1,160 @@
+<!doctype html><html lang='en'><head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width,initial-scale=1'>
+<title>BillGen Audit audit-002</title>
+<style>
+:root {
+  --bg: #fbfbfa; --panel: #ffffff; --ink: #1c1c1a; --muted: #6b6b66;
+  --line: #e4e4df; --accent: #0f766e;
+  --crit: #b42318; --high: #c4320a; --med: #b54708; --low: #667085; --info: #98a2b3;
+  --red: #b42318; --amber: #b54708; --green: #067647;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14140f; --panel: #1c1c18; --ink: #f0efe9; --muted: #9d9d94;
+    --line: #2e2e28; --accent: #2dd4bf;
+    --crit: #ff8a7a; --high: #ffa06b; --med: #ffc46b; --low: #a5adba; --info: #7d8592;
+    --red: #ff8a7a; --amber: #ffc46b; --green: #4ade80;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14140f; --panel: #1c1c18; --ink: #f0efe9; --muted: #9d9d94;
+  --line: #2e2e28; --accent: #2dd4bf;
+  --crit: #ff8a7a; --high: #ffa06b; --med: #ffc46b; --low: #a5adba; --info: #7d8592;
+  --red: #ff8a7a; --amber: #ffc46b; --green: #4ade80;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.6 ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
+}
+.wrap { max-width: 60rem; margin: 0 auto; padding: 3rem 1.5rem 6rem; }
+h1 { font-size: 1.9rem; letter-spacing: -0.02em; margin: 0 0 .3rem; }
+h2 { font-size: 1.15rem; letter-spacing: -0.01em; margin: 3rem 0 1rem;
+     padding-bottom: .5rem; border-bottom: 1px solid var(--line); }
+h3 { font-size: .95rem; margin: 2rem 0 .75rem; color: var(--muted);
+     text-transform: uppercase; letter-spacing: .08em; }
+.sub { color: var(--muted); font-size: .9rem; margin-bottom: 2rem; }
+.verdict { display: inline-block; padding: .3rem .85rem; border-radius: 999px;
+  font-weight: 650; font-size: .85rem; letter-spacing: .04em; }
+.RED { background: color-mix(in srgb, var(--red) 15%, transparent); color: var(--red); }
+.AMBER { background: color-mix(in srgb, var(--amber) 15%, transparent); color: var(--amber); }
+.GREEN { background: color-mix(in srgb, var(--green) 15%, transparent); color: var(--green); }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.scroll { overflow-x: auto; }
+th, td { text-align: left; padding: .55rem .6rem; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 600; font-size: .78rem;
+     text-transform: uppercase; letter-spacing: .06em; }
+.meter { display: inline-block; height: .5rem; border-radius: 3px;
+  background: var(--accent); vertical-align: middle; }
+.na { color: var(--muted); font-style: italic; }
+.note { background: var(--panel); border: 1px solid var(--line);
+  border-left: 3px solid var(--accent); border-radius: 6px;
+  padding: .9rem 1.1rem; margin: 1rem 0; font-size: .9rem; }
+.f { background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+     padding: 1.1rem 1.25rem; margin: .85rem 0; }
+.f header { display: flex; flex-wrap: wrap; gap: .5rem; align-items: baseline;
+            margin-bottom: .6rem; }
+.f h4 { margin: 0; font-size: 1rem; flex: 1 1 20rem; }
+.pill { font-size: .72rem; font-weight: 650; letter-spacing: .05em;
+        padding: .12rem .5rem; border-radius: 4px;
+        background: color-mix(in srgb, currentColor 13%, transparent); }
+.CRITICAL { color: var(--crit); } .HIGH { color: var(--high); }
+.MEDIUM { color: var(--med); } .LOW { color: var(--low); } .INFORMATIONAL { color: var(--info); }
+.meta { color: var(--muted); font-size: .8rem; font-family: ui-monospace, monospace; }
+.f p { margin: .5rem 0; }
+.f b { font-weight: 650; }
+pre { background: var(--bg); border: 1px solid var(--line); border-radius: 6px;
+      padding: .8rem; overflow-x: auto; font-size: .82rem; margin: .6rem 0; }
+ul { padding-left: 1.2rem; }
+li { margin: .3rem 0; }
+footer { margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--line);
+         color: var(--muted); font-size: .82rem; }
+</style></head><body><div class='wrap'>
+<h1>BillGen Professional Audit</h1>
+<p class='sub'>audit-002 · <span class='verdict RED'>Overall risk: RED</span></p>
+<div class='scroll'><table><tbody>
+<tr><th>Target</th><td>BillGen BETA</td></tr>
+<tr><th>Commit</th><td>748fd2c3f559 (dirty)</td></tr>
+<tr><th>Branch</th><td>audit-engine-and-scaffolds</td></tr>
+<tr><th>Run</th><td>2026-08-28T16:04:47+00:00 → 2026-08-28T16:07:13+00:00</td></tr>
+<tr><th>Findings</th><td>20</td></tr>
+<tr><th>Architecture doc</th><td>docs/ARCHITECTURE/system-architecture.html</td></tr>
+</tbody></table></div>
+<h2>Scorecard</h2><div class='scroll'><table>
+<thead><tr><th>Domain</th><th>Score</th><th></th><th>Findings</th></tr></thead><tbody>
+<tr><td>Legal/VAT</td><td class='na'>n/a</td><td></td><td>5</td></tr>
+<tr><td>Accounting</td><td>100/100</td><td><span class='meter' style='width:140px'></span></td><td>0</td></tr>
+<tr><td>GDPR</td><td>56/100</td><td><span class='meter' style='width:78px'></span></td><td>3</td></tr>
+<tr><td>Architecture</td><td>95/100</td><td><span class='meter' style='width:133px'></span></td><td>2</td></tr>
+<tr><td>Security</td><td>41/100</td><td><span class='meter' style='width:57px'></span></td><td>5</td></tr>
+<tr><td>Document Engine</td><td>100/100</td><td><span class='meter' style='width:140px'></span></td><td>0</td></tr>
+<tr><td>Peppol Readiness</td><td>87/100</td><td><span class='meter' style='width:122px'></span></td><td>3</td></tr>
+<tr><td>Performance</td><td class='na'>n/a</td><td></td><td>0</td></tr>
+<tr><td>Resilience</td><td>94/100</td><td><span class='meter' style='width:132px'></span></td><td>1</td></tr>
+</tbody></table></div>
+<div class='note'><b>Legal/VAT — n/a.</b> The scanner reported it could not reach a conclusion here. Any findings listed are items to confirm, not defects found.</div>
+<div class='note'><b>Performance — n/a.</b> No deterministic scanner covers this domain. Spec §8.6 requires an authorized environment and a load generator; running one is a human decision, so this scores n/a rather than 100.</div>
+<h2>Not assessed</h2>
+<div class='note'>Absence of evidence is not evidence of compliance (spec §1). Nothing below was checked, and none of it is scored as passing.</div><ul>
+<li>Belgian VAT / e-invoicing: 7 rule(s) (BE-EINV-001, BE-EINV-002, BE-VAT-001, BE-VAT-002, BE-VAT-003, BE-VAT-004, BE-VAT-005) have implementation code present but unverified. A pattern match is not a legal conclusion (§1, §5), so this domain is not scored. Run the legal-vat agent over evidence/legal-rules.json to close them.</li>
+<li>Known vulnerabilities (§8.3): this engine performs no network lookup, so no advisory database was consulted. Run the ecosystem&#x27;s own advisory scanner and attach its output as evidence.</li>
+<li>Error detection (§8.8): no error-tracking integration was found in the tree. If one is configured at the platform level instead, attach that configuration as evidence.</li>
+<li>Dynamic testing (§8.6 performance, §8.5 restore drill, §8.2 live cross-tenant probe): not run. These mutate or load a running system and require --authorize-dynamic against an environment you are permitted to test. Performance therefore scores n/a, not 100.</li>
+</ul>
+<h2>Systemic findings</h2>
+<div class='f'><header><h4>Data lifecycle — retention, erasure and recovery — 3 findings from 2 agents describe one mechanism</h4><span class='pill CRITICAL'>CRITICAL</span></header><p class='meta'>SYS-DATA-LIFECYCLE · orchestrator · confidence 0.75 · recommendation · (no single location)</p><pre>Raised independently by architecture, gdpr:
+  - [GDPR-002] No endpoint implements data-subject export (HIGH)
+  - [GDPR-003] No endpoint implements data-subject deletion (HIGH)
+  - [RES-001] No recovery time or recovery point objective is documented (MEDIUM)</pre><p><b>Impact.</b> Each finding is individually survivable; together they describe a mechanism with no compensating control. §9: the correlated severity is higher than any single part, because a fix to one part leaves the failure mode intact.</p><p><b>Recommendation.</b> Treat as one piece of work with one owner. Fixing these separately across agents&#x27; recommendations tends to produce partial coverage that reads as done.</p><p><b>Verify.</b> Re-run the audit; the systemic finding clears only when every member finding clears.</p></div>
+<h2>Findings</h2>
+<h3>HIGH — 8</h3>
+<div class='f'><header><h4>7 required privacy document(s) not present in the repository</h4><span class='pill HIGH'>HIGH</span></header><p class='meta'>GDPR-001 · gdpr · confidence 0.95 · recommendation · docs</p><p><b>Evidence.</b> Not found: cookie_policy, dpa, incident_response, privacy_policy, retention_policy, security_policy, subprocessors</p><p><b>Impact.</b> §7 expects a controller to be able to show its processing record, retention periods, subprocessors and breach procedure. None of these can be audited from code alone, and their absence here is a gap in the audit, not a pass.</p><p><b>Recommendation.</b> Keep these in the repository beside the code they describe, so §7.2&#x27;s code-vs-policy comparison has two sides to compare.</p><p><b>Verify.</b> Re-run; the missing list should shrink.</p><p class='meta'>Sources: Spec §7.1 data inventory questions · Spec §7.2 code-vs-policy consistency</p></div>
+<div class='f'><header><h4>POST /invoices/preview declares no permission</h4><span class='pill HIGH'>HIGH</span></header><p class='meta'>ARCH-AUTHZ-004 · architecture · confidence 0.85 · security_best_practice · api/routers/invoices.py:64</p><p><b>Evidence.</b> preview authenticates, but no permission dependency appears among [&#x27;InvoicePreviewRequest&#x27;].</p><p><b>Impact.</b> Authentication is not authorization. Any signed-in member of any role can perform this write.</p><p><b>Recommendation.</b> Declare the permission this write requires, so the role matrix governs it rather than the absence of a check.</p><p><b>Verify.</b> Authenticate as the lowest-privilege role and call POST /invoices/preview; expect 403.</p></div>
+<div class='f'><header><h4>No endpoint implements data-subject export</h4><span class='pill HIGH'>HIGH</span></header><p class='meta'>GDPR-002 · gdpr · confidence 0.75 · recommendation · api/routers</p><p><b>Evidence.</b> No registered route matched the export pattern across 70 endpoints.</p><p><b>Impact.</b> A data-subject request must be satisfiable within a statutory deadline. Without an endpoint it is a manual database operation, which does not scale and is not logged.</p><p><b>Recommendation.</b> Implement export as an audited, tenant-scoped operation.</p><p><b>Verify.</b> Exercise the export flow end to end for one user.</p></div>
+<div class='f'><header><h4>No endpoint implements data-subject deletion</h4><span class='pill HIGH'>HIGH</span></header><p class='meta'>GDPR-003 · gdpr · confidence 0.75 · recommendation · api/routers</p><p><b>Evidence.</b> No registered route matched the deletion pattern across 70 endpoints.</p><p><b>Impact.</b> A data-subject request must be satisfiable within a statutory deadline. Without an endpoint it is a manual database operation, which does not scale and is not logged.</p><p><b>Recommendation.</b> Implement deletion as an audited, tenant-scoped operation.</p><p><b>Verify.</b> Exercise the deletion flow end to end for one user.</p></div>
+<div class='f'><header><h4>POST /auth/desktop-bootstrap is a write reachable without authentication</h4><span class='pill HIGH'>HIGH</span></header><p class='meta'>ARCH-PUBWRITE-001 · architecture · confidence 0.70 · security_best_practice · api/routers/desktop.py:12</p><p><b>Evidence.</b> The auth middleware (api/middleware/tenant.py) exempts this path via its public allowlist [&#x27;/&#x27;, &#x27;/auth/&#x27;, &#x27;/docs&#x27;, &#x27;/healthz&#x27;, &#x27;/openapi.json&#x27;, &#x27;/readyz&#x27;, &#x27;/redoc&#x27;], and desktop_bootstrap accepts POST.</p><p><b>Impact.</b> An unauthenticated caller can invoke a state-changing endpoint. Whether that is intended depends on the endpoint; login and signup are, most others are not.</p><p><b>Recommendation.</b> Confirm each allowlisted write is deliberately public, and that it is rate-limited and does not accept a tenant identifier from the caller.</p><p><b>Verify.</b> Call POST /auth/desktop-bootstrap with no Authorization header and confirm the response is the intended public behaviour.</p></div>
+<div class='f'><header><h4>POST /auth/logout is a write reachable without authentication</h4><span class='pill HIGH'>HIGH</span></header><p class='meta'>ARCH-PUBWRITE-002 · architecture · confidence 0.70 · security_best_practice · api/routers/auth.py:71</p><p><b>Evidence.</b> The auth middleware (api/middleware/tenant.py) exempts this path via its public allowlist [&#x27;/&#x27;, &#x27;/auth/&#x27;, &#x27;/docs&#x27;, &#x27;/healthz&#x27;, &#x27;/openapi.json&#x27;, &#x27;/readyz&#x27;, &#x27;/redoc&#x27;], and logout accepts POST.</p><p><b>Impact.</b> An unauthenticated caller can invoke a state-changing endpoint. Whether that is intended depends on the endpoint; login and signup are, most others are not.</p><p><b>Recommendation.</b> Confirm each allowlisted write is deliberately public, and that it is rate-limited and does not accept a tenant identifier from the caller.</p><p><b>Verify.</b> Call POST /auth/logout with no Authorization header and confirm the response is the intended public behaviour.</p></div>
+<div class='f'><header><h4>POST /auth/signup is a write reachable without authentication</h4><span class='pill HIGH'>HIGH</span></header><p class='meta'>ARCH-PUBWRITE-003 · architecture · confidence 0.70 · security_best_practice · api/routers/auth.py:29</p><p><b>Evidence.</b> The auth middleware (api/middleware/tenant.py) exempts this path via its public allowlist [&#x27;/&#x27;, &#x27;/auth/&#x27;, &#x27;/docs&#x27;, &#x27;/healthz&#x27;, &#x27;/openapi.json&#x27;, &#x27;/readyz&#x27;, &#x27;/redoc&#x27;], and signup accepts POST.</p><p><b>Impact.</b> An unauthenticated caller can invoke a state-changing endpoint. Whether that is intended depends on the endpoint; login and signup are, most others are not.</p><p><b>Recommendation.</b> Confirm each allowlisted write is deliberately public, and that it is rate-limited and does not accept a tenant identifier from the caller.</p><p><b>Verify.</b> Call POST /auth/signup with no Authorization header and confirm the response is the intended public behaviour.</p></div>
+<div class='f'><header><h4>Structured invoices are generated but no transmission path exists</h4><span class='pill HIGH'>HIGH</span></header><p class='meta'>EINV-001 · legal-vat · confidence 0.70 · recommendation · core/einvoicing</p><p><b>Evidence.</b> core/einvoicing builds structured documents and validates them, but no send/transmit/access-point code was found.</p><p><b>Impact.</b> §5.3 requires generation and delivery to be distinct states. With no transmission, a customer who believes the product files their e-invoices is mistaken, and the obligation is unmet with no error to signal it.</p><p><b>Recommendation.</b> Model delivery as its own state with its own failures, and never let a generated document display as sent.</p><p><b>Verify.</b> Generate an e-invoice and assert its status is not &#x27;sent&#x27; until an access point acknowledges it.</p></div>
+<h3>MEDIUM — 3</h3>
+<div class='f'><header><h4>No recovery time or recovery point objective is documented</h4><span class='pill MEDIUM'>MEDIUM</span></header><p class='meta'>RES-001 · architecture · confidence 0.90 · recommendation · docs</p><p><b>Evidence.</b> No RTO/RPO statement was found in any document in the tree.</p><p><b>Impact.</b> §8.5 requires the objectives to be established first and the architecture compared against them. Without a stated RTO, no resilience investment can be shown to be sufficient — or shown to be excessive, which for an early-stage product is the more common and more expensive error.</p><p><b>Recommendation.</b> State the acceptable downtime and acceptable data loss, then compare backup frequency against the RPO. Do not add replication until the RTO demands it.</p><p><b>Verify.</b> Point to the document stating RTO and RPO.</p></div>
+<div class='f'><header><h4>Auth middleware exempts the whole &#x27;/auth/&#x27; prefix</h4><span class='pill MEDIUM'>MEDIUM</span></header><p class='meta'>ARCH-PUBLIC-001 · architecture · confidence 0.80 · security_best_practice · api/middleware/tenant.py</p><p><b>Evidence.</b> The public allowlist in api/middleware/tenant.py exempts every path beginning &#x27;/auth/&#x27;, not a fixed set of paths. Any route added under that prefix later is unauthenticated by default, with no code change to review.</p><p><b>Impact.</b> A future endpoint under this prefix ships without authentication and nothing in the diff says so.</p><p><b>Recommendation.</b> Enumerate the public paths exactly, so adding a public route is a visible edit to the allowlist.</p><p><b>Verify.</b> Add a test asserting every registered route under &#x27;/auth/&#x27; is intentionally public.</p></div>
+<div class='f'><header><h4>No request or correlation identifier is threaded through logs</h4><span class='pill MEDIUM'>MEDIUM</span></header><p class='meta'>OBS-001 · architecture · confidence 0.75 · recommendation · api</p><p><b>Evidence.</b> No correlation/request/trace id marker was found.</p><p><b>Impact.</b> §8.8 asks whether the team can distinguish a customer-specific failure from a global outage. Without a per-request id, one user&#x27;s failing invoice cannot be traced across the API, the PDF renderer and the delivery attempt.</p><p><b>Recommendation.</b> Generate an id per request and log it at every layer.</p><p><b>Verify.</b> Trigger one failure and retrieve every log line for it by id.</p></div>
+<h3>INFORMATIONAL — 8</h3>
+<div class='f'><header><h4>7 endpoint(s) documented in system-architecture.html do not exist in the router tree</h4><span class='pill INFORMATIONAL'>INFORMATIONAL</span></header><p class='meta'>ARCH-DOC-001 · architecture · confidence 0.30 · recommendation · docs/ARCHITECTURE/system-architecture.html</p><p><b>Evidence.</b> The document names these, and no registered route matches after parameter normalisation: DELETE /auth/sessions, GET /reports/export, POST /auth/password, POST /email/test, POST /invoices/{}/send, POST /privacy/delete-account, POST /privacy/export</p><p><b>Impact.</b> These appear only in prose, not in the generated inventory, so most will be deliberate gap mentions rather than false claims. Each still deserves one human glance: a route named with the wrong path reads exactly the same as a route that does not exist yet.</p><p><b>Recommendation.</b> Either mark each as planned rather than built, or delete it. A document that mixes both without saying which is which cannot be used for either purpose.</p><p><b>Verify.</b> Re-run this audit; documented_but_absent should be empty or explicitly annotated as planned.</p></div>
+<div class='f'><header><h4>Confirm structured e-invoice generation is visible — needs legal confirmation</h4><span class='pill INFORMATIONAL'>INFORMATIONAL</span></header><p class='meta'>LEGAL-BE-EINV-001-C · legal-vat · confidence 0.20 · assumption · api/entitlements/__init__.py</p><p><b>Evidence.</b> Code matching this rule&#x27;s signal exists in 183 place(s), e.g. api/entitlements/__init__.py, api/entitlements/deps.py, api/entitlements/matrix.py, api/entitlements/usage.py. A pattern match shows the topic is addressed somewhere; it does not show the rule is met. Only a reading of the implementation against the source can conclude that.</p><p><b>Impact.</b> Until confirmed, this requirement is unverified. It is not a finding and it is not a pass.</p><p><b>Recommendation.</b> Have the legal agent read these files against https://finances.belgium.be/fr/entreprises/tva/facturation/facturation-electronique and record the conclusion.</p><p><b>Verify.</b> Generate a structured invoice and validate it against the format&#x27;s business-rule set.</p><p class='meta'>Sources: https://finances.belgium.be/fr/entreprises/tva/facturation/facturation-electronique · rules/belgium-e-invoicing.json :: BE-EINV-001</p></div>
+<div class='f'><header><h4>Confirm participant identifier handling is visible — needs legal confirmation</h4><span class='pill INFORMATIONAL'>INFORMATIONAL</span></header><p class='meta'>LEGAL-BE-EINV-002-C · legal-vat · confidence 0.20 · assumption · core/einvoicing/ubl_builder.py</p><p><b>Evidence.</b> Code matching this rule&#x27;s signal exists in 24 place(s), e.g. core/einvoicing/ubl_builder.py, core/einvoicing/ubl_validator.py, core/rules/belgian_peppol.py, tests/core/rules/test_identifiers.py. A pattern match shows the topic is addressed somewhere; it does not show the rule is met. Only a reading of the implementation against the source can conclude that.</p><p><b>Impact.</b> Until confirmed, this requirement is unverified. It is not a finding and it is not a pass.</p><p><b>Recommendation.</b> Have the legal agent read these files against https://docs.peppol.eu/poacc/billing/3.0/ and record the conclusion.</p><p><b>Verify.</b> Attempt delivery to an unregistered recipient; expect a clear pre-issue failure.</p><p class='meta'>Sources: https://docs.peppol.eu/poacc/billing/3.0/ · rules/belgium-e-invoicing.json :: BE-EINV-002</p></div>
+<div class='f'><header><h4>Mandatory invoice mentions are not visibly validated — needs legal confirmation</h4><span class='pill INFORMATIONAL'>INFORMATIONAL</span></header><p class='meta'>LEGAL-BE-VAT-001-C · legal-vat · confidence 0.20 · assumption · core/einvoicing/__init__.py</p><p><b>Evidence.</b> Code matching this rule&#x27;s signal exists in 18 place(s), e.g. core/einvoicing/__init__.py, core/einvoicing/ubl_validator.py, core/pdf/context.py, core/rules/__init__.py. A pattern match shows the topic is addressed somewhere; it does not show the rule is met. Only a reading of the implementation against the source can conclude that.</p><p><b>Impact.</b> Until confirmed, this requirement is unverified. It is not a finding and it is not a pass.</p><p><b>Recommendation.</b> Have the legal agent read these files against https://finances.belgium.be/fr/entreprises/tva/facturation and record the conclusion.</p><p><b>Verify.</b> Issue an invoice with the VAT number removed; expect refusal.</p><p class='meta'>Sources: https://finances.belgium.be/fr/entreprises/tva/facturation · rules/belgium-vat.json :: BE-VAT-001</p></div>
+<div class='f'><header><h4>Confirm gapless sequential numbering mechanism is visible — needs legal confirmation</h4><span class='pill INFORMATIONAL'>INFORMATIONAL</span></header><p class='meta'>LEGAL-BE-VAT-002-C · legal-vat · confidence 0.20 · assumption · api/entitlements/service.py</p><p><b>Evidence.</b> Code matching this rule&#x27;s signal exists in 226 place(s), e.g. api/entitlements/service.py, api/routers/backup.py, api/routers/invoices.py, api/routers/quotes.py. A pattern match shows the topic is addressed somewhere; it does not show the rule is met. Only a reading of the implementation against the source can conclude that.</p><p><b>Impact.</b> Until confirmed, this requirement is unverified. It is not a finding and it is not a pass.</p><p><b>Recommendation.</b> Have the legal agent read these files against https://finances.belgium.be/fr/entreprises/tva/facturation and record the conclusion.</p><p><b>Verify.</b> Issue invoices concurrently and assert a contiguous series with no duplicates.</p><p class='meta'>Sources: https://finances.belgium.be/fr/entreprises/tva/facturation · rules/belgium-vat.json :: BE-VAT-002</p></div>
+<div class='f'><header><h4>Credit notes do not visibly reference the corrected invoice — needs legal confirmation</h4><span class='pill INFORMATIONAL'>INFORMATIONAL</span></header><p class='meta'>LEGAL-BE-VAT-003-C · legal-vat · confidence 0.20 · assumption · core/pdf/context.py</p><p><b>Evidence.</b> Code matching this rule&#x27;s signal exists in 10 place(s), e.g. core/pdf/context.py, core/services/pdf_service.py, db/migrations/versions/3d8a27f7f865_initial_schema.py, db/repositories/mappers.py. A pattern match shows the topic is addressed somewhere; it does not show the rule is met. Only a reading of the implementation against the source can conclude that.</p><p><b>Impact.</b> Until confirmed, this requirement is unverified. It is not a finding and it is not a pass.</p><p><b>Recommendation.</b> Have the legal agent read these files against https://finances.belgium.be/fr/entreprises/tva/facturation and record the conclusion.</p><p><b>Verify.</b> Attempt to create a credit note with no original invoice; expect refusal.</p><p class='meta'>Sources: https://finances.belgium.be/fr/entreprises/tva/facturation · rules/belgium-vat.json :: BE-VAT-003</p></div>
+<div class='f'><header><h4>Confirm VAT identification number validation is visible — needs legal confirmation</h4><span class='pill INFORMATIONAL'>INFORMATIONAL</span></header><p class='meta'>LEGAL-BE-VAT-004-C · legal-vat · confidence 0.20 · assumption · core/services/company_validation.py</p><p><b>Evidence.</b> Code matching this rule&#x27;s signal exists in 6 place(s), e.g. core/services/company_validation.py, core/tva/classification.py, core/tva/validation.py, tests/core/services/conftest.py. A pattern match shows the topic is addressed somewhere; it does not show the rule is met. Only a reading of the implementation against the source can conclude that.</p><p><b>Impact.</b> Until confirmed, this requirement is unverified. It is not a finding and it is not a pass.</p><p><b>Recommendation.</b> Have the legal agent read these files against https://ec.europa.eu/taxation_customs/vies/ and record the conclusion.</p><p><b>Verify.</b> Enter a number failing the modulo-97 check; expect rejection.</p><p class='meta'>Sources: https://ec.europa.eu/taxation_customs/vies/ · rules/belgium-vat.json :: BE-VAT-004</p></div>
+<div class='f'><header><h4>Confirm retention period is enforced or documented for issued documents — needs legal confirmation</h4><span class='pill INFORMATIONAL'>INFORMATIONAL</span></header><p class='meta'>LEGAL-BE-VAT-005-C · legal-vat · confidence 0.20 · assumption · .claude/commands/audit.md</p><p><b>Evidence.</b> Code matching this rule&#x27;s signal exists in 14 place(s), e.g. .claude/commands/audit.md, docs/ARCHITECTURE/ADR-0002-invoice-lifecycle.md, docs/CORE_FEATURES_AND_DATA_INTERACTIONS.md, docs/NEXT_SESSION.md. A pattern match shows the topic is addressed somewhere; it does not show the rule is met. Only a reading of the implementation against the source can conclude that.</p><p><b>Impact.</b> Until confirmed, this requirement is unverified. It is not a finding and it is not a pass.</p><p><b>Recommendation.</b> Have the legal agent read these files against https://finances.belgium.be/fr/entreprises/tva/declaration-tva/conservation-des-documents and record the conclusion.</p><p><b>Verify.</b> Run an erasure request against a customer with issued invoices; assert the invoices survive and are pseudonymised only where lawful.</p><p class='meta'>Sources: https://finances.belgium.be/fr/entreprises/tva/declaration-tva/conservation-des-documents · rules/belgium-vat.json :: BE-VAT-005</p></div>
+<h2>Roadmap</h2>
+<h3>P0 — must fix — high-confidence critical (1)</h3><ul>
+<li><span class='meta'>SYS-DATA-LIFECYCLE</span> Data lifecycle — retention, erasure and recovery — 3 findings from 2 agents describe one mechanism — <span class='pill CRITICAL'>CRITICAL</span> confidence 0.75</li>
+</ul>
+<h3>P1 — before professional launch (8)</h3><ul>
+<li><span class='meta'>GDPR-001</span> 7 required privacy document(s) not present in the repository — <span class='pill HIGH'>HIGH</span> confidence 0.95</li>
+<li><span class='meta'>ARCH-AUTHZ-004</span> POST /invoices/preview declares no permission — <span class='pill HIGH'>HIGH</span> confidence 0.85</li>
+<li><span class='meta'>GDPR-002</span> No endpoint implements data-subject export — <span class='pill HIGH'>HIGH</span> confidence 0.75</li>
+<li><span class='meta'>GDPR-003</span> No endpoint implements data-subject deletion — <span class='pill HIGH'>HIGH</span> confidence 0.75</li>
+<li><span class='meta'>ARCH-PUBWRITE-001</span> POST /auth/desktop-bootstrap is a write reachable without authentication — <span class='pill HIGH'>HIGH</span> confidence 0.70</li>
+<li><span class='meta'>ARCH-PUBWRITE-002</span> POST /auth/logout is a write reachable without authentication — <span class='pill HIGH'>HIGH</span> confidence 0.70</li>
+<li><span class='meta'>ARCH-PUBWRITE-003</span> POST /auth/signup is a write reachable without authentication — <span class='pill HIGH'>HIGH</span> confidence 0.70</li>
+<li><span class='meta'>EINV-001</span> Structured invoices are generated but no transmission path exists — <span class='pill HIGH'>HIGH</span> confidence 0.70</li>
+</ul>
+<h3>P2 — premium / scale improvements (11)</h3><ul>
+<li><span class='meta'>RES-001</span> No recovery time or recovery point objective is documented — <span class='pill MEDIUM'>MEDIUM</span> confidence 0.90</li>
+<li><span class='meta'>ARCH-PUBLIC-001</span> Auth middleware exempts the whole &#x27;/auth/&#x27; prefix — <span class='pill MEDIUM'>MEDIUM</span> confidence 0.80</li>
+<li><span class='meta'>OBS-001</span> No request or correlation identifier is threaded through logs — <span class='pill MEDIUM'>MEDIUM</span> confidence 0.75</li>
+<li><span class='meta'>ARCH-DOC-001</span> 7 endpoint(s) documented in system-architecture.html do not exist in the router tree — <span class='pill INFORMATIONAL'>INFORMATIONAL</span> confidence 0.30</li>
+<li><span class='meta'>LEGAL-BE-EINV-001-C</span> Confirm structured e-invoice generation is visible — needs legal confirmation — <span class='pill INFORMATIONAL'>INFORMATIONAL</span> confidence 0.20</li>
+<li><span class='meta'>LEGAL-BE-EINV-002-C</span> Confirm participant identifier handling is visible — needs legal confirmation — <span class='pill INFORMATIONAL'>INFORMATIONAL</span> confidence 0.20</li>
+<li><span class='meta'>LEGAL-BE-VAT-001-C</span> Mandatory invoice mentions are not visibly validated — needs legal confirmation — <span class='pill INFORMATIONAL'>INFORMATIONAL</span> confidence 0.20</li>
+<li><span class='meta'>LEGAL-BE-VAT-002-C</span> Confirm gapless sequential numbering mechanism is visible — needs legal confirmation — <span class='pill INFORMATIONAL'>INFORMATIONAL</span> confidence 0.20</li>
+<li><span class='meta'>LEGAL-BE-VAT-003-C</span> Credit notes do not visibly reference the corrected invoice — needs legal confirmation — <span class='pill INFORMATIONAL'>INFORMATIONAL</span> confidence 0.20</li>
+<li><span class='meta'>LEGAL-BE-VAT-004-C</span> Confirm VAT identification number validation is visible — needs legal confirmation — <span class='pill INFORMATIONAL'>INFORMATIONAL</span> confidence 0.20</li>
+<li><span class='meta'>LEGAL-BE-VAT-005-C</span> Confirm retention period is enforced or documented for issued documents — needs legal confirmation — <span class='pill INFORMATIONAL'>INFORMATIONAL</span> confidence 0.20</li>
+</ul>
+<footer>Generated by billgen-audit from docs/BillGen_Professional_Audit_System_Final_Specification.docx. Machine-readable findings in findings.json; evidence in evidence/.</footer>
+</div></body></html>

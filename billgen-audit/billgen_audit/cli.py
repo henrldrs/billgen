@@ -22,6 +22,7 @@ import webbrowser
 from .config import AuditConfig
 from .findings import Severity
 from .orchestrator import Audit, run_audit
+from .report import architecture as archsync
 from .report import diff as diffmod
 from .report import html as htmlreport
 from .report import markdown as mdreport
@@ -57,6 +58,16 @@ def main(argv: list[str] | None = None) -> int:
     d.add_argument("baseline")
     d.add_argument("current")
 
+    syncer = sub.add_parser(
+        "sync-architecture",
+        help="regenerate the generated blocks in the target's architecture document",
+    )
+    syncer.add_argument(
+        "--check",
+        action="store_true",
+        help="report staleness without writing; exits 1 when stale",
+    )
+
     args = parser.parse_args(argv)
     config = AuditConfig.load(args.target, args.audits_dir)
 
@@ -71,7 +82,16 @@ def main(argv: list[str] | None = None) -> int:
         return _evidence(config, args.audit_id)
     if args.command == "diff":
         return _diff(config, args.baseline, args.current)
+    if args.command == "sync-architecture":
+        return _sync(config, check=args.check)
     return 2
+
+
+def _sync(config: AuditConfig, *, check: bool) -> int:
+    in_sync, notes = archsync.sync(config, check=check)
+    for note in notes:
+        print(f"  {note}")
+    return 0 if in_sync else (1 if check else 0)
 
 
 # ----------------------------------------------------------------------

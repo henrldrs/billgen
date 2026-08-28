@@ -1,0 +1,426 @@
+[
+  {
+    "id": "SYS-DATA-LIFECYCLE",
+    "agent": "orchestrator",
+    "severity": "CRITICAL",
+    "category": "systemic:data_lifecycle",
+    "title": "Data lifecycle — retention, erasure and recovery — 3 findings from 2 agents describe one mechanism",
+    "evidence": "Raised independently by architecture, gdpr:\n  - [GDPR-002] No endpoint implements data-subject export (HIGH)\n  - [GDPR-003] No endpoint implements data-subject deletion (HIGH)\n  - [RES-001] No recovery time or recovery point objective is documented (MEDIUM)",
+    "impact": "Each finding is individually survivable; together they describe a mechanism with no compensating control. §9: the correlated severity is higher than any single part, because a fix to one part leaves the failure mode intact.",
+    "recommendation": "Treat as one piece of work with one owner. Fixing these separately across agents' recommendations tends to produce partial coverage that reads as done.",
+    "requirement_type": "recommendation",
+    "location": {
+      "file": null,
+      "line": null
+    },
+    "confidence": 0.75,
+    "status": "OPEN",
+    "verification_test": "Re-run the audit; the systemic finding clears only when every member finding clears.",
+    "references": [],
+    "fingerprint": "orchestrator|systemic:data_lifecycle|None|Data lifecycle — retention, erasure and recovery — 3 findings from 2 agents describe one mechanism"
+  },
+  {
+    "id": "ARCH-AUTHZ-004",
+    "agent": "architecture",
+    "severity": "HIGH",
+    "category": "authorization",
+    "title": "POST /invoices/preview declares no permission",
+    "evidence": "preview authenticates, but no permission dependency appears among ['InvoicePreviewRequest'].",
+    "impact": "Authentication is not authorization. Any signed-in member of any role can perform this write.",
+    "recommendation": "Declare the permission this write requires, so the role matrix governs it rather than the absence of a check.",
+    "requirement_type": "security_best_practice",
+    "location": {
+      "file": "api/routers/invoices.py",
+      "line": 64
+    },
+    "confidence": 0.85,
+    "status": "OPEN",
+    "verification_test": "Authenticate as the lowest-privilege role and call POST /invoices/preview; expect 403.",
+    "references": [],
+    "fingerprint": "architecture|authorization|api/routers/invoices.py|POST /invoices/preview declares no permission"
+  },
+  {
+    "id": "ARCH-PUBWRITE-001",
+    "agent": "architecture",
+    "severity": "HIGH",
+    "category": "authentication",
+    "title": "POST /auth/desktop-bootstrap is a write reachable without authentication",
+    "evidence": "The auth middleware (api/middleware/tenant.py) exempts this path via its public allowlist ['/', '/auth/', '/docs', '/healthz', '/openapi.json', '/readyz', '/redoc'], and desktop_bootstrap accepts POST.",
+    "impact": "An unauthenticated caller can invoke a state-changing endpoint. Whether that is intended depends on the endpoint; login and signup are, most others are not.",
+    "recommendation": "Confirm each allowlisted write is deliberately public, and that it is rate-limited and does not accept a tenant identifier from the caller.",
+    "requirement_type": "security_best_practice",
+    "location": {
+      "file": "api/routers/desktop.py",
+      "line": 12
+    },
+    "confidence": 0.7,
+    "status": "OPEN",
+    "verification_test": "Call POST /auth/desktop-bootstrap with no Authorization header and confirm the response is the intended public behaviour.",
+    "references": [],
+    "fingerprint": "architecture|authentication|api/routers/desktop.py|POST /auth/desktop-bootstrap is a write reachable without authentication"
+  },
+  {
+    "id": "ARCH-PUBWRITE-002",
+    "agent": "architecture",
+    "severity": "HIGH",
+    "category": "authentication",
+    "title": "POST /auth/logout is a write reachable without authentication",
+    "evidence": "The auth middleware (api/middleware/tenant.py) exempts this path via its public allowlist ['/', '/auth/', '/docs', '/healthz', '/openapi.json', '/readyz', '/redoc'], and logout accepts POST.",
+    "impact": "An unauthenticated caller can invoke a state-changing endpoint. Whether that is intended depends on the endpoint; login and signup are, most others are not.",
+    "recommendation": "Confirm each allowlisted write is deliberately public, and that it is rate-limited and does not accept a tenant identifier from the caller.",
+    "requirement_type": "security_best_practice",
+    "location": {
+      "file": "api/routers/auth.py",
+      "line": 71
+    },
+    "confidence": 0.7,
+    "status": "OPEN",
+    "verification_test": "Call POST /auth/logout with no Authorization header and confirm the response is the intended public behaviour.",
+    "references": [],
+    "fingerprint": "architecture|authentication|api/routers/auth.py|POST /auth/logout is a write reachable without authentication"
+  },
+  {
+    "id": "ARCH-PUBWRITE-003",
+    "agent": "architecture",
+    "severity": "HIGH",
+    "category": "authentication",
+    "title": "POST /auth/signup is a write reachable without authentication",
+    "evidence": "The auth middleware (api/middleware/tenant.py) exempts this path via its public allowlist ['/', '/auth/', '/docs', '/healthz', '/openapi.json', '/readyz', '/redoc'], and signup accepts POST.",
+    "impact": "An unauthenticated caller can invoke a state-changing endpoint. Whether that is intended depends on the endpoint; login and signup are, most others are not.",
+    "recommendation": "Confirm each allowlisted write is deliberately public, and that it is rate-limited and does not accept a tenant identifier from the caller.",
+    "requirement_type": "security_best_practice",
+    "location": {
+      "file": "api/routers/auth.py",
+      "line": 29
+    },
+    "confidence": 0.7,
+    "status": "OPEN",
+    "verification_test": "Call POST /auth/signup with no Authorization header and confirm the response is the intended public behaviour.",
+    "references": [],
+    "fingerprint": "architecture|authentication|api/routers/auth.py|POST /auth/signup is a write reachable without authentication"
+  },
+  {
+    "id": "GDPR-001",
+    "agent": "gdpr",
+    "severity": "HIGH",
+    "category": "documentation",
+    "title": "7 required privacy document(s) not present in the repository",
+    "evidence": "Not found: cookie_policy, dpa, incident_response, privacy_policy, retention_policy, security_policy, subprocessors",
+    "impact": "§7 expects a controller to be able to show its processing record, retention periods, subprocessors and breach procedure. None of these can be audited from code alone, and their absence here is a gap in the audit, not a pass.",
+    "recommendation": "Keep these in the repository beside the code they describe, so §7.2's code-vs-policy comparison has two sides to compare.",
+    "requirement_type": "recommendation",
+    "location": {
+      "file": "docs",
+      "line": null
+    },
+    "confidence": 0.95,
+    "status": "OPEN",
+    "verification_test": "Re-run; the missing list should shrink.",
+    "references": [
+      "Spec §7.1 data inventory questions",
+      "Spec §7.2 code-vs-policy consistency"
+    ],
+    "fingerprint": "gdpr|documentation|docs|7 required privacy document(s) not present in the repository"
+  },
+  {
+    "id": "GDPR-002",
+    "agent": "gdpr",
+    "severity": "HIGH",
+    "category": "data_subject_rights",
+    "title": "No endpoint implements data-subject export",
+    "evidence": "No registered route matched the export pattern across 70 endpoints.",
+    "impact": "A data-subject request must be satisfiable within a statutory deadline. Without an endpoint it is a manual database operation, which does not scale and is not logged.",
+    "recommendation": "Implement export as an audited, tenant-scoped operation.",
+    "requirement_type": "recommendation",
+    "location": {
+      "file": "api/routers",
+      "line": null
+    },
+    "confidence": 0.75,
+    "status": "OPEN",
+    "verification_test": "Exercise the export flow end to end for one user.",
+    "references": [],
+    "fingerprint": "gdpr|data_subject_rights|api/routers|No endpoint implements data-subject export"
+  },
+  {
+    "id": "GDPR-003",
+    "agent": "gdpr",
+    "severity": "HIGH",
+    "category": "data_subject_rights",
+    "title": "No endpoint implements data-subject deletion",
+    "evidence": "No registered route matched the deletion pattern across 70 endpoints.",
+    "impact": "A data-subject request must be satisfiable within a statutory deadline. Without an endpoint it is a manual database operation, which does not scale and is not logged.",
+    "recommendation": "Implement deletion as an audited, tenant-scoped operation.",
+    "requirement_type": "recommendation",
+    "location": {
+      "file": "api/routers",
+      "line": null
+    },
+    "confidence": 0.75,
+    "status": "OPEN",
+    "verification_test": "Exercise the deletion flow end to end for one user.",
+    "references": [],
+    "fingerprint": "gdpr|data_subject_rights|api/routers|No endpoint implements data-subject deletion"
+  },
+  {
+    "id": "EINV-001",
+    "agent": "legal-vat",
+    "severity": "HIGH",
+    "category": "e_invoicing_transmission",
+    "title": "Structured invoices are generated but no transmission path exists",
+    "evidence": "core/einvoicing builds structured documents and validates them, but no send/transmit/access-point code was found.",
+    "impact": "§5.3 requires generation and delivery to be distinct states. With no transmission, a customer who believes the product files their e-invoices is mistaken, and the obligation is unmet with no error to signal it.",
+    "recommendation": "Model delivery as its own state with its own failures, and never let a generated document display as sent.",
+    "requirement_type": "recommendation",
+    "location": {
+      "file": "core/einvoicing",
+      "line": null
+    },
+    "confidence": 0.7,
+    "status": "OPEN",
+    "verification_test": "Generate an e-invoice and assert its status is not 'sent' until an access point acknowledges it.",
+    "references": [],
+    "fingerprint": "legal-vat|e_invoicing_transmission|core/einvoicing|Structured invoices are generated but no transmission path exists"
+  },
+  {
+    "id": "ARCH-PUBLIC-001",
+    "agent": "architecture",
+    "severity": "MEDIUM",
+    "category": "authentication",
+    "title": "Auth middleware exempts the whole '/auth/' prefix",
+    "evidence": "The public allowlist in api/middleware/tenant.py exempts every path beginning '/auth/', not a fixed set of paths. Any route added under that prefix later is unauthenticated by default, with no code change to review.",
+    "impact": "A future endpoint under this prefix ships without authentication and nothing in the diff says so.",
+    "recommendation": "Enumerate the public paths exactly, so adding a public route is a visible edit to the allowlist.",
+    "requirement_type": "security_best_practice",
+    "location": {
+      "file": "api/middleware/tenant.py",
+      "line": null
+    },
+    "confidence": 0.8,
+    "status": "OPEN",
+    "verification_test": "Add a test asserting every registered route under '/auth/' is intentionally public.",
+    "references": [],
+    "fingerprint": "architecture|authentication|api/middleware/tenant.py|Auth middleware exempts the whole '/auth/' prefix"
+  },
+  {
+    "id": "OBS-001",
+    "agent": "architecture",
+    "severity": "MEDIUM",
+    "category": "observability",
+    "title": "No request or correlation identifier is threaded through logs",
+    "evidence": "No correlation/request/trace id marker was found.",
+    "impact": "§8.8 asks whether the team can distinguish a customer-specific failure from a global outage. Without a per-request id, one user's failing invoice cannot be traced across the API, the PDF renderer and the delivery attempt.",
+    "recommendation": "Generate an id per request and log it at every layer.",
+    "requirement_type": "recommendation",
+    "location": {
+      "file": "api",
+      "line": null
+    },
+    "confidence": 0.75,
+    "status": "OPEN",
+    "verification_test": "Trigger one failure and retrieve every log line for it by id.",
+    "references": [],
+    "fingerprint": "architecture|observability|api|No request or correlation identifier is threaded through logs"
+  },
+  {
+    "id": "RES-001",
+    "agent": "architecture",
+    "severity": "MEDIUM",
+    "category": "disaster_recovery",
+    "title": "No recovery time or recovery point objective is documented",
+    "evidence": "No RTO/RPO statement was found in any document in the tree.",
+    "impact": "§8.5 requires the objectives to be established first and the architecture compared against them. Without a stated RTO, no resilience investment can be shown to be sufficient — or shown to be excessive, which for an early-stage product is the more common and more expensive error.",
+    "recommendation": "State the acceptable downtime and acceptable data loss, then compare backup frequency against the RPO. Do not add replication until the RTO demands it.",
+    "requirement_type": "recommendation",
+    "location": {
+      "file": "docs",
+      "line": null
+    },
+    "confidence": 0.9,
+    "status": "OPEN",
+    "verification_test": "Point to the document stating RTO and RPO.",
+    "references": [],
+    "fingerprint": "architecture|disaster_recovery|docs|No recovery time or recovery point objective is documented"
+  },
+  {
+    "id": "ARCH-DOC-001",
+    "agent": "architecture",
+    "severity": "INFORMATIONAL",
+    "category": "documentation_drift",
+    "title": "7 endpoint(s) documented in system-architecture.html do not exist in the router tree",
+    "evidence": "The document names these, and no registered route matches after parameter normalisation: DELETE /auth/sessions, GET /reports/export, POST /auth/password, POST /email/test, POST /invoices/{}/send, POST /privacy/delete-account, POST /privacy/export",
+    "impact": "These appear only in prose, not in the generated inventory, so most will be deliberate gap mentions rather than false claims. Each still deserves one human glance: a route named with the wrong path reads exactly the same as a route that does not exist yet.",
+    "recommendation": "Either mark each as planned rather than built, or delete it. A document that mixes both without saying which is which cannot be used for either purpose.",
+    "requirement_type": "recommendation",
+    "location": {
+      "file": "docs/ARCHITECTURE/system-architecture.html",
+      "line": null
+    },
+    "confidence": 0.3,
+    "status": "OPEN",
+    "verification_test": "Re-run this audit; documented_but_absent should be empty or explicitly annotated as planned.",
+    "references": [],
+    "fingerprint": "architecture|documentation_drift|docs/ARCHITECTURE/system-architecture.html|7 endpoint(s) documented in system-architecture.html do not exist in the router tree"
+  },
+  {
+    "id": "LEGAL-BE-EINV-001-C",
+    "agent": "legal-vat",
+    "severity": "INFORMATIONAL",
+    "category": "structured_b2b_e_invoicing",
+    "title": "Confirm structured e-invoice generation is visible — needs legal confirmation",
+    "evidence": "Code matching this rule's signal exists in 183 place(s), e.g. api/entitlements/__init__.py, api/entitlements/deps.py, api/entitlements/matrix.py, api/entitlements/usage.py. A pattern match shows the topic is addressed somewhere; it does not show the rule is met. Only a reading of the implementation against the source can conclude that.",
+    "impact": "Until confirmed, this requirement is unverified. It is not a finding and it is not a pass.",
+    "recommendation": "Have the legal agent read these files against https://finances.belgium.be/fr/entreprises/tva/facturation/facturation-electronique and record the conclusion.",
+    "requirement_type": "assumption",
+    "location": {
+      "file": "api/entitlements/__init__.py",
+      "line": null
+    },
+    "confidence": 0.2,
+    "status": "OPEN",
+    "verification_test": "Generate a structured invoice and validate it against the format's business-rule set.",
+    "references": [
+      "https://finances.belgium.be/fr/entreprises/tva/facturation/facturation-electronique",
+      "rules/belgium-e-invoicing.json :: BE-EINV-001"
+    ],
+    "fingerprint": "legal-vat|structured_b2b_e_invoicing|api/entitlements/__init__.py|Confirm structured e-invoice generation is visible — needs legal confirmation"
+  },
+  {
+    "id": "LEGAL-BE-EINV-002-C",
+    "agent": "legal-vat",
+    "severity": "INFORMATIONAL",
+    "category": "peppol_participant_identifier",
+    "title": "Confirm participant identifier handling is visible — needs legal confirmation",
+    "evidence": "Code matching this rule's signal exists in 24 place(s), e.g. core/einvoicing/ubl_builder.py, core/einvoicing/ubl_validator.py, core/rules/belgian_peppol.py, tests/core/rules/test_identifiers.py. A pattern match shows the topic is addressed somewhere; it does not show the rule is met. Only a reading of the implementation against the source can conclude that.",
+    "impact": "Until confirmed, this requirement is unverified. It is not a finding and it is not a pass.",
+    "recommendation": "Have the legal agent read these files against https://docs.peppol.eu/poacc/billing/3.0/ and record the conclusion.",
+    "requirement_type": "assumption",
+    "location": {
+      "file": "core/einvoicing/ubl_builder.py",
+      "line": null
+    },
+    "confidence": 0.2,
+    "status": "OPEN",
+    "verification_test": "Attempt delivery to an unregistered recipient; expect a clear pre-issue failure.",
+    "references": [
+      "https://docs.peppol.eu/poacc/billing/3.0/",
+      "rules/belgium-e-invoicing.json :: BE-EINV-002"
+    ],
+    "fingerprint": "legal-vat|peppol_participant_identifier|core/einvoicing/ubl_builder.py|Confirm participant identifier handling is visible — needs legal confirmation"
+  },
+  {
+    "id": "LEGAL-BE-VAT-001-C",
+    "agent": "legal-vat",
+    "severity": "INFORMATIONAL",
+    "category": "invoice_mandatory_mentions",
+    "title": "Mandatory invoice mentions are not visibly validated — needs legal confirmation",
+    "evidence": "Code matching this rule's signal exists in 18 place(s), e.g. core/einvoicing/__init__.py, core/einvoicing/ubl_validator.py, core/pdf/context.py, core/rules/__init__.py. A pattern match shows the topic is addressed somewhere; it does not show the rule is met. Only a reading of the implementation against the source can conclude that.",
+    "impact": "Until confirmed, this requirement is unverified. It is not a finding and it is not a pass.",
+    "recommendation": "Have the legal agent read these files against https://finances.belgium.be/fr/entreprises/tva/facturation and record the conclusion.",
+    "requirement_type": "assumption",
+    "location": {
+      "file": "core/einvoicing/__init__.py",
+      "line": null
+    },
+    "confidence": 0.2,
+    "status": "OPEN",
+    "verification_test": "Issue an invoice with the VAT number removed; expect refusal.",
+    "references": [
+      "https://finances.belgium.be/fr/entreprises/tva/facturation",
+      "rules/belgium-vat.json :: BE-VAT-001"
+    ],
+    "fingerprint": "legal-vat|invoice_mandatory_mentions|core/einvoicing/__init__.py|Mandatory invoice mentions are not visibly validated — needs legal confirmation"
+  },
+  {
+    "id": "LEGAL-BE-VAT-002-C",
+    "agent": "legal-vat",
+    "severity": "INFORMATIONAL",
+    "category": "sequential_numbering",
+    "title": "Confirm gapless sequential numbering mechanism is visible — needs legal confirmation",
+    "evidence": "Code matching this rule's signal exists in 226 place(s), e.g. api/entitlements/service.py, api/routers/backup.py, api/routers/invoices.py, api/routers/quotes.py. A pattern match shows the topic is addressed somewhere; it does not show the rule is met. Only a reading of the implementation against the source can conclude that.",
+    "impact": "Until confirmed, this requirement is unverified. It is not a finding and it is not a pass.",
+    "recommendation": "Have the legal agent read these files against https://finances.belgium.be/fr/entreprises/tva/facturation and record the conclusion.",
+    "requirement_type": "assumption",
+    "location": {
+      "file": "api/entitlements/service.py",
+      "line": null
+    },
+    "confidence": 0.2,
+    "status": "OPEN",
+    "verification_test": "Issue invoices concurrently and assert a contiguous series with no duplicates.",
+    "references": [
+      "https://finances.belgium.be/fr/entreprises/tva/facturation",
+      "rules/belgium-vat.json :: BE-VAT-002"
+    ],
+    "fingerprint": "legal-vat|sequential_numbering|api/entitlements/service.py|Confirm gapless sequential numbering mechanism is visible — needs legal confirmation"
+  },
+  {
+    "id": "LEGAL-BE-VAT-003-C",
+    "agent": "legal-vat",
+    "severity": "INFORMATIONAL",
+    "category": "credit_note_linkage",
+    "title": "Credit notes do not visibly reference the corrected invoice — needs legal confirmation",
+    "evidence": "Code matching this rule's signal exists in 10 place(s), e.g. core/pdf/context.py, core/services/pdf_service.py, db/migrations/versions/3d8a27f7f865_initial_schema.py, db/repositories/mappers.py. A pattern match shows the topic is addressed somewhere; it does not show the rule is met. Only a reading of the implementation against the source can conclude that.",
+    "impact": "Until confirmed, this requirement is unverified. It is not a finding and it is not a pass.",
+    "recommendation": "Have the legal agent read these files against https://finances.belgium.be/fr/entreprises/tva/facturation and record the conclusion.",
+    "requirement_type": "assumption",
+    "location": {
+      "file": "core/pdf/context.py",
+      "line": null
+    },
+    "confidence": 0.2,
+    "status": "OPEN",
+    "verification_test": "Attempt to create a credit note with no original invoice; expect refusal.",
+    "references": [
+      "https://finances.belgium.be/fr/entreprises/tva/facturation",
+      "rules/belgium-vat.json :: BE-VAT-003"
+    ],
+    "fingerprint": "legal-vat|credit_note_linkage|core/pdf/context.py|Credit notes do not visibly reference the corrected invoice — needs legal confirmation"
+  },
+  {
+    "id": "LEGAL-BE-VAT-004-C",
+    "agent": "legal-vat",
+    "severity": "INFORMATIONAL",
+    "category": "vat_number_validation",
+    "title": "Confirm VAT identification number validation is visible — needs legal confirmation",
+    "evidence": "Code matching this rule's signal exists in 6 place(s), e.g. core/services/company_validation.py, core/tva/classification.py, core/tva/validation.py, tests/core/services/conftest.py. A pattern match shows the topic is addressed somewhere; it does not show the rule is met. Only a reading of the implementation against the source can conclude that.",
+    "impact": "Until confirmed, this requirement is unverified. It is not a finding and it is not a pass.",
+    "recommendation": "Have the legal agent read these files against https://ec.europa.eu/taxation_customs/vies/ and record the conclusion.",
+    "requirement_type": "assumption",
+    "location": {
+      "file": "core/services/company_validation.py",
+      "line": null
+    },
+    "confidence": 0.2,
+    "status": "OPEN",
+    "verification_test": "Enter a number failing the modulo-97 check; expect rejection.",
+    "references": [
+      "https://ec.europa.eu/taxation_customs/vies/",
+      "rules/belgium-vat.json :: BE-VAT-004"
+    ],
+    "fingerprint": "legal-vat|vat_number_validation|core/services/company_validation.py|Confirm VAT identification number validation is visible — needs legal confirmation"
+  },
+  {
+    "id": "LEGAL-BE-VAT-005-C",
+    "agent": "legal-vat",
+    "severity": "INFORMATIONAL",
+    "category": "record_retention",
+    "title": "Confirm retention period is enforced or documented for issued documents — needs legal confirmation",
+    "evidence": "Code matching this rule's signal exists in 14 place(s), e.g. .claude/commands/audit.md, docs/ARCHITECTURE/ADR-0002-invoice-lifecycle.md, docs/CORE_FEATURES_AND_DATA_INTERACTIONS.md, docs/NEXT_SESSION.md. A pattern match shows the topic is addressed somewhere; it does not show the rule is met. Only a reading of the implementation against the source can conclude that.",
+    "impact": "Until confirmed, this requirement is unverified. It is not a finding and it is not a pass.",
+    "recommendation": "Have the legal agent read these files against https://finances.belgium.be/fr/entreprises/tva/declaration-tva/conservation-des-documents and record the conclusion.",
+    "requirement_type": "assumption",
+    "location": {
+      "file": ".claude/commands/audit.md",
+      "line": null
+    },
+    "confidence": 0.2,
+    "status": "OPEN",
+    "verification_test": "Run an erasure request against a customer with issued invoices; assert the invoices survive and are pseudonymised only where lawful.",
+    "references": [
+      "https://finances.belgium.be/fr/entreprises/tva/declaration-tva/conservation-des-documents",
+      "rules/belgium-vat.json :: BE-VAT-005"
+    ],
+    "fingerprint": "legal-vat|record_retention|.claude/commands/audit.md|Confirm retention period is enforced or documented for issued documents — needs legal confirmation"
+  }
+]
