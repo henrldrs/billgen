@@ -23,6 +23,21 @@ async def build_source_org(client) -> tuple[dict, dict]:
     company = await create_company(client, headers)
     record = await create_client_record(client, headers, company["id"])
     invoice = await create_invoice(client, headers, company["id"], record["id"])
+    # One quote too: an aggregate the backup does not carry is data loss
+    # dressed up as a feature, and the roundtrip below is what proves it does.
+    quote = await client.post(
+        "/quotes",
+        json={
+            "company_id": company["id"],
+            "client_id": record["id"],
+            "issue_date": "2026-07-04",
+            "lines": [
+                {"description": "Offer", "quantity": "1", "unit_price": "500.00"}
+            ],
+        },
+        headers=headers,
+    )
+    assert quote.status_code == 201, quote.text
     paid = await client.post(
         "/payments",
         json={"invoice_id": invoice["id"], "amount": "1512.50", "paid_on": "2026-07-10"},
@@ -69,6 +84,7 @@ async def test_restore_roundtrip_preserves_data_and_continues_sequence(client):
         "clients": 1,
         "products": 0,
         "invoices": 1,
+        "quotes": len(payload["quotes"]),
         "credit_notes": 1 if payload["credit_notes"] else 0,
         "payments": 1,
         "sequences": report["sequences"],  # count depends on bucket scopes
@@ -92,6 +108,11 @@ async def test_restore_roundtrip_preserves_data_and_continues_sequence(client):
         await client.get(f"/clients?company_id={companies[0]['id']}", headers=fresh_headers)
     ).json()
     assert companies[0]["id"] != payload["companies"][0]["id"]
+
+    # The quote came back too, with its own reference, and its series continues
+    # independently of the invoice one.
+    quotes = await client.get("/quotes", headers=fresh_headers)
+    assert [q["reference"] for q in quotes.json()] == [payload["quotes"][0]["reference"]]
 
     # THE invariant: issuing the next invoice continues the gapless series
     # instead of restarting at 1 (which would duplicate a legal number).

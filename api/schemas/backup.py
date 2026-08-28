@@ -6,6 +6,7 @@ class RestoreReportResponse(BaseModel):
     clients: int
     products: int
     invoices: int
+    quotes: int
     credit_notes: int
     payments: int
     sequences: int
