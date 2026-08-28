@@ -9,7 +9,7 @@ the measured picture is
 — **v0.10, generated against the previous session's HEAD and now one session
 stale.** Regenerating it is on the list below.
 
-**State:** Python **378** passed (was 298), frontend 157 passed, ruff clean,
+**State:** Python **392** passed (was 298), frontend 157 passed, ruff clean,
 typecheck clean. This session's commits are **all unpushed** — see §1.
 
 Every new endpoint was also exercised live against the desktop dev pair on
@@ -72,7 +72,7 @@ That leg is also the first real test of the gapless-numbering row lock and of
 
 ## 2. What shipped 2026-08-28 (do not rebuild it)
 
-The eight that changed something, each with its reasoning in the message:
+The commits that changed something, each with its reasoning in its own message:
 
 1. **Roles stop being decoration** (`api/authz/`). A `viewer` could void an
    invoice; every write endpoint was open to every member. Endpoints now declare
@@ -110,8 +110,15 @@ The eight that changed something, each with its reasoning in the message:
    the authz matrix, the backup (schema_version 2, v1 files still restore) and
    search. Migration `165748c8c55f`; `alembic revision --autogenerate` reports no
    drift.
-8. **The gap ledger re-read.** Four `ia.ts` nodes claimed backend gaps this
-   session closed — the exact failure mode the last note ended on.
+8. **Two guards found while reviewing the above.** A route-walking test that
+   fails the suite if any new POST/PATCH/PUT/DELETE declares no permission —
+   six exemptions, each with its reason written next to it. And a fix: the
+   restore report counted quotes and then dropped them on the wire, because
+   `RestoreReportResponse` had not grown the field.
+9. **The gap ledger re-read.** Six `ia.ts` nodes claimed backend gaps this
+   session closed — the exact failure mode the last note ended on. One of them,
+   Client 360's "Risk flags", was half true: `GET /reports/clients` exists now
+   but carries the money half and not the risk half, and the block says so.
 
 ---
 
