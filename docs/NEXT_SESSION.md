@@ -237,3 +237,59 @@ that exist:
 - **This document's own failure mode.** A gap ledger is only as true as its last
   reading, and nothing re-reads it automatically. `ia.ts` was re-read on
   2026-08-28; `docs/ARCHITECTURE/` was not.
+
+---
+
+## 7. Scaffolded 2026-08-28, deliberately not integrated
+
+Two features from `docs/` now have a skeleton in the tree. **Nothing is
+wired** — no router registration, no migration, no `src/index.ts` export, no
+route, no `ia.ts` node, no CSS import. Each directory has a README with what is
+there, which decisions it already commits to, and the ordered integration
+steps.
+
+- **TVA Intelligence** (`docs/tva_feature_future.md`) →
+  [`core/tva/`](../core/tva/README.md) — state machine, domain models,
+  document validation, Belgian classification rules, aggregation. All pure, no
+  I/O. 31 tests in `tests/core/tva/` (suite is now **423**, was 392).
+  Frontend panels in [`frontend-react/src/tva/`](../frontend-react/src/tva/README.md).
+- **Invoice Workspace + Template Studio** (`docs/build_template_feature_future.md`) →
+  [`frontend-react/src/workspace/`](../frontend-react/src/workspace/README.md) —
+  the four-step composer, its live preview, and the block-based template model
+  including the issued-invoice snapshot.
+
+Three decisions were made while scaffolding, and are worth confirming or
+reversing before anything is built on them:
+
+1. **The TVA analyzer has no single "recoverable" total** — confirmed and
+   potential are separate, and `estimated_payable` uses only the confirmed
+   half. Enforced by the absence of the field.
+2. **Template appearance is a choice among semantic tokens, not a colour
+   picker.** A hex field on a template puts the palette bypass into a database
+   row where the guard test cannot see it. This is a real reduction in what
+   users can do.
+3. **An issued invoice carries a `TemplateSnapshot`.** Editing a template must
+   not restyle documents already sent. Cheap now, expensive after the first
+   thousand invoices.
+
+Both scaffolds are English-only: `t()` takes a closed `MessageKey` union, and
+inventing fr/nl/en/es invoice terminology badly is worse than deferring it.
+
+### Integration is ON HOLD — Henri, 2026-08-28
+
+**Do not wire these into the app.** Henri has seen the invoice builder running
+and called it good progress but *not what he had in mind*; the shape needs
+another pass with him before anything is connected. Integration also waits on
+an audit — `docs/BillGen_Professional_Audit_System_Final_Specification.docx`
+appeared in `docs/` the same day and is presumably it, but that was not
+confirmed and this session did not read it.
+
+So: the READMEs' "integrating it" sections are a plan, not a queue. A future
+session that finds this scaffold and helpfully mounts it has done the wrong
+thing.
+
+The one exception already in the tree is the **dev-only preview** at
+`/_preview` (`frontend-saas/src/pages/PreviewRoute.tsx` plus one guarded
+`<Route>` in `App.tsx`). It exists so the components can be looked at; it owns
+no IA node, is absent from a production build (verified against
+`dist/assets/`), and deleting those two things removes it entirely.

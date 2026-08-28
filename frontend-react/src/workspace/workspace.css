@@ -1,0 +1,397 @@
+/* Invoice Workspace + Template Studio — scaffold styles.
+ *
+ * NOT IMPORTED ANYWHERE. Integrating the feature means adding one line to
+ * frontend-saas/src/styles.css, after components.css:
+ *
+ *   @import "@billgen/ui/src/workspace/workspace.css";
+ *
+ * Colour comes exclusively from the semantic tokens in tokens.css — no raw
+ * hex, no Tailwind palette utilities. The palette guard
+ * (frontend-react/src/scaffold/tokens.test.ts) scans .ts/.tsx and would not
+ * catch a violation here, which is a reason to be more careful in this file,
+ * not less.
+ */
+
+/* ---------------------------------------------------------------- workspace */
+
+.bg-ws__split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 60rem) {
+  .bg-ws__split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.bg-ws__preview {
+  position: sticky;
+  top: 1.5rem;
+}
+
+.bg-ws-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.bg-ws-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.bg-ws-note {
+  color: var(--bg-ink-soft);
+  font-size: var(--bg-text-label);
+}
+
+.bg-ws-footnote {
+  color: var(--bg-ink-soft);
+  font-size: var(--bg-text-helper);
+}
+
+/* ------------------------------------------------------------ customer card */
+
+.bg-ws-customer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.bg-ws-customer--selected {
+  border: 1px solid var(--bg-line);
+  border-radius: var(--bg-radius);
+  padding: 1rem;
+  background: var(--bg-surface);
+}
+
+.bg-ws-customer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.bg-ws-customer__facts dt {
+  color: var(--bg-ink-soft);
+  font-size: var(--bg-text-helper);
+}
+
+/* ------------------------------------------------------------------- items */
+
+.bg-ws-items__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.bg-ws-vat-summary {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.bg-ws-vat-summary th,
+.bg-ws-vat-summary td {
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--bg-line);
+  text-align: right;
+}
+
+.bg-ws-vat-summary th:first-child,
+.bg-ws-vat-summary td:first-child {
+  text-align: left;
+}
+
+.bg-ws-grand {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+/* -------------------------------------------------------- details sections */
+
+.bg-ws-section {
+  border-top: 1px solid var(--bg-line);
+}
+
+.bg-ws-section__toggle {
+  width: 100%;
+  text-align: left;
+  padding: 0.75rem 0;
+  background: none;
+  border: 0;
+  color: var(--bg-ink);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bg-ws-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-bottom: 1rem;
+}
+
+/* --------------------------------------------------------------- readiness */
+
+.bg-ws-readiness {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bg-ws-readiness li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+}
+
+.bg-ws-readiness small {
+  grid-column: 2;
+  color: var(--bg-ink-soft);
+}
+
+/* Blocking items get weight; warnings deliberately do not. */
+.bg-ws-readiness li[data-severity="blocking"] {
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------- delivery */
+
+.bg-ws-delivery {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ------------------------------------------------------- document preview */
+
+.bg-doc {
+  background: var(--bg-surface);
+  border: 1px solid var(--bg-line);
+  border-radius: var(--bg-radius);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  container-type: inline-size;
+}
+
+.bg-doc--compact {
+  gap: 0.5rem;
+}
+
+.bg-doc--spacious {
+  gap: 1.5rem;
+}
+
+.bg-doc__block {
+  border: 1px solid transparent;
+  border-radius: var(--bg-radius-sm);
+  padding: 0.5rem;
+}
+
+.bg-doc__block--selected {
+  border-color: var(--bg-accent);
+}
+
+.bg-doc__header--center {
+  text-align: center;
+}
+
+.bg-doc__header--end {
+  text-align: right;
+}
+
+.bg-doc__logo {
+  max-height: 3rem;
+  max-width: 100%;
+}
+
+.bg-doc__brand {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.bg-doc__title {
+  font-size: var(--bg-text-title);
+  letter-spacing: 0.08em;
+}
+
+.bg-doc__parties {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.bg-doc__parties address {
+  display: flex;
+  flex-direction: column;
+  font-style: normal;
+}
+
+.bg-doc__customer--end {
+  text-align: right;
+}
+
+.bg-doc__meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: 0.75rem;
+}
+
+.bg-doc__meta dt {
+  color: var(--bg-ink-soft);
+  font-size: var(--bg-text-helper);
+  text-transform: capitalize;
+}
+
+.bg-doc__items {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.bg-doc__items th,
+.bg-doc__items td {
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--bg-line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.bg-doc__items td.bg-num,
+.bg-doc__items th:not(:first-child) {
+  text-align: right;
+}
+
+.bg-doc__totals,
+.bg-doc__payment {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-left: auto;
+  min-width: 16rem;
+}
+
+.bg-doc__totals div,
+.bg-doc__payment div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.bg-doc__grand {
+  border-top: 1px solid var(--bg-line);
+  padding-top: 0.5rem;
+  font-weight: 700;
+}
+
+.bg-doc__notes,
+.bg-doc__terms,
+.bg-doc__footer {
+  color: var(--bg-ink-soft);
+  font-size: var(--bg-text-label);
+}
+
+.bg-doc__disclaimer {
+  color: var(--bg-ink-soft);
+  font-size: var(--bg-text-helper);
+  border-top: 1px dashed var(--bg-line);
+  padding-top: 0.5rem;
+}
+
+/* ----------------------------------------------------------- template studio */
+
+.bg-ws-templates {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 1rem;
+}
+
+.bg-ws-template-thumb,
+.bg-ws-template-new {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border: 1px dashed var(--bg-line);
+  border-radius: var(--bg-radius-sm);
+  background: var(--bg-surface-alt);
+  color: var(--bg-ink-soft);
+  cursor: pointer;
+}
+
+.bg-ws-template-thumb__page {
+  display: block;
+  width: 60%;
+  height: 70%;
+  margin: auto;
+  background: var(--bg-surface);
+  border: 1px solid var(--bg-line);
+}
+
+.bg-ws-studio__columns {
+  display: grid;
+  grid-template-columns: 14rem minmax(0, 1fr) 18rem;
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 72rem) {
+  .bg-ws-studio__columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.bg-ws-studio__sample {
+  margin-bottom: 0.75rem;
+}
+
+.bg-ws-blocks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.bg-ws-blocks li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: var(--bg-radius-sm);
+}
+
+.bg-ws-blocks li > button {
+  background: none;
+  border: 0;
+  color: var(--bg-ink);
+  cursor: pointer;
+  text-align: left;
+  flex: 1;
+}
+
+.bg-ws-blocks__item--selected {
+  background: var(--bg-surface-alt);
+}
+
+.bg-ws-blocks__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.bg-ws-blocks__required {
+  color: var(--bg-ink-soft);
+  font-size: var(--bg-text-helper);
+}
