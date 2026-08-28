@@ -12,6 +12,12 @@
  * When this import can be deleted, the app is finished. */
 @import "@billgen/ui/src/scaffold/scaffold.css";
 
+/* The template studio (catalog/templates). Scoped to .bg-ws-* and .bg-doc.
+ * Up here with the other imports for the reason stated directly above — it was
+ * appended to the end of this file when the studio was wired, which put an
+ * @import after a style rule and made the whole sheet invalid. */
+@import "@billgen/ui/src/workspace/workspace.css";
+
 body {
   margin: 0;
   font-family: var(--bg-font-sans, "Segoe UI", system-ui, -apple-system, sans-serif);
@@ -31,9 +37,7 @@ body {
   font-size: var(--bg-text-helper);
 }
 
-/* The template studio (catalog/templates). Scoped to .bg-ws-* and .bg-doc. */
-@import "@billgen/ui/src/workspace/workspace.css";
-
+/* Document-type switcher above the template list. */
 .bg-ws-doc-kinds { margin: var(--bg-space-3, 12px) 0; }
 
 .bg-dev-tier { display: flex; flex-direction: column; gap: 12px; }
