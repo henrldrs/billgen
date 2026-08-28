@@ -10265,6 +10265,17 @@
             "type": "string",
             "title": "Display Name"
           },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
           "organization_id": {
             "type": "string",
             "format": "uuid",
@@ -10296,16 +10307,32 @@
       "UserUpdateRequest": {
         "properties": {
           "display_name": {
-            "type": "string",
-            "maxLength": 200,
-            "minLength": 1,
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Display Name"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(en|fr|nl|es)$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
           }
         },
         "type": "object",
-        "required": [
-          "display_name"
-        ],
         "title": "UserUpdateRequest",
         "description": "A user editing their own profile.\n\nDisplay name only. Changing an email address is an identity change, not a\nprofile edit \u2014 the new address has to be verified before it becomes the\nlogin, and verification needs email transport the product does not have\n(blocker B1). Accepting it here would let someone lock themselves out of\ntheir own account with a typo."
       },

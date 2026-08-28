@@ -1,4 +1,4 @@
-import { BillGenProvider, LoadingScreen } from "@billgen/ui";
+import { BillGenProvider, LanguageProvider, LoadingScreen } from "@billgen/ui";
 import type { ReactNode } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
@@ -13,6 +13,29 @@ import {
 } from "./pages/routes";
 import { SignupPage } from "./pages/SignupPage";
 
+/** Wraps the app in the interface language, and persists a change.
+ *
+ *  Above the router because the language applies to the login screen too — a
+ *  provider under `RequireAuth` would leave sign-in stuck in one language for
+ *  the people least able to change it.
+ */
+function WithLanguage({ children }: { children: ReactNode }) {
+  const { user } = useSession();
+  return (
+    <LanguageProvider
+      userLanguage={user?.language}
+      onPersist={(lang) => {
+        //  Fire-and-forget: the choice already applies locally, and a failed
+        //  write should not undo it or interrupt the person. It retries
+        //  implicitly the next time they change it.
+        void api.updateMe({ language: lang }).catch(() => {});
+      }}
+    >
+      {children}
+    </LanguageProvider>
+  );
+}
+
 function RequireAuth({ children }: { children: ReactNode }) {
   const { status } = useSession();
   if (status === "loading") return <LoadingScreen />;
@@ -24,6 +47,7 @@ export function App() {
   return (
     <BillGenProvider client={api}>
       <SessionProvider>
+        <WithLanguage>
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
@@ -64,6 +88,7 @@ export function App() {
             <Route path="*" element={<Navigate to="/app" replace />} />
           </Routes>
         </BrowserRouter>
+        </WithLanguage>
       </SessionProvider>
     </BillGenProvider>
   );

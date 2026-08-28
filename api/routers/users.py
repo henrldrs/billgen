@@ -33,6 +33,7 @@ def me(
         id=user.id,
         email=user.email,
         display_name=user.display_name,
+        language=user.language,
         organization_id=current_organization_id(),
         role=role,
         permissions=sorted(p.value for p in permissions_for(role)),
@@ -57,7 +58,13 @@ def update_me(
         user = uow.users.get(user_id)
         if user is None:
             raise HTTPException(status_code=404, detail="User not found")
-        user.display_name = body.display_name
+        #  Both fields optional: the language toggle sends only `language`, and
+        #  the profile form sends only `display_name`. A PATCH that required
+        #  both would make the toggle overwrite a name it never saw.
+        if body.display_name is not None:
+            user.display_name = body.display_name
+        if body.language is not None:
+            user.language = body.language
         stored = uow.users.update(user)
         uow.commit()
 
@@ -65,6 +72,7 @@ def update_me(
         id=stored.id,
         email=stored.email,
         display_name=stored.display_name,
+        language=stored.language,
         organization_id=current_organization_id(),
         role=role,
         permissions=sorted(p.value for p in permissions_for(role)),

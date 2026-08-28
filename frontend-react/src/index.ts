@@ -26,6 +26,8 @@ export {
   tTier,
   type Lang,
   type MessageKey,
+  LANGS,
+  isLang,
 } from "./lib/translations";
 export { formatDate, formatMoney, monthName } from "./lib/format";
 export { documentFilename, saveBlob } from "./lib/download";
@@ -43,6 +45,12 @@ export {
 
 // Providers & hooks
 export { BillGenProvider, useApi } from "./providers/BillGenProvider";
+export {
+  LanguageProvider,
+  useLang,
+  type LanguageProviderProps,
+} from "./providers/LanguageProvider";
+export { LanguageToggle, type LanguageToggleProps } from "./panels/LanguageToggle";
 export {
   EntitlementBoundary,
   type EntitlementBoundaryProps,

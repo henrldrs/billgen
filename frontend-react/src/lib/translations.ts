@@ -1,5 +1,24 @@
 export type Lang = "en" | "fr" | "nl" | "es";
 
+/** The four, in the order a picker should offer them.
+ *
+ *  French first: BillGen is Belgian, `Company.default_language` defaults to
+ *  "fr", and the majority of the first customers will be francophone. Dutch
+ *  second because the other half of the country reads it.
+ */
+export const LANGS: readonly { value: Lang; label: string; short: string }[] = [
+  { value: "fr", label: "Français", short: "FR" },
+  { value: "nl", label: "Nederlands", short: "NL" },
+  { value: "en", label: "English", short: "EN" },
+  { value: "es", label: "Español", short: "ES" },
+];
+
+/** Narrows an untrusted string — a stored value, a URL, an API field — to a
+ *  language the app actually has translations for. */
+export function isLang(value: string | null | undefined): value is Lang {
+  return value === "en" || value === "fr" || value === "nl" || value === "es";
+}
+
 const MESSAGES = {
   // ---- common -----------------------------------------------------------------
   "common.save": { en: "Save", fr: "Enregistrer", nl: "Opslaan", es: "Guardar" },
@@ -527,6 +546,18 @@ const MESSAGES = {
     fr: "Profil de l'entreprise",
     nl: "Bedrijfsprofiel",
     es: "Perfil de la empresa",
+  },
+  "settings.language": {
+    en: "Language",
+    fr: "Langue",
+    nl: "Taal",
+    es: "Idioma",
+  },
+  "settings.languageHint": {
+    en: "The language of this interface. Documents keep the company's language.",
+    fr: "La langue de cette interface. Les documents conservent celle de la société.",
+    nl: "De taal van deze interface. Documenten behouden die van het bedrijf.",
+    es: "El idioma de esta interfaz. Los documentos conservan el de la empresa.",
   },
   "company.sectionIdentity": {
     en: "Legal identity",

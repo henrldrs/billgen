@@ -116,7 +116,7 @@ class SqlAlchemyOrganizationRepository(OrganizationRepository):
 #  Columns a user may change about themselves. `email` is absent on purpose —
 #  see the port's docstring; `email_verified` and `is_active` are administrative
 #  state rather than profile, and a user must not be able to set either.
-_USER_UPDATABLE = ("display_name", "updated_at")
+_USER_UPDATABLE = ("display_name", "language", "updated_at")
 
 
 class SqlAlchemyUserRepository(UserRepository):

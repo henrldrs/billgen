@@ -3672,6 +3672,8 @@ export interface components {
             email: string;
             /** Display Name */
             display_name: string;
+            /** Language */
+            language?: string | null;
             /**
              * Organization Id
              * Format: uuid
@@ -3697,7 +3699,9 @@ export interface components {
          */
         UserUpdateRequest: {
             /** Display Name */
-            display_name: string;
+            display_name?: string | null;
+            /** Language */
+            language?: string | null;
         };
         /** VATIn */
         VATIn: {

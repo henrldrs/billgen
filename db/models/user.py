@@ -13,6 +13,8 @@ class UserRow(IdentifiedRowMixin, Base):
     display_name: Mapped[str] = mapped_column(String(200), nullable=False)
     email_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    #  Interface language. Nullable on purpose — see the domain model.
+    language: Mapped[str | None] = mapped_column(String(2))
 
 
 class OrgMembershipRow(Base):

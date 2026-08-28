@@ -10,6 +10,10 @@ class UserMeResponse(BaseModel):
     id: UUID
     email: str
     display_name: str
+    #  Null means the person has never chosen one, which is not the same as
+    #  choosing French — the client falls back to the company default, then the
+    #  browser, and a stored default would hide that distinction.
+    language: str | None = None
     organization_id: UUID
     role: str
     # What this role may do, so the UI can hide a button it knows will 403.
@@ -28,7 +32,10 @@ class UserUpdateRequest(BaseModel):
     their own account with a typo.
     """
 
-    display_name: str = Field(min_length=1, max_length=200)
+    display_name: str | None = Field(default=None, min_length=1, max_length=200)
+    #  The interface language, not the document language. Companies decide what
+    #  an invoice is written in; people decide what they read.
+    language: str | None = Field(default=None, pattern=r"^(en|fr|nl|es)$")
 
 
 class SessionResponse(BaseModel):

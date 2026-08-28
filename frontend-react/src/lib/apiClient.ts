@@ -382,6 +382,12 @@ export class ApiClient {
 
   // ---- products --------------------------------------------------------------
 
+  /** Edit your own profile. Both fields optional — the language toggle sends
+   *  only `language`, and the profile form only `display_name`. */
+  updateMe(body: { display_name?: string; language?: string }): Promise<UserMeResponse> {
+    return this.request("PATCH", "/users/me", body);
+  }
+
   /** Move the local dev organization onto a tier.
    *
    *  404s unless the API was started with desktop_mode. There is no checkout

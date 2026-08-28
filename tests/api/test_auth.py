@@ -159,3 +159,31 @@ async def test_the_profile_edit_cannot_change_an_email(client):
     )
     assert response.status_code == 200
     assert response.json()["email"] == before
+
+
+async def test_the_interface_language_starts_unchosen(client):
+    """Null is meaningful. It means "follow the company", not "prefers French" —
+    and a stored default would make those two indistinguishable."""
+    headers = bearer(await signup(client))
+    assert (await client.get("/users/me", headers=headers)).json()["language"] is None
+
+
+async def test_setting_a_language_leaves_the_name_alone(client):
+    """The toggle sends only `language`. A PATCH that required both fields would
+    make changing language overwrite a display name it never saw."""
+    headers = bearer(await signup(client))
+    await client.patch("/users/me", headers=headers, json={"display_name": "Henri"})
+
+    response = await client.patch("/users/me", headers=headers, json={"language": "nl"})
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["language"] == "nl"
+    assert body["display_name"] == "Henri"
+
+
+async def test_an_unsupported_language_is_refused(client):
+    """Four languages have translations. A fifth would render as blank strings
+    everywhere, which looks like a broken app rather than a missing locale."""
+    headers = bearer(await signup(client))
+    response = await client.patch("/users/me", headers=headers, json={"language": "de"})
+    assert response.status_code == 422

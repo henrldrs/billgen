@@ -27,10 +27,12 @@ import {
   PolicyIcon,
   ScaffoldNavDot,
   SettingsUserIcon,
+  LanguageToggle,
   TopNav,
   UpgradeIcon,
   t,
   useCompanies,
+  useLang,
   type BackendStatus,
   type CommandItem,
   type CompanyResponse,
@@ -59,10 +61,6 @@ const STATUS_SUFFIX: Record<BackendStatus, string> = {
   none: " · no backend",
 };
 
-function isLang(value: string): value is Lang {
-  return ["en", "fr", "nl", "es"].includes(value);
-}
-
 function initialsOf(name: string | undefined, email: string | undefined): string {
   const source = (name?.trim() || email || "?").trim();
   const words = source.split(/\s+/).filter(Boolean);
@@ -72,6 +70,7 @@ function initialsOf(name: string | undefined, email: string | undefined): string
 
 export function AppShell() {
   const { user, logout } = useSession();
+  const { lang, setCompanyDefault } = useLang();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { data: companies, isLoading } = useCompanies();
@@ -99,6 +98,16 @@ export function AppShell() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  //  Above the early returns, not beside `company`. React counts hooks per
+  //  render, and this one sat after `if (isLoading) return …` — so the first
+  //  render ran 28 hooks and the second ran 29, which is the "rendered more
+  //  hooks than during the previous render" crash rather than a subtle bug.
+  const activeCompanyLanguage = companies?.find((c) => c.id === selectedId)
+    ?.default_language;
+  useEffect(() => {
+    setCompanyDefault(activeCompanyLanguage);
+  }, [activeCompanyLanguage, setCompanyDefault]);
+
   if (isLoading) return <LoadingScreen />;
 
   // First run: no company yet -> onboarding. useCreateCompany invalidates the
@@ -119,9 +128,10 @@ export function AppShell() {
 
   const company: CompanyResponse =
     companies.find((c) => c.id === selectedId) ?? companies[0];
-  const lang: Lang = isLang(company.default_language)
-    ? company.default_language
-    : "en";
+  //  The language is no longer decided here. `LanguageProvider` reconciles the
+  //  person's own choice, this company's document language and the browser —
+  //  see its docstring for why the first two are different questions. The shell
+  //  only reports the company's document language up as the fallback.
 
   // Icons are stand-ins until Henri draws the real set; the mapping lives here
   // rather than in ia.ts so the IA stays free of presentation concerns.
@@ -278,6 +288,10 @@ export function AppShell() {
             onChange={setSelectedId}
             onCreateNew={() => navigate("/app/company/profile")}
           />
+          {/* Beside the company switcher rather than inside the account menu:
+              changing language is what you do when the interface is in one you
+              cannot read, and a menu you must read to find is no use then. */}
+          <LanguageToggle ariaLabel={t(lang, "settings.language")} />
         </TopNav>
       }
     >

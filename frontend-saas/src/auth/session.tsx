@@ -20,6 +20,9 @@ export interface SessionUser {
   displayName: string;
   organizationId: string;
   role: string;
+  /** The interface language this person chose, or null if they never have.
+   *  Null is meaningful: it means "follow the company", not "prefers French". */
+  language: string | null;
 }
 
 type SessionStatus = "loading" | "anonymous" | "authenticated";
@@ -62,6 +65,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           displayName: me.display_name,
           organizationId: me.organization_id,
           role: me.role,
+          language: me.language ?? null,
         });
         setStatus("authenticated");
       })
@@ -83,6 +87,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       displayName: result.display_name,
       organizationId: result.organization_id,
       role: result.role,
+      //  Login does not return it; `/users/me` fills it in on the next load.
+      //  Until then the provider falls back to the company default.
+      language: null,
     });
     setStatus("authenticated");
   }, []);
@@ -95,6 +102,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       displayName: result.display_name,
       organizationId: result.organization_id,
       role: "owner",
+      //  A new account has chosen nothing yet, so the provider falls back to
+      //  the company default and then the browser.
+      language: null,
     });
     setStatus("authenticated");
   }, []);
@@ -119,6 +129,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       displayName: result.display_name,
       organizationId: result.organization_id,
       role: result.role,
+      //  Login does not return it; `/users/me` fills it in on the next load.
+      //  Until then the provider falls back to the company default.
+      language: null,
     });
     setStatus("authenticated");
   }, []);
