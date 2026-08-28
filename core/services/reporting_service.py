@@ -115,6 +115,46 @@ class InvoiceReport:
 
 
 @dataclass(frozen=True)
+class MethodBucket:
+    method: str
+    count: int
+    total: Decimal
+
+
+@dataclass(frozen=True)
+class PaymentReport:
+    """What came in, over a period, split by how it arrived.
+
+    The payments screen shipped printing no total on purpose: summing a page of
+    rows in the browser gives the total of *that page*, which is a different
+    number from the total of the filter, and the wrong one. This is the total of
+    the filter.
+
+    Cash in, not revenue: a payment is counted on the day it landed, whatever
+    period the invoice it settles belongs to. The two disagree across a quarter
+    boundary and both are right — this one answers "what did the bank see".
+
+    Amounts are in the company's default currency; payments in any other are
+    counted in `skipped_other_currency` rather than summed at face value.
+    """
+
+    company_id: UUID
+    period: str | None
+    period_start: date | None
+    period_end: date | None
+    currency: str
+    methods: list[MethodBucket] = field(default_factory=list)
+    by_month: dict[str, Decimal] = field(default_factory=dict)
+    count_by_month: dict[str, int] = field(default_factory=dict)
+    payment_count: int = 0
+    total: Decimal = _ZERO
+    largest: Decimal = _ZERO
+    first_payment_on: date | None = None
+    last_payment_on: date | None = None
+    skipped_other_currency: int = 0
+
+
+@dataclass(frozen=True)
 class ClientStats:
     """The numbers behind Client 360's header.
 
@@ -473,6 +513,79 @@ class ReportingService:
             draft_count=draft_count,
             overdue_count=overdue_count,
             overdue_total=quantize(overdue_total, currency),
+            skipped_other_currency=skipped,
+        )
+
+    def payment_report(
+        self,
+        company_id: UUID,
+        period: str | None = None,
+        client_id: UUID | None = None,
+    ) -> PaymentReport:
+        """Payments received by `company_id`, optionally in `period`.
+
+        `period` filters on `paid_on` — when the money arrived — not on the
+        issue date of the invoice it settles. That is the question a payments
+        report is asked: reconciling a bank statement, or answering "how much
+        came in last quarter".
+        """
+        start, end = parse_period(period) if period else (None, None)
+
+        with self._uow_factory() as uow:
+            company = uow.companies.get(company_id)
+            if company is None:
+                raise NotFoundError(f"Company {company_id} not found")
+            currency = company.default_currency
+            payments = uow.payments.list(
+                company_id=company_id,
+                client_id=client_id,
+                paid_from=start,
+                paid_to=end,
+            )
+
+        in_currency = [p for p in payments if p.currency is currency]
+        skipped = len(payments) - len(in_currency)
+
+        methods: dict[str, list] = {}
+        by_month: dict[str, Decimal] = {}
+        count_by_month: dict[str, int] = {}
+        total = largest = _ZERO
+
+        for payment in in_currency:
+            slot = methods.setdefault(payment.method.value, [0, _ZERO])
+            slot[0] += 1
+            slot[1] += payment.amount
+
+            total += payment.amount
+            largest = max(largest, payment.amount)
+
+            month = f"{payment.paid_on.year:04d}-{payment.paid_on.month:02d}"
+            by_month[month] = by_month.get(month, _ZERO) + payment.amount
+            count_by_month[month] = count_by_month.get(month, 0) + 1
+
+        dates = sorted(p.paid_on for p in in_currency)
+        return PaymentReport(
+            company_id=company_id,
+            period=period.strip().upper() if period else None,
+            period_start=start,
+            period_end=end,
+            currency=currency.value,
+            methods=[
+                MethodBucket(
+                    method=method, count=count, total=quantize(amount, currency)
+                )
+                for method, (count, amount) in sorted(methods.items())
+            ],
+            by_month={
+                month: quantize(amount, currency)
+                for month, amount in sorted(by_month.items())
+            },
+            count_by_month=dict(sorted(count_by_month.items())),
+            payment_count=len(in_currency),
+            total=quantize(total, currency),
+            largest=quantize(largest, currency),
+            first_payment_on=dates[0] if dates else None,
+            last_payment_on=dates[-1] if dates else None,
             skipped_other_currency=skipped,
         )
 

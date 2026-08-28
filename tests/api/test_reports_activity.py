@@ -165,3 +165,140 @@ async def test_vat_report_rejects_a_malformed_period(client):
         headers=headers,
     )
     assert response.status_code == 422
+
+
+# ── GET /reports/payments ──────────────────────────────────────────────────
+#
+# The payments screen shipped printing no total because this did not exist.
+# Summing the rows in the browser gives the total of the *page*, which is a
+# different number from the total of the filter, and the wrong one.
+
+
+async def _paid_workspace(client):
+    headers = bearer(await signup(client))
+    company = await create_company(client, headers)
+    record = await create_client_record(client, headers, company["id"])
+    other = await create_client_record(client, headers, company["id"], name="Second NV")
+    return headers, company, record, other
+
+
+async def _pay(client, headers, invoice_id, amount, paid_on, method="bank_transfer"):
+    response = await client.post(
+        "/payments",
+        json={
+            "invoice_id": invoice_id,
+            "amount": amount,
+            "paid_on": paid_on,
+            "method": method,
+        },
+        headers=headers,
+    )
+    assert response.status_code == 201, response.text
+    return response.json()
+
+
+async def _payment_report(client, headers, company, **params):
+    response = await client.get(
+        "/reports/payments",
+        params={"company_id": company["id"], **params},
+        headers=headers,
+    )
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+async def test_payment_report_totals_the_filter_not_the_page(client):
+    headers, company, record, _ = await _paid_workspace(client)
+    first = await create_invoice(client, headers, company["id"], record["id"])
+    second = await create_invoice(client, headers, company["id"], record["id"])
+    await _pay(client, headers, first["id"], "1000.00", "2026-07-10")
+    await _pay(client, headers, first["id"], "512.50", "2026-07-20", method="cash")
+    await _pay(client, headers, second["id"], "200.00", "2026-08-03")
+
+    body = await _payment_report(client, headers, company)
+
+    assert body["payment_count"] == 3
+    assert Decimal(body["total"]) == Decimal("1712.50")
+    assert Decimal(body["largest"]) == Decimal("1000.00")
+    assert body["first_payment_on"] == "2026-07-10"
+    assert body["last_payment_on"] == "2026-08-03"
+    assert body["currency"] == "EUR"
+
+
+async def test_payment_report_splits_by_method(client):
+    headers, company, record, _ = await _paid_workspace(client)
+    invoice = await create_invoice(client, headers, company["id"], record["id"])
+    await _pay(client, headers, invoice["id"], "1000.00", "2026-07-10")
+    await _pay(client, headers, invoice["id"], "512.50", "2026-07-20", method="cash")
+
+    body = await _payment_report(client, headers, company)
+
+    by_method = {m["method"]: m for m in body["methods"]}
+    assert Decimal(by_method["bank_transfer"]["total"]) == Decimal("1000.00")
+    assert by_method["bank_transfer"]["count"] == 1
+    assert Decimal(by_method["cash"]["total"]) == Decimal("512.50")
+
+
+async def test_payment_report_counts_the_month_the_money_arrived(client):
+    """Cash in, not revenue: a July invoice paid in August is August's.
+
+    This and /reports/invoices legitimately disagree across a period boundary,
+    and both are right — they answer different questions.
+    """
+    headers, company, record, _ = await _paid_workspace(client)
+    invoice = await create_invoice(
+        client, headers, company["id"], record["id"], issue_date="2026-07-04"
+    )
+    await _pay(client, headers, invoice["id"], "1512.50", "2026-08-05")
+
+    body = await _payment_report(client, headers, company)
+    assert body["by_month"] == {"2026-08": "1512.50"}
+    assert body["count_by_month"] == {"2026-08": 1}
+
+    july = await _payment_report(client, headers, company, period="2026-07")
+    assert july["payment_count"] == 0
+    assert Decimal(july["total"]) == Decimal("0.00")
+
+    august = await _payment_report(client, headers, company, period="2026-08")
+    assert Decimal(august["total"]) == Decimal("1512.50")
+    assert august["period"] == "2026-08"
+
+
+async def test_payment_report_narrows_to_one_client(client):
+    headers, company, record, other = await _paid_workspace(client)
+    mine = await create_invoice(client, headers, company["id"], record["id"])
+    theirs = await create_invoice(client, headers, company["id"], other["id"])
+    await _pay(client, headers, mine["id"], "100.00", "2026-07-10")
+    await _pay(client, headers, theirs["id"], "250.00", "2026-07-11")
+
+    body = await _payment_report(client, headers, company, client_id=other["id"])
+
+    assert body["payment_count"] == 1
+    assert Decimal(body["total"]) == Decimal("250.00")
+
+
+async def test_payment_report_is_empty_and_still_well_formed(client):
+    """An empty report reads 0.00, not 0 — a money column that changes scale
+    mid-table is a formatting bug waiting to happen in whatever renders it."""
+    headers, company, _, _ = await _paid_workspace(client)
+
+    body = await _payment_report(client, headers, company)
+
+    assert body["total"] == "0.00"
+    assert body["largest"] == "0.00"
+    assert body["methods"] == []
+    assert body["by_month"] == {}
+    assert body["first_payment_on"] is None
+    assert body["skipped_other_currency"] == 0
+
+
+async def test_payment_report_rejects_a_malformed_period(client):
+    headers, company, _, _ = await _paid_workspace(client)
+
+    response = await client.get(
+        "/reports/payments",
+        params={"company_id": company["id"], "period": "last-quarter"},
+        headers=headers,
+    )
+
+    assert response.status_code == 422

@@ -12,6 +12,7 @@ from ..deps import get_uow_factory
 from ..schemas.insights import InvoiceReportResponse
 from ..schemas.reports import (
     KpiResponse,
+    PaymentReportResponse,
     RevenueByMonthResponse,
     VatReportResponse,
 )
@@ -68,3 +69,22 @@ def invoice_report(
     aggregating the full invoice list in the browser. Omit `period` for all time."""
     report = ReportingService(uow_factory).invoice_report(company_id, period, today=today)
     return InvoiceReportResponse.model_validate(report, from_attributes=True)
+
+
+@router.get("/payments", response_model=PaymentReportResponse)
+def payment_report(
+    company_id: UUID,
+    period: str | None = Query(default=None, pattern=PERIOD_PATTERN, examples=["2026-Q3"]),
+    client_id: UUID | None = None,
+    uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+):
+    """Total received, split by method and by month. Omit `period` for all time.
+
+    The payments screen deliberately printed no total until this existed:
+    summing the rows in the browser gives the total of the page, which is a
+    different number from the total of the filter, and the wrong one.
+    """
+    report = ReportingService(uow_factory).payment_report(
+        company_id, period, client_id=client_id
+    )
+    return PaymentReportResponse.model_validate(report, from_attributes=True)
