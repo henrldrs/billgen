@@ -80,8 +80,7 @@ type Draft = Record<EditableField, string>;
 export type CompanySection =
   | "all"
   | "profile"
-  | "legal"
-  | "vat"
+  | "identity"
   | "bank"
   | "numbering"
   | "defaults";
@@ -109,8 +108,13 @@ const SECTION_FIELDS: Record<Exclude<CompanySection, "all">, EditableField[]> = 
     "city",
     "country_code",
   ],
-  legal: ["legal_name", "registration_number"],
-  vat: ["vat_number"],
+  //  One section, not two. "Legal information" held the enterprise number and
+  //  "VAT / BCE information" held the VAT number, so BCE appeared in both — and
+  //  for a Belgian company they are the same identifier: the VAT number is BE
+  //  followed by the ten-digit enterprise number (core/rules/identifiers.py).
+  //  Two headings over the same fact is how a user comes to believe they are
+  //  two facts. Both fields stay, because outside Belgium they genuinely differ.
+  identity: ["legal_name", "registration_number", "vat_number"],
   bank: ["iban", "bic"],
   numbering: ["invoice_reference_prefix"],
   defaults: ["default_currency", "default_language", "default_pdf_template"],
@@ -118,8 +122,7 @@ const SECTION_FIELDS: Record<Exclude<CompanySection, "all">, EditableField[]> = 
 
 const SECTION_ORDER: Exclude<CompanySection, "all">[] = [
   "profile",
-  "legal",
-  "vat",
+  "identity",
   "bank",
   "numbering",
   "defaults",
@@ -127,8 +130,7 @@ const SECTION_ORDER: Exclude<CompanySection, "all">[] = [
 
 const SECTION_TITLES: Record<Exclude<CompanySection, "all">, MessageKey> = {
   profile: "company.sectionProfile",
-  legal: "company.sectionLegal",
-  vat: "company.sectionVat",
+  identity: "company.sectionIdentity",
   bank: "company.sectionBank",
   numbering: "company.sectionNumbering",
   defaults: "company.sectionDefaults",
@@ -165,7 +167,7 @@ const PEPPOL_FIELD_LABELS: Record<string, MessageKey> = {
 };
 
 /** Sections that can move the Peppol verdict, and therefore show its banner. */
-const PEPPOL_SECTIONS: CompanySection[] = ["all", "profile", "vat", "bank"];
+const PEPPOL_SECTIONS: CompanySection[] = ["all", "profile", "identity", "bank"];
 
 /** The languages a PDF can be written in. Unlike the template list this is not
  *  served by an endpoint, so it stays a constant here. */
@@ -398,7 +400,7 @@ export function CompanySettingsPanel({
           // rendering bug. Only the all-in-one screen needs section headings.
           title={section === "all" ? t(lang, SECTION_TITLES[name]) : undefined}
           actions={
-            name === "vat" && checks.get("vat_number")?.valid === false ? (
+            name === "identity" && checks.get("vat_number")?.valid === false ? (
               <Badge tone="danger">{t(lang, "company.invalid")}</Badge>
             ) : null
           }

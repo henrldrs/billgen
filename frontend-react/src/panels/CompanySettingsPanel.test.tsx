@@ -179,7 +179,7 @@ test("what still blocks Peppol is named, with the supplier-side caveat", async (
     templates,
   );
 
-  renderWithProvider(<CompanySettingsPanel companyId={COMPANY_ID} section="vat" />);
+  renderWithProvider(<CompanySettingsPanel companyId={COMPANY_ID} section="identity" />);
 
   expect(await screen.findByText("Not ready to send via Peppol")).toBeInTheDocument();
   expect(screen.getByText(/VAT number, IBAN/)).toBeInTheDocument();

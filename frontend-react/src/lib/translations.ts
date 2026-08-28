@@ -528,17 +528,11 @@ const MESSAGES = {
     nl: "Bedrijfsprofiel",
     es: "Perfil de la empresa",
   },
-  "company.sectionLegal": {
-    en: "Legal information",
-    fr: "Informations légales",
-    nl: "Juridische gegevens",
-    es: "Información legal",
-  },
-  "company.sectionVat": {
-    en: "VAT / BCE information",
-    fr: "Informations TVA / BCE",
-    nl: "Btw- / KBO-gegevens",
-    es: "Información de IVA",
+  "company.sectionIdentity": {
+    en: "Legal identity",
+    fr: "Identité juridique",
+    nl: "Juridische identiteit",
+    es: "Identidad jurídica",
   },
   "company.sectionBank": {
     en: "Bank account",
