@@ -52,12 +52,21 @@ read, and this session ran while he was asleep. It is one command:
 git push origin main
 ```
 
-**Expect the first CI run to be an experiment.** `.github/workflows/ci.yml` has
-still never executed. Its Postgres leg is the first real test of the
-gapless-numbering row lock and of `quota_guard`'s lock — both no-ops on SQLite.
-A red first run is information, not a regression.
+**Two documents disagree about whether CI has ever run, and this session cannot
+settle it.** The previous note and the header comment in
+`.github/workflows/ci.yml` both say it has never executed; the deployment record
+says the 2026-08-27 push ran it for the first time. `gh` is not installed here
+and nothing local carries a run result, so **check the Actions tab first** — and
+fix whichever of those two comments turns out to be stale.
 
-One thing that *would* have made it red is now fixed — see §3.
+It matters for §3. The Postgres leg runs the suite against a real Postgres, so
+`create_all` runs there — and that is exactly what the duplicate constraint name
+would have broken, at the first fixture, in every API test. If that leg has
+already gone green, the reasoning in §3 is wrong and the rename is merely
+tidier; if it went red, §3 is the likeliest reason.
+
+That leg is also the first real test of the gapless-numbering row lock and of
+`quota_guard`'s lock — both no-ops on SQLite.
 
 ---
 
@@ -117,8 +126,10 @@ migration, which has only ever been applied to SQLite development databases
 where the names are cosmetic.
 
 **Not verified against a real Postgres** — `docker` is not installed on this
-machine, so the evidence is the compiled DDL, not a green run. That verification
-is what the first CI run buys.
+machine, so the evidence is the compiled DDL (`CreateTable(...).compile(dialect=
+postgresql.dialect())`, which emits both constraints under one name), not a
+failing run reproduced here. If the Actions tab shows the Postgres leg green
+before 2026-08-28, this diagnosis is wrong and worth un-writing.
 
 ---
 
