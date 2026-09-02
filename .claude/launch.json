@@ -48,7 +48,7 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": [
         "--prefix",
-        "../finf_siteweb",
+        "../billgen_presale_website",
         "run",
         "dev",
         "--",
