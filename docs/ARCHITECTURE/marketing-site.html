@@ -244,7 +244,7 @@ tbody tr:nth-child(even){background:var(--zebra)}
     <a href="#overview">Overview</a>
     <a href="#routes">Routes &amp; Locales <span class="n">10</span></a>
     <a href="#page">Page Structure <span class="n">6</span></a>
-    <a href="#components">Components <span class="n">9</span></a>
+    <a href="#components">Components <span class="n">11</span></a>
 
     <p class="rail__group">Design</p>
     <a href="#language">Visual Language</a>
@@ -353,7 +353,7 @@ tbody tr:nth-child(even){background:var(--zebra)}
   <div class="sechead">
     <span class="sechead__id">&sect;M03</span>
     <h2>Components</h2>
-    <p class="sechead__sub">Nine of them, all local to this repository.</p>
+    <p class="sechead__sub">Eleven of them, all local to this repository.</p>
   </div>
 
   <div class="grid g2">
@@ -382,6 +382,14 @@ tbody tr:nth-child(even){background:var(--zebra)}
       <p>Name, email, company, market, role, message. Native <code>select</code> and <code>textarea</code> rather than Radix &mdash; three dependencies to render four options is not a trade worth making.</p>
     </div>
     <div class="card">
+      <h3>Reveal</h3>
+      <p>One IntersectionObserver over every <code>[data-reveal]</code> on the page. Cards render <em>visible</em> and only those starting below the fold are hidden, then un-hidden as they arrive &mdash; content that hides itself by default is one failed script away from a blank section. The first attempt inverted that, gating the hidden state on an attribute a script wrote to <code>&lt;html&gt;</code>; React stripped it on a later render and the cards never revealed at all.</p>
+    </div>
+    <div class="card">
+      <h3>Logo</h3>
+      <p>The real mark plus a two-tone wordmark, replacing the placeholder monogram. Used in the header, the footer, and as the tab icon.</p>
+    </div>
+    <div class="card">
       <h3>SiteFooter</h3>
       <p>Brand column with the closing pitch and its own CTA, then Product / Contact / Language columns, an oversized wordmark, and the cookie disclosure.</p>
     </div>
@@ -405,17 +413,39 @@ tbody tr:nth-child(even){background:var(--zebra)}
   <div class="grid g3">
     <div class="card">
       <h3>Ground</h3>
-      <p>White and muted slate for the argument. A dark ink ledger field &mdash; <code>#10131f</code> to <code>#171c2e</code> &mdash; for the product.</p>
+      <p>White and muted slate for the argument. A softened slate field &mdash; the logo grey ramp with two quiet washes of the mark&rsquo;s green &mdash; for the product.</p>
     </div>
     <div class="card">
       <h3>Accent</h3>
-      <p>Emerald, kept for actions, validation and active state. Not decoration.</p>
+      <p><code>#529984</code>, the mark&rsquo;s own green. Kept for actions and active state, not decoration.</p>
     </div>
     <div class="card">
       <h3>Type</h3>
       <p>Satoshi, canonical per BRAND_TOKENS. Geist as the fallback stack.</p>
     </div>
   </div>
+
+  <h3>The logo palette</h3>
+  <p>Sampled from <code>docs/BillGen_logo.png</code> rather than guessed, and added to <code>globals.css</code> as tokens:</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Token</th><th>Value</th><th>Where it comes from</th></tr></thead>
+      <tbody>
+        <tr><td><code>--logo-ink</code></td><td><code>#142336</code></td><td>The navy of &ldquo;Bill&rdquo; and the document outline.</td></tr>
+        <tr><td><code>--logo-green</code></td><td><code>#529984</code></td><td>The green of &ldquo;Gen&rdquo;, the folded corner and the &euro; glyph.</td></tr>
+        <tr><td><code>--logo-paper</code></td><td><code>#fdfcfa</code></td><td>The warm ground the lockup sits on.</td></tr>
+        <tr><td><code>--logo-slate-*</code></td><td>900&ndash;100</td><td>A grey ramp between the two, for grounds and dividers.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <p><strong>One divergence from BRAND_TOKENS, on this site only.</strong> <code>--primary</code> here is the mark&rsquo;s <code>#529984</code>, not the app&rsquo;s canonical <code>#10B981</code>. They are different greens, and a brighter emerald button sitting beside the wordmark in the same header read as exactly that &mdash; two greens. BRAND_TOKENS and the guard test in <code>frontend-react</code> are untouched; the place to reverse this is the <code>--primary</code> line in <code>globals.css</code>. Whether the mark&rsquo;s green should become canonical across the app is a brand decision, not a stylesheet edit.</p>
+  </div>
+
+  <h3>The mark</h3>
+  <p><code>public/billgen-mark.png</code> is the document-and-B glyph cropped out of the master logo with the warm paper knocked out to transparency and the near-white edge feathered. The counter of the B stays transparent rather than white, which is what lets the page show through the way the original does on its own paper. The wordmark beside it is set in type rather than baked into the image, so it stays crisp at any size and carries the logo&rsquo;s two tones. The same crop, padded and squared, is <code>src/app/icon.png</code> &mdash; the browser-tab icon.</p>
 </section>
 
 <!-- ==================================================== GLASS -->
@@ -439,6 +469,7 @@ tbody tr:nth-child(even){background:var(--zebra)}
     <p><strong>Two things the technique needs, and one that breaks it.</strong></p>
     <p>It needs a ground worth distorting. Frosted glass on white over white is invisible, which is why the sections that use it carry their own dark ledger backdrop with rule lines rather than sitting on the page white.</p>
     <p>It breaks in the build. <strong>Lightning CSS &mdash; the optimiser Tailwind v4 runs inside the Next build &mdash; deletes <code>backdrop-filter: url(#id) &hellip;</code> from the compiled stylesheet</strong>, treating the SVG filter reference as unsupported by a build target. The declaration never reaches a browser that does in fact support it. The filter is therefore set as an inline style in <code>components/glass.tsx</code>, which is not put through that pass. If the frost ever disappears after a refactor, this is the first thing to check.</p>
+    <p>The ground is not the mock&rsquo;s either. That one paired an emerald radial with a rust one over near-black, and against the rest of the page the band read as over-coloured. It is now the logo grey ramp with two quiet washes of <code>#529984</code>, no second hue, and much lower contrast. The mock&rsquo;s ledger rule lines are gone.</p>
   </div>
 
   <p class="muted">The source mock also carried the line &ldquo;Facture envoy&eacute;e via Peppol &mdash; statut&nbsp;: accept&eacute;e par le destinataire.&rdquo; That copy was not used: it claims network transmission the product does not do.</p>
