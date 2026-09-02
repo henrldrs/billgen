@@ -440,6 +440,72 @@ footer{
   .layerdiagram__row { grid-template-columns: 1fr auto; }
   .layerdiagram__blurb { grid-column: 1 / -1; }
 }
+
+/* --------------------------------------------------------- surface switch
+
+   Two documents now describe two surfaces: this one covers the software,
+   marketing-site.html covers billgen.be. The switch names the surface you
+   are in and offers the other one. Frosted, to match the card treatment on
+   the marketing site itself, so the pair reads as one set.              */
+
+.surface { position: relative; margin: 0 14px 14px; }
+
+.surface__btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 11px;
+  border-radius: 11px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink);
+  font: 500 12.5px/1 var(--sans);
+  cursor: pointer;
+  text-align: left;
+}
+.surface__btn:hover { background: var(--hover); }
+.surface__btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.surface__dot {
+  width: 7px; height: 7px; flex: none;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.surface__label { flex: 1; }
+.surface__caret { color: var(--ink-faint); transition: transform .15s ease; }
+.surface__btn[aria-expanded="true"] .surface__caret { transform: rotate(180deg); }
+
+.surface__menu {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  padding: 6px;
+  border-radius: 13px;
+  border: 1px solid var(--line-strong);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.35),
+    0 18px 40px rgba(15,23,42,.22);
+}
+.surface__menu[hidden] { display: none; }
+
+.surface__item {
+  display: block;
+  padding: 9px 10px;
+  border-radius: 9px;
+  text-decoration: none;
+  color: var(--ink);
+}
+.surface__item:hover { background: var(--hover); }
+.surface__item strong { display: block; font: 600 12.5px/1.3 var(--sans); }
+.surface__item span { display: block; margin-top: 2px; font: 400 11.5px/1.45 var(--sans); color: var(--ink-faint); }
+.surface__item.is-current { background: var(--accent-soft); }
+.surface__item.is-current strong { color: var(--accent-ink); }
 </style>
 
 <div class="shell">
@@ -454,6 +520,26 @@ footer{
       <button class="tt" id="tt" type="button" aria-label="Switch between light and dark">
         <span class="tt__light">☾</span><span class="tt__dark">☀</span>
       </button>
+    </div>
+  </div>
+
+  <!-- Which surface this document describes. The other one is a click away. -->
+  <div class="surface">
+    <button class="surface__btn" id="surface-btn" type="button"
+            aria-expanded="false" aria-controls="surface-menu">
+      <span class="surface__dot"></span>
+      <span class="surface__label">Software UI/UX</span>
+      <span class="surface__caret">&#9662;</span>
+    </button>
+    <div class="surface__menu" id="surface-menu" hidden>
+      <a class="surface__item is-current" href="system-architecture.html" aria-current="page">
+        <strong>Software UI/UX</strong>
+        <span>The app &mdash; shell, sections, drawers, entitlements.</span>
+      </a>
+      <a class="surface__item" href="marketing-site.html">
+        <strong>Marketing UI/UX</strong>
+        <span>billgen.be &mdash; the pre-sale page, four locales.</span>
+      </a>
     </div>
   </div>
 
@@ -488,6 +574,7 @@ footer{
     <a href="#compliance">Compliance Architecture</a>
 
     <p class="rail__group">Execution</p>
+    <a href="#mvp">MVP Scope <span class="n">3</span></a>
     <a href="#roadmap">Roadmap &amp; Progress</a>
     <a href="#path">Path to 100% <span class="n">38</span></a>
     <a href="#experience">Experience Layer (L6)</a>
@@ -1016,6 +1103,40 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
 </section>
 
 <!-- ==================================================== ROADMAP -->
+<!-- ==================================================== MVP SCOPE -->
+<section id="mvp">
+  <div class="sechead">
+    <span class="sechead__id">&sect;MVP</span>
+    <h2>MVP Scope</h2>
+    <p class="sechead__sub">Fixed 2026-09-02. Deliberately unnumbered &mdash; it cuts across the roadmap rather than sitting at a point on it. The smallest product worth putting in front of a paying Belgian business.</p>
+  </div>
+
+  <p>The MVP is <strong>issuing a correct invoice</strong>, supported by exactly three managed record types and nothing else. Everything the backend can already do stays in the codebase; it stays out of the MVP surface.</p>
+
+  <div class="grid g3">
+    <div class="card">
+      <h3>Template customization</h3>
+      <p>The document the client actually receives. Versioned and published, so changing a layout never rewrites what was already sent.</p>
+      <p class="muted">Backend wired 2026-08-28. The builder UI is the piece still waiting.</p>
+    </div>
+    <div class="card">
+      <h3>Clients</h3>
+      <p>Who is billed. Name, VAT number, address, language &mdash; the fields the mandatory mentions and the UBL both draw from.</p>
+    </div>
+    <div class="card">
+      <h3>Products &amp; services</h3>
+      <p>What is billed. One record type with a unit, a price and a VAT rate; a service and a product are two sides of the same coin and share a table.</p>
+    </div>
+  </div>
+
+  <h3>Explicitly out of the MVP</h3>
+  <p>Each of these exists in the backend and is <em>not</em> part of the first release surface: quotes, credit notes, payments, expenses, reports, multi-company, search, Peppol export, desktop packaging.</p>
+
+  <div class="note">
+    <p><strong>One reading to confirm.</strong> The scope as given was &ldquo;template customization, management of clients, services/products and clients&rdquo; &mdash; clients appear twice. This section reads that as three record types plus invoice issue as the thing they serve, on the grounds that an invoicing MVP without invoices is not a product. If the intent was different, this is the section to correct first.</p>
+  </div>
+</section>
+
 <section id="roadmap">
   <div class="sechead">
     <span class="sechead__id">§06</span>
@@ -1290,6 +1411,21 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
   </div>
 
   <div class="grid g2">
+    <details>
+      <summary>Expenses studio &mdash; a toggle, not a module</summary>
+      <div class="det-body">
+        <p>Expense capture exists in the backend already. The blueprint here is the <em>studio</em> on top of it: a surface the customer switches on when they want it, so the base product stays a clean invoicing tool for the people who only want that.</p>
+        <p>What it would answer, month by month:</p>
+        <ul>
+          <li>What recurring costs actually run &mdash; fuel, EV charging, electricity, telecom, insurance, subscriptions</li>
+          <li>What each one costs with and without VAT, and what share is deductible</li>
+          <li>What they take out of the month&rsquo;s invoiced turnover, as a figure rather than a feeling</li>
+          <li>How the deductible side moves the VAT position that the reporting screen already computes</li>
+        </ul>
+        <p>The value is the <strong>comparison</strong>, not the data entry: invoiced against spent, in the same view, on the same VAT basis. Nothing in the benchmark set does this for a Belgian sole trader without selling them a full bookkeeping product.</p>
+        <p class="muted">Gated behind an entitlement so it can ship to one tier first.</p>
+      </div>
+    </details>
     <details>
       <summary>Belgian market depth</summary>
       <div class="det-body">
@@ -2324,6 +2460,27 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
   };
   document.getElementById("nc-prev").addEventListener("click", () => go(current - 1));
   document.getElementById("nc-next").addEventListener("click", () => go(current + 1));
+
+  const surfaceBtn = document.getElementById("surface-btn");
+  const surfaceMenu = document.getElementById("surface-menu");
+  if (surfaceBtn && surfaceMenu) {
+    const close = () => {
+      surfaceMenu.hidden = true;
+      surfaceBtn.setAttribute("aria-expanded", "false");
+    };
+    surfaceBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const open = surfaceMenu.hidden;
+      surfaceMenu.hidden = !open;
+      surfaceBtn.setAttribute("aria-expanded", String(open));
+    });
+    document.addEventListener("click", (event) => {
+      if (!surfaceMenu.hidden && !surfaceMenu.contains(event.target)) close();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") close();
+    });
+  }
 
   const toggle = document.getElementById("rail-toggle");
   const list = document.getElementById("rail-list");

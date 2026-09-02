@@ -80,35 +80,51 @@ can ship uncommitted work. Fixing this is item 1 below.
    without a configured mail client — most mobile visitors. This is the one open
    item that costs real signups. Decision already taken: a Next route handler at
    `/api/waitlist` sending via Resend, function region pinned to `fra1`, rather
-   than Formspree — prospect addresses stay in your own infrastructure. **Not
-   started.**
-3. **i18n — designed, drafted, not landed.** Agreed shape: `content.ts` exports
-   `dictionaries` keyed `en`/`fr`/`nl` with a `Dictionary` type derived from the
-   English object so a missing key is a type error; a client-side switcher in
-   the footer; locale in `localStorage`, first guess from `navigator.language`;
-   `document.documentElement.lang` updated on switch. Full FR and NL copy for
-   every section — meta, hero, all 12 cards, audience, waitlist, footer — was
-   written during the session but **never reached disk** (the write failed and
-   the repo is clean at `a538168`). It has to be redone.
-   *Accepted tradeoff:* one route, so no `/fr` `/nl` URLs and no `hreflang`.
-   Fine while nothing ranks; revisit before real SEO effort.
-   *Before it ships:* the FR and especially the NL want a native read. This is a
-   compliance product and the copy is the credibility.
-4. **Footer rebuild.** Not started. Planned: brand, tagline, contact, the
-   language switcher, private-beta status, one data-protection sentence.
-5. **Privacy notice.** Missing. Not urgent *today* only because the `mailto:`
-   fallback stores nothing — it becomes a GDPR requirement the moment item 2
-   lands and the site starts holding addresses.
+   than Formspree — prospect addresses stay in your own infrastructure.
+   **Built 2026-09-02, waiting on credentials.** The design was inverted from
+   the original plan: the address is *stored first* and the notification is
+   best-effort, because a route that treats the email as the record loses the
+   prospect when the send fails. Storage is Upstash Redis over REST, region
+   Frankfurt. Both routes answer `503 unconfigured` until the env vars exist,
+   which is what keeps the `mailto:` fallback honest. Accepts either
+   `UPSTASH_REDIS_REST_URL`/`_TOKEN` or `KV_REST_API_URL`/`_TOKEN`.
+3. **i18n — landed 2026-09-02.** Three statically generated routes, `/en`,
+   `/fr` and `/nl`, from hand-written FR and NL copy for every section. The
+   dictionaries live in `src/lib/content.ts`: English is the source of truth
+   and `Dictionary` is derived from it, so a translation that drops a key,
+   misspells one, or ships eleven feature cards instead of twelve fails the
+   build. No i18n library — at ~50 strings on one page, `next-intl` would only
+   have added a dependency and a config file.
+   *Reversal of the earlier plan:* it is real URLs, not a `localStorage`
+   toggle, so the page carries `canonical` and `hreflang` for all three and a
+   Dutch searcher can be served the Dutch page. The visitor's choice is
+   remembered in a `billgen_locale` cookie; `src/proxy.ts` sends bare `/` to
+   that locale, falling back to `Accept-Language`, then English. The cookie is
+   functional and set only on a click, so no consent banner — but it is
+   disclosed in the footer.
+   *Still open:* **the NL wants a native read.** The FR is publishable. This is
+   a compliance product and the copy is the credibility.
+
+4. **Footer — rebuilt 2026-09-02.** Modelled on the ai.studio chrome Henri
+   picked as the reference: a brand column carrying the closing pitch and its
+   own CTA, then Product / Contact / Language columns, an oversized wordmark
+   under a divider, and a bottom row with the private-beta status and the
+   cookie sentence. The site also gained the sticky top bar it never had —
+   wordmark, section anchors, the EN/FR/NL segmented control and a pill CTA.
+
+5. **Privacy notice.** Missing, and now closer to required: the site sets one
+   functional cookie. The footer sentence is the minimum disclosure and it is
+   in place, but a real notice is due with item 2, when the site starts
+   holding addresses.
 6. **`noindex` decision.** The `.vercel.app` URL is indexable and will compete
    with `billgen.be` in search later.
 7. **Repo visibility** — public as of now.
 
-### S2. Domain and mail — blocked on LWS
+### S2. Domain and mail — **unblocked 2026-09-02**
 
-- **`billgen.be` is bought (LWS) but returns NXDOMAIN** — no nameservers
-  published at the `.be` registry. Nothing resolves and no mail can be delivered
-  until it is delegated. Check in the LWS panel whether the DNS zone is editable
-  or greyed out: if editable, nothing is actually blocking you.
+- **`billgen.be` is delegated.** The LWS panel now publishes `ns17`–`ns20
+  .lwsdns.com`, the zone is editable, expiry is 25-08-2027, and the identity
+  hold is cleared. Everything below that said "blocked" is now "do it".
 - **The LWS block is identity verification** — the account name is
   `HENRIQUE D RIBEIRO`, the ID says `HENRIQUE DOUGLAS RIBEIRO DA SILVA`. Ask
   support for a **correction of the holder's name**, not a change of holder; for
@@ -165,6 +181,78 @@ the product does neither.
 
 *Housekeeping:* `docs/billgen.bat` is an untracked accidental copy of the root
 launcher, and the prototype `.zip` now duplicates the unzipped folder.
+
+### S5. What landed 2026-09-02 (evening)
+
+Everything here is in `../billgen_presale_website`, committed locally, **not
+deployed**. `next build` is clean: eight static pages, two route handlers.
+
+- **Four locales.** Portuguese added beside EN/FR/NL — PT-PT throughout
+  (`faturação`, `IVA`, `gabinete de contabilidade`), tagged `pt-PT` rather than
+  `pt-BE` so the page stays reachable from Portugal if the market widens.
+  Copy split from one `content.ts` into `src/lib/content/{en,fr,nl,pt}.ts`;
+  the import path did not move.
+- **Dutch corrections** from the Data Architect applied. One deviation:
+  `machineleesbare` kept over his `computer-leesbare`, since that is the term
+  the Belgian administration uses. **His closing line — "de Peppol performantie
+  komt vooraan" — was not used**, because it contradicts the repositioning
+  below and the four languages have to say the same thing. Trivial to reverse.
+- **"Built and tested" removed** from the feature subtitle, per his note that
+  shipping tested software is the floor, not a boast. Scrubbed in all four.
+- **Request form** at `#inquiry`, posting to `/api/inquiry`. Name, email,
+  company, **market**, **role**, message. Market and role are separate fields
+  on purpose: one prospect asking about the Netherlands is an anecdote, twenty
+  is a roadmap decision, and that is only visible if it is a column.
+- **Frosted glass cards** from `themed/billgen-frosted-glass-hero.html`, on a
+  dark ledger ground because glass on white over white is invisible.
+  **Trap:** Lightning CSS strips `backdrop-filter: url(#id) …` from the built
+  stylesheet, so the filter is set inline in `components/glass.tsx`. If the
+  frost ever vanishes after a refactor, check that first.
+- **Privacy notice** at `/[locale]/privacy`, four languages.
+- **Competitor benchmark** run against Billit, Dexxter, Accountable and
+  Moneybird. Findings drove the repositioning: Peppol is commoditised (three of
+  four give it away, one is an access point), the free fiduciaire portal is
+  already occupied by two of them, and **nobody sells provable correctness** —
+  which is the ground BillGen owns. Headline is now *correct before it leaves,
+  provable after*.
+- **Architecture docs**: new `§MVP` section, an expenses-studio blueprint in
+  §11, and a glass surface switcher in the rail that flips between
+  `system-architecture.html` and the new `marketing-site.html`.
+
+### S6. Next session, in order
+
+1. **Finish the waitlist.** Paste the Upstash env vars into Vercel (Frankfurt),
+   redeploy, and POST a real address to `/api/waitlist` and `/api/inquiry` to
+   confirm a 200 and a row. Until this is done every mobile signup is still
+   lost to a `mailto:`.
+2. **Point `billgen.be` at Vercel.** Add the domain in Vercel → Settings →
+   Domains and paste the exact A/CNAME values it prints into the LWS zone.
+   **Keep the nameservers at LWS** — moving them to Vercel breaks mail.
+3. **Create `contact@billgen.be`** (two mailboxes included, zero used), then
+   set `NEXT_PUBLIC_CONTACT_EMAIL` in Vercel and **redeploy** — it is inlined
+   at build time. If Resend is later verified on the domain, its SPF must be
+   *merged* with the LWS SPF record; two SPF records is a silent failure.
+4. **Reply to the Netherlands prospect.** See S7 below.
+5. **Native reads** — Dutch (full pass) and Portuguese. This is a compliance
+   product and the copy is the credibility.
+6. **Connect Vercel to GitHub**, so a deploy stops shipping the working copy.
+7. **The MVP surface** — the template builder is the piece §MVP is waiting on.
+
+### S7. The Netherlands prospect
+
+Someone asked for a BillGen demo for Dutch invoicing, and a partnership was
+floated. Two things worth being honest about before that conversation:
+
+- **BillGen is Belgium-specific by construction.** The UBL carries the Belgian
+  elements and the VAT handling is Belgian. A Netherlands version is not a
+  locale switch; it is a second compliance profile. That is a real project, not
+  a demo flag.
+- **What can be shown today** is the export pipeline, the numbering guarantees,
+  the template versioning and the multi-company separation — none of which are
+  country-specific. That is the honest demo, and it is a strong one.
+
+Treat the request as evidence, not as a commitment: the `market` field on the
+new form exists so this stops being one anecdote and starts being a count.
 
 ---
 
