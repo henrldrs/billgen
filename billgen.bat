@@ -37,7 +37,7 @@ goto menu
 :web
 echo.
 echo Starting the API and the web UI in two new windows...
-start "BillGen API" cmd /k "cd /d "%~dp0" && python -m alembic upgrade head && python -m uvicorn api.main:app --port 8000"
+start "BillGen API" cmd /k "cd /d "%~dp0" && set "DESKTOP_MODE=true" && python -m alembic upgrade head && python -m uvicorn api.main:app --port 8000"
 timeout /t 4 >nul
 start "BillGen Web" cmd /k "cd /d "%~dp0" && npm run dev --workspace @billgen/saas"
 timeout /t 6 >nul
