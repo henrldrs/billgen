@@ -256,6 +256,86 @@ new form exists so this stops being one anecdote and starts being a count.
 
 ---
 
+## SELF. Software session — written 2026-09-03, to be run without Henri
+
+Two evenings have gone into the marketing site. This section exists so the next
+session goes back to the **software**, and so it can run while Henri is asleep
+without producing anything he has to undo.
+
+### The rule that shapes this list
+
+Three standing rules decide what is safe to do alone, and between them they cut
+out most of what looks like obvious work:
+
+1. **Henri reviews components before they are connected.** `/_preview` in
+   `frontend-saas` is the surface. Building a component is fine; wiring it into
+   a route is not.
+2. **UI is built from Henri's drawings.** There are none for the alerts panel or
+   the quotes section, so those screens cannot be invented unattended.
+3. **Pushing needs Henri.** It publishes work he has not read and runs CI.
+
+So the work below is deliberately *not* "build the missing screens". It is the
+mechanical and behavioural work that needs no design decision.
+
+### Do these, in order
+
+1. **Migrate the day-to-day dev database.** It still has not picked up the quote
+   tables; the desktop dev DB did, because it uses `create_all`.
+   ```bash
+   python -m alembic upgrade head
+   ```
+
+2. **Settle §3 — the duplicate constraint name.** This is a real bug that would
+   fail the Postgres leg of CI at the first fixture, in every API test, and it
+   is the highest-value thing on this list because nothing downstream can be
+   trusted until it is resolved. Read §3, confirm the diagnosis against the
+   current models, rename, add the migration, and run the suite. Do **not** push.
+
+3. **Regenerate the architecture report.** It is v0.11 against a stale HEAD and
+   now under-reports the backend by five endpoints and a whole aggregate. `/audit`
+   runs the engine; `sync-architecture` regenerates the volatile parts. This is
+   pure measurement — no judgement, no design — and it makes every other
+   document in `docs/ARCHITECTURE/` honest again.
+
+4. **Wire three endpoints into surfaces that already exist.** None of these
+   invents a screen; each connects a control that is already drawn:
+   - **⌘K palette → `GET /search`.** The palette exists and only navigates
+     pages today. This is the clearest win in §5b.
+   - **A total on the payments report → `GET /reports/payments`.** One number on
+     a screen that is already there.
+   - **The composer's VAT category default → `GET /vat-treatment`.** §5b calls
+     this "the one that changes what the product is legally capable of", and it
+     is a default value rather than new layout.
+
+5. **Keep the suite green.** It was 423 after the TVA scaffold. Add tests for
+   anything touched above; report the number honestly, including if it drops.
+
+### Do NOT do these alone
+
+- **`git push`.** §1. It is one command and it is Henri's to run.
+- **The alerts panel and the quotes section.** Backend-complete, but they are
+  new screens and rule 2 applies.
+- **Integrating the TVA and Template Studio scaffolds** (§7). Explicitly waiting
+  on reshaping the builder *with* Henri.
+- **Anything needing a third party** — B1 email, Peppol transport, checkout,
+  blob storage. §5.
+
+### Not software, and not for an unattended session
+
+Carried over so they are not lost, all needing Henri at a keyboard:
+
+- **Upstash env vars into Vercel**, then redeploy. Until then both site forms
+  answer 503 and fall back to `mailto:`, and every mobile signup is still lost.
+- **Point `billgen.be` at Vercel** and create `contact@billgen.be` (§S2, now
+  unblocked — the domain is delegated).
+- **The top bar redesign**, asked for 2026-09-03: the white bar reads as a hard
+  edge against the tinted paper. Wanted instead is a floating glass bar with
+  rounded corners, *opaque at rest*, going translucent over the gradient once
+  the page is scrolled. Design work, needs his eye.
+- **Native reads** of the Dutch and Portuguese copy.
+
+---
+
 ## 0. The one-line summary
 
 **The backend backlog is now the part that needs other people.** Everything on

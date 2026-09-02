@@ -244,7 +244,7 @@ tbody tr:nth-child(even){background:var(--zebra)}
     <a href="#overview">Overview</a>
     <a href="#routes">Routes &amp; Locales <span class="n">10</span></a>
     <a href="#page">Page Structure <span class="n">6</span></a>
-    <a href="#components">Components <span class="n">11</span></a>
+    <a href="#components">Components <span class="n">13</span></a>
 
     <p class="rail__group">Design</p>
     <a href="#language">Visual Language</a>
@@ -326,7 +326,7 @@ tbody tr:nth-child(even){background:var(--zebra)}
   <div class="sechead">
     <span class="sechead__id">&sect;M02</span>
     <h2>Page Structure</h2>
-    <p class="sechead__sub">Three acts: light, dark, light. The middle act is the product.</p>
+    <p class="sechead__sub">One vertical ramp, not three acts. Tinted paper at the top, a 260px blend, then a single field running unbroken to the bottom of the footer.</p>
   </div>
 
   <div class="tablewrap">
@@ -335,17 +335,26 @@ tbody tr:nth-child(even){background:var(--zebra)}
         <tr><th>Section</th><th>Ground</th><th>Job</th></tr>
       </thead>
       <tbody>
-        <tr><td>Hero</td><td>Light, emerald wash</td><td>The integrity promise, one CTA, the beta framed as selection.</td></tr>
-        <tr><td><code>#why</code></td><td>Light, muted</td><td>Compliance is the floor, not the feature.</td></tr>
-        <tr><td><code>#features</code></td><td><strong>Dark ledger</strong></td><td>Twelve frosted panes. What the product does today.</td></tr>
-        <tr><td><code>#audience</code></td><td><strong>Dark ledger</strong></td><td>Two frosted panes. Businesses, and the fiduciaires who answer for the books.</td></tr>
-        <tr><td><code>#waitlist</code></td><td>Light</td><td>Email only. The narrow ask.</td></tr>
-        <tr><td><code>#inquiry</code></td><td>Light, muted</td><td>Everything the waitlist has nowhere to put.</td></tr>
+        <tr><td>Hero</td><td>Tinted paper</td><td>The integrity promise, one CTA, the beta framed as selection.</td></tr>
+        <tr><td><code>#why</code></td><td>Deep field, top</td><td>Compliance is the floor, not the feature.</td></tr>
+        <tr><td><code>#features</code></td><td>Deep field</td><td>Twelve frosted panes. What the product does today.</td></tr>
+        <tr><td><code>#audience</code></td><td>Deep field</td><td>Two frosted panes. Businesses, and the fiduciaires who answer for the books.</td></tr>
+        <tr><td><code>#waitlist</code></td><td>Deep field</td><td>Email only. The narrow ask.</td></tr>
+        <tr><td><code>#inquiry</code></td><td>Deep field</td><td>Everything the waitlist has nowhere to put.</td></tr>
       </tbody>
     </table>
   </div>
 
-  <p>The dark band is a deliberate correction. The page previously ran twelve identically weighted white cards in a uniform grid, which tells a reader that twelve capabilities matter equally. They do not. Giving the product section its own ground separates it from the argument around it and gives the page a shape it did not have.</p>
+  <p>The shape is a deliberate correction. The page previously ran twelve identically weighted white cards in a uniform grid, which tells a reader that twelve capabilities matter equally. They do not.</p>
+
+  <div class="note">
+    <p><strong>The seam took four attempts, and none of the causes were the obvious one.</strong> Worth recording, because every fix that failed looked correct.</p>
+    <p><em>One:</em> the ramp faded a semi-transparent slate down onto the page. Compositing a dark desaturated colour over white interpolates through <strong>grey</strong> — a black dead-zone mid-ramp. Fixed with opaque stops on the paper-to-sapphire line.</p>
+    <p><em>Two:</em> the ramp and the hero were siblings, so the ramp's transparent top composited over plain body white while the hero above it was tinted paper. They now share one <code>.paper</code> parent.</p>
+    <p><em>Three:</em> <code>.deep</code> painted a green radial centred at 4%, so its real top pixel row was the base colour <em>plus a wash varying across x</em>, while the ramp ended on a flat colour. A flat stop cannot meet a horizontally varying edge. Both washes are now clear of the top.</p>
+    <p><em>Four, and the one that survived every colour fix:</em> a <strong>slope</strong> discontinuity. The ramp was still moving fast at its last stop while the field continues almost flat. Identical values, mismatched rates — the eye reads the second derivative. The ramp now decelerates into the handover.</p>
+    <p>Interpolation is <code>in oklab</code> throughout, which Lightning CSS preserves rather than downcompiling.</p>
+  </div>
 </section>
 
 <!-- ==================================================== COMPONENTS -->
@@ -353,7 +362,7 @@ tbody tr:nth-child(even){background:var(--zebra)}
   <div class="sechead">
     <span class="sechead__id">&sect;M03</span>
     <h2>Components</h2>
-    <p class="sechead__sub">Eleven of them, all local to this repository.</p>
+    <p class="sechead__sub">Thirteen of them, all local to this repository.</p>
   </div>
 
   <div class="grid g2">
@@ -368,6 +377,14 @@ tbody tr:nth-child(even){background:var(--zebra)}
     <div class="card">
       <h3>Hero</h3>
       <p>Badge, headline, subhead, CTA, reassurance line. No image &mdash; there is still no product screenshot worth showing.</p>
+    </div>
+    <div class="card">
+      <h3>EuroField</h3>
+      <p>The &euro; motif, scattered. It comes out of the mark &mdash; there is a euro inside the document in the logo &mdash; so repeating it at scale is the brand&rsquo;s own shape rather than ornament. Sizes, rotations, ring counts and arc sweeps all differ; several are cropped; some are fragments with no crossbars. Nothing shares a horizontal, or the field reads as a pattern. Positions are a <strong>fixed table, never <code>Math.random()</code></strong> &mdash; random geometry differs between server and client and breaks hydration on every load.</p>
+    </div>
+    <div class="card">
+      <h3>ProductPreview</h3>
+      <p>The floating shot under the CTA. Renders <strong>only if <code>public/product-preview.png</code> exists</strong>, checked at build time, and returns null otherwise &mdash; so the page can never show a product that is not real. Landed 2026-09-03.</p>
     </div>
     <div class="card">
       <h3>GlassFilters / GlassCard</h3>
@@ -413,7 +430,7 @@ tbody tr:nth-child(even){background:var(--zebra)}
   <div class="grid g3">
     <div class="card">
       <h3>Ground</h3>
-      <p>White and muted slate for the argument. A softened slate field &mdash; the logo grey ramp with two quiet washes of the mark&rsquo;s green &mdash; for the product.</p>
+      <p>Tinted paper at the top, ramping through green tints into a slate-green field that runs to the footer. No neutral anywhere on the line.</p>
     </div>
     <div class="card">
       <h3>Accent</h3>
@@ -585,7 +602,7 @@ tbody tr:nth-child(even){background:var(--zebra)}
         <tr><td>Vercel &rarr; GitHub</td><td><span class="pill pill--gap">open</span></td><td>Until connected, every deploy is manual and ships the working copy rather than <code>main</code>.</td></tr>
         <tr><td>Native Dutch read</td><td><span class="pill pill--partial">partial</span></td><td>Data Architect corrections applied 2026-09-02. A full native pass is still owed.</td></tr>
         <tr><td>Native Portuguese read</td><td><span class="pill pill--gap">open</span></td><td>PT-PT throughout, written not reviewed.</td></tr>
-        <tr><td>Product screenshots</td><td><span class="pill pill--gap">blocked</span></td><td>The strongest evidence the page could carry, blocked on the app UI reshape.</td></tr>
+        <tr><td>Product screenshot</td><td><span class="pill pill--done">done</span></td><td>Template studio shot landed 2026-09-03 and the hero card is live.</td></tr>
         <tr><td><code>noindex</code> on the vercel.app URL</td><td><span class="pill pill--gap">open</span></td><td>It will compete with billgen.be in search.</td></tr>
       </tbody>
     </table>
