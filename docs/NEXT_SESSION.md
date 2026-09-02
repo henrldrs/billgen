@@ -28,6 +28,146 @@ python -m alembic upgrade head
 
 ---
 
+
+---
+
+> **Two workstreams now.** Section **S** below is 2026-09-02 and covers the
+> pre-sale website, the domain and the business setup. Sections **0–7** are the
+> 2026-08-28 backend note, **untouched this session** — no backend code ran, no
+> tests were re-run, and everything they say is still outstanding still is.
+> `audit-engine-and-scaffolds` is **ahead of origin by 3 commits** from this
+> session and needs a push.
+
+---
+
+## S. The pre-sale site is live — 2026-09-02
+
+**https://billgenbe.vercel.app** serves the BillGen page. It had been serving
+the old FinanceFlow site for six months.
+
+| | |
+|---|---|
+| Repo | `github.com/henrldrs/pre_sale_billgen` — **public** |
+| Local | `../billgen_presale_website` (renamed from `finf_siteweb`) |
+| Vercel project | `billgen.be` |
+| Stack | Next.js 16.1.6, static, one route, no server functions |
+| HEAD | `a538168` |
+
+**Why it was stuck for most of the session:** the rebrand lived on a local
+`billgen-rebrand` branch that was never merged. An earlier message in that
+session claimed `main` had been fast-forwarded onto it; that command was written
+out but never run, so `git push` faithfully published FinanceFlow. `main` is
+correct now. If a deploy ever looks stale again, check `git branch -vv` before
+anything else.
+
+**Deploys are manual.** The Vercel GitHub App is not installed on the account
+(GitHub Apps lists Claude, Google AI and Linear — no Vercel), so there is no
+webhook and pushes do not build. Publishing is:
+
+```bash
+npx vercel --prod
+```
+
+run from the site folder. That uploads the **working copy**, not `main` — so it
+can ship uncommitted work. Fixing this is item 1 below.
+
+### S1. Site todos, in order
+
+1. **Connect Vercel → GitHub.** Project → Settings → Git → Connect Git
+   Repository, then grant the App access to `pre_sale_billgen`. Until then every
+   deploy is manual and can diverge from `main`.
+2. **Waitlist endpoint.** The form falls back to `mailto:`, which loses anyone
+   without a configured mail client — most mobile visitors. This is the one open
+   item that costs real signups. Decision already taken: a Next route handler at
+   `/api/waitlist` sending via Resend, function region pinned to `fra1`, rather
+   than Formspree — prospect addresses stay in your own infrastructure. **Not
+   started.**
+3. **i18n — designed, drafted, not landed.** Agreed shape: `content.ts` exports
+   `dictionaries` keyed `en`/`fr`/`nl` with a `Dictionary` type derived from the
+   English object so a missing key is a type error; a client-side switcher in
+   the footer; locale in `localStorage`, first guess from `navigator.language`;
+   `document.documentElement.lang` updated on switch. Full FR and NL copy for
+   every section — meta, hero, all 12 cards, audience, waitlist, footer — was
+   written during the session but **never reached disk** (the write failed and
+   the repo is clean at `a538168`). It has to be redone.
+   *Accepted tradeoff:* one route, so no `/fr` `/nl` URLs and no `hreflang`.
+   Fine while nothing ranks; revisit before real SEO effort.
+   *Before it ships:* the FR and especially the NL want a native read. This is a
+   compliance product and the copy is the credibility.
+4. **Footer rebuild.** Not started. Planned: brand, tagline, contact, the
+   language switcher, private-beta status, one data-protection sentence.
+5. **Privacy notice.** Missing. Not urgent *today* only because the `mailto:`
+   fallback stores nothing — it becomes a GDPR requirement the moment item 2
+   lands and the site starts holding addresses.
+6. **`noindex` decision.** The `.vercel.app` URL is indexable and will compete
+   with `billgen.be` in search later.
+7. **Repo visibility** — public as of now.
+
+### S2. Domain and mail — blocked on LWS
+
+- **`billgen.be` is bought (LWS) but returns NXDOMAIN** — no nameservers
+  published at the `.be` registry. Nothing resolves and no mail can be delivered
+  until it is delegated. Check in the LWS panel whether the DNS zone is editable
+  or greyed out: if editable, nothing is actually blocking you.
+- **The LWS block is identity verification** — the account name is
+  `HENRIQUE D RIBEIRO`, the ID says `HENRIQUE DOUGLAS RIBEIRO DA SILVA`. Ask
+  support for a **correction of the holder's name**, not a change of holder; for
+  `.be` a registrant change is a transfer of ownership with its own procedure.
+- **Keep DNS at the registrar**, not at Vercel — mail records live there too.
+  Email needs only delegation plus an MX; it does **not** need the website, so
+  the mailbox can go live before the domain points anywhere.
+- **`contact@billgen.be`:** Proton custom domain (paid plan) is the better route
+  since Proton is already in use — proper SPF/DKIM/DMARC matters for an
+  invoicing product's deliverability. LWS mail is the fallback.
+- **When the mailbox exists:** set `NEXT_PUBLIC_CONTACT_EMAIL=contact@billgen.be`
+  in Vercel **and redeploy** — `NEXT_PUBLIC_*` is inlined at build time, so an
+  env change alone does nothing.
+- **`billgen.com` is not available.** It is a live fuel-bill-generator business
+  on Hostinger, with schema.org markup claiming the name "BillGen". A naming
+  question, not just a domain one. Unresolved.
+
+### S3. Business setup — Henri, not code
+
+- **Xerius** as *guichet d'entreprises* is a fine choice; every recognised one
+  does the same statutory work. It doubles as the social insurance fund, which
+  is convenience and mild lock-in.
+- **Hello bank! Pro** — before signing, confirm **CODA / CAMT.053 export and
+  API access**. Payment reconciliation against the `+++/+++` structured
+  communication is a BillGen feature; you will be your own test case. Compare
+  **Qonto** on exactly that axis.
+- **Decide legal structure and VAT regime before the counter asks.** Do **not**
+  take the *franchise* exemption — you sell VAT and Peppol software, and B2B
+  customers deduct VAT anyway. Registering also lets you deduct VAT on Vercel,
+  domains and hardware.
+- Being VAT-registered puts you inside the Belgian B2B e-invoicing mandate —
+  which is dogfooding, and a credibility line for the site.
+- Worth one paid hour with a comptable on sole trader vs SRL.
+
+### S4. Pool — specs exist, nothing started
+
+Committed this session under `docs/`, all Henri's own specs:
+
+- **Onboarding quiz** (`docs/onboarding feature .txt`) — the big one. Five
+  steps: language + theme, entity type with KBO mod-97 validation, feature
+  toggling by business profile, data seeding and branding, then a guided first
+  invoice. Explicitly a scaffolding engine, not a tour.
+- **Settings surface** (`docs/settings exhaustive list.txt`)
+- **Dashboard** (`docs/dashboard nice to have.txt`)
+- **SaaS appearance pass** (`docs/appearance for saas.txt`)
+
+**AI Studio reference build** is now unzipped at
+`docs/billgen---enterprise-invoicing-&-financial-saas/`. Read it for the design
+layer (`tokens.css`, `components.css`), the domain types, the settings IA and
+the French vocabulary. **Do not port** its palette — it is `#2563EB` blue with
+Plus Jakarta Sans and will fail the emerald + Satoshi guard test — and do not
+port its Peppol language: it shows *transmission* and recurring invoices, and
+the product does neither.
+
+*Housekeeping:* `docs/billgen.bat` is an untracked accidental copy of the root
+launcher, and the prototype `.zip` now duplicates the unzipped folder.
+
+---
+
 ## 0. The one-line summary
 
 **The backend backlog is now the part that needs other people.** Everything on
