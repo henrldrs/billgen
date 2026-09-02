@@ -1,0 +1,182 @@
+1. Essential Dashboard Cards ("Should Have")
+These cards provide the core daily operational status and basic financial visibility.
+
+A. Agenda & Billing Pipeline
+Unbilled Appointments & Ready-to-Bill Card:
+
+Shows total appointments completed in the current billing cycle that haven't been invoiced yet.
+
+Displays a monetary estimate based on appointment rates + added extra items.
+
+Action: Quick "Review & Generate Drafts" button.
+
+Upcoming Appointments (Agenda Overview):
+
+A compact view of today's and this week's scheduled client appointments.
+
+Shows client name, service type, and whether it's confirmed or pending.
+
+B. Core Financial Metrics (Top KPI Row)
+Monthly Revenue (Current vs. Previous Month):
+
+Total billed revenue this month with percentage growth relative to the previous month.
+
+Outstanding & Overdue Invoices:
+
+Total unpaid balance split into Pending (Within Terms) and Overdue (Late).
+
+Badge/counter for invoices requiring reminders.
+
+Estimated Tax & VAT Buffer:
+
+Real-time calculation of VAT collected and estimated income tax to set aside for the quarter/year.
+
+C. Offerings & Catalog Breakdown
+Revenue Split: Services vs. Products (Visual Chart):
+
+A stacked bar or donut chart comparing revenue from Services (hourly fees, consultation appointments, recurring retainers) versus Products (digital goods, software licenses, physical materials, flat-rate items).
+
+D. Quick Actions Widget
+One-click shortcuts: + New Appointment, + Quick Invoice, + Add Product/Service, + Manual Line Item.
+
+2. Exceptional Dashboard Cards ("Nice to Have / Killer Features")
+These cards turn a standard invoicing tool into an intelligent, high-value freelance ERP.
+
++-----------------------------------------------------------------------------------+
+|  [!] 4 Month-End Invoices Ready for Confirmation ($3,450.00)                      |
+|      Client A (3 Appts + 1 Product) | Client B (1 Appt) | [ Generate & Send All ] |
++-----------------------------------------------------------------------------------+
+|  REVENUE FORECAST (30 DAYS)          |  EFFECTIVE HOURLY RATE                     |
+|  Billed: $4,200  | Scheduled: $1,800  |  Earned: $85/hr  | Admin Overhead: 18%     |
++-----------------------------------------------------------------------------------+
+|  SERVICES VS PRODUCTS PERFORMANCE    |  CLIENT CONCENTRATION RISK                 |
+|  Services: 72% ($6.2k) | Prods: 28%  |  Client Alpha: 62% of revenue (Warning)   |
++-----------------------------------------------------------------------------------+
+A. Automated Monthly Billing Queue (The Agenda Hub)
+What it does: Acts as an intelligent staging area for your end-of-month batch billing.
+
+Key Details:
+
+Displays clients whose monthly appointments have closed.
+
+Shows itemized previews: X Appointments + Y Extra Products/Items added during sessions.
+
+Batch Actions: "Approve All & Send Invoices", "Edit Line Items", or "Snooze Client to Next Month".
+
+B. Cash Flow & Revenue Forecast (Billed + Scheduled)
+What it does: Combines past invoice data with future scheduled agenda appointments.
+
+Key Details:
+
+Shows guaranteed income (issued invoices) + projected income (confirmed upcoming appointments in the agenda for the next 30/60 days).
+
+Helps the freelancer see if they will hit their monthly income target before the month ends.
+
+C. Effective Hourly Rate & Admin Overhead Tracker
+What it does: Calculates the true profitability of services.
+
+Key Details:
+
+Divides total service revenue by hours spent (billable session time vs. non-billable setup/admin time).
+
+Indicates if certain service types or clients are yielding a lower effective hourly rate than your base rate.
+
+D. Product vs. Service Profitability & Velocity Matrix
+What it does: Provides deep insight into your product catalog versus active service time.
+
+Key Details:
+
+Top Service: Most booked service type by volume and revenue.
+
+Top Product/Add-on: Most frequently added item attached to appointments (e.g., hosting fees, specialized software licenses, physical supplies).
+
+Passive vs. Active Ratio: Percentage of income earned from products (zero extra labor) vs. services (labored time).
+
+E. Client Revenue Concentration & Health Index
+What it does: Protects the freelancer from financial risk by tracking client dependency.
+
+Key Details:
+
+Displays client income distribution (e.g., "Client X represents 55% of your total revenue this quarter").
+
+Flags warning status if a single client dominates cash flow, helping plan diversification.
+
+F. "Safe-to-Spend" Real-Time Cash Indicator
+What it does: Takes total bank/invoice receipts and automatically deducts estimated quarterly VAT, income tax reserve, and recurring operating expenses.
+
+Key Details:
+
+Gives the freelancer one bold number: "Safe Personal Draw: $X,XXX", preventing accidental over-spending before tax deadlines.
+
+Suggested Layout Structure
+Top Row (Metrics & Action Banners):
+
+Month-End Billing Queue Banner (if pending approvals exist).
+
+4 Small KPI Cards: Monthly Revenue, Unbilled Agenda Value, Overdue Invoices, Safe-to-Spend Cash.
+
+Middle Main Grid:
+
+Left (2/3 width): Combined Revenue Chart (Past Invoices + Upcoming Scheduled Agenda) with Service vs. Product toggle.
+
+Right (1/3 width): Today's/This Week's Agenda Widget (with quick "Add Extra Item" shortcut per appointment).
+
+Bottom Row:
+
+Left (1/2 width): Service vs. Product Sales Breakdown & Top Catalog Items.
+
+Right (1/2 width): Effective Hourly Rate & Client Concentration Risk index.
+
+
+Proposed Layout Redesign
++-----------------------------------------------------------------------------------+
+|  KPI BAR:  Invoiced (€) | Paid (€) | Unbilled Agenda (€) | Overdue | Est. Tax Reserve |
++-----------------------------------------------------------------------------------+
+|  [!] UNBILLED AGENDA QUEUE (Ready for Monthly Confirmation)                      |
+|      3 Appointments completed (€450.00) + 1 Product Add-on (€50.00)  [Review]    |
++-----------------------------------------------------------------------------------+
+|  REVENUE & PROJECTIONS (2026)         |  UPCOMING AGENDA & QUICK ACTIONS          |
+|  [Stacked Bar Chart: Services/Prods]  |  • Today: 14:00 - Client Consultation     |
+|  • Invoiced  • Scheduled (Agenda)     |  [+ New Appt] [+ Add Product] [+ Invoice] |
++-----------------------------------------------------------------------------------+
+|  CATALOG BREAKDOWN                    |  ACTIVITY LOG                             |
+|  Top Service: Retainer (60%)          |  29/08 19:31 — Created Invoice #004       |
+|  Top Product: License Add-on (40%)    |  29/08 19:27 — Confirmed Appointment      |
++-----------------------------------------------------------------------------------+
+Key UI Enhancements
+1. Upgraded Top KPI Bar
+
+Keep: Invoiced (€0.00), Paid (€0.00), Outstanding (€0.00), Overdue (0).
+
+Add: Unbilled Agenda (€0.00) — Calculates total value of completed appointments in the current month awaiting billing.
+
+Add: Estimated Tax Buffer — Displays VAT/Income tax set-aside so you know your net income.
+
+2. Actionable Empty States
+Replace "No invoices were issued in this year" with contextual quick actions:
+
+Current: No invoices were issued in this year.
+
+Better: No invoices issued for 2026 yet. [Schedule an Appointment] or [Create Manual Invoice]
+
+3. Dual-Category Revenue Chart (Services vs. Products)
+Upgrade the Revenue by month — 2026 component from a basic list into a visual chart that separates your offerings:
+
+Stacked Bar View: Shows month-by-month revenue split into Services (Session time, hourly) and Products (One-off items, materials, licenses).
+
+Dotted/Ghost Bars: Displays projected revenue from confirmed appointments scheduled in your agenda for the rest of the month.
+
+4. Agenda & Unbilled Staging Widget
+Place a dedicated section directly above your main charts:
+
+Displays appointments confirmed as "Done" that need monthly invoice generation.
+
+Shows extra line items attached during the appointment (e.g., Service: 1h Coaching + Item: Physical Handbook).
+
+Batch Action Button: "Generate & Send Monthly Invoices".
+
+5. Activity Log Relocation
+
+Move the raw timestamps (Created 29/08/2026...) to a smaller lower-right card or a collapsible side drawer.
+
+Enriched log formatting: Created Invoice #102 for Client X or Added Product 'Hosting' to Appointment #4 instead of generic Created/Edited text.

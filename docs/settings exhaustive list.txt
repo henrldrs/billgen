@@ -1,0 +1,57 @@
+To build a fully compliant, production-grade SaaS, user and administration settings are categorized into legal, privacy, frontend UX, security, and system operational controls.
+
+GDPR, Privacy & Data Governance Settings (Mandatory)
+
+Consent Management: Independent toggles for non-essential cookies, product analytics, error telemetry, user behavior session recording, and marketing communications.
+
+Data Subject Access Request (DSAR) Portal: Self-serve request generator to view and download all personal data stored across databases and third-party vendors.
+
+Data Portability / Export: One-click automated export of tenant and personal data in standardized machine-readable formats (JSON, CSV, UBL/XML).
+
+Right to Erasure / Deletion: Self-serve "Delete Account / Forget Me" trigger with options for immediate deletion or a configurable 30-day grace period.
+
+Data Retention & Auto-Purge: Rules specifying log retention limits (e.g., 30/90 days for API logs), user activity history cleanup, and automated soft-delete cleanup schedules.
+
+Subprocessor Directory & Alerts: Opt-in notification preference for updates to the vendor/subprocessor list, alongside explicit consent tracking for cross-border data transfers.
+
+Legal, Tax & Regulatory Compliance Settings
+
+Legal Entity & Business Details: Official company name, legal registration number (e.g., Enterprise/KBO/BCE number), registered business address, and legal representative contact.
+
+Tax & Billing Identifiers: Tax/VAT identification number (e.g., intra-community VAT format), default VAT rate presets, and tax exemption status overrides.
+
+E-Invoicing & Network Registration: Peppol ID / EAS code configuration, electronic signature keys, and automated regulatory invoice archiving rules (7–10 years retention enforced by law).
+
+Terms & Policy Versioning: Agreement history tracking acceptance dates for Terms of Service, Privacy Policy, Cookie Policy, and Data Processing Agreements (DPA).
+
+Audit Trail & Legal Hold: Immutable event logging toggle for administrative actions, access attempts, and financial modifications, with an optional legal hold override to block auto-deletion during litigation.
+
+Frontend, UI & Application UX Settings
+
+Appearance & Visual Theme: Theme selection (Light, Dark, OS System Sync, High Contrast), custom accent/brand color pickers, and glassmorphism/translucency toggles.
+
+Typography & Density: Font size scaling (80%–120%), monospace font toggle for financial/numeric tables, dyslexia-friendly font options, and UI layout density (Compact, Comfortable, Spacious).
+
+Localization & Regional Standards: Interface language, timezone, date format (YYYY-MM-DD vs DD/MM/YYYY), time format (12h vs 24h), primary currency symbol, and number formatting (decimal and thousands separators).
+
+Navigation & Default Views: Selectable default landing page (Dashboard, Invoices, Analytics), collapsible vs pin-expanded sidebar defaults, and custom keyboard shortcut bindings.
+
+Motion & Performance: Reduced motion toggle (disables animations/transitions) and low-power rendering mode (disables background blurs and canvas animations).
+
+Identity, Security & Access Control (Mandatory)
+
+Authentication Options: Password change UI, Passkeys / WebAuthn PRF enrollment, hardware security key management (YubiKey), and SSO integration (Google, Microsoft Entra ID, SAML 2.0).
+
+Multi-Factor Authentication (MFA): TOTP authenticator app pairing, recovery code generation, and enforced MFA policy switches for sub-users.
+
+Session & Device Management: Active session overview (IP address, browser, OS, last active timestamp), idle session timeout duration, and single-click "Revoke All Other Sessions".
+
+Role-Based Access Control (RBAC): Organization role management (Owner, Admin, Accountant, Developer, Read-Only) and custom granular API/feature permissions.
+
+Notifications & Integration Settings
+
+Communication Channels: Granular email notification switches (security alerts [mandatory], billing receipts, system updates, digests), in-app toast preferences, and push notification toggles.
+
+API Keys & Webhooks: Personal access token generation, scoped API keys, IP address whitelisting for API access, webhook endpoint management, and secret key rotation.
+
+Connected Services: OAuth app authorizations, cloud backup destinations, and third-party payment gateway integration settings.

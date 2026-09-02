@@ -1,0 +1,51 @@
+Global Theme & Color Modes
+
+Theme Switching: Light Mode, Dark Mode, or Automatic (sync with OS/system theme).
+
+Accent Color / Palette: Selection of the primary brand color for buttons, focus rings, and active states (e.g., Slate, Emerald, Indigo, Amber).
+
+Contrast Modes: Standard vs. High-Contrast mode for low-vision users.
+
+Colorblind Accessibility: Specialized palette overrides for Deuteranopia, Protanopia, or Tritanopia.
+
+Typography & Display Density
+
+Interface Density: Compact (tight margins/padding, high data density), Comfortable (standard), or Spacious (touch-friendly, generous padding).
+
+Font Scaling: Base font size adjustments (e.g., 80%, 100%, 120%) or discrete steps (Small, Medium, Large).
+
+Font Family Choice: Toggling between default sans-serif (e.g., Inter, system font), serif, or fixed-width monospace fonts for numeric and table-heavy views.
+
+Layout & Navigation
+
+Sidebar State: Collapsed (icons only), Expanded, or Auto-hide on idle.
+
+Navigation Placement: Left vertical sidebar vs. Top horizontal navigation bar.
+
+Container Width: Fluid (100% full-viewport width) vs. Fixed/Boxed max-width layout (e.g., 1200px centered).
+
+Default Landing Screen: User-configurable initial page upon login (e.g., Dashboard, Invoices, Analytics).
+
+Data Tables & Visualization
+
+Table Styling: Toggle zebra striping (alternating row background colors), visible inner gridlines, or sticky headers/columns.
+
+Default Display Mode: Preference between Grid/Kanban cards, Table list, or Compact row view.
+
+Chart Palettes: Color scheme presets for data graphs (e.g., Categorical, Sequential, Pastel, Vibrant).
+
+Workspace & White-Label Branding (Organization Level)
+
+Custom Logos: Light-mode logo, dark-mode logo, collapsed icon/mark, and browser favicon uploads.
+
+Custom Domain / Portal Theme: Custom Hex color codes applied to customer-facing portals, payment pages, or shared links.
+
+Document & PDF Styling: Header/footer layout selection, brand accent lines, and font selection for generated invoices, quotes, or exported reports.
+
+Custom CSS Overrides: Advanced raw CSS injection field for enterprise custom styling.
+
+Motion & Performance Accessibility
+
+Reduced Motion: Disabling smooth scrolling, hover animations, modal transitions, and micro-interactions.
+
+Translucency & Blurs: Toggling glassmorphism effects, translucent sidebars, and backdrop blurs off for low-power GPUs.

@@ -1,0 +1,264 @@
+/* Geometric Balance brand tokens — precision geometric hierarchy, #111827 dark sidebar,
+ * #2563EB royal blue accent, #F3F4F6 clean canvas, and balanced geometric radii.
+ */
+
+:root {
+  /* ---- raw brand scales (Geometric Balance) ---- */
+  --brand-blue-50: #eff6ff;
+  --brand-blue-100: #dbeafe;
+  --brand-blue-200: #bfdbfe;
+  --brand-blue-300: #93c5fd;
+  --brand-blue-400: #60a5fa;
+  --brand-blue-500: #2563eb;
+  --brand-blue-600: #1d4ed8;
+  --brand-blue-700: #1e40af;
+  --brand-blue-800: #1e3a8a;
+  --brand-blue-900: #172554;
+
+  --brand-slate-50: #f8fafc;
+  --brand-slate-100: #f1f5f9;
+  --brand-slate-200: #e2e8f0;
+  --brand-slate-300: #cbd5e1;
+  --brand-slate-400: #94a3b8;
+  --brand-slate-500: #64748b;
+  --brand-slate-600: #475569;
+  --brand-slate-700: #334155;
+  --brand-slate-800: #1e293b;
+  --brand-slate-900: #111827;
+  --brand-slate-950: #0b0f19;
+
+  --brand-emerald-500: #10b981;
+  --brand-emerald-600: #059669;
+
+  --brand-red-50: #fef2f2;
+  --brand-red-100: #fee2e2;
+  --brand-red-300: #fca5a5;
+  --brand-red-400: #f87171;
+  --brand-red-500: #ef4444;
+  --brand-red-600: #dc2626;
+  --brand-red-700: #b91c1c;
+
+  --brand-amber-50: #fffbeb;
+  --brand-amber-100: #fef3c7;
+  --brand-amber-300: #fcd34d;
+  --brand-amber-400: #fbbf24;
+  --brand-amber-500: #f59e0b;
+  --brand-amber-700: #b45309;
+
+  --brand-orange-50: #fff7ed;
+  --brand-orange-100: #ffedd5;
+  --brand-orange-200: #fed7aa;
+  --brand-orange-600: #ea580c;
+  --brand-orange-700: #c2410c;
+  --brand-orange-900: #7c2d12;
+
+  /* ---- semantic tokens ---- */
+  --bg-ink: #0f172a;
+  --bg-ink-soft: var(--brand-slate-500);
+
+  --bg-surface: #ffffff;
+  --bg-surface-alt: #f3f4f6;
+  --bg-line: #e5e7eb;
+
+  --bg-accent: var(--brand-blue-500);
+  --bg-accent-strong: var(--brand-blue-600);
+  --bg-accent-soft: var(--brand-blue-100);
+  --bg-accent-ink: var(--brand-blue-700);
+
+  --bg-navy: #111827;
+  --bg-navy-strong: #0b0f19;
+  --bg-navy-soft: var(--brand-slate-100);
+
+  --bg-sidebar: #111827;
+  --bg-sidebar-ink: var(--brand-slate-50);
+  --bg-sidebar-ink-soft: var(--brand-slate-400);
+  --bg-sidebar-active: var(--brand-blue-500);
+  --bg-sidebar-line: #1f2937;
+
+  --bg-danger: var(--brand-red-600);
+  --bg-danger-soft: var(--brand-red-50);
+  --bg-success: var(--brand-emerald-600);
+  --bg-success-soft: #ecfdf5;
+  --bg-warn: var(--brand-amber-700);
+  --bg-warn-soft: var(--brand-amber-50);
+
+  --bg-radius: 12px;
+  --bg-radius-sm: 6px;
+  --bg-radius-md: 8px;
+  --bg-radius-lg: 12px;
+  --bg-radius-xl: 14px;
+  --bg-radius-surface: 16px;
+
+  /* Elevation */
+  --bg-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --bg-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.03);
+  --bg-shadow-glow: 0 0 0 4px color-mix(in srgb, var(--bg-accent) 25%, transparent),
+    0 6px 18px color-mix(in srgb, var(--bg-accent) 40%, transparent);
+
+  /* Icon chips */
+  --bg-icon-chip-accent-from: color-mix(in srgb, var(--brand-blue-300) 70%, transparent);
+  --bg-icon-chip-accent-to: color-mix(in srgb, var(--brand-blue-600) 75%, transparent);
+  --bg-icon-chip-navy-from: color-mix(in srgb, var(--brand-slate-500) 72%, transparent);
+  --bg-icon-chip-navy-to: color-mix(in srgb, var(--brand-slate-800) 82%, transparent);
+  --bg-icon-chip-neutral-from: color-mix(in srgb, white 82%, transparent);
+  --bg-icon-chip-neutral-to: color-mix(in srgb, var(--brand-slate-200) 55%, transparent);
+  --bg-icon-chip-highlight: color-mix(in srgb, white 55%, transparent);
+  --bg-icon-chip-shadow: color-mix(in srgb, var(--bg-ink) 35%, transparent);
+  --bg-icon-chip-ring: inset 0 0 0 1px color-mix(in srgb, white 45%, transparent);
+  --bg-icon-chip-depth: inset 0 -1px 2px color-mix(in srgb, var(--bg-ink) 14%, transparent);
+
+  /* Motion */
+  --bg-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --bg-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --bg-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --bg-duration-fast: 120ms;
+  --bg-duration-pop: 200ms;
+  --bg-duration-press: 80ms;
+  --bg-press-scale: 0.98;
+
+  --bg-topbar: #ffffff;
+  --bg-topbar-ink: var(--bg-ink);
+  --bg-topbar-line: #e5e7eb;
+
+  /* Typefaces */
+  --bg-font-sans: "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --bg-font-mono: "Geist Mono", ui-monospace, "Cascadia Mono", monospace;
+
+  /* Scale */
+  --bg-text-title: 1.45rem;
+  --bg-text-section: 1.06rem;
+  --bg-text-label: 0.875rem;
+  --bg-text-body: 0.95rem;
+  --bg-text-helper: 0.8rem;
+  --bg-weight-title: 600;
+  --bg-weight-label: 500;
+  --bg-weight-button: 500;
+  --bg-weight-button-strong: 600;
+
+  /* Spacing */
+  --bg-space-field: 1.35rem;
+  --bg-pad-input-y: 0.8rem;
+  --bg-pad-input-x: 0.85rem;
+  --bg-pad-card: 1.75rem;
+
+  --bg-pad-sm-x: 12px;
+  --bg-pad-sm-y: 6px;
+  --bg-pad-md-x: 16px;
+  --bg-pad-md-y: 8px;
+  --bg-pad-lg-x: 20px;
+  --bg-pad-lg-y: 10px;
+  --bg-pad-xl-x: 24px;
+  --bg-pad-xl-y: 12px;
+
+  --bg-icon-16: 16px;
+  --bg-icon-20: 20px;
+  --bg-icon-24: 24px;
+  --bg-icon-idle-opacity: 0.8;
+
+  /* Glass surfaces */
+  --bg-glass-from: color-mix(in srgb, white 82%, transparent);
+  --bg-glass-to: color-mix(in srgb, white 48%, transparent);
+  --bg-glass-border: color-mix(in srgb, white 75%, transparent);
+  --bg-glass-highlight: inset 0 0 0 1px color-mix(in srgb, white 45%, transparent);
+  --bg-shadow-card: 0 4px 20px color-mix(in srgb, var(--bg-ink) 12%, transparent);
+  --bg-shadow-card-hover: 0 12px 34px color-mix(in srgb, var(--bg-ink) 18%, transparent);
+
+  --bg-glass-overlay-from: color-mix(in srgb, white 95%, transparent);
+  --bg-glass-overlay-to: color-mix(in srgb, white 80%, transparent);
+  --bg-shadow-overlay: 0 24px 60px color-mix(in srgb, var(--bg-ink) 25%, transparent);
+  --bg-backdrop-dim: color-mix(in srgb, var(--brand-slate-900) 45%, transparent);
+
+  /* Button depth */
+  --bg-button-face: linear-gradient(180deg, var(--brand-blue-500), var(--brand-blue-600));
+  --bg-button-face-hover: linear-gradient(180deg, var(--brand-blue-600), var(--brand-blue-700));
+  --bg-shadow-button:
+    0 2px 6px color-mix(in srgb, var(--bg-accent) 35%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 25%, transparent);
+  --bg-shadow-button-hover:
+    0 6px 16px color-mix(in srgb, var(--bg-accent) 40%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 25%, transparent);
+  --bg-shadow-button-pressed: inset 0 2px 4px color-mix(in srgb, var(--bg-ink) 30%, transparent);
+  --bg-shadow-raise:
+    0 1px 2px color-mix(in srgb, var(--bg-ink) 8%, transparent),
+    0 2px 6px color-mix(in srgb, var(--bg-ink) 5%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 70%, transparent);
+  --bg-shadow-raise-hover:
+    0 4px 10px color-mix(in srgb, var(--bg-ink) 10%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 70%, transparent);
+
+  --bg-focus-ring: 0 0 0 3px color-mix(in srgb, var(--bg-accent) 22%, transparent);
+  --bg-focus-ring-color: color-mix(in srgb, var(--brand-blue-300) 40%, transparent);
+
+  --bg-app-backdrop: #f3f4f6;
+
+  --bg-topbar-gradient: linear-gradient(
+    180deg,
+    var(--bg-topbar),
+    color-mix(in srgb, var(--bg-topbar) 97%, var(--bg-ink))
+  );
+  --bg-topbar-translucent: color-mix(in srgb, white 85%, transparent);
+}
+
+/* ---- Dark Theme ---- */
+:root[data-bg-theme="dark"] {
+  --bg-ink: var(--brand-slate-100);
+  --bg-ink-soft: var(--brand-slate-400);
+
+  --bg-surface: #1e293b;
+  --bg-surface-alt: #0f172a;
+  --bg-line: color-mix(in srgb, var(--brand-slate-400) 25%, transparent);
+
+  --bg-accent-strong: var(--brand-blue-400);
+  --bg-accent-soft: color-mix(in srgb, var(--brand-blue-500) 18%, transparent);
+  --bg-accent-ink: var(--brand-blue-300);
+
+  --bg-navy: var(--brand-slate-300);
+  --bg-navy-strong: #0b0f19;
+  --bg-navy-soft: color-mix(in srgb, var(--brand-slate-400) 20%, transparent);
+
+  --bg-danger: var(--brand-red-400);
+  --bg-danger-soft: color-mix(in srgb, var(--brand-red-600) 22%, transparent);
+  --bg-success: var(--brand-emerald-500);
+  --bg-success-soft: color-mix(in srgb, var(--brand-emerald-500) 16%, transparent);
+  --bg-warn: var(--brand-amber-400);
+  --bg-warn-soft: color-mix(in srgb, var(--brand-amber-400) 16%, transparent);
+
+  --bg-shadow-sm: 0 1px 2px color-mix(in srgb, var(--brand-slate-900) 60%, transparent);
+  --bg-shadow-md: 0 6px 16px color-mix(in srgb, black 55%, transparent);
+  --bg-shadow-card: 0 4px 20px color-mix(in srgb, black 45%, transparent);
+  --bg-shadow-card-hover: 0 12px 34px color-mix(in srgb, black 58%, transparent);
+  --bg-shadow-overlay: 0 24px 60px color-mix(in srgb, black 65%, transparent);
+  --bg-shadow-button-pressed: inset 0 2px 4px color-mix(in srgb, black 50%, transparent);
+  --bg-shadow-raise:
+    0 1px 2px color-mix(in srgb, black 30%, transparent),
+    0 2px 6px color-mix(in srgb, black 25%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 10%, transparent);
+  --bg-shadow-raise-hover:
+    0 4px 10px color-mix(in srgb, black 40%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 10%, transparent);
+
+  --bg-glass-from: color-mix(in srgb, var(--brand-slate-700) 65%, transparent);
+  --bg-glass-to: color-mix(in srgb, var(--brand-slate-800) 45%, transparent);
+  --bg-glass-border: color-mix(in srgb, white 14%, transparent);
+  --bg-glass-highlight: inset 0 0 0 1px color-mix(in srgb, white 7%, transparent);
+  --bg-glass-overlay-from: color-mix(in srgb, var(--brand-slate-800) 95%, transparent);
+  --bg-glass-overlay-to: color-mix(in srgb, var(--brand-slate-900) 85%, transparent);
+  --bg-backdrop-dim: color-mix(in srgb, black 55%, transparent);
+
+  --bg-icon-chip-neutral-from: color-mix(in srgb, var(--brand-slate-600) 80%, transparent);
+  --bg-icon-chip-neutral-to: color-mix(in srgb, var(--brand-slate-800) 60%, transparent);
+  --bg-icon-chip-highlight: color-mix(in srgb, white 14%, transparent);
+  --bg-icon-chip-shadow: color-mix(in srgb, black 55%, transparent);
+  --bg-icon-chip-ring: inset 0 0 0 1px color-mix(in srgb, white 14%, transparent);
+  --bg-icon-chip-depth: inset 0 -1px 2px color-mix(in srgb, black 35%, transparent);
+
+  --bg-topbar: #1e293b;
+  --bg-topbar-gradient: linear-gradient(
+    180deg,
+    var(--bg-topbar),
+    color-mix(in srgb, var(--bg-topbar) 96%, black)
+  );
+  --bg-topbar-translucent: color-mix(in srgb, var(--brand-slate-900) 80%, transparent);
+
+  --bg-app-backdrop: #0f172a;
+}

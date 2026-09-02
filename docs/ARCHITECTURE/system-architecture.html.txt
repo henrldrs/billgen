@@ -407,6 +407,39 @@ footer{
   .navcard__steps{max-width:320px}
   main{padding:30px 20px 80px}
 }
+
+/* Layer diagram (§20). Rows rather than boxes-and-lines: the model is a stack,
+   and a stack drawn as a stack needs no arrows to explain the direction. */
+.layerdiagram { margin: 1.5rem 0; }
+.layerdiagram__row {
+  display: grid;
+  grid-template-columns: 10rem 1fr auto;
+  gap: 1rem;
+  align-items: baseline;
+  padding: .85rem 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--card);
+}
+.layerdiagram__row[data-layer="core"] { border-color: var(--accent); border-width: 2px; }
+.layerdiagram__name code { font-size: .95rem; }
+.layerdiagram__blurb { color: var(--ink-soft); font-size: .88rem; }
+.layerdiagram__n {
+  font-variant-numeric: tabular-nums;
+  font-size: 1.1rem;
+  color: var(--ink);
+}
+.layerdiagram__arrow {
+  text-align: center;
+  color: var(--ink-faint);
+  line-height: 1;
+  padding: .25rem 0;
+  font-size: 1.1rem;
+}
+@media (max-width: 640px) {
+  .layerdiagram__row { grid-template-columns: 1fr auto; }
+  .layerdiagram__blurb { grid-column: 1 / -1; }
+}
 </style>
 
 <div class="shell">
@@ -416,7 +449,7 @@ footer{
     <div class="brand__row">
       <div>
         <p class="brand__name"><span class="brand__dot"></span>BillGen</p>
-        <p class="brand__sub">System Architecture · v0.10</p>
+        <p class="brand__sub">System Architecture · v0.11</p>
       </div>
       <button class="tt" id="tt" type="button" aria-label="Switch between light and dark">
         <span class="tt__light">☾</span><span class="tt__dark">☀</span>
@@ -451,7 +484,7 @@ footer{
     <a href="#status">Status <span class="n">26%</span></a>
     <a href="#frontends">Multi-Frontend Architecture</a>
     <a href="#components">Component &amp; Library Comparison</a>
-    <a href="#backend">Backend Architecture <span class="n">55</span></a>
+    <a href="#backend">Backend Architecture <span class="n"><span data-fact="endpoint_count">92</span></span></a>
     <a href="#compliance">Compliance Architecture</a>
 
     <p class="rail__group">Execution</p>
@@ -466,9 +499,12 @@ footer{
     <p class="rail__group">Deep dive</p>
     <a href="#dataflow">Data Architecture</a>
     <a href="#debt">Backend Debt Ledger <span class="n">159</span></a>
-    <a href="#repo">Repo Map <span class="n">478</span></a>
+    <a href="#repo">Repo Map <span class="n"><span data-fact="tracked_files">641</span></span></a>
     <a href="#entitlements">Entitlement Layer <span class="n">B4</span></a>
     <a href="#decisions">Decisions of Record <span class="n">4</span></a>
+    <a href="#scaffolds">Scaffolded, Not Wired <span class="n">2</span></a>
+    <a href="#audit">Audit System <span class="n">13</span></a>
+    <a href="#structure">Code Structure <span class="n"><span data-fact="tracked_files">641</span></span></a>
   </div>
 </nav>
 
@@ -479,19 +515,24 @@ footer{
   <div class="sechead">
     <span class="sechead__id">§00</span>
     <h1>System Architecture</h1>
-    <p class="sechead__sub">Audit of one product across four frontend surfaces, one Python backend, and a shared design system. Regenerated 2026-08-27 against commit <code>2a83ccb</code> — the last <em>code</em> commit, since a document cannot name the commit that contains it.</p>
+    <p class="sechead__sub">Audit of one product across four frontend surfaces, one Python backend, and a shared design system. Revised 2026-08-28 against commit <code>748fd2c</code> — the last <em>code</em> commit, since a document cannot name the commit that contains it.</p>
   </div>
 
   <p class="lede">BillGen is a Belgian invoicing SaaS with a finished domain core and an unfinished product wrapper. This document separates those two facts, measures each, and orders the work.</p>
 
   <div class="note">
-    <p><strong>What changed since v0.8 (2026-08-25).</strong> Five commits, and for the first time none of them added a backend
-    capability — every one consumed one that already existed. The entitlement UI shipped
-    (<a href="#entitlements">§16</a>); the company record got its edit form; five screens closed the
-    frontend backlog this document has carried since v0.8 — duplicate, the VAT-rate picker, catalog
-    server filters, the payments report and the invoices report; and <strong>the navigation stopped
-    being the coverage map</strong>. Coverage moved 20% → <strong>26%</strong> without a line of
-    Python. Frontend tests 107 → <strong>157</strong>, backend steady at 298.</p>
+    <p><strong>What changed since v0.10 (2026-08-27).</strong> Quotes shipped with their own numbering
+    series, and the last report gaps closed — <code>/alerts</code>, <code>/search</code>,
+    <code>/vat-treatment</code>, and the payments, clients and products reports. Two features were
+    <em>scaffolded and deliberately left unwired</em> (<a href="#scaffolds">§18</a>), and a parallel
+    audit engine was built from the specification in <code>docs/</code>
+    (<a href="#audit">§19</a>). Backend tests 392 → <strong>423</strong>; the surface is now
+    <span data-fact="endpoint_count">92</span> endpoints across
+    <span data-fact="router_count">23</span> routers.</p>
+    <p><strong>And this document stopped being hand-maintained where it kept going wrong.</strong> The
+    audit engine found eight endpoints documented here that no longer existed and fifty that were never
+    written down. The endpoint inventory and every volatile count are generated now
+    (<a href="#audit">§19</a>); the judgements are not.</p>
   </div>
 
   <div class="grid g3">
@@ -815,7 +856,7 @@ footer{
 └── utils/                 money · dates · jsonsafe
 
 api/                       Layer 2 — FastAPI
-├── routers/               17 routers, 55 endpoints
+├── routers/               <span data-fact="router_count">23</span> routers, <span data-fact="endpoint_count">92</span> endpoints
 ├── entitlements/          matrix(tiers) · service(resolve, quota_guard) · usage · deps · errors
 │                          the ONLY place a tier maps to a capability — core/ may not import it
 ├── security/              auth_service · jwt
@@ -844,6 +885,41 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
       </tbody>
     </table>
   </div>
+
+  <h3>The complete registered surface</h3>
+<!-- GENERATED:endpoints -->
+  <p class="lede">Generated from the router tree by <code>billgen-audit</code>. Do not edit by hand — run <code>python -m billgen_audit sync-architecture</code>. The verdicts in the table above are written by a person and are not touched by the generator.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Router</th><th class="num">n</th><th>Registered endpoints</th></tr></thead>
+      <tbody>
+        <tr><td><code>activity</code></td><td class="num">1</td><td class="ev"><code>GET /activity</code></td></tr>
+        <tr><td><code>alerts</code></td><td class="num">1</td><td class="ev"><code>GET /alerts</code></td></tr>
+        <tr><td><code>auth</code></td><td class="num">4</td><td class="ev"><code>POST /auth/login</code> · <code>POST /auth/logout</code> · <code>POST /auth/refresh</code> · <code>POST /auth/signup</code></td></tr>
+        <tr><td><code>backup</code></td><td class="num">2</td><td class="ev"><code>GET /backup/export</code> · <code>POST /backup/restore</code></td></tr>
+        <tr><td><code>clients</code></td><td class="num">6</td><td class="ev"><code>GET /clients</code> · <code>POST /clients</code> · <code>GET /clients/{client_id}</code> · <code>PATCH /clients/{client_id}</code> · <code>GET /clients/{client_id}/stats</code> · <code>GET /clients/{client_id}/timeline</code></td></tr>
+        <tr><td><code>companies</code></td><td class="num">5</td><td class="ev"><code>GET /companies</code> · <code>POST /companies</code> · <code>GET /companies/{company_id}</code> · <code>PATCH /companies/{company_id}</code> · <code>GET /companies/{company_id}/validation</code></td></tr>
+        <tr><td><code>credit_notes</code></td><td class="num">5</td><td class="ev"><code>GET /credit-notes</code> · <code>POST /credit-notes</code> · <code>GET /credit-notes/{credit_note_id}</code> · <code>GET /credit-notes/{credit_note_id}/html</code> · <code>GET /credit-notes/{credit_note_id}/pdf</code></td></tr>
+        <tr><td><code>desktop</code></td><td class="num">2</td><td class="ev"><code>POST /auth/desktop-bootstrap</code> · <code>POST /auth/plan-tier</code></td></tr>
+        <tr><td><code>entitlements</code></td><td class="num">2</td><td class="ev"><code>GET /entitlements</code> · <code>GET /plans</code></td></tr>
+        <tr><td><code>expenses</code></td><td class="num">5</td><td class="ev"><code>GET /expenses</code> · <code>POST /expenses/import</code> · <code>DELETE /expenses/{expense_id}</code> · <code>GET /expenses/{expense_id}</code> · <code>POST /expenses/{expense_id}/review</code></td></tr>
+        <tr><td><code>health</code></td><td class="num">2</td><td class="ev"><code>GET /healthz</code> · <code>GET /readyz</code></td></tr>
+        <tr><td><code>imports</code></td><td class="num">2</td><td class="ev"><code>POST /imports/legacy/commit</code> · <code>POST /imports/legacy/preview</code></td></tr>
+        <tr><td><code>invoices</code></td><td class="num">11</td><td class="ev"><code>GET /invoices</code> · <code>POST /invoices</code> · <code>POST /invoices/preview</code> · <code>DELETE /invoices/{invoice_id}</code> · <code>GET /invoices/{invoice_id}</code> · <code>POST /invoices/{invoice_id}/duplicate</code> · <code>GET /invoices/{invoice_id}/html</code> · <code>POST /invoices/{invoice_id}/issue</code> · <code>GET /invoices/{invoice_id}/pdf</code> · <code>GET /invoices/{invoice_id}/peppol.xml</code> · <code>POST /invoices/{invoice_id}/void</code></td></tr>
+        <tr><td><code>organizations</code></td><td class="num">3</td><td class="ev"><code>GET /orgs/current</code> · <code>GET /orgs/current/members</code> · <code>PATCH /orgs/current/members/{user_id}</code></td></tr>
+        <tr><td><code>payments</code></td><td class="num">2</td><td class="ev"><code>GET /payments</code> · <code>POST /payments</code></td></tr>
+        <tr><td><code>products</code></td><td class="num">4</td><td class="ev"><code>GET /products</code> · <code>POST /products</code> · <code>GET /products/{product_id}</code> · <code>PATCH /products/{product_id}</code></td></tr>
+        <tr><td><code>quotes</code></td><td class="num">9</td><td class="ev"><code>GET /quotes</code> · <code>POST /quotes</code> · <code>DELETE /quotes/{quote_id}</code> · <code>GET /quotes/{quote_id}</code> · <code>POST /quotes/{quote_id}/accept</code> · <code>POST /quotes/{quote_id}/convert</code> · <code>POST /quotes/{quote_id}/expire</code> · <code>POST /quotes/{quote_id}/reject</code> · <code>POST /quotes/{quote_id}/send</code></td></tr>
+        <tr><td><code>reference</code></td><td class="num">4</td><td class="ev"><code>GET /pdf-templates</code> · <code>GET /sequences</code> · <code>GET /vat-rates</code> · <code>GET /vat-treatment</code></td></tr>
+        <tr><td><code>reports</code></td><td class="num">7</td><td class="ev"><code>GET /reports/clients</code> · <code>GET /reports/invoices</code> · <code>GET /reports/kpi</code> · <code>GET /reports/payments</code> · <code>GET /reports/products</code> · <code>GET /reports/revenue</code> · <code>GET /reports/vat</code></td></tr>
+        <tr><td><code>search</code></td><td class="num">1</td><td class="ev"><code>GET /search</code></td></tr>
+        <tr><td><code>templates</code></td><td class="num">8</td><td class="ev"><code>GET /templates</code> · <code>POST /templates</code> · <code>DELETE /templates/{template_id}</code> · <code>GET /templates/{template_id}</code> · <code>PATCH /templates/{template_id}</code> · <code>POST /templates/{template_id}/default</code> · <code>POST /templates/{template_id}/publish</code> · <code>GET /templates/{template_id}/snapshot</code></td></tr>
+        <tr><td><code>tva</code></td><td class="num">1</td><td class="ev"><code>GET /tva/position</code></td></tr>
+        <tr><td><code>users</code></td><td class="num">5</td><td class="ev"><code>GET /users/me</code> · <code>PATCH /users/me</code> · <code>POST /users/me/password</code> · <code>GET /users/me/sessions</code> · <code>DELETE /users/me/sessions/{jti}</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+<!-- /GENERATED:endpoints -->
 
   <h3>The four hard blockers</h3>
   <div class="tw">
@@ -951,7 +1027,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
 
   <div class="gate gate--open">
     <p class="gate__h">Domain gate <span class="chip c-done">open</span></p>
-    <p>Gapless numbering, banker's rounding, Belgian VAT rules, multi-tenancy, Peppol BIS 3.0, audit log, backup/restore, and now VAT aggregation. <strong>298 Python tests passing.</strong> Cleared. <em>One caveat carried from this session:</em> the quota guard's row lock and the numbering row lock are both no-ops on SQLite. Neither is proven until CI runs against Postgres, which needs the repo pushed.</p>
+    <p>Gapless numbering, banker's rounding, Belgian VAT rules, multi-tenancy, Peppol BIS 3.0, audit log, backup/restore, and now VAT aggregation. <strong>423 Python tests passing.</strong> Cleared. <em>One caveat carried from this session:</em> the quota guard's row lock and the numbering row lock are both no-ops on SQLite. Neither is proven until CI runs against Postgres, which needs the repo pushed.</p>
   </div>
 
   <div class="gate">
@@ -1020,7 +1096,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
     <div class="sprint__h"><span class="sprint__n">SPRINT 4</span><span class="sprint__t">Quotes &amp; the record inspector</span></div>
     <ul class="task">
       <li><b>core</b> — Quote model with its <em>own</em> numbering series · must not consume gapless invoice numbers</li>
-      <li><b>api</b> — CRUD <code>/quotes</code> + <code>POST /quotes/{id}/convert-to-invoice</code></li>
+      <li><b>api</b> — CRUD <code>/quotes</code> + <code>POST /quotes/{id}/convert</code></li>
       <li><b>core/pdf</b> — quote template</li>
       <li><b>saas</b> — mount <code>Drawer</code> + <code>StatusTimeline</code> + <code>Menu</code> · the N3 depth, kills action soup</li>
     </ul>
@@ -1579,7 +1655,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
   <div class="sechead">
     <span class="sechead__id">§15</span>
     <h2>Repo Map</h2>
-    <p class="sechead__sub">What every directory is for, and the record of what was removed on 2026-08-26. 478 tracked files.</p>
+    <p class="sechead__sub">What every directory is for, and the record of what was removed on 2026-08-26. <span data-fact="tracked_files">641</span> tracked files.</p>
   </div>
 
   <p class="lede">A repository that cannot be read cheaply is a repository that gets misread. This section names the purpose of every top-level directory, so nothing in the tree is unexplained, and records what left.</p>
@@ -1591,17 +1667,17 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
     <table>
       <thead><tr><th>Path</th><th class="num">Files</th><th>What it is</th><th>What breaks without it</th></tr></thead>
       <tbody>
-        <tr><td><code>core/</code></td><td class="num">81</td><td class="ev"><strong>Layer 1 — the product's actual logic.</strong> Money arithmetic, Belgian VAT, gapless invoice numbering, legal mentions, Peppol XML, PDF rendering, the legacy importer. Imports no web framework and no ORM.</td><td class="ev">Everything. This is the finished half of the product and the reason §01 reads 20% rather than 0%.</td></tr>
-        <tr><td><code>api/</code></td><td class="num">60</td><td class="ev"><strong>Layer 2 — the HTTP boundary.</strong> 17 routers, 55 endpoints, JWT auth, middleware — and <code>api/entitlements/</code>, the commercial matrix. Translates JSON into domain calls and back, and decides whether the caller's plan permits the call.</td><td class="ev">No frontend can reach the domain. <code>core/</code> would still pass its tests.</td></tr>
-        <tr><td><code>db/</code></td><td class="num">30</td><td class="ev">SQLAlchemy models and the Alembic migration history. The concrete implementation behind <code>core/repository/</code>'s abstract ports.</td><td class="ev">Nothing persists. The domain would run entirely in memory.</td></tr>
-        <tr><td><code>tests/</code></td><td class="num">51</td><td class="ev">298 backend tests. Includes the palette guard test and the icon-grammar guard test, both build-failing.</td><td class="ev">The brand decisions at <code>4e39460</code> and <code>81d2c66</code> become suggestions rather than rules.</td></tr>
-        <tr><td><code>henrioutai-ui/</code></td><td class="num">87</td><td class="ev"><strong>The design system, and the only place components are edited.</strong> 74 exports, <code>tokens.css</code>, three vendored font files. Its own package, MIT, public-ready.</td><td class="ev">Every frontend loses its component vocabulary. <code>@billgen/ui</code> re-exports this; it holds nothing of its own.</td></tr>
-        <tr><td><code>frontend-react/</code></td><td class="num">61</td><td class="ev"><strong>Holds <code>src/scaffold/ia.ts</code> — the source of truth</strong> for nav, routes, status and the 159 gaps in §14. Also the scaffold kit that renders unwired areas as deliberately ugly.</td><td class="ev">No frontend knows what screens exist. This is the highest-leverage file in the repository.</td></tr>
-        <tr><td><code>frontend-saas/</code></td><td class="num">20</td><td class="ev">L3, the active surface. React 19 + Vite + react-router. Thin — it composes <code>henrioutai-ui</code> against <code>ia.ts</code>.</td><td class="ev">The web product. Thin by design: the weight lives in the two directories above.</td></tr>
-        <tr><td><code>frontend-electron/</code></td><td class="num">39</td><td class="ev">L4, the Tauri desktop shell. Own local SQLite in <code>%APPDATA%</code>, auto-login, no sync. Despite the name it is Tauri, not Electron.</td><td class="ev">The desktop product. Currently mounts 17 components and consumes no IA.</td></tr>
+        <tr><td><code>core/</code></td><td class="num"><span data-fact="files_core">98</span></td><td class="ev"><strong>Layer 1 — the product's actual logic.</strong> Money arithmetic, Belgian VAT, gapless invoice numbering, legal mentions, Peppol XML, PDF rendering, the legacy importer. Imports no web framework and no ORM.</td><td class="ev">Everything. This is the finished half of the product and the reason §01 reads 20% rather than 0%.</td></tr>
+        <tr><td><code>api/</code></td><td class="num"><span data-fact="files_api">75</span></td><td class="ev"><strong>Layer 2 — the HTTP boundary.</strong> <span data-fact="router_count">23</span> routers, <span data-fact="endpoint_count">92</span> endpoints, JWT auth, middleware — and <code>api/entitlements/</code>, the commercial matrix. Translates JSON into domain calls and back, and decides whether the caller's plan permits the call.</td><td class="ev">No frontend can reach the domain. <code>core/</code> would still pass its tests.</td></tr>
+        <tr><td><code>db/</code></td><td class="num"><span data-fact="files_db">37</span></td><td class="ev">SQLAlchemy models and the Alembic migration history. The concrete implementation behind <code>core/repository/</code>'s abstract ports.</td><td class="ev">Nothing persists. The domain would run entirely in memory.</td></tr>
+        <tr><td><code>tests/</code></td><td class="num"><span data-fact="files_tests">64</span></td><td class="ev">423 backend tests. Includes the palette guard test and the icon-grammar guard test, both build-failing.</td><td class="ev">The brand decisions at <code>4e39460</code> and <code>81d2c66</code> become suggestions rather than rules.</td></tr>
+        <tr><td><code>henrioutai-ui/</code></td><td class="num"><span data-fact="files_henrioutai_ui">87</span></td><td class="ev"><strong>The design system, and the only place components are edited.</strong> 74 exports, <code>tokens.css</code>, three vendored font files. Its own package, MIT, public-ready.</td><td class="ev">Every frontend loses its component vocabulary. <code>@billgen/ui</code> re-exports this; it holds nothing of its own.</td></tr>
+        <tr><td><code>frontend-react/</code></td><td class="num"><span data-fact="files_frontend_react">116</span></td><td class="ev"><strong>Holds <code>src/scaffold/ia.ts</code> — the source of truth</strong> for nav, routes, status and the 159 gaps in §14. Also the scaffold kit that renders unwired areas as deliberately ugly.</td><td class="ev">No frontend knows what screens exist. This is the highest-leverage file in the repository.</td></tr>
+        <tr><td><code>frontend-saas/</code></td><td class="num"><span data-fact="files_frontend_saas">23</span></td><td class="ev">L3, the active surface. React 19 + Vite + react-router. Thin — it composes <code>henrioutai-ui</code> against <code>ia.ts</code>.</td><td class="ev">The web product. Thin by design: the weight lives in the two directories above.</td></tr>
+        <tr><td><code>frontend-electron/</code></td><td class="num"><span data-fact="files_frontend_electron">39</span></td><td class="ev">L4, the Tauri desktop shell. Own local SQLite in <code>%APPDATA%</code>, auto-login, no sync. Despite the name it is Tauri, not Electron.</td><td class="ev">The desktop product. Currently mounts 17 components and consumes no IA.</td></tr>
         <tr><td><code>infra/</code> · <code>desktop/</code> · <code>scripts/</code></td><td class="num">13</td><td class="ev">Compose and deployment config; the desktop packaging target; two generators — <code>generate_brand_assets.py</code> (writes <code>assets/brand/</code>) and <code>generate_peppol_samples.py</code>.</td><td class="ev">Deployment and asset regeneration become manual.</td></tr>
         <tr><td><code>assets/brand/</code></td><td class="num">1</td><td class="ev">Generated output, not a source. <code>billgen-mark.svg</code> is written by the script above from the vector geometry at <code>92e5f07</code>.</td><td class="ev">Regenerate it. Never hand-edit it.</td></tr>
-        <tr><td><code>docs/</code></td><td class="num">18</td><td class="ev">This document, four ADRs, the token standard, the IA roadmap, and three working specs. <strong>Down from 356 files.</strong></td><td class="ev">The decision record. ADRs in particular are superseded by writing new ones, never by deletion.</td></tr>
+        <tr><td><code>docs/</code></td><td class="num"><span data-fact="files_docs">21</span></td><td class="ev">This document, four ADRs, the token standard, the IA roadmap, and three working specs. <strong>Down from 356 files.</strong></td><td class="ev">The decision record. ADRs in particular are superseded by writing new ones, never by deletion.</td></tr>
         <tr><td><code>var/</code> · <code>backups/</code></td><td class="num">—</td><td class="ev">Runtime data. Dev SQLite and the local backup target. Gitignored.</td><td class="ev">Nothing — both are regenerated on demand.</td></tr>
       </tbody>
     </table>
@@ -1890,9 +1966,272 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
   roadmap, never a step sequenced after it.</p>
 </section>
 
+<!-- ==================================================== SCAFFOLDS -->
+<section id="scaffolds">
+  <div class="sechead">
+    <span class="sechead__id">&#167;18</span>
+    <h2>Scaffolded, Not Wired</h2>
+    <p class="sechead__sub">Two features whose backends landed 2026-08-28. The composer and studio UI are still unwired, and deliberately so.</p>
+  </div>
+
+  <p class="lede">Both were written from a blueprint in <code>docs/</code> as pure scaffolds. On
+  2026-08-28 <strong>their backends were built and wired</strong>: tables, migrations, repositories,
+  services, routers and permissions, with 20 tests. What is still deliberately unconnected is the
+  <em>frontend</em> — <code>src/index.ts</code> exports nothing from either directory, no route or
+  <code>ia.ts</code> node exists, and neither CSS file is imported. That half waits on a design pass:
+  the invoice builder was reviewed at <code>/_preview</code> and judged &ldquo;not exactly what I
+  thought&rdquo;, and connecting a shape already called wrong would only make it expensive to change.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Feature</th><th>Blueprint</th><th>Where</th><th>State</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>TVA Intelligence</td>
+          <td class="ev"><code>docs/tva_feature_future.md</code></td>
+          <td class="ev"><code>core/tva/</code> &middot; <code>frontend-react/src/tva/</code> &middot; <code>tests/core/tva/</code></td>
+          <td><span class="chip c-done">backend wired · 40 tests</span></td>
+        </tr>
+        <tr>
+          <td>Invoice Workspace &amp; Template Studio</td>
+          <td class="ev"><code>docs/build_template_feature_future.md</code></td>
+          <td class="ev"><code>frontend-react/src/workspace/</code></td>
+          <td><span class="chip c-partial">backend wired · UI unconnected</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>The backend half of TVA is pure: domain models, a state machine, document validation, Belgian
+  classification rules and aggregation, with no I/O at all. That is not a style preference &mdash; it is the
+  line between the half that can be written correctly today and the half that cannot. Extraction (OCR) is a
+  vendor decision nobody has made, storing the source document is blocked on <strong>B2 &mdash; blob
+  storage</strong>, and the blueprint's &ldquo;keep importing while the user navigates away&rdquo; needs a job
+  runner this product does not have. The package models the <em>result</em> so those choices stay swappable.
+  Its 31 tests need no database, fixture or app, which is the point; the suite went 392 &rarr; 423.</p>
+
+  <h3>Three decisions already baked in</h3>
+  <p>Each is cheap to reverse now and expensive later, so they are recorded here rather than left in a
+  README nobody re-reads.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th class="id">#</th><th>Decision</th><th>Why it is load-bearing</th></tr></thead>
+      <tbody>
+        <tr><td class="id">1</td><td class="ev">The TVA analyzer has <strong>no single &ldquo;recoverable&rdquo; total</strong>. <code>confirmed_</code> and <code>potential_recoverable</code> are separate, and <code>estimated_payable</code> uses only the confirmed half.</td><td class="ev">Enforced by the <em>absence</em> of the field, now all the way to the wire: <code>GET /tva/position</code> ships the two halves apart and no combined total.  Uncertainty never becomes a deduction: an unknown category returns <code>REVIEW_REQUIRED</code> with zero, even where a known cap exists. This feature's failure mode is a filing error carrying BillGen's name.</td></tr>
+        <tr><td class="id">2</td><td class="ev">Template appearance is a choice among <strong>semantic tokens, not a colour picker</strong>.</td><td class="ev">Enforced by <code>TemplateAppearance</code>: a POST carrying <code>"accent_token": "#0f766e"</code> is a 422. A hex in a database row is the palette bypass the guard test cannot see, because that test walks source files. This is a real reduction in what users can do; the honest way to give brand colour back is a named organization colour that <em>becomes</em> a token.</td></tr>
+        <tr><td class="id">3</td><td class="ev">An issued invoice carries a <strong><code>TemplateSnapshot</code></strong>.</td><td class="ev">Real now: <code>template_versions</code> holds immutable published versions and <code>invoices.template_snapshot</code> stores the layout by value. A test edits a template after publishing and asserts the snapshot does not move.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <p><strong>Both scaffolds are English-only.</strong> <code>t()</code> takes a closed <code>MessageKey</code>
+    union, so real copy means adding keys in fr/nl/en/es &mdash; translation work, not component work. Inventing
+    four Belgian invoice terms badly now would bake them in. And neither frontend directory has
+    <code>.test.tsx</code> files yet: that is the honest cost of scaffolding ahead of the endpoints, and the
+    first thing to pay down when they land.</p>
+  </div>
+</section>
+
+<!-- ======================================================== AUDIT -->
+<section id="audit">
+  <div class="sechead">
+    <span class="sechead__id">&#167;19</span>
+    <h2>Audit System</h2>
+    <p class="sechead__sub">A parallel engine that audits this product and this document. Added 2026-08-28.</p>
+  </div>
+
+  <p class="lede"><code>billgen-audit/</code> builds
+  <code>docs/BillGen_Professional_Audit_System_Final_Specification.docx</code> into running software. It is
+  <strong>parallel, not integrated</strong>: it does not import BillGen, BillGen does not import it, and
+  nothing in this repository's build, test or lint path touches it. The target is a path read as text, which
+  is what lets it audit a checkout it could not even install. Standard library only. Run it with
+  <code>/audit</code>, or <code>python -m billgen_audit run</code>.</p>
+
+  <p>Thirteen deterministic scanners cover the specification's phases 0&ndash;3 and 5&ndash;7 &mdash;
+  discovery, the enforcement model, routes and authorization, accounting invariants, the document engine, the
+  Belgian rule registry, e-invoicing, privacy, secrets, dependencies, resilience, observability, and drift
+  between <em>this document</em> and the tree &mdash; then correlation, scoring, two reports and a baseline
+  diff. Its own 22 tests are not collected by this repository's suite, whose <code>testpaths</code> is
+  <code>["tests"]</code>.</p>
+
+  <h3>What it refuses to do</h3>
+  <p>Most of the design is the specification's &#167;1 taken literally &mdash; <em>no hallucinated
+  compliance</em> and <em>absence of evidence is not evidence of compliance</em> &mdash; and each refusal is
+  enforced in code rather than requested in a prompt.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Refusal</th><th>Where it lives</th></tr></thead>
+      <tbody>
+        <tr><td class="ev">A <code>legal_requirement</code> finding with no authoritative source cannot be constructed</td><td class="ev"><code>findings.py</code> raises in <code>__post_init__</code></td></tr>
+        <tr><td class="ev">A pattern match never becomes compliance &mdash; it becomes <code>NEEDS_CONFIRMATION</code></td><td class="ev"><code>scanners/legal.py</code></td></tr>
+        <tr><td class="ev">An unassessed domain scores <code>n/a</code>, never 100, and the verdict is never GREEN while one is open</td><td class="ev"><code>scoring.py</code></td></tr>
+        <tr><td class="ev">Confidence is separate from severity and discounts the penalty &mdash; a CRITICAL at 0.35 is a verification task, not a fix</td><td class="ev"><code>findings.py</code> &middot; <code>scoring.py</code></td></tr>
+        <tr><td class="ev">A secret's value is never quoted into the report, which is itself a document that gets shared</td><td class="ev"><code>scanners/privacy.py</code></td></tr>
+        <tr><td class="ev">Dynamic testing stays off until a human passes <code>--authorize-dynamic</code></td><td class="ev"><code>config.py</code> &middot; <code>cli.py</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note note--stop">
+    <p><strong>The tool was wrong three times before it was right, and that is the useful part.</strong>
+    Run against BillGen, the route scanner first emitted <strong>56 findings, roughly 50 of them false</strong>,
+    because this product authenticates in one global middleware and every handler therefore looks
+    unauthenticated when read one at a time. <code>scanners/enforcement.py</code> now detects the enforcement
+    model before the route scanner runs and gates what it may claim: 56 &rarr; 4 substantive. Separately,
+    Legal/VAT scored a clean 100/100 because a grep for &ldquo;retention&rdquo; matched a document listing
+    retention as a <em>missing</em> feature; and a <code>^</code>-anchored regex silently matched nothing, so
+    the e-invoicing check reported &ldquo;no generation&rdquo; about a module whose whole purpose is
+    generation. All three are fixed and guarded by tests. A tool with that false-positive rate is switched off
+    within a day, and the findings it was right about go with it.</p>
+  </div>
+
+  <h3>This document is now partly generated</h3>
+  <p>The drift the audit found here was not in the prose &mdash; it was in the two places that state facts a
+  machine can compute. Eight endpoints were documented that no longer existed (this file said
+  a <code>/quotes/{id}/convert-to-invoice</code> route; the real one is <code>/convert</code>), and fifty registered
+  endpoints appeared nowhere. So those are generated now:</p>
+  <ul>
+    <li>the <strong>complete registered surface</strong> in <a href="#backend">&#167;04</a>, between
+    <code>&lt;!-- GENERATED:endpoints --&gt;</code> markers;</li>
+    <li>every volatile count &mdash; endpoints, routers, tracked files, per-directory file counts &mdash;
+    inside <code>&lt;span data-fact="&hellip;"&gt;</code>, replaced in place wherever it appears.</li>
+  </ul>
+  <p>Regenerate with <code>python -m billgen_audit sync-architecture</code>; <code>--check</code> exits
+  non-zero when this file has gone stale, so the audit fails on drift instead of a person noticing months
+  later. <strong>Everything outside those markers is left byte-for-byte alone</strong> &mdash; the verdict
+  columns, the blockers, the rulings and every judgement in this document are written by a person, because a
+  verdict does not go stale the way a route table does.</p>
+</section>
+
+
+<!-- ==================================================== STRUCTURE -->
+<section id="structure">
+  <div class="sechead">
+    <span class="sechead__id">&#167;20</span>
+    <h2>Code Structure</h2>
+    <p class="sechead__sub">Every tracked directory, and what the imports actually do between them. Generated 2026-08-29.</p>
+  </div>
+
+  <p class="lede">&#167;15's repo map says what each top-level directory is <em>for</em>.
+  This one says what is <em>there</em> and how the layers really depend on each other —
+  and the difference matters, because a hand-drawn architecture diagram is a picture of
+  what somebody intended. The arrows below are import edges counted from the AST, so this
+  is a picture of what the code does.</p>
+
+  <div class="note">
+    <p><strong>The one rule this section exists to check.</strong> ADR-0001 says
+    <code>core/</code> is pure: domain logic that imports no web framework and no ORM, so
+    it can be tested and reasoned about on its own. That is easy to state and easy to
+    breach by accident — one convenient import and the boundary is gone with nothing to
+    notice it. The table below counts the edges, and the verdict under it is computed
+    rather than written.</p>
+  </div>
+
+<!-- GENERATED:structure -->
+  <p class="lede">Generated from the tree by <code>billgen-audit</code> — the directory counts are <code>git ls-files</code>, and the arrows below are import edges counted from the AST. Regenerate with <code>python -m billgen_audit sync-architecture</code>.</p>
+  <div class="layerdiagram">
+    <div class="layerdiagram__row" data-layer="frontend"><span class="layerdiagram__name"><code>Frontends</code></span><span class="layerdiagram__blurb">L3 · L4 — what a person sees</span><span class="layerdiagram__n">265</span></div>
+    <div class="layerdiagram__arrow" aria-hidden="true">↓</div>
+    <div class="layerdiagram__row" data-layer="api"><span class="layerdiagram__name"><code>api/</code></span><span class="layerdiagram__blurb">L2 — HTTP boundary, authorization, entitlements</span><span class="layerdiagram__n">75</span></div>
+    <div class="layerdiagram__arrow" aria-hidden="true">↓</div>
+    <div class="layerdiagram__row" data-layer="db"><span class="layerdiagram__name"><code>db/</code></span><span class="layerdiagram__blurb">persistence — SQLAlchemy rows and migrations</span><span class="layerdiagram__n">37</span></div>
+    <div class="layerdiagram__arrow" aria-hidden="true">↓</div>
+    <div class="layerdiagram__row" data-layer="core"><span class="layerdiagram__name"><code>core/</code></span><span class="layerdiagram__blurb">L1 — domain logic, no framework imports</span><span class="layerdiagram__n">98</span></div>
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>Import edge</th><th class="num">Count</th><th>Allowed by ADR-0001</th></tr></thead><tbody>
+      <tr><td><code>api/</code> &rarr; <code>core/</code></td><td class="num">80</td><td><span class="chip c-done">yes</span></td></tr>
+      <tr><td><code>api/</code> &rarr; <code>db/</code></td><td class="num">7</td><td><span class="chip c-done">yes</span></td></tr>
+      <tr><td><code>db/</code> &rarr; <code>core/</code></td><td class="num">9</td><td><span class="chip c-done">yes</span></td></tr>
+      <tr><td><code>core/</code> &rarr; <code>api/</code></td><td class="num">0</td><td><span class="chip c-done">held</span></td></tr>
+      <tr><td><code>core/</code> &rarr; <code>db/</code></td><td class="num">0</td><td><span class="chip c-done">held</span></td></tr>
+    </tbody></table></div>
+  <div class="note"><p><strong>The boundary holds.</strong> <code>core/</code> imports neither <code>api/</code> nor <code>db/</code> — checked here rather than asserted, so this sentence stops being printed the day it stops being true.</p></div>
+  <h3>Every tracked directory</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Path</th><th class="num">Files</th></tr></thead><tbody>
+      <tr><td><code>.claude/</code></td><td class="num">1</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;commands/</code></td><td class="num">1</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;workflows/</code></td><td class="num">1</td></tr>
+      <tr><td><code>api/</code></td><td class="num">6</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;authz/</code></td><td class="num">4</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;entitlements/</code></td><td class="num">6</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;integrations/</code></td><td class="num">1</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;middleware/</code></td><td class="num">4</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;routers/</code></td><td class="num">25</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;schemas/</code></td><td class="num">23</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;security/</code></td><td class="num">6</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;brand/</code></td><td class="num">1</td></tr>
+      <tr><td><code>billgen-audit/</code></td><td class="num">4</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;agents/</code></td><td class="num">4</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;audits/</code></td><td class="num">14</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;billgen_audit/</code></td><td class="num">26</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;tests/</code></td><td class="num">1</td></tr>
+      <tr><td><code>core/</code></td><td class="num">3</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;einvoicing/</code></td><td class="num">4</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;imports/</code></td><td class="num">4</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;models/</code></td><td class="num">16</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;pdf/</code></td><td class="num">11</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;repository/</code></td><td class="num">15</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;rules/</code></td><td class="num">8</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;services/</code></td><td class="num">25</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;tva/</code></td><td class="num">7</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;utils/</code></td><td class="num">5</td></tr>
+      <tr><td><code>db/</code></td><td class="num">4</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;migrations/</code></td><td class="num">11</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;models/</code></td><td class="num">17</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;repositories/</code></td><td class="num">4</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;seed/</code></td><td class="num">1</td></tr>
+      <tr><td><code>desktop/</code></td><td class="num">4</td></tr>
+      <tr><td><code>docs/</code></td><td class="num">13</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;.claude/</code></td><td class="num">1</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;ARCHITECTURE/</code></td><td class="num">7</td></tr>
+      <tr><td><code>frontend-electron/</code></td><td class="num">4</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;public/</code></td><td class="num">3</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;src/</code></td><td class="num">7</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;src-tauri/</code></td><td class="num">25</td></tr>
+      <tr><td><code>frontend-react/</code></td><td class="num">4</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;src/</code></td><td class="num">112</td></tr>
+      <tr><td><code>frontend-saas/</code></td><td class="num">5</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;public/</code></td><td class="num">3</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;src/</code></td><td class="num">15</td></tr>
+      <tr><td><code>henrioutai-ui/</code></td><td class="num">4</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;src/</code></td><td class="num">83</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;docker/</code></td><td class="num">4</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;github-actions/</code></td><td class="num">1</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;scripts/</code></td><td class="num">1</td></tr>
+      <tr><td><code>scripts/</code></td><td class="num">3</td></tr>
+      <tr><td><code>tests/</code></td><td class="num">1</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;api/</code></td><td class="num">27</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;core/</code></td><td class="num">27</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;db/</code></td><td class="num">3</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;desktop/</code></td><td class="num">3</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;e2e/</code></td><td class="num">1</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;fixtures/</code></td><td class="num">1</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;ui/</code></td><td class="num">1</td></tr>
+      <tr><td><em>files at the repository root</em></td><td class="num">15</td></tr>
+      <tr><td><strong>Total tracked</strong></td><td class="num"><strong>641</strong></td></tr>
+    </tbody></table></div>
+<!-- /GENERATED:structure -->
+
+  <h3>Reading the layers</h3>
+  <p>Each layer may import only from the ones below it. <code>api/</code> reaching into
+  <code>db/</code> is allowed and deliberate — the HTTP layer builds the unit of work that
+  the domain then uses through an abstract port, which is the seam that lets the desktop
+  build swap SQLite for Postgres without <code>core/</code> knowing. What must never
+  appear is an arrow pointing <em>down</em> out of <code>core/</code>.</p>
+
+  <p><code>billgen-audit/</code> appears in the directory table and in no layer, which is
+  correct: it is a parallel project that reads this repository as text and is imported by
+  nothing in it. <code>henrioutai-ui/</code> sits outside the layers for the opposite
+  reason — it is the design system, consumed by every frontend and depending on none of
+  them.</p>
+</section>
+
 <footer>
-  BillGen System Architecture v0.10 · regenerated 2026-08-27 against <code>2a83ccb</code> ·
-  IA counts derived from <code>frontend-react/src/scaffold/ia.ts</code>, endpoint counts read from <code>api/routers/</code> ·
+  BillGen System Architecture v0.11 · revised 2026-08-28 against <code>748fd2c</code> ·
+  IA counts derived from <code>frontend-react/src/scaffold/ia.ts</code>, endpoint inventory and file counts generated by <code>python -m billgen_audit sync-architecture</code> ·
   regenerate the IA report with <code>npx vitest run --root frontend-react src/scaffold/report.test.ts</code>
 </footer>
 
