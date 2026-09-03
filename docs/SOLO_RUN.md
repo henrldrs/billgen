@@ -78,10 +78,10 @@ to anything else in §5b.
 | | |
 |---|---|
 | Python | **485 collected, exit 0** |
-| Frontend | **166 passed** (`npm run test`, 29 files), typecheck clean across all four workspaces |
+| Frontend | **169 passed** (`npm run test`, 29 files), typecheck clean across all four workspaces |
 | `ruff check` | clean. CI runs `ruff check .` only — the tree is *not* `ruff format` clean and was not before, so do not reformat it as a side errand |
 | Architecture doc | in sync, v0.11 |
-| Unpushed | 15 commits on `audit-engine-and-scaffolds` |
+| Unpushed | 20 commits on `audit-engine-and-scaffolds` |
 
 ---
 
@@ -196,6 +196,31 @@ that was not on it and one Henri added mid-session.
   document — and shows the mention, because a silent zero-rating is a legal
   claim the person composing it should be able to see. Rates the user chose
   deliberately are left alone.
+
+### Henri's session, 2026-09-03 (evening)
+
+Answered in his own words, so the reasoning survives:
+
+- **Invoice lines come from the catalog** (`1aef1c7`). Two defects there were
+  invisible to a green suite and obvious on load — a price rendered as
+  `850.000000` and a duplicate `21.00%` rate option. Both were decimals arriving
+  in a different spelling than the UI compares against; there is now one
+  `servedSpelling` helper because three endpoints serialise the same rates three
+  ways.
+- **The AI Studio reference keeps its archive** (`fda6f97`), not two copies.
+- **The two palettes became the two themes** (`b2a21c3`). Dark mode is the
+  site's sapphire field, light mode is its paper, the € motif and the frosted
+  card are in `@henrioutai/ui`, and `/_preview` → *Palette + grounds* is where
+  to look at all of it.
+- **[SHELL_UI_PROPOSAL.md](SHELL_UI_PROPOSAL.md)** — five proposals for
+  reorganising the shell around the new vocabulary. Not built; it needs his eye,
+  and item 4 needs a drawing.
+
+*Watch item:* `InvoiceDetailPanel.test.tsx` "renders the header, the lines and
+the frozen totals" failed once under parallel load at 1947ms and passes alone at
+642ms. It is a timing flake, not a regression — but if it recurs, that test is
+waiting on a client-name lookup and should be given an explicit `findBy` rather
+than a longer timeout.
 
 **Nothing is queued.** The three sanctioned wirings are done, and what remains
 in NEXT_SESSION §5b — the alerts panel and the quotes section — are new screens
