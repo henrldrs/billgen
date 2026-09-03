@@ -258,6 +258,13 @@ new form exists so this stops being one anecdote and starts being a count.
 
 ## SELF. Software session — written 2026-09-03, to be run without Henri
 
+> **Superseded as a live list by [SOLO_RUN.md](SOLO_RUN.md), 2026-09-03.**
+> That file is the ledger the run is actually driven from — it carries a resume
+> protocol for a session that starts cold, and a queue whose finished rows carry
+> their commit. Items 1–4 below are now `DONE` there. The reasoning in this
+> section is still the reasoning; only the tracking moved.
+
+
 Two evenings have gone into the marketing site. This section exists so the next
 session goes back to the **software**, and so it can run while Henri is asleep
 without producing anything he has to undo.
