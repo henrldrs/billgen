@@ -4864,3 +4864,80 @@ hr.bg-divider {
   height: 0;
   pointer-events: none;
 }
+
+/* ── Floating top bar ──────────────────────────────────────────────────────
+   The bar as a rounded glass panel with the ground visible around it, rather
+   than a white band welded to the window edge. Henri, 2026-09-03: "the top
+   bar navigation could it be a circular glass? i dont like the white bar."
+
+   Radius is generous rather than a true pill: the nav carries two rows — the
+   title/action row and the section links — and a 999px radius on a ~7rem
+   element bows the ends so far inward that the first and last link sit in the
+   curve. This is the largest radius that still leaves both rows straight.
+   ──────────────────────────────────────────────────────────────────────── */
+
+.bg-topnav--floating {
+  position: sticky;
+  top: 0.75rem;
+  z-index: 40;
+  margin: 0.75rem 1rem 0;
+  border: 1px solid var(--bg-topbar-line);
+  border-radius: 1.75rem;
+  /* Glass at rest, not opaque white.
+     The first pass here was fully opaque, on the reasoning that translucency
+     over the top of a page is translucency over nothing. True, but it misses
+     what the bar sits on: the ground is warm paper now, and an opaque
+     --bg-topbar is #ffffff, so "opaque at rest" renders a white pill on a
+     beige page — a rounded version of the white bar this variant exists to
+     stop being. Letting the paper through at rest is what makes it read as
+     glass rather than as a white shape; the scrolled state below is then a
+     deepening of the same material rather than a switch into a different one. */
+  background: color-mix(in srgb, var(--bg-topbar) 78%, transparent);
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  box-shadow: var(--bg-shadow-card);
+  /* NO `overflow: hidden` here, however much the rounded corners invite it.
+     `Menu` positions its sub-page popup absolutely and renders no portal, so
+     anything that clips this element clips every nav popup to the bar — which
+     is what `overflow-x: auto` on .bg-topnav__links did once already, and the
+     comment there says so. Nothing inside paints its own background, so there
+     is nothing to clip out of the corners in the first place. */
+  transition:
+    background var(--bg-duration-pop) var(--bg-ease-standard),
+    box-shadow var(--bg-duration-pop) var(--bg-ease-standard),
+    border-color var(--bg-duration-pop) var(--bg-ease-standard);
+}
+
+/* Scrolled: content is passing underneath, so the glass has something to be
+   glass over. */
+.bg-topnav--floating[data-scrolled="true"] {
+  background: color-mix(in srgb, var(--bg-topbar) 62%, transparent);
+  backdrop-filter: blur(20px) saturate(175%);
+  -webkit-backdrop-filter: blur(20px) saturate(175%);
+  border-color: var(--bg-glass-border);
+  box-shadow: var(--bg-shadow-card-hover), var(--bg-glass-highlight);
+}
+
+/* The band's own bottom rule would draw a line across a floating panel. */
+.bg-topnav--floating,
+.bg-topnav--floating[data-scrolled="true"] {
+  border-bottom-width: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-topnav--floating {
+    transition: none;
+  }
+}
+
+/* Narrow screens: the side margin costs more than the effect is worth when
+   there are 320px to spend, so the panel squares off against the edges. */
+@media (max-width: 640px) {
+  .bg-topnav--floating {
+    margin: 0;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    top: 0;
+  }
+}

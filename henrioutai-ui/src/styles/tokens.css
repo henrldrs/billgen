@@ -371,11 +371,18 @@
     radial-gradient(56% 40% at 16% 5%, color-mix(in srgb, var(--brand-logo-green) 11%, transparent), transparent 66%),
     radial-gradient(50% 36% at 88% 16%, color-mix(in srgb, var(--brand-logo-sand) 18%, transparent), transparent 62%),
     radial-gradient(70% 40% at 52% 62%, color-mix(in srgb, var(--brand-logo-green) 12%, transparent), transparent 72%),
-    /* Literal white, not var(--bg-surface): paper is one specific ground from
-       the site and does not follow the theme. Resolving it through a token
-       that flips would turn the light ground into washes over a dark card the
-       moment anything read it in dark mode. */
-    #ffffff;
+    /* The mark's own warm off-white, not #ffffff (2026-09-03, second pass).
+       The washes above are local — a green one top-left, a sand one top-right
+       — so on a pure white base everything between them stays pure white, and
+       the ground reads cool next to the beige it is supposed to be. Warming
+       the BASE is what makes the whole surface read as paper rather than as
+       white with two stains on it.
+
+       Written as the raw token rather than var(--bg-surface): paper is one
+       specific ground and does not follow the theme. Resolving it through a
+       token that flips would turn the light ground into washes over a dark
+       card the moment anything read it in dark mode. */
+    var(--brand-logo-paper);
 
   /* The deep field — one gradient long enough to run under several sections,
      rather than a dark band that starts and stops around the cards. Both

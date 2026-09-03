@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { HomeButton } from "./HomeButton";
 import { Menu, type MenuEntry } from "./Menu";
 import { IconButton } from "./IconButton";
@@ -59,7 +59,18 @@ export interface TopNavProps {
    * and `glass` blur whatever scrolls underneath — use those when the header
    * floats over page content.
    */
-  variant?: "solid" | "translucent" | "glass";
+  /**
+   * `floating` detaches the bar from the window edges: a rounded glass panel
+   * with the ground visible around it, opaque at rest and going translucent
+   * once the page is scrolled under it.
+   *
+   * The rest-state opacity is the point rather than an optimisation. A bar
+   * that is translucent over the top of a page is translucent over nothing —
+   * it just looks washed out — and the effect only means anything once there
+   * is content passing beneath it. So the translucency is the *scrolled*
+   * state, which is also when a person can see that it is floating.
+   */
+  variant?: "solid" | "translucent" | "glass" | "floating";
   /** Extra controls rendered after the title block, before the action cluster. */
   children?: ReactNode;
   className?: string;
@@ -87,6 +98,16 @@ export function TopNav({
   children,
   className,
 }: TopNavProps) {
+  /* Only the floating variant listens. Attaching a scroll handler for a bar
+     that cannot react to it is a listener on every scroll frame for nothing. */
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    if (variant !== "floating") return;
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll(); // a reload part-way down a page starts scrolled
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [variant]);
   const classes = [
     "bg-topnav",
     variant !== "solid" ? `bg-topnav--${variant}` : "",
@@ -95,7 +116,7 @@ export function TopNav({
     .filter(Boolean)
     .join(" ");
   return (
-    <header className={classes}>
+    <header className={classes} data-scrolled={scrolled ? "true" : undefined}>
       <div className="bg-topnav__row">
         <HomeButton onNavigateHome={onNavigateHome} size="md" />
 

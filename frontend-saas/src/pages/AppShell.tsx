@@ -11,6 +11,8 @@
  *  a small square marker, amber for partial and red for unwired — so the state
  *  of the product is legible from the nav bar itself. */
 
+import { useTheme } from "../lib/theme";
+
 import {
   AccountMenu,
   AppShell as Shell,
@@ -28,6 +30,7 @@ import {
   ScaffoldNavDot,
   SettingsUserIcon,
   LanguageToggle,
+  ThemeSwitcher,
   TopNav,
   UpgradeIcon,
   t,
@@ -103,6 +106,7 @@ export function AppShell() {
   // What is typed in the palette. The palette still owns its own query and
   // its own filtering; this is a copy, so the server can be asked too.
   const [paletteQuery, setPaletteQuery] = useState("");
+  const [theme, setTheme] = useTheme();
 
   // Records, from the server. The palette used to navigate to pages and nothing
   // else, so typing an invoice number off a bank statement answered "nothing
@@ -338,6 +342,7 @@ export function AppShell() {
       width="wide"
       nav={
         <TopNav
+          variant="floating"
           title={company.name}
           links={links}
           onNavigateHome={() => navigate("/app")}
@@ -366,6 +371,12 @@ export function AppShell() {
               changing language is what you do when the interface is in one you
               cannot read, and a menu you must read to find is no use then. */}
           <LanguageToggle ariaLabel={t(lang, "settings.language")} />
+          {/* Beside the language toggle for the same reason it is: both are
+              "the interface is wrong for me right now" controls, and both are
+              useless buried in a menu that is itself hard to read — a person
+              on a dark screen at night should not have to open anything. It
+              stays in Settings too; this is the shortcut, not the home. */}
+          <ThemeSwitcher theme={theme} onChange={setTheme} size="sm" />
         </TopNav>
       }
     >
