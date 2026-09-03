@@ -259,13 +259,31 @@ async def test_users_me_carries_the_permission_list(client):
 # ── The invariant that keeps this true ─────────────────────────────────────
 
 
+def _all_routes(routes):
+    """Every route, including the ones inside a router mounted by `include_router`.
+
+    FastAPI 0.139 / Starlette 1.0 stopped copying an included router's routes up
+    into `app.routes`; each include is now a private `_IncludedRouter` wrapper
+    instead. Walking `app.routes` alone therefore stopped seeing 88 of this
+    app's 92 routes, and a guard that inspects nothing is not a guard. The
+    wrapper keeps the real router on `original_router`, and the paths there
+    already carry the include prefix, so nothing has to re-join them.
+    """
+    for route in routes:
+        nested = getattr(getattr(route, "original_router", None), "routes", None)
+        if nested is None:
+            yield route
+        else:
+            yield from _all_routes(nested)
+
+
 def _mutating_routes(app):
     """Every route that changes something, and whether it declares a permission."""
     import inspect
 
     out = []
-    for route in app.routes:
-        methods = getattr(route, "methods", set()) - {"HEAD", "OPTIONS"}
+    for route in _all_routes(app.routes):
+        methods = set(getattr(route, "methods", None) or ()) - {"HEAD", "OPTIONS"}
         if not methods & {"POST", "PATCH", "PUT", "DELETE"}:
             continue
         declares = any(
@@ -344,3 +362,18 @@ async def test_every_write_endpoint_declares_a_permission(client):
         "a write endpoint declares no permission — add require_permission(...) "
         "to it, or add it to _UNGUARDED_BY_DESIGN with the reason"
     )
+
+
+async def test_the_route_walk_actually_finds_the_routes(client):
+    """Guards the guard.
+
+    `_mutating_routes` reads FastAPI's route tree, and that tree has already
+    changed shape once underneath it — the walk quietly went from ninety-two
+    routes to four. The invariant above only failed loudly that time because
+    `_UNGUARDED_BY_DESIGN` happened to be non-empty; had it been empty, an
+    inspection of nothing would have passed for years. This pins the floor.
+    """
+    mutating = _mutating_routes(client._transport.app)  # noqa: SLF001
+
+    assert len(mutating) > 40, f"the route walk found only {len(mutating)} write endpoints"
+    assert ("POST", "/invoices") in {(method, path) for method, path, _ in mutating}
