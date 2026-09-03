@@ -239,7 +239,32 @@ were corrections to something he had just seen on screen.
   round trips against Testing Library's 1000ms default; the budget is now 5s
   globally, in `src/test/setup.ts`, with the reasoning next to it.
 
-**Nothing is queued.** The three sanctioned wirings are done, and what remains
+### Queued for the next session — the architectural points
+
+Henri, leaving 2026-09-03: *"continue architectural points."* These come from
+[SHELL_UI_PROPOSAL.md](SHELL_UI_PROPOSAL.md), reordered by what is now unblocked.
+
+| # | Item | Why it is ready |
+|---|---|---|
+| 9 | **Desktop shell parity — one line** | `frontend-electron/src/DesktopShell.tsx` already imports the same `AppShell` and `TopNav`, so it picked up the € texture for free but still renders the old solid bar. It needs `variant="floating"` and the `ThemeSwitcher`, exactly as `frontend-saas/src/pages/AppShell.tsx` has them. Start here: it is the cheapest item on the list and it stops the two shells diverging. |
+| 10 | **Measure vs full width** (proposal §2) | Record and form screens take a reading measure; list and report screens stay full width. `ia.ts` already knows which kind each node is, so this is one class with two variants chosen per route rather than per component. Touches every route — do it in one pass. |
+| 11 | **Frosted cards for overlays only** (proposal §5) | `Card frosted` exists and nothing uses it. The ⌘K palette, modals and the record drawer are the surfaces where the blur does real work; on a list it is an expensive way to make text harder to read. |
+| 12 | **The deep field as a light-mode zone** (proposal §4) | **Blocked on a drawing.** It could read as premium or as a marketing page bolted onto an invoicing tool, and it is a visual-language commitment rather than a token change. |
+
+### Answered while he was here
+
+- **Desktop is already wired and reuses everything.** `frontend-electron` is
+  two files and 344 lines (`App.tsx` + `DesktopShell.tsx`); the 24 panels, 76
+  design-system components, API client, hooks and types all come from the
+  shared packages. Nothing there was built from scratch and nothing needs to be.
+- **Mobile does not exist, and the answer depends on the choice.** A responsive
+  web build or PWA reuses everything, the same way desktop does — a third shell
+  of a few hundred lines. React Native reuses the portable half (5 lib files, 2
+  hooks, 2 types, 3 providers — the API client, formatting, translations and
+  every query) but **not** the 76 design-system components, which are DOM and
+  CSS. The business logic ports either way; only the view layer forks.
+
+**Nothing else is queued.** The three sanctioned wirings are done, and what remains
 in NEXT_SESSION §5b — the alerts panel and the quotes section — are new screens
 that rule 2 puts on Henri's side. A next unattended session should not invent
 work from §5b; the honest options are the two report screens that now have
