@@ -143,3 +143,48 @@ test("signup stores the returned tokens", async () => {
   });
   expect(tokens.getAccess()).toBe("fresh-access");
 });
+
+test("search sends the term as data, not as query syntax", async () => {
+  // The palette fires this on every keystroke, so whatever is half-typed goes
+  // on the wire. A term holding `%`, `&` or `#` must arrive as those
+  // characters — unencoded, `&` would split into a second parameter and `#`
+  // would truncate the request at the client, before the server's own LIKE
+  // escaping ever gets a say.
+  let seenUrl = "";
+  server.use(
+    http.get(`${BASE}/search`, ({ request }) => {
+      seenUrl = request.url;
+      return HttpResponse.json({
+        query: "100%",
+        hits: [],
+        counts: {},
+        truncated: false,
+      });
+    }),
+  );
+
+  const { client } = makeClient();
+  await client.search("100% & co #2");
+
+  const sent = new URL(seenUrl).searchParams;
+  expect(sent.get("q")).toBe("100% & co #2");
+  expect(sent.has("limit")).toBe(false);
+});
+
+test("search passes a per-kind limit only when asked for one", async () => {
+  let seenUrl = "";
+  server.use(
+    http.get(`${BASE}/search`, ({ request }) => {
+      seenUrl = request.url;
+      return HttpResponse.json({ query: "ac", hits: [], counts: {}, truncated: false });
+    }),
+  );
+
+  const { client } = makeClient();
+  const result = await client.search("ac", 5);
+
+  expect(new URL(seenUrl).searchParams.get("limit")).toBe("5");
+  // `truncated` is the caller's cue to say "more" rather than implying the
+  // list is everything, so it has to survive the round trip.
+  expect(result.truncated).toBe(false);
+});

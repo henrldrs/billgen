@@ -1,6 +1,7 @@
 /** React Query hooks over the ApiClient. Server state only — no business math
  *  here; totals always come from the API's preview/report endpoints. */
 
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type {
@@ -562,5 +563,46 @@ export function useDeleteTemplate() {
   return useMutation({
     mutationFn: (id: string) => api.deleteTemplate(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["templates"] }),
+  });
+}
+
+// ---- search ----------------------------------------------------------------------
+
+/** Debounced global search — one term over invoices, quotes, credit notes,
+ *  clients and products.
+ *
+ *  The debounce lives in the hook rather than in the caller on purpose. What
+ *  drives this is a text field that fires on every keystroke, and a caller who
+ *  forgets to debounce sends one request per character typed. 180ms sits below
+ *  the point where a result feels late and above a fast typist's gap between
+ *  keys.
+ *
+ *  Below two characters the query is disabled rather than sent. The server
+ *  answers a one-character term with nothing by design, so asking is a round
+ *  trip that cannot produce a result.
+ *
+ *  Previous results are held while a new term is in flight: a palette that
+ *  empties itself between keystrokes flickers, and the stale list is a better
+ *  answer than no list for the ~200ms it takes to replace it.
+ */
+export function useSearch(term: string, limit?: number) {
+  const api = useApi();
+  const [debounced, setDebounced] = useState(term);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebounced(term), 180);
+    return () => window.clearTimeout(timer);
+  }, [term]);
+
+  const q = debounced.trim();
+
+  return useQuery({
+    queryKey: ["search", q, limit ?? null],
+    queryFn: () => api.search(q, limit),
+    enabled: q.length >= 2,
+    // A palette is reopened constantly with the same few terms; refetching a
+    // result the user is still looking at buys nothing.
+    staleTime: 30_000,
+    placeholderData: (previous) => previous,
   });
 }

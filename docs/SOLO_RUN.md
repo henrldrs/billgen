@@ -53,7 +53,9 @@ Then read **§ Queue** below and start at the first item marked `QUEUED`.
 ## Queue
 
 Ordered. `DONE` items stay listed with their commit so a cold session can tell
-"already done" from "never started" without reading the diff.
+"already done" from "never started" without reading the diff. A row that ships
+*in* the same commit as this file cites that commit's subject instead of a hash,
+which it cannot know.
 
 | # | Item | State | Evidence |
 |---|---|---|---|
@@ -62,11 +64,11 @@ Ordered. `DONE` items stay listed with their commit so a cold session can tell
 | 3 | The authz guard had stopped seeing the routes | `DONE` | `b5ebe4e`. Not on the original list — found by running the suite. See § What changed underneath us. |
 | 4 | Regenerate the architecture report | `DONE` | `14bcd89`. In sync. Only file counts moved; the engine and the route walk agree on 92 endpoints / 23 routers. |
 | 5 | The mark's palette and the site's grounds, as tokens | `DONE` | `bcc3401`. Henri's ask mid-session. Additive only — no existing token changed value. |
-| 6 | ⌘K palette → `GET /search` | `QUEUED` | The palette is `henrioutai-ui/src/components/CommandPalette.tsx`, already controlled and already opened on ⌘K by `frontend-saas/src/pages/AppShell.tsx`. It only navigates pages today. The clearest win in NEXT_SESSION §5b. |
+| 6 | ⌘K palette → `GET /search` | `DONE` | Ships in *feat: the palette searches the database*. Verified in the running app, not only under test: typing `Corp` returns the client and lands on Client 360; typing `OUT-BC06` returns the invoice and lands on its detail. |
 | 7 | A total on the payments report → `GET /reports/payments` | `QUEUED` | One number on a screen that already exists. |
 | 8 | The composer's VAT category default → `GET /vat-treatment` | `QUEUED` | A default value, not new layout. §5b calls this the one that changes what the product is legally capable of. |
 
-Items 6–8 are the three NEXT_SESSION §SELF sanctions explicitly: *"None of
+Items 6–8 are the three that NEXT_SESSION §SELF sanctions explicitly: *"None of
 these invents a screen; each connects a control that is already drawn."* That
 sanction is what makes them safe to do without Henri, and it does **not** extend
 to anything else in §5b.
@@ -76,7 +78,7 @@ to anything else in §5b.
 | | |
 |---|---|
 | Python | **483 collected, exit 0** |
-| Frontend | **159 passed** (`npm run test --workspace @billgen/ui`) |
+| Frontend | **161 passed** (`npm run test`, 29 files), typecheck clean across all four workspaces |
 | `ruff check` | clean. CI runs `ruff check .` only — the tree is *not* `ruff format` clean and was not before, so do not reformat it as a side errand |
 | Architecture doc | in sync, v0.11 |
 | Unpushed | 10 commits on `audit-engine-and-scaffolds` |
@@ -170,4 +172,13 @@ that was not on it and one Henri added mid-session.
   app.** Brought in as additive tokens, with the canonical-green question
   written down rather than answered.
 
-Left for the next run: queue items 6, 7 and 8 — the three sanctioned wirings.
+- **Queue item 6 landed, and the browser caught what the tests did not.** The
+  palette wiring typechecked and the suite went green with it — and the app
+  crashed on first load with "rendered more hooks than during the previous
+  render", because `useSearch` had been placed below `if (isLoading) return`.
+  This file already carried that exact lesson four lines further down in
+  AppShell, written by whoever hit it the first time. Two conclusions worth
+  keeping: a hook added to a component with early returns goes at the top by
+  default, and a UI change is not verified until it has been loaded.
+
+Left for the next run: queue items 7 and 8.

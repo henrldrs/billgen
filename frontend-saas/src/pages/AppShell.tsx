@@ -33,10 +33,12 @@ import {
   t,
   useCompanies,
   useLang,
+  useSearch,
   type BackendStatus,
   type CommandItem,
   type CompanyResponse,
   type IaSection,
+  type SearchHitResponse,
   type Lang,
   type MenuEntry,
   type TopNavLink,
@@ -53,6 +55,28 @@ export interface ShellContext {
    *  decimals, so every screen that renders money needs to be told this. */
   currency: string;
 }
+
+/** Where a search hit goes when it is picked, and whether that is the record.
+ *
+ *  Two of the five kinds have a record screen drawn — invoices and clients.
+ *  The other three have only the section that lists them. That asymmetry is
+ *  left visible rather than papered over: inventing a quote, credit-note or
+ *  product detail screen is inventing a screen, which is not this change's
+ *  business. So those hits land on their section and the hint says so, instead
+ *  of navigating somewhere that looks like a record and is not.
+ *
+ *  A kind the server grows later and this map has not is dropped rather than
+ *  guessed at — see the flatMap below. */
+const HIT_DESTINATION: Record<
+  string,
+  { href: (id: string) => string; section: string; record: boolean }
+> = {
+  invoice: { href: (id) => `/app/sales/invoices/id/${id}`, section: "Invoices", record: true },
+  client: { href: (id) => `/app/customers/clients/${id}`, section: "Clients", record: true },
+  quote: { href: () => "/app/sales/quotes", section: "Quotes", record: false },
+  credit_note: { href: () => "/app/sales/credit-notes", section: "Credit notes", record: false },
+  product: { href: () => "/app/catalog/products", section: "Products", record: false },
+};
 
 /** Palette-safe status marker (see the label comment in `commands`). */
 const STATUS_SUFFIX: Record<BackendStatus, string> = {
@@ -76,6 +100,24 @@ export function AppShell() {
   const { data: companies, isLoading } = useCompanies();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  // What is typed in the palette. The palette still owns its own query and
+  // its own filtering; this is a copy, so the server can be asked too.
+  const [paletteQuery, setPaletteQuery] = useState("");
+
+  // Records, from the server. The palette used to navigate to pages and nothing
+  // else, so typing an invoice number off a bank statement answered "nothing
+  // matches" while the invoice sat in the database. `useSearch` debounces and
+  // stays disabled under two characters, so an empty or barely started query
+  // costs no request.
+  //
+  // Gated on `paletteOpen` rather than on the query alone: the palette clears
+  // its field when it opens, not when it closes, so a closed palette would
+  // otherwise leave the last term live — nothing renders it, but React Query
+  // would still hold it warm and refetch it on a window focus.
+  //
+  // Above the early returns, for the reason already written out further down
+  // beside `activeCompanyLanguage` — this file has made that mistake once.
+  const { data: searchResults } = useSearch(paletteOpen ? paletteQuery : "", 5);
 
   // Pin the active company once the list loads. Without this, refetches (e.g.
   // after an import adds a company) fall back to companies[0] and yank the user
@@ -198,10 +240,42 @@ export function AppShell() {
     };
   });
 
+  const recordCommands: CommandItem[] = (searchResults?.hits ?? []).flatMap(
+    (hit: SearchHitResponse) => {
+      const destination = HIT_DESTINATION[hit.kind];
+      // A kind this shell does not know where to send is not shown. Guessing a
+      // route would navigate somewhere wrong; showing an inert row would be
+      // worse than the "nothing matches" this whole change exists to remove.
+      if (!destination) return [];
+
+      return [
+        {
+          key: `hit:${hit.kind}:${hit.id}`,
+          label: hit.title,
+          section: destination.section,
+          hint: destination.record ? (hit.subtitle ?? undefined) : "opens the list",
+          // CommandPalette filters `commands` by substring over label,
+          // keywords and section — and a server hit legitimately need not
+          // contain the term at all: searching a VAT number returns a client
+          // whose label is their name. Carrying the query itself in keywords is
+          // what keeps those hits from being filtered back out on arrival.
+          keywords: `${paletteQuery} ${hit.subtitle ?? ""} ${hit.status ?? ""}`,
+          onRun: () => {
+            setPaletteOpen(false);
+            navigate(destination.href(hit.id));
+          },
+        },
+      ];
+    },
+  );
+
   // The palette indexes the WHOLE architecture, not just the five primary
   // sections — it is the only way to reach Billing, Legal, Help and the rest
   // in one hop, and it doubles as a map of what still has no backend.
   const commands: CommandItem[] = [
+    // Records first: if a query matched real data, that is the answer, and
+    // the architecture entries below are the fallback rather than the point.
+    ...recordCommands,
     {
       key: "new-invoice",
       label: t(lang, "invoice.title"),
@@ -308,6 +382,7 @@ export function AppShell() {
         open={paletteOpen}
         onClose={() => setPaletteOpen(false)}
         commands={commands}
+        onQueryChange={setPaletteQuery}
       />
       {/* Every commercial refusal in the app, handled once. It listens to the
           React Query caches, so no panel, hook or button opts in and none of

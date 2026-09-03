@@ -43,6 +43,7 @@ import type {
   ProductResponse,
   ProductUpdateRequest,
   RevenueByMonthResponse,
+  SearchResponse,
   SignupRequest,
   SignupResponse,
   TimelineEventResponse,
@@ -650,6 +651,23 @@ export class ApiClient {
   vatReport(companyId: string, period: string): Promise<VatReportResponse> {
     const search = new URLSearchParams({ company_id: companyId, period });
     return this.request("GET", `/reports/vat?${search}`);
+  }
+
+  // ---- search ----------------------------------------------------------------------
+
+  /** One term across invoices, quotes, credit notes, clients and products.
+   *
+   *  The server escapes LIKE metacharacters, so a typed `%` is a literal and
+   *  not a request for every row. A term shorter than two characters comes
+   *  back empty rather than as a 422: the palette fires on every keystroke and
+   *  the caller is mid-word, which is not an error worth rendering.
+   *
+   *  `truncated` is set when any kind hit `limit`, so a caller can say "more"
+   *  rather than implying it showed everything. */
+  search(q: string, limit?: number): Promise<SearchResponse> {
+    const search = new URLSearchParams({ q });
+    if (limit !== undefined) search.set("limit", String(limit));
+    return this.request("GET", `/search?${search}`);
   }
 
   // ---- entitlements --------------------------------------------------------------

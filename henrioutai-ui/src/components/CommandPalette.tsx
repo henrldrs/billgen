@@ -22,6 +22,10 @@ export interface CommandPaletteProps {
   placeholder?: string;
   /** Shown when the query matches nothing. */
   emptyText?: string;
+  /** Every keystroke in the field, so a caller can search a server with it.
+   *  The palette keeps owning the query — this only reports it. Results a
+   *  caller fetches come back in as ordinary `commands`. */
+  onQueryChange?: (query: string) => void;
   className?: string;
 }
 
@@ -37,6 +41,7 @@ export function CommandPalette({
   commands,
   placeholder = "Type a command or search…",
   emptyText = "Nothing matches.",
+  onQueryChange,
   className,
 }: CommandPaletteProps) {
   const [query, setQuery] = useState("");
@@ -78,6 +83,17 @@ export function CommandPalette({
       ?.querySelector(`[data-flat-index="${highlight}"]`)
       ?.scrollIntoView({ block: "nearest" });
   }, [highlight]);
+
+  /* Reported from one place rather than from the input's onChange, so that the
+     reset on open (above) is reported too — otherwise a caller keeps showing
+     the results of whatever was typed the last time the palette was open. The
+     callback is held in a ref so an inline arrow from the caller does not
+     re-fire this on every render. */
+  const queryChangeRef = useRef(onQueryChange);
+  queryChangeRef.current = onQueryChange;
+  useEffect(() => {
+    queryChangeRef.current?.(query);
+  }, [query]);
 
   if (!open) return null;
 
