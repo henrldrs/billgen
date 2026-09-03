@@ -19,8 +19,14 @@ export interface EuroFieldProps {
    *  `ink` is for light surfaces, where they read as faint green line work
    *  multiplied into the page. `light` is for the deep field, where a green
    *  stroke disappears and a pale one screened over the ground does the work.
-   *  There is no single tone that survives both. */
-  tone?: "ink" | "light";
+   *  There is no single tone that survives both.
+   *
+   *  `auto` picks between them from `data-bg-theme`, for the one caller that
+   *  cannot know which ground it is on until runtime: the app shell, whose
+   *  backdrop is paper or the sapphire field depending on the theme. Prefer an
+   *  explicit tone anywhere the ground is fixed — a glass panel on the deep
+   *  field is on the deep field whatever the theme says. */
+  tone?: "ink" | "light" | "auto";
   className?: string;
 }
 

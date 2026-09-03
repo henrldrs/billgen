@@ -2353,6 +2353,7 @@ textarea.bg-field__input {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
   background: var(--bg-app-backdrop);
   color: var(--bg-ink);
   font-family: var(--bg-font-sans);
@@ -4829,6 +4830,20 @@ hr.bg-divider {
   color: color-mix(in srgb, var(--brand-deep-glyph) 10%, transparent);
 }
 
+/* Theme-following, for the app shell: its ground is paper in one theme and the
+   sapphire field in the other, and the motif has to change tone AND blend mode
+   with it. Weaker than the marketing page's on purpose — that field is behind
+   a headline, this one is behind a table of invoices somebody is reading. */
+.bg-euro-field--auto {
+  color: color-mix(in srgb, var(--brand-logo-green) 22%, transparent);
+}
+:root[data-bg-theme="dark"] .bg-euro-field--auto {
+  color: color-mix(in srgb, var(--brand-deep-glyph) 8%, transparent);
+}
+:root[data-bg-theme="dark"] .bg-euro-field--auto .bg-euro-field__glyph {
+  mix-blend-mode: screen;
+}
+
 .bg-euro-glyph {
   display: block;
   width: 100%;
@@ -4940,4 +4955,21 @@ hr.bg-divider {
     border-right: none;
     top: 0;
   }
+}
+
+/* The shell's texture layer. `position: fixed` rather than absolute: the field
+   is a property of the window, not of the document, so it must not scroll with
+   a long invoice list and it must not stretch to the height of one. */
+.bg-app-shell__texture {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+/* Everything above it. Without this the nav and the content stack below the
+   texture in paint order and the motif draws over the invoices. */
+.bg-app-shell__nav,
+.bg-app-shell__content {
+  position: relative;
+  z-index: 1;
 }
