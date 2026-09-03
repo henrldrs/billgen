@@ -2,12 +2,18 @@
  *  API's /invoices/preview (the ONLY source of VAT math — never computed here),
  *  then create. Preview consumes no invoice number. */
 
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 
-import { Button, Spinner } from "@henrioutai/ui";
-import { useClients, useCreateInvoice, useInvoicePreview, useVatRates } from "../hooks/queries";
+import { Banner, Button, Spinner } from "@henrioutai/ui";
+import {
+  useClients,
+  useCreateInvoice,
+  useInvoicePreview,
+  useVatRates,
+  useVatTreatment,
+} from "../hooks/queries";
 import { formatMoney } from "../lib/format";
-import { t, type Lang } from "../lib/translations";
+import { t, tVatReason, type Lang } from "../lib/translations";
 import type { InvoiceLineIn, InvoiceResponse } from "../types";
 
 export interface InvoiceBuilderPanelProps {
@@ -40,17 +46,22 @@ const EMPTY_LINE: LineDraft = {
   vatRate: FALLBACK_RATE,
 };
 
-function toApiLines(drafts: LineDraft[]): InvoiceLineIn[] {
+/** `category` is the whole invoice's, not a per-line choice.
+ *
+ *  Both halves are the server's now. The rate comes from GET /vat-rates, and
+ *  the category from GET /vat-treatment, which runs core/rules/vat.pick_category
+ *  over buyer country, buyer VAT number and seller country. Until that route
+ *  existed every line shipped "S" — correct for a Belgian seller billing a
+ *  Belgian customer, and wrong for the two cases the rule exists for.
+ *
+ *  It is not per line because nothing about a line decides it: the same pair of
+ *  countries and VAT numbers governs every line on the document. */
+function toApiLines(drafts: LineDraft[], category: string): InvoiceLineIn[] {
   return drafts.map((draft) => ({
     description: draft.description,
     quantity: draft.quantity,
     unit_price: draft.unitPrice,
-    // The RATE is now the server's (GET /vat-rates); the CATEGORY is still
-    // hardcoded standard, and that is a backend question rather than a picker.
-    // core/rules/vat.py has pick_category() — buyer country, buyer VAT number,
-    // seller country — and no route calls it, so a reverse-charge or export
-    // line cannot be composed here whatever this select offers.
-    vat: { category: "S", rate: draft.vatRate },
+    vat: { category, rate: draft.vatRate },
   }));
 }
 
@@ -88,18 +99,51 @@ export function InvoiceBuilderPanel({
   const valid = linesAreValid(lines);
   const serializedLines = useMemo(() => JSON.stringify(lines), [lines]);
 
+  // What this seller/buyer pair implies. Advisory: it defaults the document,
+  // it does not lock it.
+  const treatment = useVatTreatment(companyId, clientId || undefined, lang);
+  const category = treatment.data?.category ?? "S";
+
   useEffect(() => {
     if (!valid) return;
-    preview.mutate({ lines: toApiLines(lines), currency: "EUR" });
+    preview.mutate({ lines: toApiLines(lines, category), currency: "EUR" });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- serializedLines covers `lines`
-  }, [serializedLines, valid]);
+  }, [serializedLines, valid, category]);
 
   // The rates the server says exist, defaulting to whatever it flags as default.
   // Until it answers there is exactly one option — the rate the empty line
   // already holds — so the select is never blank and never offers a rate the
   // backend would refuse.
   const served = vatRates.data?.rates ?? [];
-  const defaultRate = served.find((option) => option.is_default)?.rate ?? FALLBACK_RATE;
+  const standardDefaultRate = served.find((option) => option.is_default)?.rate ?? FALLBACK_RATE;
+
+  /** The treatment's rate, expressed the way the served list expresses it.
+   *
+   *  Both come from core/rules/vat.py, but they arrive as separately serialised
+   *  decimals — "0" and "0.00" are the same rate and different strings, and the
+   *  select matches on the string. Comparing numerically and then taking the
+   *  served spelling keeps a zero-rated line on the list's own option instead
+   *  of appending a second one that looks like a stale draft's. */
+  const advisedRate = treatment.data?.rate;
+  const defaultRate =
+    advisedRate === undefined
+      ? standardDefaultRate
+      : (served.find((option) => Number(option.rate) === Number(advisedRate))?.rate ??
+        String(advisedRate));
+
+  /* Move the lines onto a new default when the treatment changes — but only the
+     ones still sitting on the old one. A reverse-charged line taxed at 21% is a
+     contradictory invoice, so the rate has to follow the category; a rate the
+     user actually chose is theirs and is left alone. */
+  const appliedDefault = useRef(defaultRate);
+  useEffect(() => {
+    const previous = appliedDefault.current;
+    if (previous === defaultRate) return;
+    appliedDefault.current = defaultRate;
+    setLines((current) =>
+      current.map((line) => (line.vatRate === previous ? { ...line, vatRate: defaultRate } : line)),
+    );
+  }, [defaultRate]);
   const rateOptions = served.length
     ? served
     : [{ rate: FALLBACK_RATE, label: `${FALLBACK_RATE}%`, is_default: true }];
@@ -123,7 +167,7 @@ export function InvoiceBuilderPanel({
       {
         company_id: companyId,
         client_id: clientId,
-        lines: toApiLines(lines),
+        lines: toApiLines(lines, category),
         comments: comments || null,
       },
       {
@@ -172,6 +216,25 @@ export function InvoiceBuilderPanel({
           ))}
         </select>
       </div>
+
+      {/* Shown only when the treatment is NOT plain Belgian VAT. A line that has
+          silently become reverse-charged or zero-rated for export is a legal
+          claim about the document, and the person composing it has to be able
+          to see that it was made — the mention itself is what the customer's
+          own accountant will look for. Standard VAT needs no announcement: a
+          banner on every ordinary invoice is a banner nobody reads. */}
+      {treatment.data && category !== "S" ? (
+        <Banner tone="info" title={t(lang, "invoice.vatTreatment")}>
+          {tVatReason(lang, treatment.data.reason)}
+          {/* The mention is set apart rather than joined with a dash: the reason
+              is a sentence and the mention is a quotation — the exact words that
+              will be printed on the document — and running them together reads
+              as one long clause with two dashes in it. */}
+          {treatment.data.legal_mention ? (
+            <> <strong>{treatment.data.legal_mention}</strong></>
+          ) : null}
+        </Banner>
+      ) : null}
 
       <table className="bg-table bg-table--editable">
         <thead>

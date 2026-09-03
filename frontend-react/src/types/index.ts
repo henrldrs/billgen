@@ -60,6 +60,7 @@ export type VatReportLineResponse = components["schemas"]["VatReportLineResponse
 
 /** Server-owned constants the UI has been hardcoding (21/12/6/0, template ids). */
 export type VatRatesResponse = components["schemas"]["VatRatesResponse"];
+export type VatTreatmentResponse = components["schemas"]["VatTreatmentResponse"];
 
 export type SearchHitResponse = components["schemas"]["SearchHitResponse"];
 export type SearchResponse = components["schemas"]["SearchResponse"];

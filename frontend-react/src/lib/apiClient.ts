@@ -51,6 +51,7 @@ import type {
   TokenResponse,
   UserMeResponse,
   VatRatesResponse,
+  VatTreatmentResponse,
   VatReportResponse,
 } from "../types";
 
@@ -715,6 +716,20 @@ export class ApiClient {
    *  Use this instead of hardcoding 21/12/6/0. */
   vatRates(): Promise<VatRatesResponse> {
     return this.request("GET", "/vat-rates");
+  }
+
+  /** Which VAT category a seller/buyer pair implies, and the mention it needs.
+   *
+   *  Advisory. `core/rules/vat.pick_category` decides from buyer country, buyer
+   *  VAT number and seller country — the three facts that turn a line into
+   *  intra-EU reverse charge or an export — and the composer uses the answer as
+   *  a DEFAULT. It does not overwrite a choice: the caller knows things the
+   *  data does not, such as a client flagged as a business who is buying
+   *  privately. */
+  vatTreatment(companyId: string, clientId: string, lang?: string): Promise<VatTreatmentResponse> {
+    const search = new URLSearchParams({ company_id: companyId, client_id: clientId });
+    if (lang) search.set("lang", lang);
+    return this.request("GET", `/vat-treatment?${search}`);
   }
 
   /** The PDF templates the server can actually render, from core/pdf/registry. */

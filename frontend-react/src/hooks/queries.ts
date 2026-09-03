@@ -592,6 +592,27 @@ export function useDeleteTemplate() {
   });
 }
 
+/** The VAT treatment a company/client pair implies — advisory, for defaulting.
+ *
+ *  Disabled until a client is picked: the whole answer turns on who the buyer
+ *  is, so asking before one is chosen has nothing to answer from. */
+export function useVatTreatment(
+  companyId: string | undefined,
+  clientId: string | undefined,
+  lang?: string,
+) {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["vat-treatment", companyId, clientId, lang ?? ""],
+    queryFn: () => api.vatTreatment(companyId as string, clientId as string, lang),
+    enabled: Boolean(companyId) && Boolean(clientId),
+    // A seller/buyer pair's treatment changes when the client record changes,
+    // which is rare and invalidated elsewhere; re-asking on every focus is
+    // noise on a screen that is already asking for a preview per keystroke.
+    staleTime: 5 * 60_000,
+  });
+}
+
 // ---- search ----------------------------------------------------------------------
 
 /** Debounced global search — one term over invoices, quotes, credit notes,

@@ -1220,6 +1220,33 @@ const MESSAGES = {
     nl: "Periode wissen",
     es: "Borrar el período",
   },
+  // The server sends these as message keys rather than prose — see
+  // api/routers/reference.py — so the explanation is translated here and the
+  // backend stays out of the language business.
+  "vat.reason.standard": {
+    en: "Standard Belgian VAT.",
+    fr: "TVA belge normale.",
+    nl: "Normale Belgische btw.",
+    es: "IVA belga estándar.",
+  },
+  "vat.reason.intra_eu_b2b": {
+    en: "Intra-EU B2B — VAT reverse-charged to the customer.",
+    fr: "B2B intracommunautaire — TVA autoliquidée par le client.",
+    nl: "Intracommunautair B2B — btw verlegd naar de klant.",
+    es: "B2B intracomunitario — IVA con inversión del sujeto pasivo.",
+  },
+  "vat.reason.outside_eu": {
+    en: "Export outside the EU — no Belgian VAT.",
+    fr: "Exportation hors UE — pas de TVA belge.",
+    nl: "Uitvoer buiten de EU — geen Belgische btw.",
+    es: "Exportación fuera de la UE — sin IVA belga.",
+  },
+  "invoice.vatTreatment": {
+    en: "VAT treatment",
+    fr: "Régime de TVA",
+    nl: "Btw-regeling",
+    es: "Régimen de IVA",
+  },
   "payments.received": {
     en: "Received",
     fr: "Encaissé",
@@ -1289,6 +1316,14 @@ export function t(lang: Lang, key: MessageKey): string {
 export function tPeppolError(lang: Lang, messageKey: string): string {
   const key = `peppol.${messageKey}`;
   return key in MESSAGES ? t(lang, key as MessageKey) : messageKey;
+}
+
+/** Translate a VAT-treatment reason key from `GET /vat-treatment`.
+ *  An unknown key — a backend that grew a case this UI has no wording for —
+ *  falls back to the raw key rather than rendering an empty explanation next
+ *  to a zero-rated line. */
+export function tVatReason(lang: Lang, reason: string): string {
+  return reason in MESSAGES ? t(lang, reason as MessageKey) : reason;
 }
 
 /** Translate an audit-log action ("issue", "export_pdf"). Unknown actions —

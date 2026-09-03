@@ -66,9 +66,9 @@ which it cannot know.
 | 5 | The mark's palette and the site's grounds, as tokens | `DONE` | `bcc3401`. Henri's ask mid-session. Additive only — no existing token changed value. |
 | 6 | ⌘K palette → `GET /search` | `DONE` | Ships in *feat: the palette searches the database*. Verified in the running app, not only under test: typing `Corp` returns the client and lands on Client 360; typing `OUT-BC06` returns the invoice and lands on its detail. |
 | 7 | A total on the payments report → `GET /reports/payments` | `DONE` | Ships in *feat: the payments screen prints the server's total*. The endpoint grew `paid_from`/`paid_to` so the headline totals the same window the rows are filtered by. Verified in the app: narrowing the window moved both to € 0,00 together. |
-| 8 | The composer's VAT category default → `GET /vat-treatment` | `QUEUED` | A default value, not new layout. §5b calls this the one that changes what the product is legally capable of. |
+| 8 | The composer's VAT category default → `GET /vat-treatment` | `DONE` | Ships in *feat: the composer stops charging Belgian VAT to everyone*. Verified in the app against a real Dutch client: category `AE`, rate 0%, Article 51 §2 mention shown; switching back to a Belgian client restores 21% and drops the notice. |
 
-Items 6–8 are the three that NEXT_SESSION §SELF sanctions explicitly: *"None of
+**The queue is empty.** Items 6–8 were the three that NEXT_SESSION §SELF sanctions explicitly: *"None of
 these invents a screen; each connects a control that is already drawn."* That
 sanction is what makes them safe to do without Henri, and it does **not** extend
 to anything else in §5b.
@@ -78,10 +78,10 @@ to anything else in §5b.
 | | |
 |---|---|
 | Python | **485 collected, exit 0** |
-| Frontend | **163 passed** (`npm run test`, 29 files), typecheck clean across all four workspaces |
+| Frontend | **166 passed** (`npm run test`, 29 files), typecheck clean across all four workspaces |
 | `ruff check` | clean. CI runs `ruff check .` only — the tree is *not* `ruff format` clean and was not before, so do not reformat it as a side errand |
 | Architecture doc | in sync, v0.11 |
-| Unpushed | 14 commits on `audit-engine-and-scaffolds` |
+| Unpushed | 15 commits on `audit-engine-and-scaffolds` |
 
 ---
 
@@ -188,4 +188,23 @@ that was not on it and one Henri added mid-session.
   list takes, and refuses a period beside one rather than picking a winner
   silently. `openapi.json` and `api.d.ts` were regenerated with it.
 
-Left for the next run: queue item 8.
+- **Queue item 8 was the one with legal consequences.** Every invoice line
+  shipped `category: "S"`, so an invoice to an EU business with a VAT number
+  charged them 21% Belgian VAT they do not owe and carried no Article 51 §2
+  mention. The composer now defaults the category from the server and moves the
+  rate with it — a reverse-charged line taxed at 21% is a contradictory
+  document — and shows the mention, because a silent zero-rating is a legal
+  claim the person composing it should be able to see. Rates the user chose
+  deliberately are left alone.
+
+**Nothing is queued.** The three sanctioned wirings are done, and what remains
+in NEXT_SESSION §5b — the alerts panel and the quotes section — are new screens
+that rule 2 puts on Henri's side. A next unattended session should not invent
+work from §5b; the honest options are the two report screens that now have
+endpoints (`/reports/clients`, `/reports/products`, same shape as item 7), or
+nothing.
+
+*Left in the desktop dev database:* a client **Van Dijk Holding BV** (NL, VAT
+number), created to verify item 8. That database is disposable and rebuilds
+itself; the client is worth keeping, because reverse charge cannot be looked at
+without a non-Belgian business on file.

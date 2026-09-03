@@ -24,6 +24,7 @@ export {
   tPeppolError,
   tSubscriptionStatus,
   tTier,
+  tVatReason,
   type Lang,
   type MessageKey,
   LANGS,

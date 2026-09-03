@@ -40,10 +40,34 @@ const VAT_RATES = {
   categories: [],
 };
 
+const STANDARD_TREATMENT = {
+  category: "S",
+  category_name: "STANDARD",
+  rate: "21",
+  legal_mention: null,
+  reason: "vat.reason.standard",
+  seller_country: "BE",
+  buyer_country: "BE",
+};
+
+/** A Dutch business with a VAT number: the case core/rules/vat.pick_category
+ *  exists for, and the one that shipped as plain 21% Belgian VAT until
+ *  GET /vat-treatment had a caller. */
+const REVERSE_CHARGE_TREATMENT = {
+  category: "AE",
+  category_name: "REVERSE_CHARGE",
+  rate: "0",
+  legal_mention: "Autoliquidation — article 51 §2 du Code de la TVA",
+  reason: "vat.reason.intra_eu_b2b",
+  seller_country: "BE",
+  buyer_country: "NL",
+};
+
 function mockEndpoints() {
   server.use(
     http.get(`${BASE}/clients`, () => HttpResponse.json([CLIENT])),
     http.get(`${BASE}/vat-rates`, () => HttpResponse.json(VAT_RATES)),
+    http.get(`${BASE}/vat-treatment`, () => HttpResponse.json(STANDARD_TREATMENT)),
     http.post(`${BASE}/invoices/preview`, () =>
       HttpResponse.json({
         subtotal_ht: "1250.00",
@@ -151,4 +175,106 @@ test("a rate the server no longer offers is kept rather than silently re-taxed",
   // Force a value off the served list, the way a loaded draft would.
   await user.selectOptions(picker, "21");
   expect(picker).toHaveValue("21");
+});
+
+test("an intra-EU business is reverse-charged, and the invoice says so", async () => {
+  // Until GET /vat-treatment had a caller, every line shipped category "S" — so
+  // this invoice went out charging 21% Belgian VAT to a Dutch company that owes
+  // none, with no Article 51 §2 mention. Both halves are the point: the category
+  // the server computes, and the rate that has to follow it, because a
+  // reverse-charged line taxed at 21% is a contradictory document.
+  let posted: { vat: { category: string; rate: string } }[] = [];
+  server.use(
+    http.get(`${BASE}/clients`, () => HttpResponse.json([CLIENT])),
+    http.get(`${BASE}/vat-rates`, () => HttpResponse.json(VAT_RATES)),
+    http.get(`${BASE}/vat-treatment`, () => HttpResponse.json(REVERSE_CHARGE_TREATMENT)),
+    http.post(`${BASE}/invoices/preview`, () =>
+      HttpResponse.json({
+        subtotal_ht: "100.00",
+        total_discount: "0.00",
+        net_ht: "100.00",
+        total_vat: "0.00",
+        total_ttc: "100.00",
+        vat_breakdown: {},
+      }),
+    ),
+    http.post(`${BASE}/invoices`, async ({ request }) => {
+      posted = ((await request.json()) as { lines: typeof posted }).lines;
+      return HttpResponse.json(
+        invoiceRecord("inv-1", null, { status: "draft", sequence_global: null }),
+        { status: 201 },
+      );
+    }),
+  );
+
+  const user = userEvent.setup();
+  renderWithProvider(<InvoiceBuilderPanel companyId={COMPANY_ID} />);
+
+  await user.selectOptions(await screen.findByLabelText("Client"), "c-1");
+  await user.type(screen.getByLabelText("Description 1"), "Consulting");
+  await user.type(screen.getByLabelText("Unit price 1"), "100.00");
+
+  // The rate follows the category onto the served list's own "0" option, not
+  // onto a second one spelled differently.
+  await vi.waitFor(() => expect(screen.getByLabelText("VAT % 1")).toHaveValue("0"));
+  expect(screen.getByLabelText("VAT % 1").querySelectorAll("option")).toHaveLength(4);
+
+  // And the claim is visible, mention included — it is what the customer's own
+  // accountant looks for.
+  expect(await screen.findByText(/reverse-charged to the customer/)).toBeInTheDocument();
+  expect(screen.getByText(/article 51 §2/)).toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: "Save draft" }));
+  await vi.waitFor(() => expect(posted).toHaveLength(1));
+  expect(posted[0].vat).toEqual({ category: "AE", rate: "0" });
+});
+
+test("plain Belgian VAT announces nothing", async () => {
+  // A banner on every ordinary invoice is a banner nobody reads, which is how
+  // the one above stops being noticed on the invoice that needs it.
+  mockEndpoints();
+  const user = userEvent.setup();
+  renderWithProvider(<InvoiceBuilderPanel companyId={COMPANY_ID} />);
+
+  await user.selectOptions(await screen.findByLabelText("Client"), "c-1");
+
+  await vi.waitFor(() => expect(screen.getByLabelText("VAT % 1")).toHaveValue("21"));
+  expect(screen.queryByText(/VAT treatment/)).not.toBeInTheDocument();
+});
+
+test("a rate the user chose survives the treatment arriving", async () => {
+  // The default moves lines that are still sitting on the old default. A line
+  // the user deliberately set to 6% is theirs, and a reverse-charge answer
+  // arriving a moment later must not quietly retax it.
+  server.use(
+    http.get(`${BASE}/clients`, () => HttpResponse.json([CLIENT])),
+    http.get(`${BASE}/vat-rates`, () => HttpResponse.json(VAT_RATES)),
+    http.get(`${BASE}/vat-treatment`, async () => {
+      // Late on purpose: the user gets to type before the answer lands.
+      await new Promise((resolve) => setTimeout(resolve, 60));
+      return HttpResponse.json(REVERSE_CHARGE_TREATMENT);
+    }),
+    http.post(`${BASE}/invoices/preview`, () =>
+      HttpResponse.json({
+        subtotal_ht: "100.00",
+        total_discount: "0.00",
+        net_ht: "100.00",
+        total_vat: "6.00",
+        total_ttc: "106.00",
+        vat_breakdown: { "6": "6.00" },
+      }),
+    ),
+  );
+
+  const user = userEvent.setup();
+  renderWithProvider(<InvoiceBuilderPanel companyId={COMPANY_ID} />);
+
+  const picker = await screen.findByLabelText("VAT % 1");
+  await user.selectOptions(picker, "6");
+  await user.selectOptions(screen.getByLabelText("Client"), "c-1");
+
+  // The banner proves the treatment did arrive; the picker proves it was not
+  // allowed to overwrite a deliberate choice.
+  expect(await screen.findByText(/reverse-charged to the customer/)).toBeInTheDocument();
+  expect(picker).toHaveValue("6");
 });
