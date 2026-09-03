@@ -1,1 +1,0 @@
-export { NotificationsIcon } from './Icons';

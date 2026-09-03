@@ -1,7 +1,0 @@
-{
-  "name": "BillGen - Enterprise Invoicing & Financial SaaS",
-  "description": "Comprehensive Belgian & European business invoicing, quoting, Peppol e-invoicing, 360° client management, catalog, analytics, and company operations platform.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
-

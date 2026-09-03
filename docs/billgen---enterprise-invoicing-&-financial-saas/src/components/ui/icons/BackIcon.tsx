@@ -1,1 +1,0 @@
-export { BackIcon } from './Icons';
