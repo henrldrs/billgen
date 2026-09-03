@@ -23,8 +23,10 @@ badge/banner backgrounds.
 
 ## Where they live
 
-Single source of truth: [`frontend-react/src/styles/`](../frontend-react/src/styles/)
-(the `@billgen/ui` package).
+Single source of truth: [`henrioutai-ui/src/styles/`](../henrioutai-ui/src/styles/)
+(the `@henrioutai/ui` package). It used to live in `frontend-react/src/styles/`;
+that directory was removed when the design system was extracted into its own
+package, and both shells now `@import "@henrioutai/ui/styles/tokens.css"`.
 
 - **`tokens.css`** — two layers:
   - `--brand-*` — raw scales (emerald, slate, red, amber). Palette data;
@@ -104,3 +106,48 @@ or `.bg-*` rules in an app** — change the package files instead.
 `--bg-sidebar-active`, `--bg-sidebar-line` — defined so the sidebar/top-bar
 components (next build step, from hand drawings) consume slots instead of
 inventing colors. Default skin: navy sidebar, light text, green active state.
+
+
+## The two greens (2026-09-03)
+
+The pre-sale site's palette and grounds were brought into `tokens.css` at
+Henri's ask. Everything that arrived is **additive** — new token names only,
+no existing token changed value — so the block is reversible by deleting it.
+
+### Why there are two greens, and which is canonical
+
+| | Hex | What it is |
+|---|---|---|
+| `--bg-accent` | `#10B981` | **Canonical.** The app's action colour, pinned by the guard test in `frontend-react/src/scaffold/tokens.test.ts`. |
+| `--brand-logo-green` | `#529984` | What the mark in `docs/BillGen_logo.png` actually is, sampled rather than guessed. |
+
+Both are correct and they are different greens. The site discovered this the
+hard way: a brighter emerald button beside the `#529984` wordmark in one header
+reads as two greens, because it is two greens — so the site remapped its own
+primary to the mark's green and left the app's anchor alone.
+
+**Open decision, Henri's:** whether `#529984` should become the canonical
+accent everywhere. That is a change to this document *and* to the guard test —
+deliberately not something a stylesheet edit can do quietly. Until it is taken,
+`--brand-logo-green` is available for the mark and for surfaces that sit beside
+it, and `--bg-accent` remains what buttons and active states use.
+
+### The grounds
+
+Three new surfaces, copied stop-for-stop from the site so the two are literally
+the same surface rather than two attempts at the same idea:
+
+- **`--bg-paper`** — tinted white. The counterpart to `--bg-app-backdrop`: soft
+  washes of the mark's green and a warm off-white, so a page reads as one long
+  gradient rather than a light half and a dark half.
+- **`--bg-deep`** — the long dark teal field, with `--bg-deep-ink`,
+  `--bg-deep-ink-soft`, `--bg-deep-ink-muted` and `--bg-deep-line` for what
+  sits on it. It is dark under either theme, so those do **not** flip with
+  `data-bg-theme` — that is why they are their own tokens rather than a remap
+  of `--bg-ink`.
+- **`--bg-seam-into-deep`** (with `--bg-seam-height`, 320px) — the ramp between
+  the two. Its shape encodes two mistakes worth not repeating; the reasoning is
+  written next to it in `tokens.css`.
+
+Glass over the dark field uses `--bg-deep-glass*`, not `--bg-glass-*`: white
+glass at 78% over that ground reads as a white box rather than as glass.

@@ -131,3 +131,33 @@ test("the accent token is emerald, not the reference's blue", () => {
   expect(tokens).not.toMatch(/--bg-accent:\s*var\(--brand-blue/);
   expect(tokens).toMatch(/--bg-font-sans:\s*"Satoshi"/);
 });
+
+test("the site's palette arrived as an addition, not as a repoint", () => {
+  // 2026-09-03: billgen.be's colour and grounds were brought into tokens.css.
+  // The whole safety of that move is that it added names and changed no
+  // values — so the two things worth pinning are that the mark's green is
+  // present, and that it did not quietly become the accent.
+  //
+  // #529984 (the mark) and #10B981 (the accent) are both correct and they are
+  // different greens. Which one is canonical is a BRAND_TOKENS decision, and
+  // this test is what makes taking it a deliberate act rather than an edit.
+  const tokens = readFileSync(
+    join(REPO, "henrioutai-ui/src/styles/tokens.css"),
+    "utf8",
+  );
+
+  expect(tokens).toMatch(/--brand-logo-green:\s*#529984/i);
+  expect(tokens).not.toMatch(/--bg-accent:\s*var\(--brand-logo-green\)/);
+
+  // The grounds are surfaces the app had none of; a refactor that drops them
+  // would take the site's look with it silently.
+  for (const token of [
+    "--bg-paper",
+    "--bg-deep",
+    "--bg-deep-ink",
+    "--bg-seam-into-deep",
+    "--bg-deep-glass",
+  ]) {
+    expect(tokens).toContain(`${token}:`);
+  }
+});

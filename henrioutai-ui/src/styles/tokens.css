@@ -297,6 +297,142 @@
   --bg-topbar-translucent: color-mix(in srgb, white 85%, transparent);
 }
 
+/* ==== the mark's palette and the site's grounds (2026-09-03) ==============
+ * Brought over from the pre-sale site (billgen.be) at Henri's ask to reuse its
+ * colour and its background in the app. Two things arrive, and neither
+ * repoints a token that already existed.
+ *
+ * 1. THE LOGO PALETTE, sampled from docs/BillGen_logo.png rather than guessed:
+ *    the navy of "Bill", the green of "Gen", the warm paper behind them. That
+ *    green is #529984, which is NOT the #10B981 --bg-accent maps to. Both are
+ *    correct and they are different greens: #10B981 is the app's canonical
+ *    accent, pinned by frontend-react/src/scaffold/tokens.test.ts, while
+ *    #529984 is what the mark actually is. A brighter emerald button beside
+ *    the #529984 wordmark in one header reads as two greens, because it is.
+ *    Whether the mark's green should become canonical everywhere is a
+ *    BRAND_TOKENS decision and a test change, not a stylesheet edit, so it is
+ *    NOT made here. See docs/BRAND_TOKENS.md.
+ *
+ * 2. THE DEEP FIELD AND ITS SEAM. The site's long dark ground and the ramp
+ *    that blends paper into it. The app has no dark-teal ground of its own —
+ *    its dark mode is built on slate — so these are new surfaces rather than
+ *    overrides, and they do not flip with the theme: the field is dark in both.
+ *
+ * Additive by construction: every token below is a new name, so deleting this
+ * block is a complete reversal.
+ * ======================================================================== */
+
+:root {
+  /* ---- raw: the logo palette (layer 1) ---------------------------------- */
+  --brand-logo-ink: #142336;    /* "Bill" */
+  --brand-logo-green: #529984;  /* "Gen", and the folded corner of the mark */
+  --brand-logo-paper: #fdfcfa;  /* the warm off-white behind the mark */
+  --brand-logo-sand: #d2cab0;   /* the warm wash on paper */
+  --brand-logo-green-300: #6bb79e; /* lighter cast, for washes over the field */
+
+  /* The greys sitting between the mark's two colours, for grounds and rules. */
+  --brand-logo-slate-900: #1b2731;
+  --brand-logo-slate-800: #202c37;
+  --brand-logo-slate-700: #2a3945;
+  --brand-logo-slate-500: #4c5d68;
+  --brand-logo-slate-300: #93a3a5;
+  --brand-logo-slate-100: #d9e0df;
+
+  /* ---- raw: the deep field's ramp (layer 1) -----------------------------
+   * Seven measured stops of ONE gradient, not a hue scale. They are named for
+   * the positions they sit at so it stays obvious that they are not
+   * independently choosable colours, and they are copied stop-for-stop from
+   * the site so the two surfaces are literally the same surface. */
+  --brand-deep-00: #3f5a5e;
+  --brand-deep-03: #3e585c;
+  --brand-deep-16: #3b545a;
+  --brand-deep-34: #364c53;
+  --brand-deep-54: #31444c;
+  --brand-deep-76: #2b3b43;
+  --brand-deep-100: #26343b;
+  --brand-deep-ink: #f4f7f6;
+  --brand-deep-ink-dim: #eef2f1;
+  --brand-deep-shadow: #0a1218;
+
+  /* ---- semantic: grounds (layer 2) -------------------------------------- */
+
+  /* Paper — the counterpart to --bg-app-backdrop, and the top of the ramp.
+     Not flat white: soft washes of the mark's green and a warm off-white, so a
+     page reads as one long gradient rather than a light half and a dark half.
+     The third wash is kept clear of the bottom edge, where the seam lives. */
+  --bg-paper:
+    radial-gradient(56% 40% at 16% 5%, color-mix(in srgb, var(--brand-logo-green) 11%, transparent), transparent 66%),
+    radial-gradient(50% 36% at 88% 16%, color-mix(in srgb, var(--brand-logo-sand) 18%, transparent), transparent 62%),
+    radial-gradient(70% 40% at 52% 62%, color-mix(in srgb, var(--brand-logo-green) 12%, transparent), transparent 72%),
+    var(--bg-surface);
+
+  /* The deep field — one gradient long enough to run under several sections,
+     rather than a dark band that starts and stops around the cards. Both
+     washes are pulled clear of the top edge on purpose: the seam above hands
+     over on a flat stop, and a flat stop cannot meet an edge whose colour
+     varies across x without drawing a line exactly where the blend was
+     supposed to disappear. */
+  --bg-deep:
+    radial-gradient(64% 22% at 18% 16%, color-mix(in srgb, var(--brand-logo-green-300) 20%, transparent), transparent 64%),
+    radial-gradient(64% 24% at 86% 44%, color-mix(in srgb, var(--brand-logo-green-300) 11%, transparent), transparent 62%),
+    linear-gradient(
+      in oklab 180deg,
+      var(--brand-deep-00) 0%,
+      var(--brand-deep-03) 3%,
+      var(--brand-deep-16) 16%,
+      var(--brand-deep-34) 34%,
+      var(--brand-deep-54) 54%,
+      var(--brand-deep-76) 76%,
+      var(--brand-deep-100) 100%
+    );
+
+  /* Ink and rules ON the field. The field is dark under either theme, so these
+     are their own tokens rather than a remap of --bg-ink. */
+  --bg-deep-ink: var(--brand-deep-ink);
+  --bg-deep-ink-soft: color-mix(in srgb, var(--brand-deep-ink-dim) 72%, transparent);
+  --bg-deep-ink-muted: color-mix(in srgb, var(--brand-deep-ink-dim) 58%, transparent);
+  --bg-deep-line: color-mix(in srgb, white 14%, transparent);
+
+  /* The seam — sections meet on a ramp, not a hairline, and height is what
+     makes it read as a blend rather than a mistake.
+     Two things here are easy to get wrong and are encoded on purpose. It opens
+     on transparent WHITE rather than a semi-transparent slate: compositing a
+     dark desaturated colour down onto paper interpolates through grey, which
+     is the dead zone that shows up mid-ramp. And its last stops decelerate,
+     because the ramp was still moving fast where the field continues almost
+     flat, and a slope discontinuity reads as a crease even when the colours
+     match exactly. `in oklab` does the rest — sRGB interpolation dips in
+     perceived lightness across a long light-to-dark run, which reads as muddy.
+     The thirteen stops stay inline: they are one measured curve, and naming
+     each would imply they can be picked from. */
+  --bg-seam-into-deep: linear-gradient(
+    in oklab to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(246, 250, 248, 0.85) 12%,
+    #ebf2ef 26%,
+    #d7e5e1 38%,
+    #b9cdcb 50%,
+    #97aeb1 62%,
+    #779197 71%,
+    #648289 81%,
+    #56727a 88%,
+    #4c6870 93%,
+    #456066 96.5%,
+    #415c60 98.5%,
+    var(--brand-deep-00) 100%
+  );
+  --bg-seam-height: 320px;
+
+  /* Glass on the field. --bg-glass-* is white glass for light surfaces; a
+     white pane at 78% over this ground reads as a white box, not as glass. */
+  --bg-deep-glass: color-mix(in srgb, var(--brand-deep-ink) 7%, transparent);
+  --bg-deep-glass-highlight:
+    inset 0 1px 0 color-mix(in srgb, white 28%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, white 5%, transparent);
+  --bg-deep-glass-shadow: 0 22px 44px color-mix(in srgb, var(--brand-deep-shadow) 32%, transparent);
+  --bg-deep-radius: 20px;
+}
+
 /* ==== dark mode (closing pass of the P0 set, 2026-07-10) ===================
  * One token-layer remap — no component CSS changes, exactly what the
  * token-only color rule was for. Activate with data-bg-theme="dark" on the
