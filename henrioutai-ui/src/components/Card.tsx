@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { frostedSurface, frostedSurfaceSoft } from "./GlassFilters";
+
 export interface CardProps {
   /** Optional header title. Header row only renders when title or actions exist. */
   title?: ReactNode;
@@ -18,6 +20,23 @@ export interface CardProps {
    * Set this only when the entire card is itself one clickable target.
    */
   interactive?: boolean;
+  /**
+   * Opt in to the organic frost from billgen.be — an SVG turbulence and
+   * displacement filter over the blur, rather than blur alone.
+   *
+   * Off by default. It costs a real compositing pass per surface, so a table
+   * of forty frosted rows is a scroll-jank generator; and it only reads at all
+   * over a ground with something in it, which is what `--bg-app-backdrop`
+   * gives it. On a flat fill it is an expensive way to draw nothing.
+   *
+   * `"soft"` is the small-pane variant: the displacement that reads as
+   * hand-blown glass across a hero pane reads as a smear across a 200px card.
+   *
+   * Requires <GlassFilters /> mounted once near the app root — without it the
+   * url() reference resolves to nothing and the surface falls back to plain
+   * blur, which is also exactly what Safari does.
+   */
+  frosted?: boolean | "soft";
   children: ReactNode;
   className?: string;
 }
@@ -34,15 +53,22 @@ export function Card({
   footer,
   padded = true,
   interactive = false,
+  frosted = false,
   children,
   className,
 }: CardProps) {
-  const classes = ["bg-card", interactive ? "bg-card--interactive" : "", className]
+  const classes = [
+    "bg-card",
+    interactive ? "bg-card--interactive" : "",
+    frosted ? "bg-card--frosted" : "",
+    className,
+  ]
     .filter(Boolean)
     .join(" ");
+  const frost = frosted === "soft" ? frostedSurfaceSoft : frosted ? frostedSurface : undefined;
   const hasHeader = title != null || actions != null;
   return (
-    <div className={classes}>
+    <div className={classes} style={frost}>
       {hasHeader ? (
         <div className="bg-card__header">
           <div className="bg-card__titles">

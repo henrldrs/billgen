@@ -212,13 +212,16 @@
   /* Focus ring — replaces hard outlines on inputs */
   --bg-focus-ring: 0 0 0 3px color-mix(in srgb, var(--bg-accent) 22%, transparent);
 
-  /* App backdrop — soft brand-tinted gradients; the "back layer with depth"
-     that makes the glass surfaces read as 3D */
-  --bg-app-backdrop:
-    radial-gradient(1100px 700px at 10% -10%, color-mix(in srgb, var(--bg-accent) 15%, transparent), transparent 60%),
-    radial-gradient(900px 650px at 105% 15%, color-mix(in srgb, var(--bg-navy) 13%, transparent), transparent 55%),
-    radial-gradient(800px 600px at 50% 110%, color-mix(in srgb, var(--brand-green-300) 12%, transparent), transparent 60%),
-    var(--bg-surface-alt);
+  /* App backdrop — the back layer with depth that makes glass read as 3D.
+   *
+   * 2026-09-03: repointed at `--bg-paper`, the site's own ground, so the app
+   * and billgen.be are lit the same way instead of being two attempts at the
+   * same idea. The washes it replaces were the same shape — three radials over
+   * a tinted base — but built from the accent and the navy, which made the
+   * product read cooler than the marketing page beside it. Paper's warm second
+   * wash is the difference. Defined as its own token above; this is one
+   * indirection so the old build is one line away. */
+  --bg-app-backdrop: var(--bg-paper);
 
   /* ---- henrioutai standard compliance (slice 6, per Henri's spec 2026-07-10) */
 
@@ -353,6 +356,10 @@
   --brand-deep-ink: #f4f7f6;
   --brand-deep-ink-dim: #eef2f1;
   --brand-deep-shadow: #0a1218;
+  /* The pale tone the euro glyphs take on the deep field. A green stroke is
+     invisible down there and a pale one does the work — the site draws the
+     motif per ground for exactly that reason. */
+  --brand-deep-glyph: #e9f2ef;
 
   /* ---- semantic: grounds (layer 2) -------------------------------------- */
 
@@ -364,7 +371,11 @@
     radial-gradient(56% 40% at 16% 5%, color-mix(in srgb, var(--brand-logo-green) 11%, transparent), transparent 66%),
     radial-gradient(50% 36% at 88% 16%, color-mix(in srgb, var(--brand-logo-sand) 18%, transparent), transparent 62%),
     radial-gradient(70% 40% at 52% 62%, color-mix(in srgb, var(--brand-logo-green) 12%, transparent), transparent 72%),
-    var(--bg-surface);
+    /* Literal white, not var(--bg-surface): paper is one specific ground from
+       the site and does not follow the theme. Resolving it through a token
+       that flips would turn the light ground into washes over a dark card the
+       moment anything read it in dark mode. */
+    #ffffff;
 
   /* The deep field — one gradient long enough to run under several sections,
      rather than a dark band that starts and stops around the cards. Both
@@ -449,24 +460,35 @@
  * ======================================================================== */
 
 :root[data-bg-theme="dark"] {
-  /* Text */
-  --bg-ink: var(--brand-slate-100);
-  --bg-ink-soft: var(--brand-slate-400);
+  /* Text — the field's own ink, which is warmer than slate-100 and is what
+     sits on this ground on the site. */
+  --bg-ink: var(--bg-deep-ink);
+  --bg-ink-soft: var(--bg-deep-ink-soft);
 
-  /* Surfaces */
-  --bg-surface: var(--brand-slate-800);
-  --bg-surface-alt: var(--brand-slate-900);
-  --bg-line: color-mix(in srgb, var(--brand-slate-400) 25%, transparent);
+  /* Surfaces — the sapphire ramp, not slate (2026-09-03).
+   *
+   * This is the half of the palette that came from billgen.be. Dark mode was
+   * built on Tailwind slate, which is a neutral grey-blue and shares nothing
+   * with the site's ground; the site's deep field is a desaturated teal that
+   * carries the mark's green in it. Two products that are the same product
+   * should not be lit by two different dark greys.
+   *
+   * The ramp runs light at the top to dark at the bottom, so a card takes a
+   * step from its ground rather than a tint: surface is -34, the page is -100. */
+  --bg-surface: var(--brand-deep-34);
+  --bg-surface-alt: var(--brand-deep-100);
+  --bg-line: var(--bg-deep-line);
 
   /* Brand action — accent anchor stays 500; hover lightens */
   --bg-accent-strong: var(--brand-green-400);
   --bg-accent-soft: color-mix(in srgb, var(--brand-green-500) 18%, transparent);
   --bg-accent-ink: var(--brand-green-300);
 
-  /* Navy — emphasis text must be light; toast/tooltip base stays deep */
-  --bg-navy: var(--brand-slate-300);
-  --bg-navy-strong: var(--brand-slate-900);
-  --bg-navy-soft: color-mix(in srgb, var(--brand-slate-400) 20%, transparent);
+  /* Navy — emphasis text must be light; toast/tooltip base stays deep. The
+     logo palette's own greys, which is what the mark's navy becomes on dark. */
+  --bg-navy: var(--brand-logo-slate-300);
+  --bg-navy-strong: var(--brand-logo-slate-900);
+  --bg-navy-soft: color-mix(in srgb, var(--brand-logo-slate-500) 30%, transparent);
 
   /* Status — lighter hues for text on dark, translucent soft fills */
   --bg-danger: var(--brand-red-400);
@@ -476,35 +498,39 @@
   --bg-warn: var(--brand-amber-400);
   --bg-warn-soft: color-mix(in srgb, var(--brand-amber-400) 16%, transparent);
 
-  /* Elevation — rebuilt on black/slate-900 (see rule 1 above) */
-  --bg-shadow-sm: 0 1px 2px color-mix(in srgb, var(--brand-slate-900) 60%, transparent);
-  --bg-shadow-md: 0 6px 16px color-mix(in srgb, black 55%, transparent);
-  --bg-shadow-card: 0 4px 20px color-mix(in srgb, black 45%, transparent);
-  --bg-shadow-card-hover: 0 12px 34px color-mix(in srgb, black 58%, transparent);
-  --bg-shadow-overlay: 0 24px 60px color-mix(in srgb, black 65%, transparent);
-  --bg-shadow-button-pressed: inset 0 2px 4px color-mix(in srgb, black 50%, transparent);
+  /* Elevation — rebuilt on the field's own shadow (see rule 1 above), which is
+     a very dark blue-black rather than pure black: a neutral black shadow over
+     a teal ground reads as a grey smudge on it. */
+  --bg-shadow-sm: 0 1px 2px color-mix(in srgb, var(--brand-deep-shadow) 60%, transparent);
+  --bg-shadow-md: 0 6px 16px color-mix(in srgb, var(--brand-deep-shadow) 55%, transparent);
+  --bg-shadow-card: 0 4px 20px color-mix(in srgb, var(--brand-deep-shadow) 45%, transparent);
+  --bg-shadow-card-hover: var(--bg-deep-glass-shadow);
+  --bg-shadow-overlay: 0 24px 60px color-mix(in srgb, var(--brand-deep-shadow) 65%, transparent);
+  --bg-shadow-button-pressed: inset 0 2px 4px color-mix(in srgb, var(--brand-deep-shadow) 50%, transparent);
   --bg-shadow-raise:
-    0 1px 2px color-mix(in srgb, black 30%, transparent),
-    0 2px 6px color-mix(in srgb, black 25%, transparent),
+    0 1px 2px color-mix(in srgb, var(--brand-deep-shadow) 30%, transparent),
+    0 2px 6px color-mix(in srgb, var(--brand-deep-shadow) 25%, transparent),
     inset 0 1px 0 color-mix(in srgb, white 10%, transparent);
   --bg-shadow-raise-hover:
-    0 4px 10px color-mix(in srgb, black 40%, transparent),
+    0 4px 10px color-mix(in srgb, var(--brand-deep-shadow) 40%, transparent),
     inset 0 1px 0 color-mix(in srgb, white 10%, transparent);
 
-  /* Glass — slate glass instead of white glass; thinner highlights */
-  --bg-glass-from: color-mix(in srgb, var(--brand-slate-700) 62%, transparent);
-  --bg-glass-to: color-mix(in srgb, var(--brand-slate-800) 42%, transparent);
-  --bg-glass-border: color-mix(in srgb, white 14%, transparent);
-  --bg-glass-highlight: inset 0 0 0 1px color-mix(in srgb, white 7%, transparent);
-  --bg-glass-overlay-from: color-mix(in srgb, var(--brand-slate-800) 92%, transparent);
-  --bg-glass-overlay-to: color-mix(in srgb, var(--brand-slate-900) 78%, transparent);
-  --bg-backdrop-dim: color-mix(in srgb, black 55%, transparent);
+  /* Glass — the site's own pane on the field. Its highlight is what sells the
+     edge, and it is stronger than the slate version was: over a teal ground a
+     7% white ring disappears. */
+  --bg-glass-from: color-mix(in srgb, var(--brand-deep-16) 62%, transparent);
+  --bg-glass-to: color-mix(in srgb, var(--brand-deep-76) 42%, transparent);
+  --bg-glass-border: var(--bg-deep-line);
+  --bg-glass-highlight: var(--bg-deep-glass-highlight);
+  --bg-glass-overlay-from: color-mix(in srgb, var(--brand-deep-34) 92%, transparent);
+  --bg-glass-overlay-to: color-mix(in srgb, var(--brand-deep-100) 78%, transparent);
+  --bg-backdrop-dim: color-mix(in srgb, var(--brand-deep-shadow) 60%, transparent);
 
-  /* Icon chips — neutral tone flips to slate glass; tinted tones keep */
-  --bg-icon-chip-neutral-from: color-mix(in srgb, var(--brand-slate-600) 80%, transparent);
-  --bg-icon-chip-neutral-to: color-mix(in srgb, var(--brand-slate-800) 60%, transparent);
+  /* Icon chips — neutral tone flips to sapphire glass; tinted tones keep */
+  --bg-icon-chip-neutral-from: color-mix(in srgb, var(--brand-deep-16) 80%, transparent);
+  --bg-icon-chip-neutral-to: color-mix(in srgb, var(--brand-deep-76) 60%, transparent);
   --bg-icon-chip-highlight: color-mix(in srgb, white 14%, transparent);
-  --bg-icon-chip-shadow: color-mix(in srgb, black 55%, transparent);
+  --bg-icon-chip-shadow: color-mix(in srgb, var(--brand-deep-shadow) 55%, transparent);
   --bg-icon-chip-ring: inset 0 0 0 1px color-mix(in srgb, white 14%, transparent);
   --bg-icon-chip-depth: inset 0 -1px 2px color-mix(in srgb, black 35%, transparent);
 
@@ -514,12 +540,10 @@
     var(--bg-topbar),
     color-mix(in srgb, var(--bg-topbar) 96%, black)
   );
-  --bg-topbar-translucent: color-mix(in srgb, var(--brand-slate-900) 80%, transparent);
+  --bg-topbar-translucent: color-mix(in srgb, var(--brand-deep-100) 80%, transparent);
 
-  /* App backdrop — same three brand glows over the dark base */
-  --bg-app-backdrop:
-    radial-gradient(1100px 700px at 10% -10%, color-mix(in srgb, var(--brand-green-500) 12%, transparent), transparent 60%),
-    radial-gradient(900px 650px at 105% 15%, color-mix(in srgb, var(--brand-slate-500) 18%, transparent), transparent 55%),
-    radial-gradient(800px 600px at 50% 110%, color-mix(in srgb, var(--brand-green-700) 14%, transparent), transparent 60%),
-    var(--bg-surface-alt);
+  /* App backdrop — the site's deep field itself, washes and all. This is the
+     line that makes dark mode and billgen.be the same surface rather than two
+     dark themes that happen to co-exist. */
+  --bg-app-backdrop: var(--bg-deep);
 }

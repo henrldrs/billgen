@@ -22,7 +22,7 @@
  */
 
 import { useState } from "react";
-import { Banner, Segmented } from "@henrioutai/ui";
+import { Banner, Button, Card, EuroField, GlassFilters, Segmented } from "@henrioutai/ui";
 import {
   DeliveryPanel,
   InvoiceWorkspace,
@@ -197,7 +197,8 @@ type Surface =
   | "tva_analyzer"
   | "tva_queue"
   | "tva_evidence"
-  | "tva_import";
+  | "tva_import"
+  | "palette";
 
 const SURFACES: { value: Surface; label: string }[] = [
   { value: "workspace", label: "Invoice workspace" },
@@ -207,6 +208,26 @@ const SURFACES: { value: Surface; label: string }[] = [
   { value: "tva_queue", label: "TVA queue" },
   { value: "tva_evidence", label: "TVA evidence" },
   { value: "tva_import", label: "TVA import" },
+  { value: "palette", label: "Palette + grounds" },
+];
+
+/** The colours that came over from billgen.be, named the way tokens.css names
+ *  them. Listed rather than derived: the point of looking at this surface is to
+ *  see what the site actually contributed, and a loop over every --brand-* would
+ *  bury that in the sixty tokens that were already here. */
+const SITE_COLOURS: { token: string; note: string }[] = [
+  { token: "--brand-logo-ink", note: "\"Bill\"" },
+  { token: "--brand-logo-green", note: "\"Gen\", and the folded corner of the mark" },
+  { token: "--brand-logo-paper", note: "the warm off-white behind the mark" },
+  { token: "--brand-logo-sand", note: "the warm wash on paper" },
+  { token: "--brand-logo-green-300", note: "washes over the deep field" },
+  { token: "--brand-deep-00", note: "sapphire, top of the ramp" },
+  { token: "--brand-deep-34", note: "surface in dark mode" },
+  { token: "--brand-deep-76", note: "" },
+  { token: "--brand-deep-100", note: "sapphire, bottom — the page in dark mode" },
+  { token: "--brand-deep-ink", note: "text on the field" },
+  { token: "--brand-deep-glyph", note: "the € motif on dark" },
+  { token: "--brand-deep-shadow", note: "elevation, instead of black" },
 ];
 
 /** Anything that would need a server. Loud in the console, silent on screen. */
@@ -312,6 +333,114 @@ export function PreviewRoute() {
             onFiles={unavailable("Upload expenses")}
             onReview={unavailable("Review expenses")}
           />
+        </div>
+      )}
+
+      {surface === "palette" && (
+        <div className="bg-stack">
+          {/* Mounted here rather than in AppShell on purpose: the filters are
+              what the frosted card references, and nothing in the product uses
+              a frosted card yet. When one does, this moves to the shell — it
+              has to exist exactly once in the document. */}
+          <GlassFilters />
+
+          <Banner tone="info" title="What billgen.be contributed">
+            Dark mode is now the site&apos;s sapphire field rather than Tailwind slate, and the
+            light ground is the site&apos;s paper. Switch the theme from the account menu to see
+            both. The accent is still emerald in both — that decision is separate and is written
+            down in BRAND_TOKENS.md.
+          </Banner>
+
+          {/* The two grounds, side by side. Height is fixed because the point
+              is the gradient, and a ground you can only see 40px of is not a
+              ground you can judge. */}
+          <div style={{ display: "grid", gap: "1rem", gridTemplateColumns: "1fr 1fr" }}>
+            <div
+              style={{
+                position: "relative",
+                overflow: "hidden",
+                minHeight: "22rem",
+                borderRadius: "var(--bg-radius-surface)",
+                background: "var(--bg-paper)",
+                border: "1px solid var(--bg-line)",
+              }}
+            >
+              <EuroField tone="ink" />
+              <div style={{ position: "relative", padding: "var(--bg-pad-card)" }}>
+                <h3 style={{ margin: 0, color: "var(--bg-ink)" }}>Paper</h3>
+                <p style={{ color: "var(--bg-ink-soft)" }}>
+                  --bg-paper, and the € field in its ink tone. This is what --bg-app-backdrop now
+                  resolves to in light mode.
+                </p>
+                <Button>Primary action</Button>
+              </div>
+            </div>
+
+            <div
+              style={{
+                position: "relative",
+                overflow: "hidden",
+                minHeight: "22rem",
+                borderRadius: "var(--bg-radius-surface)",
+                background: "var(--bg-deep)",
+              }}
+            >
+              <EuroField tone="light" />
+              <div style={{ position: "relative", padding: "var(--bg-pad-card)" }}>
+                <h3 style={{ margin: 0, color: "var(--bg-deep-ink)" }}>Sapphire</h3>
+                <p style={{ color: "var(--bg-deep-ink-soft)" }}>
+                  --bg-deep, and the € field in its light tone. This is --bg-app-backdrop in dark
+                  mode — the same surface as the site, not a second dark theme.
+                </p>
+                <Card frosted="soft" padded>
+                  <strong style={{ color: "var(--bg-deep-ink)" }}>Frosted card</strong>
+                  <p style={{ color: "var(--bg-deep-ink-soft)", margin: "0.5rem 0 0" }}>
+                    Turbulence + displacement over the blur. Chromium distorts; Safari falls back
+                    to plain frost.
+                  </p>
+                </Card>
+              </div>
+            </div>
+          </div>
+
+          <Card title="Colours that came over">
+            <div
+              style={{
+                display: "grid",
+                gap: "0.75rem",
+                gridTemplateColumns: "repeat(auto-fill, minmax(13rem, 1fr))",
+              }}
+            >
+              {SITE_COLOURS.map(({ token, note }) => (
+                <div key={token} style={{ display: "flex", gap: "0.6rem", alignItems: "center" }}>
+                  <span
+                    style={{
+                      width: "2.25rem",
+                      height: "2.25rem",
+                      flex: "0 0 auto",
+                      borderRadius: "var(--bg-radius-sm)",
+                      background: `var(${token})`,
+                      border: "1px solid var(--bg-line)",
+                    }}
+                  />
+                  <span style={{ minWidth: 0 }}>
+                    <code style={{ fontSize: "var(--bg-text-helper)" }}>{token}</code>
+                    {note ? (
+                      <span
+                        style={{
+                          display: "block",
+                          fontSize: "var(--bg-text-helper)",
+                          color: "var(--bg-ink-soft)",
+                        }}
+                      >
+                        {note}
+                      </span>
+                    ) : null}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </Card>
         </div>
       )}
     </div>

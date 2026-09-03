@@ -4785,3 +4785,82 @@ hr.bg-divider {
   font-size: var(--bg-text-helper);
   color: var(--bg-ink-soft);
 }
+
+/* ── The € field ───────────────────────────────────────────────────────────
+   Ported from billgen.be 2026-09-03 with the palette. Layout and blending
+   only; the geometry is in EuroField.tsx, because it is drawing rather than
+   styling.
+
+   The site masked the light-ground variant out above its section ramp. That
+   mask is deliberately NOT carried over: it was measured against a fixed
+   320px seam that only exists on the marketing page, and a mask tuned to a
+   ramp that is not there fades the field for no reason.
+   ──────────────────────────────────────────────────────────────────────── */
+
+.bg-euro-field {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.bg-euro-field__glyph {
+  position: absolute;
+  display: block;
+  /* Blended rather than painted on top, so the line work sits *in* the ground
+     instead of over it. Multiply on paper deepens what is already there;
+     screen on the deep field lifts it. Painting flat would put a visible
+     translucent rectangle over every gradient it crosses. */
+  mix-blend-mode: multiply;
+}
+
+.bg-euro-field--light .bg-euro-field__glyph {
+  mix-blend-mode: screen;
+}
+
+/* The mark's green, on light grounds. */
+.bg-euro-field--ink {
+  color: color-mix(in srgb, var(--brand-logo-green) 34%, transparent);
+}
+
+/* The pale tone, on the deep field — a green stroke is invisible down there. */
+.bg-euro-field--light {
+  color: color-mix(in srgb, var(--brand-deep-glyph) 10%, transparent);
+}
+
+.bg-euro-glyph {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Glyphs are meant to be cropped by the field, not clipped to their own box:
+     a complete ring in every slot is the wallpaper this is avoiding. */
+  overflow: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Nothing here animates, but the field is decoration and a reader who has
+     asked for less should not have it competing with the text. */
+  .bg-euro-field {
+    opacity: 0.55;
+  }
+}
+
+/* Frosted card — the distortion variant from billgen.be. The backdrop-filter
+   itself is inline (see GlassFilters.tsx for why); what belongs here is
+   everything the filter needs to be visible: a surface transparent enough to
+   have a backdrop at all, and the highlight that sells the edge. */
+.bg-card--frosted {
+  background: var(--bg-deep-glass);
+  border-color: var(--bg-deep-line);
+  box-shadow: var(--bg-deep-glass-highlight), var(--bg-deep-glass-shadow);
+  border-radius: var(--bg-deep-radius);
+}
+
+/* The filter host draws nothing and must never take layout. */
+.bg-glass-filters {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
