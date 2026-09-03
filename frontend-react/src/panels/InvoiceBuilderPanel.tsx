@@ -4,10 +4,11 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
-import { Banner, Button, Spinner } from "@henrioutai/ui";
+import { Banner, Button, Modal, Spinner } from "@henrioutai/ui";
 import {
   useClients,
   useCreateInvoice,
+  useCreateProduct,
   useInvoicePreview,
   useProducts,
   useVatRates,
@@ -15,7 +16,7 @@ import {
 } from "../hooks/queries";
 import { formatMoney } from "../lib/format";
 import { t, tVatReason, type Lang } from "../lib/translations";
-import type { InvoiceLineIn, InvoiceResponse } from "../types";
+import type { InvoiceLineIn, InvoiceResponse, ProductResponse } from "../types";
 
 export interface InvoiceBuilderPanelProps {
   companyId: string;
@@ -47,6 +48,10 @@ interface LineDraft {
  *  keeps a line editable during the first paint; the picker below is the
  *  server's. */
 const FALLBACK_RATE = "21";
+
+/** The picker's "create one" option. A sentinel rather than an empty value,
+ *  because "" already means free text and the two are opposite intentions. */
+const NEW_PRODUCT = "__new__";
 
 const EMPTY_LINE: LineDraft = {
   description: "",
@@ -110,6 +115,9 @@ export function InvoiceBuilderPanel({
   onCreated,
 }: InvoiceBuilderPanelProps) {
   const clientSelectId = useId();
+  const newNameId = useId();
+  const newPriceId = useId();
+  const newRateId = useId();
   const { data: clients, isLoading } = useClients(companyId);
   const vatRates = useVatRates();
   const preview = useInvoicePreview();
@@ -188,6 +196,16 @@ export function InvoiceBuilderPanel({
   // nobody should be putting it on a new invoice, and a draft one is not
   // finished being priced.
   const { data: catalog } = useProducts({ companyId, status: "active" });
+  const createProduct = useCreateProduct();
+
+  /* Which line opened the "new item" overlay, or null. The INDEX rather than a
+     boolean: the overlay has to know which line to drop the result onto, and a
+     second line opened while the first was pending would otherwise fill the
+     wrong one. */
+  const [newItemFor, setNewItemFor] = useState<number | null>(null);
+  const [newName, setNewName] = useState("");
+  const [newPrice, setNewPrice] = useState("");
+  const [newRate, setNewRate] = useState("");
 
   const setLine = (index: number, patch: Partial<LineDraft>) => {
     setLines((current) =>
@@ -205,14 +223,7 @@ export function InvoiceBuilderPanel({
    *  customer is not charged Belgian VAT. A catalog item's 21% is the rate for
    *  a domestic sale; on a reverse-charged invoice it would contradict the
    *  category on the same line, so the treatment wins. */
-  const pickProduct = (index: number, productId: string) => {
-    if (productId === "") {
-      setLine(index, { productId: null });
-      return;
-    }
-    const product = (catalog ?? []).find((item) => item.id === productId);
-    if (!product) return;
-
+  const fillFromProduct = (index: number, product: ProductResponse) =>
     setLine(index, {
       productId: product.id,
       description: product.name,
@@ -222,6 +233,55 @@ export function InvoiceBuilderPanel({
           ? servedSpelling(product.default_vat_rate ?? defaultRate)
           : defaultRate,
     });
+
+  const pickProduct = (index: number, productId: string) => {
+    if (productId === "") {
+      setLine(index, { productId: null });
+      return;
+    }
+    if (productId === NEW_PRODUCT) {
+      // Seed the overlay from the line, so someone who typed a description and
+      // a price and only then realised it should be a catalog item does not
+      // type them again.
+      const line = lines[index];
+      setNewName(line.description);
+      setNewPrice(line.unitPrice);
+      setNewRate(servedSpelling(line.vatRate));
+      setNewItemFor(index);
+      return;
+    }
+    const product = (catalog ?? []).find((item) => item.id === productId);
+    if (!product) return;
+    fillFromProduct(index, product);
+  };
+
+  const closeNewItem = () => {
+    setNewItemFor(null);
+    createProduct.reset();
+  };
+
+  const submitNewItem = () => {
+    if (newItemFor === null || newName.trim() === "" || newPrice.trim() === "") return;
+    const index = newItemFor;
+
+    createProduct.mutate(
+      {
+        company_id: companyId,
+        name: newName.trim(),
+        unit_price: newPrice.trim(),
+        default_vat_rate: newRate || defaultRate,
+      },
+      {
+        onSuccess: (product) => {
+          // Filled from the RESPONSE, not from a refetched catalog. The
+          // mutation invalidates ["products"], but that refetch is in flight
+          // when this runs, so looking the new item up in `catalog` would find
+          // nothing and silently leave the line empty.
+          fillFromProduct(index, product);
+          closeNewItem();
+        },
+      },
+    );
   };
 
   const handleCreate = () => {
@@ -298,6 +358,77 @@ export function InvoiceBuilderPanel({
         </Banner>
       ) : null}
 
+      <Modal
+        open={newItemFor !== null}
+        onClose={closeNewItem}
+        title={t(lang, "invoice.newProductTitle")}
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" onClick={closeNewItem}>
+              {t(lang, "common.cancel")}
+            </Button>
+            <Button
+              onClick={submitNewItem}
+              disabled={
+                newName.trim() === "" || newPrice.trim() === "" || createProduct.isPending
+              }
+            >
+              {t(lang, "common.create")}
+            </Button>
+          </>
+        }
+      >
+        <div className="bg-field">
+          <label className="bg-field__label" htmlFor={newNameId}>
+            {t(lang, "invoice.productName")}
+          </label>
+          <input
+            id={newNameId}
+            className="bg-field__input"
+            value={newName}
+            onChange={(event) => setNewName(event.target.value)}
+          />
+        </div>
+        <div className="bg-field">
+          <label className="bg-field__label" htmlFor={newPriceId}>
+            {t(lang, "invoice.unitPrice")}
+          </label>
+          <input
+            id={newPriceId}
+            className="bg-field__input"
+            inputMode="decimal"
+            value={newPrice}
+            onChange={(event) => setNewPrice(event.target.value)}
+          />
+        </div>
+        <div className="bg-field">
+          <label className="bg-field__label" htmlFor={newRateId}>
+            {t(lang, "invoice.vatRate")}
+          </label>
+          <select
+            id={newRateId}
+            className="bg-field__input"
+            value={newRate || defaultRate}
+            onChange={(event) => setNewRate(event.target.value)}
+          >
+            {optionsFor(newRate || defaultRate).map((option) => (
+              <option key={option.rate} value={option.rate}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        {/* Three fields, not the catalog's whole form. What an invoice line
+            needs is a name, a price and a rate; category, tags and billing type
+            are catalog housekeeping and asking for them here turns "add this
+            one thing" back into the detour it is meant to remove. */}
+        <p className="bg-field__hint">{t(lang, "invoice.newProductHint")}</p>
+        {createProduct.isError ? (
+          <Banner tone="danger">{t(lang, "common.error")}</Banner>
+        ) : null}
+      </Modal>
+
       <table className="bg-table bg-table--editable">
         <thead>
           <tr>
@@ -334,6 +465,10 @@ export function InvoiceBuilderPanel({
                       {product.name}
                     </option>
                   ))}
+                  {/* Last, not first: the common case is picking something that
+                      already exists, and an option that opens a dialog should
+                      not sit where a mis-click lands. */}
+                  <option value={NEW_PRODUCT}>{t(lang, "invoice.newProduct")}</option>
                 </select>
               </td>
               <td>

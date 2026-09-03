@@ -1241,6 +1241,30 @@ const MESSAGES = {
     nl: "Uitvoer buiten de EU — geen Belgische btw.",
     es: "Exportación fuera de la UE — sin IVA belga.",
   },
+  "invoice.newProduct": {
+    en: "+ New item…",
+    fr: "+ Nouvel article…",
+    nl: "+ Nieuw artikel…",
+    es: "+ Nuevo artículo…",
+  },
+  "invoice.newProductTitle": {
+    en: "New catalog item",
+    fr: "Nouvel article du catalogue",
+    nl: "Nieuw catalogusartikel",
+    es: "Nuevo artículo del catálogo",
+  },
+  "invoice.newProductHint": {
+    en: "Saved to the catalog and put on this line. The rest of its details can be filled in under Catalog.",
+    fr: "Enregistré au catalogue et placé sur cette ligne. Le reste de ses détails se complète dans Catalogue.",
+    nl: "Opgeslagen in de catalogus en op deze regel gezet. De overige gegevens vult u aan onder Catalogus.",
+    es: "Guardado en el catálogo y añadido a esta línea. El resto de sus datos se completa en Catálogo.",
+  },
+  "invoice.productName": {
+    en: "Name",
+    fr: "Nom",
+    nl: "Naam",
+    es: "Nombre",
+  },
   "invoice.product": {
     en: "Item",
     fr: "Article",

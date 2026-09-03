@@ -78,7 +78,7 @@ to anything else in §5b.
 | | |
 |---|---|
 | Python | **485 collected, exit 0** |
-| Frontend | **169 passed** (`npm run test`, 29 files), typecheck clean across all four workspaces |
+| Frontend | **172 passed** (`npm run test`, 29 files), typecheck clean across all four workspaces |
 | `ruff check` | clean. CI runs `ruff check .` only — the tree is *not* `ruff format` clean and was not before, so do not reformat it as a side errand |
 | Architecture doc | in sync, v0.11 |
 | Unpushed | everything on `audit-engine-and-scaffolds` since `2e15e79` — count it with the first command in the resume protocol rather than trusting a number here, which is stale the moment the next commit lands |
@@ -117,8 +117,6 @@ he has to undo.
 - **Wiring the TVA and Template Studio scaffolds.** Explicitly on hold pending a
   pass over the builder *with* him. A session that helpfully mounts them has
   done the wrong thing.
-- **The top bar redesign.** Wanted: a floating glass bar, opaque at rest, going
-  translucent over the gradient once scrolled. Design work, needs his eye.
 - **Anything needing a third party** — email, Peppol transport, checkout, blob
   storage. No amount of local work unblocks these.
 - **Vercel env vars, the `billgen.be` DNS records, `contact@billgen.be`.** His
@@ -221,6 +219,25 @@ the frozen totals" failed once under parallel load at 1947ms and passes alone at
 642ms. It is a timing flake, not a regression — but if it recurs, that test is
 waiting on a client-name lookup and should be given an explicit `findBy` rather
 than a longer timeout.
+
+### Henri at the keyboard, 2026-09-03 (late)
+
+He was watching this time, which changed the shape of the work: two of these
+were corrections to something he had just seen on screen.
+
+- **The top bar floats** (`e38e7c6`), and the theme toggle sits beside the
+  language one. Two corrections inside ten minutes: the bar was opaque white on
+  warm paper (a rounded version of the bar he disliked), and `overflow: hidden`
+  clipped every nav popup to it. The second was a repeat of a mistake this
+  codebase had already made and written down one level lower.
+- **A catalog item can be created from the invoice** — the overlay, seeded from
+  whatever is already typed on the line.
+- **Paper warmed to `--brand-logo-paper`** rather than `#ffffff`: the washes are
+  local, so on a pure white base everything between them stayed white and the
+  ground read cool next to the beige it is meant to be.
+- **The flaky test was not flaky.** `InvoiceDetailPanel` makes two sequential
+  round trips against Testing Library's 1000ms default; the budget is now 5s
+  globally, in `src/test/setup.ts`, with the reasoning next to it.
 
 **Nothing is queued.** The three sanctioned wirings are done, and what remains
 in NEXT_SESSION §5b — the alerts panel and the quotes section — are new screens

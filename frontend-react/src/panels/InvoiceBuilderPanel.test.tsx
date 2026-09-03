@@ -431,3 +431,92 @@ test("a catalog rate does not survive a reverse-charged customer", async () => {
   expect(screen.getByLabelText("Description 1")).toHaveValue("Audit day");
   expect(screen.getByLabelText("VAT % 1")).toHaveValue("0");
 });
+
+test("a catalog item can be created from the invoice, and lands on the line", async () => {
+  // The detour this removes: leave the half-written invoice, go to Catalog,
+  // create the item, come back, find the line again. The overlay keeps the
+  // invoice on screen and puts the result straight onto the line that asked
+  // for it.
+  let posted: Record<string, unknown> | null = null;
+  const created = {
+    ...PRODUCT,
+    id: "p-2",
+    name: "Strategy workshop",
+    unit_price: "1250.000000",
+    default_vat_rate: "21.00",
+  };
+
+  server.use(
+    http.get(`${BASE}/clients`, () => HttpResponse.json([CLIENT])),
+    http.get(`${BASE}/vat-rates`, () => HttpResponse.json(VAT_RATES)),
+    http.get(`${BASE}/vat-treatment`, () => HttpResponse.json(STANDARD_TREATMENT)),
+    http.get(`${BASE}/products`, () => HttpResponse.json([PRODUCT])),
+    http.post(`${BASE}/products`, async ({ request }) => {
+      posted = (await request.json()) as Record<string, unknown>;
+      return HttpResponse.json(created, { status: 201 });
+    }),
+    http.post(`${BASE}/invoices/preview`, () =>
+      HttpResponse.json({
+        subtotal_ht: "1250.00",
+        total_discount: "0.00",
+        net_ht: "1250.00",
+        total_vat: "262.50",
+        total_ttc: "1512.50",
+        vat_breakdown: { "21": "262.50" },
+      }),
+    ),
+  );
+
+  const user = userEvent.setup();
+  renderWithProvider(<InvoiceBuilderPanel companyId={COMPANY_ID} />);
+
+  await user.selectOptions(await screen.findByLabelText("Item 1"), "__new__");
+
+  expect(await screen.findByText("New catalog item")).toBeInTheDocument();
+  await user.type(screen.getByLabelText("Name"), "Strategy workshop");
+  await user.type(screen.getByLabelText("Unit price"), "1250.00");
+  await user.click(screen.getByRole("button", { name: "Create" }));
+
+  // Filled from the response rather than from a refetched catalog — the
+  // invalidated products query is still in flight at this point.
+  await vi.waitFor(() =>
+    expect(screen.getByLabelText("Description 1")).toHaveValue("Strategy workshop"),
+  );
+  expect(screen.getByLabelText("Unit price 1")).toHaveValue("1250.00");
+  expect(screen.queryByText("New catalog item")).not.toBeInTheDocument();
+  expect(posted).toMatchObject({
+    company_id: COMPANY_ID,
+    name: "Strategy workshop",
+    unit_price: "1250.00",
+  });
+});
+
+test("the overlay opens seeded from the line, so nothing is typed twice", async () => {
+  // Someone types a description and a price, then realises it should be a
+  // catalog item. Asking them to type it again is how the feature goes unused.
+  mockEndpoints();
+  const user = userEvent.setup();
+  renderWithProvider(<InvoiceBuilderPanel companyId={COMPANY_ID} />);
+
+  await user.type(await screen.findByLabelText("Description 1"), "Discovery day");
+  await user.type(screen.getByLabelText("Unit price 1"), "600.00");
+  await user.selectOptions(screen.getByLabelText("Item 1"), "__new__");
+
+  expect(await screen.findByLabelText("Name")).toHaveValue("Discovery day");
+  expect(screen.getByLabelText("Unit price")).toHaveValue("600.00");
+});
+
+test("cancelling the overlay leaves the line as it was", async () => {
+  mockEndpoints();
+  const user = userEvent.setup();
+  renderWithProvider(<InvoiceBuilderPanel companyId={COMPANY_ID} />);
+
+  await user.type(await screen.findByLabelText("Description 1"), "Discovery day");
+  await user.selectOptions(screen.getByLabelText("Item 1"), "__new__");
+  await user.click(await screen.findByRole("button", { name: "Cancel" }));
+
+  expect(screen.queryByText("New catalog item")).not.toBeInTheDocument();
+  expect(screen.getByLabelText("Description 1")).toHaveValue("Discovery day");
+  // The picker must not be left showing "+ New item…" as if it were a choice.
+  expect(screen.getByLabelText("Item 1")).toHaveValue("");
+});
