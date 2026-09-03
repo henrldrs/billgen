@@ -81,7 +81,7 @@ to anything else in §5b.
 | Frontend | **169 passed** (`npm run test`, 29 files), typecheck clean across all four workspaces |
 | `ruff check` | clean. CI runs `ruff check .` only — the tree is *not* `ruff format` clean and was not before, so do not reformat it as a side errand |
 | Architecture doc | in sync, v0.11 |
-| Unpushed | 18 commits on `audit-engine-and-scaffolds` |
+| Unpushed | everything on `audit-engine-and-scaffolds` since `2e15e79` — count it with the first command in the resume protocol rather than trusting a number here, which is stale the moment the next commit lands |
 
 ---
 
