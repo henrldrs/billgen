@@ -131,11 +131,11 @@ he has to undo.
   and documented in [BRAND_TOKENS.md](BRAND_TOKENS.md); the accent was
   deliberately *not* repointed. Changing it is a doc change plus a test change,
   which is the point — it cannot happen by stylesheet edit.
-- **`files_docs` reads 120, up from 21**, and the prose beside it in the
-  architecture report still says "Down from 356 files". The number is correct:
-  94 of those 120 files are the unzipped AI Studio prototype in `docs/`. The
-  sentence is about documentation and no longer describes what is counted.
-  Rewording is judgement, so it was left.
+- ~~`files_docs` reads 120 against prose saying "down from 356"~~ — **closed
+  by deleting the unzipped AI Studio folder.** The count is 29 again and the
+  sentence describes it. Worth noting how it resolved: the number was never
+  wrong, the tree was, and re-measuring after a real change fixed a
+  documentation problem that a rewording would only have papered over.
 - **`docs/billgen.bat`** is still an untracked accidental copy of the root
   launcher. Deleting a file is not something to do unasked; it is one `rm` when
   he says so.
