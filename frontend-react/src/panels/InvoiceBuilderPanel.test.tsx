@@ -40,6 +40,27 @@ const VAT_RATES = {
   categories: [],
 };
 
+const PRODUCT = {
+  id: "p-1",
+  organization_id: "org-1",
+  company_id: COMPANY_ID,
+  name: "Audit day",
+  description: "One day of audit work",
+  category: "Consulting",
+  // Serialised the way the API actually serialises them, not tidied: the column
+  // holds six decimals and the rate comes back as "6.00" while /vat-rates says
+  // "6". Both spellings caused a visible defect that every passing test missed
+  // — a price of "450.000000" in an editable field, and a duplicate "6.00%"
+  // option sitting beside the identical served "6%".
+  unit_price: "450.000000",
+  currency: "EUR",
+  billing_type: "daily",
+  status: "active",
+  pipeline_stage: null,
+  default_vat_rate: "6.00",
+  tags: [],
+};
+
 const STANDARD_TREATMENT = {
   category: "S",
   category_name: "STANDARD",
@@ -68,6 +89,7 @@ function mockEndpoints() {
     http.get(`${BASE}/clients`, () => HttpResponse.json([CLIENT])),
     http.get(`${BASE}/vat-rates`, () => HttpResponse.json(VAT_RATES)),
     http.get(`${BASE}/vat-treatment`, () => HttpResponse.json(STANDARD_TREATMENT)),
+    http.get(`${BASE}/products`, () => HttpResponse.json([PRODUCT])),
     http.post(`${BASE}/invoices/preview`, () =>
       HttpResponse.json({
         subtotal_ht: "1250.00",
@@ -162,6 +184,7 @@ test("a rate the server no longer offers is kept rather than silently re-taxed",
   // to another rate because a select could not render the value it holds.
   server.use(
     http.get(`${BASE}/clients`, () => HttpResponse.json([CLIENT])),
+    http.get(`${BASE}/products`, () => HttpResponse.json([PRODUCT])),
     http.get(`${BASE}/vat-rates`, () =>
       HttpResponse.json({ ...VAT_RATES, rates: [{ rate: "21", label: "21%", is_default: true }] }),
     ),
@@ -188,6 +211,7 @@ test("an intra-EU business is reverse-charged, and the invoice says so", async (
     http.get(`${BASE}/clients`, () => HttpResponse.json([CLIENT])),
     http.get(`${BASE}/vat-rates`, () => HttpResponse.json(VAT_RATES)),
     http.get(`${BASE}/vat-treatment`, () => HttpResponse.json(REVERSE_CHARGE_TREATMENT)),
+    http.get(`${BASE}/products`, () => HttpResponse.json([PRODUCT])),
     http.post(`${BASE}/invoices/preview`, () =>
       HttpResponse.json({
         subtotal_ht: "100.00",
@@ -254,6 +278,7 @@ test("a rate the user chose survives the treatment arriving", async () => {
       await new Promise((resolve) => setTimeout(resolve, 60));
       return HttpResponse.json(REVERSE_CHARGE_TREATMENT);
     }),
+    http.get(`${BASE}/products`, () => HttpResponse.json([PRODUCT])),
     http.post(`${BASE}/invoices/preview`, () =>
       HttpResponse.json({
         subtotal_ht: "100.00",
@@ -277,4 +302,132 @@ test("a rate the user chose survives the treatment arriving", async () => {
   // allowed to overwrite a deliberate choice.
   expect(await screen.findByText(/reverse-charged to the customer/)).toBeInTheDocument();
   expect(picker).toHaveValue("6");
+});
+
+test("a line is filled from the catalog, and says which product it is", async () => {
+  // Typing a description and a price per invoice is how two invoices for the
+  // same work end up at different prices. The catalog holds both, and the line
+  // carries product_id so GET /reports/products can tell a sold catalog item
+  // from a one-off someone typed.
+  let posted: { description: string; unit_price: string; product_id: string | null }[] = [];
+  server.use(
+    http.get(`${BASE}/clients`, () => HttpResponse.json([CLIENT])),
+    http.get(`${BASE}/vat-rates`, () => HttpResponse.json(VAT_RATES)),
+    http.get(`${BASE}/vat-treatment`, () => HttpResponse.json(STANDARD_TREATMENT)),
+    http.get(`${BASE}/products`, () => HttpResponse.json([PRODUCT])),
+    http.post(`${BASE}/invoices/preview`, () =>
+      HttpResponse.json({
+        subtotal_ht: "450.00",
+        total_discount: "0.00",
+        net_ht: "450.00",
+        total_vat: "27.00",
+        total_ttc: "477.00",
+        vat_breakdown: { "6": "27.00" },
+      }),
+    ),
+    http.post(`${BASE}/invoices`, async ({ request }) => {
+      posted = ((await request.json()) as { lines: typeof posted }).lines;
+      return HttpResponse.json(
+        invoiceRecord("inv-1", null, { status: "draft", sequence_global: null }),
+        { status: 201 },
+      );
+    }),
+  );
+
+  const user = userEvent.setup();
+  renderWithProvider(<InvoiceBuilderPanel companyId={COMPANY_ID} />);
+
+  await user.selectOptions(await screen.findByLabelText("Client"), "c-1");
+  await user.selectOptions(await screen.findByLabelText("Item 1"), "p-1");
+
+  // Description, price AND the product's own VAT rate — all three were typed
+  // once, in the catalog.
+  expect(screen.getByLabelText("Description 1")).toHaveValue("Audit day");
+  expect(screen.getByLabelText("Unit price 1")).toHaveValue("450.00");
+
+  // The rate lands on the served list's own option rather than appending a
+  // second one spelled "6.00%", which is what the raw string would do.
+  const rates = screen.getByLabelText("VAT % 1");
+  expect(rates).toHaveValue("6");
+  expect(rates.querySelectorAll("option")).toHaveLength(4);
+
+  await user.click(screen.getByRole("button", { name: "Save draft" }));
+  await vi.waitFor(() => expect(posted).toHaveLength(1));
+  expect(posted[0].product_id).toBe("p-1");
+});
+
+test("free text stays possible, and carries no product", async () => {
+  // An invoice for something not in the catalog is an ordinary invoice, not an
+  // error. Forcing a catalog entry for it would fill the catalog with things
+  // nobody sells twice.
+  let posted: { description: string; product_id: string | null }[] = [];
+  server.use(
+    http.get(`${BASE}/clients`, () => HttpResponse.json([CLIENT])),
+    http.get(`${BASE}/vat-rates`, () => HttpResponse.json(VAT_RATES)),
+    http.get(`${BASE}/vat-treatment`, () => HttpResponse.json(STANDARD_TREATMENT)),
+    http.get(`${BASE}/products`, () => HttpResponse.json([PRODUCT])),
+    http.post(`${BASE}/invoices/preview`, () =>
+      HttpResponse.json({
+        subtotal_ht: "80.00",
+        total_discount: "0.00",
+        net_ht: "80.00",
+        total_vat: "16.80",
+        total_ttc: "96.80",
+        vat_breakdown: { "21": "16.80" },
+      }),
+    ),
+    http.post(`${BASE}/invoices`, async ({ request }) => {
+      posted = ((await request.json()) as { lines: typeof posted }).lines;
+      return HttpResponse.json(
+        invoiceRecord("inv-1", null, { status: "draft", sequence_global: null }),
+        { status: 201 },
+      );
+    }),
+  );
+
+  const user = userEvent.setup();
+  renderWithProvider(<InvoiceBuilderPanel companyId={COMPANY_ID} />);
+
+  await user.selectOptions(await screen.findByLabelText("Client"), "c-1");
+  expect(screen.getByLabelText("Item 1")).toHaveValue("");
+
+  await user.type(screen.getByLabelText("Description 1"), "Courier, one-off");
+  await user.type(screen.getByLabelText("Unit price 1"), "80.00");
+
+  await user.click(screen.getByRole("button", { name: "Save draft" }));
+  await vi.waitFor(() => expect(posted).toHaveLength(1));
+  expect(posted[0].description).toBe("Courier, one-off");
+  expect(posted[0].product_id).toBeNull();
+});
+
+test("a catalog rate does not survive a reverse-charged customer", async () => {
+  // The product says 6%. This customer owes no Belgian VAT at all, and a line
+  // carrying category AE at 6% is a contradictory document — so the treatment
+  // wins over the catalog, and only over the catalog.
+  server.use(
+    http.get(`${BASE}/clients`, () => HttpResponse.json([CLIENT])),
+    http.get(`${BASE}/vat-rates`, () => HttpResponse.json(VAT_RATES)),
+    http.get(`${BASE}/vat-treatment`, () => HttpResponse.json(REVERSE_CHARGE_TREATMENT)),
+    http.get(`${BASE}/products`, () => HttpResponse.json([PRODUCT])),
+    http.post(`${BASE}/invoices/preview`, () =>
+      HttpResponse.json({
+        subtotal_ht: "450.00",
+        total_discount: "0.00",
+        net_ht: "450.00",
+        total_vat: "0.00",
+        total_ttc: "450.00",
+        vat_breakdown: {},
+      }),
+    ),
+  );
+
+  const user = userEvent.setup();
+  renderWithProvider(<InvoiceBuilderPanel companyId={COMPANY_ID} />);
+
+  await user.selectOptions(await screen.findByLabelText("Client"), "c-1");
+  await screen.findByText(/reverse-charged to the customer/);
+  await user.selectOptions(screen.getByLabelText("Item 1"), "p-1");
+
+  expect(screen.getByLabelText("Description 1")).toHaveValue("Audit day");
+  expect(screen.getByLabelText("VAT % 1")).toHaveValue("0");
 });

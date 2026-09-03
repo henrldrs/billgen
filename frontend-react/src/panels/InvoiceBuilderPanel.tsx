@@ -9,6 +9,7 @@ import {
   useClients,
   useCreateInvoice,
   useInvoicePreview,
+  useProducts,
   useVatRates,
   useVatTreatment,
 } from "../hooks/queries";
@@ -27,6 +28,14 @@ interface LineDraft {
   quantity: string;
   unitPrice: string;
   vatRate: string;
+  /** The catalog item this line came from, or null for a free-text line.
+   *
+   *  Kept even after the description is edited: a line is still that product
+   *  when it has been re-worded for one customer, and dropping the link would
+   *  quietly move the revenue into the free-text bucket that
+   *  GET /reports/products has to report separately. Cleared only by choosing
+   *  free text in the picker. */
+  productId: string | null;
 }
 
 /** The fallback rate, used only until GET /vat-rates answers.
@@ -44,6 +53,7 @@ const EMPTY_LINE: LineDraft = {
   quantity: "1",
   unitPrice: "",
   vatRate: FALLBACK_RATE,
+  productId: null,
 };
 
 /** `category` is the whole invoice's, not a per-line choice.
@@ -61,8 +71,24 @@ function toApiLines(drafts: LineDraft[], category: string): InvoiceLineIn[] {
     description: draft.description,
     quantity: draft.quantity,
     unit_price: draft.unitPrice,
+    product_id: draft.productId,
     vat: { category, rate: draft.vatRate },
   }));
+}
+
+/** A stored price for an editable field.
+ *
+ *  The catalog serialises its price as the column holds it — "850.000000" —
+ *  which is right for arithmetic and wrong for a text input someone is about to
+ *  edit. Trailing zeros past the second decimal are noise the user has to clear
+ *  by hand; stopping short of two would read as a truncated price. Anything
+ *  with real precision beyond two decimals keeps it, because some unit prices
+ *  genuinely have it.
+ */
+function trimPrice(value: string): string {
+  if (!/^-?\d+\.\d+$/.test(value)) return value;
+  const [whole, fraction = ""] = value.replace(/0+$/, "").split(".");
+  return `${whole}.${fraction.padEnd(2, "0")}`;
 }
 
 function linesAreValid(drafts: LineDraft[]): boolean {
@@ -117,19 +143,21 @@ export function InvoiceBuilderPanel({
   const served = vatRates.data?.rates ?? [];
   const standardDefaultRate = served.find((option) => option.is_default)?.rate ?? FALLBACK_RATE;
 
-  /** The treatment's rate, expressed the way the served list expresses it.
+  /** A rate, expressed the way the served list expresses it.
    *
-   *  Both come from core/rules/vat.py, but they arrive as separately serialised
-   *  decimals — "0" and "0.00" are the same rate and different strings, and the
-   *  select matches on the string. Comparing numerically and then taking the
-   *  served spelling keeps a zero-rated line on the list's own option instead
-   *  of appending a second one that looks like a stale draft's. */
+   *  Every rate in this screen comes from core/rules/vat.py, but they arrive
+   *  through three separately serialised decimals — /vat-rates says "21", a
+   *  product says "21.00", a treatment says "0". Those are the same rates and
+   *  different strings, and the select matches on the string: an unnormalised
+   *  one appends a second option beside the identical served one, which reads
+   *  as a stale draft's rate. Compare numerically, then take the list's own
+   *  spelling. */
+  const servedSpelling = (rate: string) =>
+    served.find((option) => Number(option.rate) === Number(rate))?.rate ?? rate;
+
   const advisedRate = treatment.data?.rate;
   const defaultRate =
-    advisedRate === undefined
-      ? standardDefaultRate
-      : (served.find((option) => Number(option.rate) === Number(advisedRate))?.rate ??
-        String(advisedRate));
+    advisedRate === undefined ? standardDefaultRate : servedSpelling(String(advisedRate));
 
   /* Move the lines onto a new default when the treatment changes — but only the
      ones still sitting on the old one. A reverse-charged line taxed at 21% is a
@@ -156,10 +184,44 @@ export function InvoiceBuilderPanel({
       ? rateOptions
       : [...rateOptions, { rate, label: `${rate}%`, is_default: false }];
 
+  // The catalog. Only sellable items: an archived product is archived because
+  // nobody should be putting it on a new invoice, and a draft one is not
+  // finished being priced.
+  const { data: catalog } = useProducts({ companyId, status: "active" });
+
   const setLine = (index: number, patch: Partial<LineDraft>) => {
     setLines((current) =>
       current.map((line, i) => (i === index ? { ...line, ...patch } : line)),
     );
+  };
+
+  /** Fill a line from a catalog item — or empty the link, for free text.
+   *
+   *  Description, price and VAT rate are the product's, which is the whole
+   *  point: they were typed once, in the catalog, and re-typing them per
+   *  invoice is how two invoices for the same work end up at different prices.
+   *
+   *  The one thing a product does NOT get to set is the rate when this
+   *  customer is not charged Belgian VAT. A catalog item's 21% is the rate for
+   *  a domestic sale; on a reverse-charged invoice it would contradict the
+   *  category on the same line, so the treatment wins. */
+  const pickProduct = (index: number, productId: string) => {
+    if (productId === "") {
+      setLine(index, { productId: null });
+      return;
+    }
+    const product = (catalog ?? []).find((item) => item.id === productId);
+    if (!product) return;
+
+    setLine(index, {
+      productId: product.id,
+      description: product.name,
+      unitPrice: trimPrice(product.unit_price),
+      vatRate:
+        category === "S"
+          ? servedSpelling(product.default_vat_rate ?? defaultRate)
+          : defaultRate,
+    });
   };
 
   const handleCreate = () => {
@@ -239,6 +301,7 @@ export function InvoiceBuilderPanel({
       <table className="bg-table bg-table--editable">
         <thead>
           <tr>
+            <th>{t(lang, "invoice.product")}</th>
             <th>{t(lang, "invoice.description")}</th>
             <th>{t(lang, "invoice.quantity")}</th>
             <th>{t(lang, "invoice.unitPrice")}</th>
@@ -249,6 +312,30 @@ export function InvoiceBuilderPanel({
         <tbody>
           {lines.map((line, index) => (
             <tr key={index}>
+              <td>
+                {/* The catalog, not a memory test. Prices and wording live in
+                    one place, and a line that came from the catalog carries
+                    its product_id, which is what lets GET /reports/products
+                    tell a sold item from a one-off typed by hand.
+
+                    Free text stays first and stays available: an invoice for
+                    something not in the catalog is an ordinary invoice, not an
+                    error, and forcing a catalog entry for it would fill the
+                    catalog with things nobody sells twice. */}
+                <select
+                  aria-label={`${t(lang, "invoice.product")} ${index + 1}`}
+                  className="bg-field__input"
+                  value={line.productId ?? ""}
+                  onChange={(event) => pickProduct(index, event.target.value)}
+                >
+                  <option value="">{t(lang, "invoice.freeText")}</option>
+                  {(catalog ?? []).map((product) => (
+                    <option key={product.id} value={product.id}>
+                      {product.name}
+                    </option>
+                  ))}
+                </select>
+              </td>
               <td>
                 <input
                   aria-label={`${t(lang, "invoice.description")} ${index + 1}`}

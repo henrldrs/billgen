@@ -1241,6 +1241,18 @@ const MESSAGES = {
     nl: "Uitvoer buiten de EU — geen Belgische btw.",
     es: "Exportación fuera de la UE — sin IVA belga.",
   },
+  "invoice.product": {
+    en: "Item",
+    fr: "Article",
+    nl: "Artikel",
+    es: "Artículo",
+  },
+  "invoice.freeText": {
+    en: "Free text",
+    fr: "Texte libre",
+    nl: "Vrije tekst",
+    es: "Texto libre",
+  },
   "invoice.vatTreatment": {
     en: "VAT treatment",
     fr: "Régime de TVA",
