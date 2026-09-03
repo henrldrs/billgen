@@ -36,6 +36,7 @@ import type {
   OrganizationResponse,
   PaymentCreateRequest,
   PaymentRecordResponse,
+  PaymentReportResponse,
   PaymentResponse,
   PdfTemplatesResponse,
   PlansResponse,
@@ -643,6 +644,29 @@ export class ApiClient {
     if (params?.period) search.set("period", params.period);
     if (params?.today) search.set("today", params.today);
     return this.request("GET", `/reports/invoices?${search}`);
+  }
+
+  /** Cash in, totalled by the server rather than by the browser.
+   *
+   *  Filter by `period` (a named window) OR by `paidFrom`/`paidTo` (the same
+   *  window `listPayments` takes) — not both; the server answers 422 rather
+   *  than picking one silently. The explicit pair is what lets a screen print
+   *  the total of exactly the rows it is showing.
+   *
+   *  Amounts are the company's default currency; payments in any other are
+   *  counted in `skipped_other_currency` instead of being summed at face
+   *  value, so a mixed-currency window is visibly incomplete rather than
+   *  quietly wrong. */
+  paymentReport(
+    companyId: string,
+    params?: { period?: string; clientId?: string; paidFrom?: string; paidTo?: string },
+  ): Promise<PaymentReportResponse> {
+    const search = new URLSearchParams({ company_id: companyId });
+    if (params?.period) search.set("period", params.period);
+    if (params?.clientId) search.set("client_id", params.clientId);
+    if (params?.paidFrom) search.set("paid_from", params.paidFrom);
+    if (params?.paidTo) search.set("paid_to", params.paidTo);
+    return this.request("GET", `/reports/payments?${search}`);
   }
 
   /** Output VAT per (category, rate) for one declaration period.

@@ -3273,7 +3273,7 @@
           "reports"
         ],
         "summary": "Payment Report",
-        "description": "Total received, split by method and by month. Omit `period` for all time.\n\nThe payments screen deliberately printed no total until this existed:\nsumming the rows in the browser gives the total of the page, which is a\ndifferent number from the total of the filter, and the wrong one.",
+        "description": "Total received, split by method and by month. Omit every filter for all time.\n\nThe payments screen deliberately printed no total until this existed:\nsumming the rows in the browser gives the total of the page, which is a\ndifferent number from the total of the filter, and the wrong one.\n\n`paid_from`/`paid_to` is the same window `GET /payments` takes, so the\nscreen that lists the rows can ask for the total of exactly those rows\nrather than of a period that only approximates them. `period` remains the\nshorthand for a named window; passing both is refused rather than resolved\nby precedence, because whichever lost would do so silently.",
         "operationId": "payment_report_reports_payments_get",
         "parameters": [
           {
@@ -3321,6 +3321,40 @@
                 }
               ],
               "title": "Client Id"
+            }
+          },
+          {
+            "name": "paid_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Paid From"
+            }
+          },
+          {
+            "name": "paid_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Paid To"
             }
           }
         ],

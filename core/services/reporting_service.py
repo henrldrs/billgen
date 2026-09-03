@@ -596,15 +596,33 @@ class ReportingService:
         company_id: UUID,
         period: str | None = None,
         client_id: UUID | None = None,
+        paid_from: date | None = None,
+        paid_to: date | None = None,
     ) -> PaymentReport:
-        """Payments received by `company_id`, optionally in `period`.
+        """Payments received by `company_id`, over a period or an explicit window.
 
-        `period` filters on `paid_on` — when the money arrived — not on the
-        issue date of the invoice it settles. That is the question a payments
-        report is asked: reconciling a bank statement, or answering "how much
-        came in last quarter".
+        The filter is on `paid_on` — when the money arrived — not on the issue
+        date of the invoice it settles. That is the question a payments report
+        is asked: reconciling a bank statement, or answering "how much came in
+        last quarter".
+
+        `period` is a shorthand for a window that happens to be a named one;
+        `paid_from`/`paid_to` is the general case, and the same pair
+        `payments.list` already takes, so a screen that filters its rows by a
+        window can ask for the total of exactly those rows. Passing both is a
+        caller bug rather than a precedence question — a period that disagreed
+        with the dates beside it would have to silently win — so it raises.
         """
-        start, end = parse_period(period) if period else (None, None)
+        if period is not None and (paid_from is not None or paid_to is not None):
+            raise ValueError(
+                "pass either period or paid_from/paid_to, not both — "
+                "a period IS a window, and two of them cannot both be the filter"
+            )
+
+        if period is not None:
+            start, end = parse_period(period)
+        else:
+            start, end = paid_from, paid_to
 
         with self._uow_factory() as uow:
             company = uow.companies.get(company_id)

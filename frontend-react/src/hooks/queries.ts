@@ -446,6 +446,32 @@ export function useInvoiceReport(
   });
 }
 
+/** The payments total, for the same window the list is showing.
+ *
+ *  Deliberately a second request rather than a number derived from
+ *  `usePaymentsList`: that list is paginated in the browser, so summing it
+ *  gives the total of the visible page, and it serialises amounts as stored
+ *  rather than quantized to the currency. The server owns the arithmetic. */
+export function usePaymentReport(
+  companyId: string | undefined,
+  params?: { period?: string; clientId?: string; paidFrom?: string; paidTo?: string },
+) {
+  const api = useApi();
+  return useQuery({
+    queryKey: [
+      "reports",
+      "payments",
+      companyId,
+      params?.period ?? "all",
+      params?.clientId ?? "all",
+      params?.paidFrom ?? "",
+      params?.paidTo ?? "",
+    ],
+    queryFn: () => api.paymentReport(companyId as string, params),
+    enabled: Boolean(companyId),
+  });
+}
+
 /** Output VAT for one declaration period. The response's `covers` field says
  *  `output_vat_only`: it is a preparation aid, never a filed return. */
 export function useVatReport(companyId: string | undefined, period: string) {

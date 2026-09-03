@@ -304,6 +304,72 @@ async def test_payment_report_rejects_a_malformed_period(client):
     assert response.status_code == 422
 
 
+async def test_payment_report_window_totals_exactly_what_the_list_returns(client):
+    """The headline and the rows under it have to be the same money.
+
+    The payments screen filters its list with `paid_from`/`paid_to`. Before the
+    report took the same pair, the only filter it understood was a named
+    period — so a screen showing a fortnight of rows could only print the total
+    of the quarter around them, which is a different number presented as if it
+    described what you were looking at.
+    """
+    headers, company, record, _ = await _paid_workspace(client)
+    invoice = await create_invoice(client, headers, company["id"], record["id"])
+
+    await _pay(client, headers, invoice["id"], "100.00", "2026-07-05")
+    await _pay(client, headers, invoice["id"], "250.00", "2026-07-15")
+    await _pay(client, headers, invoice["id"], "400.00", "2026-07-25")
+
+    window = {"paid_from": "2026-07-10", "paid_to": "2026-07-20"}
+
+    listed = await client.get(
+        "/payments",
+        params={"company_id": company["id"], **window},
+        headers=headers,
+    )
+    assert listed.status_code == 200, listed.text
+    rows = listed.json()
+
+    report = await _payment_report(client, headers, company, **window)
+
+    # Compared as numbers, not as strings: the list serialises a payment's
+    # amount as stored (`250.000000`) while the report quantizes to the
+    # currency (`250.00`). Same money, two representations — which is itself
+    # the reason the total belongs to the server rather than to a browser
+    # adding up whatever text the rows happened to carry.
+    assert [Decimal(row["amount"]) for row in rows] == [Decimal("250.00")]
+    assert Decimal(report["total"]) == Decimal("250.00")
+    assert report["payment_count"] == len(rows) == 1
+    # The window is reported back as the period bounds, so a caller can render
+    # what the number covers without re-deriving it from its own inputs.
+    assert report["period"] is None
+    assert (report["period_start"], report["period_end"]) == ("2026-07-10", "2026-07-20")
+
+
+async def test_payment_report_refuses_a_period_and_a_window_together(client):
+    """Two filters, and whichever lost would lose silently.
+
+    A period IS a window, so accepting both would mean picking one by a
+    precedence rule nobody reading the call site can see. The screen that sent
+    a stale period beside fresh dates would get a total for the wrong dates and
+    no indication of it.
+    """
+    headers, company, _, _ = await _paid_workspace(client)
+
+    response = await client.get(
+        "/reports/payments",
+        params={
+            "company_id": company["id"],
+            "period": "2026-Q3",
+            "paid_from": "2026-07-10",
+        },
+        headers=headers,
+    )
+
+    assert response.status_code == 422
+    assert "not both" in response.json()["detail"]
+
+
 async def test_activity_filters_by_actor(client):
     """Settings > Activity asks "what did this person do".
 

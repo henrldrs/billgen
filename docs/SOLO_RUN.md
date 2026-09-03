@@ -65,7 +65,7 @@ which it cannot know.
 | 4 | Regenerate the architecture report | `DONE` | `14bcd89`. In sync. Only file counts moved; the engine and the route walk agree on 92 endpoints / 23 routers. |
 | 5 | The mark's palette and the site's grounds, as tokens | `DONE` | `bcc3401`. Henri's ask mid-session. Additive only — no existing token changed value. |
 | 6 | ⌘K palette → `GET /search` | `DONE` | Ships in *feat: the palette searches the database*. Verified in the running app, not only under test: typing `Corp` returns the client and lands on Client 360; typing `OUT-BC06` returns the invoice and lands on its detail. |
-| 7 | A total on the payments report → `GET /reports/payments` | `QUEUED` | One number on a screen that already exists. |
+| 7 | A total on the payments report → `GET /reports/payments` | `DONE` | Ships in *feat: the payments screen prints the server's total*. The endpoint grew `paid_from`/`paid_to` so the headline totals the same window the rows are filtered by. Verified in the app: narrowing the window moved both to € 0,00 together. |
 | 8 | The composer's VAT category default → `GET /vat-treatment` | `QUEUED` | A default value, not new layout. §5b calls this the one that changes what the product is legally capable of. |
 
 Items 6–8 are the three that NEXT_SESSION §SELF sanctions explicitly: *"None of
@@ -77,11 +77,11 @@ to anything else in §5b.
 
 | | |
 |---|---|
-| Python | **483 collected, exit 0** |
-| Frontend | **161 passed** (`npm run test`, 29 files), typecheck clean across all four workspaces |
+| Python | **485 collected, exit 0** |
+| Frontend | **163 passed** (`npm run test`, 29 files), typecheck clean across all four workspaces |
 | `ruff check` | clean. CI runs `ruff check .` only — the tree is *not* `ruff format` clean and was not before, so do not reformat it as a side errand |
 | Architecture doc | in sync, v0.11 |
-| Unpushed | 10 commits on `audit-engine-and-scaffolds` |
+| Unpushed | 14 commits on `audit-engine-and-scaffolds` |
 
 ---
 
@@ -181,4 +181,11 @@ that was not on it and one Henri added mid-session.
   keeping: a hook added to a component with early returns goes at the top by
   default, and a UI change is not verified until it has been loaded.
 
-Left for the next run: queue items 7 and 8.
+- **Queue item 7 needed a backend change to be honest.** The report endpoint
+  only understood a named `period`, while the screen filters its rows by
+  `paid_from`/`paid_to` — so the only total it could have printed was of the
+  quarter *around* the fortnight on screen. It now takes the same window the
+  list takes, and refuses a period beside one rather than picking a winner
+  silently. `openapi.json` and `api.d.ts` were regenerated with it.
+
+Left for the next run: queue item 8.

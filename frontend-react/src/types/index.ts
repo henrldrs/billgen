@@ -38,6 +38,7 @@ export type CreditNoteResponse = components["schemas"]["CreditNoteResponse"];
 
 export type PaymentCreateRequest = components["schemas"]["PaymentCreateRequest"];
 export type PaymentRecordResponse = components["schemas"]["PaymentRecordResponse"];
+export type PaymentReportResponse = components["schemas"]["PaymentReportResponse"];
 export type PaymentResponse = components["schemas"]["PaymentResponse"];
 
 export type KpiResponse = components["schemas"]["KpiResponse"];

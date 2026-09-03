@@ -1200,11 +1200,17 @@ export interface paths {
         };
         /**
          * Payment Report
-         * @description Total received, split by method and by month. Omit `period` for all time.
+         * @description Total received, split by method and by month. Omit every filter for all time.
          *
          *     The payments screen deliberately printed no total until this existed:
          *     summing the rows in the browser gives the total of the page, which is a
          *     different number from the total of the filter, and the wrong one.
+         *
+         *     `paid_from`/`paid_to` is the same window `GET /payments` takes, so the
+         *     screen that lists the rows can ask for the total of exactly those rows
+         *     rather than of a period that only approximates them. `period` remains the
+         *     shorthand for a named window; passing both is refused rather than resolved
+         *     by precedence, because whichever lost would do so silently.
          */
         get: operations["payment_report_reports_payments_get"];
         put?: never;
@@ -6014,6 +6020,8 @@ export interface operations {
                 company_id: string;
                 period?: string | null;
                 client_id?: string | null;
+                paid_from?: string | null;
+                paid_to?: string | null;
             };
             header?: never;
             path?: never;

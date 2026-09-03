@@ -44,11 +44,48 @@ function client() {
   };
 }
 
-function stub(payments: unknown[], asked?: URLSearchParams[]) {
+/** The headline's shape. Defaults deliberately do NOT match the rows any test
+ *  renders: the point of the report endpoint is that the total belongs to the
+ *  filter, not to the page, so a stub whose total equalled the visible sum
+ *  could not tell the two apart. */
+function paymentReport(extra: Record<string, unknown> = {}) {
+  return {
+    company_id: COMPANY_ID,
+    period: null,
+    period_start: null,
+    period_end: null,
+    currency: "EUR",
+    methods: [],
+    by_month: {},
+    count_by_month: {},
+    payment_count: 4,
+    total: "900.00",
+    // Distinct from every amount the rows render, for the same reason the
+    // total is: the largest payment in the filter need not be on this page,
+    // and a stub that collided with a row would let a row satisfy an
+    // assertion about the headline.
+    largest: "800.00",
+    first_payment_on: "2026-08-01",
+    last_payment_on: "2026-08-11",
+    skipped_other_currency: 0,
+    ...extra,
+  };
+}
+
+function stub(
+  payments: unknown[],
+  asked?: URLSearchParams[],
+  report: Record<string, unknown> = paymentReport(),
+  reportAsked?: URLSearchParams[],
+) {
   server.use(
     http.get(`${BASE}/payments`, ({ request }) => {
       asked?.push(new URL(request.url).searchParams);
       return HttpResponse.json(payments);
+    }),
+    http.get(`${BASE}/reports/payments`, ({ request }) => {
+      reportAsked?.push(new URL(request.url).searchParams);
+      return HttpResponse.json(report);
     }),
     http.get(`${BASE}/invoices`, () =>
       HttpResponse.json([invoiceRecord("inv-1", "ACME-BC07012026")]),
@@ -68,15 +105,48 @@ test("lists payments across invoices, resolving each to its invoice and client",
   expect(screen.getByText("€250.00")).toBeInTheDocument();
 });
 
-test("prints no total — the sum is the server's job, and it has no endpoint yet", async () => {
-  // €750.00 is what a browser-side sum of the two rows would show. It must not
-  // appear: money arithmetic does not live in a React component, and a sum
-  // across currencies would be wrong rather than merely misplaced.
+test("the total is the server's, not a sum of the rows on screen", async () => {
+  // The two rendered rows sum to €750.00. That number must NOT appear: the
+  // list is paginated in the browser, so summing it totals the visible page
+  // rather than the filter — a different number, presented as if it were the
+  // same one. The server says €900.00 over four payments, and €900.00 is what
+  // a person reconciling a bank statement needs to see.
   stub([paymentRecord("pay-1"), paymentRecord("pay-2", { amount: "250.00" })]);
   renderWithProvider(<PaymentsReportPanel companyId={COMPANY_ID} />);
 
-  expect(await screen.findByText("€500.00")).toBeInTheDocument();
+  expect(await screen.findByText("€900.00")).toBeInTheDocument();
   expect(screen.queryByText("€750.00")).not.toBeInTheDocument();
+});
+
+test("the headline asks for the same window the list is filtered by", async () => {
+  // The whole reason the report endpoint grew paid_from/paid_to. If these two
+  // calls could drift, the figure at the top would describe a different set of
+  // payments from the rows underneath it and nothing on screen would say so.
+  const listAsked: URLSearchParams[] = [];
+  const reportAsked: URLSearchParams[] = [];
+  stub([paymentRecord("pay-1")], listAsked, paymentReport(), reportAsked);
+  renderWithProvider(<PaymentsReportPanel companyId={COMPANY_ID} />);
+
+  await screen.findAllByText("ACME-BC07012026");
+
+  expect(reportAsked[0]?.get("company_id")).toBe(COMPANY_ID);
+  expect(reportAsked[0]?.get("paid_from")).toBe(listAsked[0]?.get("paid_from") ?? null);
+  expect(reportAsked[0]?.get("paid_to")).toBe(listAsked[0]?.get("paid_to") ?? null);
+  // A period would be a second, competing filter; the server refuses both.
+  expect(reportAsked[0]?.get("period")).toBeNull();
+});
+
+test("a window holding another currency says so instead of looking complete", async () => {
+  // Payments outside the company's default currency are counted, not summed.
+  // Silence here would present a partial total as the whole of the window.
+  stub(
+    [paymentRecord("pay-1")],
+    undefined,
+    paymentReport({ skipped_other_currency: 3 }),
+  );
+  renderWithProvider(<PaymentsReportPanel companyId={COMPANY_ID} />);
+
+  expect(await screen.findByText(/not counted — another currency/)).toBeInTheDocument();
 });
 
 test("the company scope reaches the server as a query parameter", async () => {

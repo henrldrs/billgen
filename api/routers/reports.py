@@ -2,7 +2,7 @@ from collections.abc import Callable
 from datetime import date
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from core.repository import UnitOfWork
 from core.services import ReportingService
@@ -78,17 +78,32 @@ def payment_report(
     company_id: UUID,
     period: str | None = Query(default=None, pattern=PERIOD_PATTERN, examples=["2026-Q3"]),
     client_id: UUID | None = None,
+    paid_from: date | None = None,
+    paid_to: date | None = None,
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
 ):
-    """Total received, split by method and by month. Omit `period` for all time.
+    """Total received, split by method and by month. Omit every filter for all time.
 
     The payments screen deliberately printed no total until this existed:
     summing the rows in the browser gives the total of the page, which is a
     different number from the total of the filter, and the wrong one.
+
+    `paid_from`/`paid_to` is the same window `GET /payments` takes, so the
+    screen that lists the rows can ask for the total of exactly those rows
+    rather than of a period that only approximates them. `period` remains the
+    shorthand for a named window; passing both is refused rather than resolved
+    by precedence, because whichever lost would do so silently.
     """
-    report = ReportingService(uow_factory).payment_report(
-        company_id, period, client_id=client_id
-    )
+    try:
+        report = ReportingService(uow_factory).payment_report(
+            company_id,
+            period,
+            client_id=client_id,
+            paid_from=paid_from,
+            paid_to=paid_to,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     return PaymentReportResponse.model_validate(report, from_attributes=True)
 
 

@@ -1220,6 +1220,30 @@ const MESSAGES = {
     nl: "Periode wissen",
     es: "Borrar el período",
   },
+  "payments.received": {
+    en: "Received",
+    fr: "Encaissé",
+    nl: "Ontvangen",
+    es: "Cobrado",
+  },
+  "payments.receivedHint": {
+    en: "payments in this window",
+    fr: "paiements sur cette période",
+    nl: "betalingen in deze periode",
+    es: "pagos en este período",
+  },
+  "payments.largest": {
+    en: "Largest",
+    fr: "Plus élevé",
+    nl: "Grootste",
+    es: "Mayor",
+  },
+  "payments.otherCurrency": {
+    en: "not counted — another currency",
+    fr: "non comptés — autre devise",
+    nl: "niet meegeteld — andere valuta",
+    es: "no contados — otra moneda",
+  },
   "payments.none": {
     en: "No payment was recorded in this window.",
     fr: "Aucun paiement enregistré sur cette période.",

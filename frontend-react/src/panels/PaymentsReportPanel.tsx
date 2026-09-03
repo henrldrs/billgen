@@ -5,12 +5,17 @@
  *  date window is what an accountant asks for at the end of a month — what came
  *  in, when, and against what.
  *
- *  **No total.** Every other report screen prints a headline figure and this one
- *  deliberately does not, because there is no `/reports/payments` to print. The
- *  rows are the server's; adding them up here would put money arithmetic in a
- *  React component, which is the one thing this codebase keeps out of the
- *  frontend — and it would be wrong the moment two currencies appear in the
- *  window, which is exactly the case a naive sum hides.
+ *  **The total is the server's.** This screen printed no headline figure for as
+ *  long as there was no `/reports/payments` to print, because adding the rows up
+ *  here would put money arithmetic in a React component — and it would sum the
+ *  visible *page* rather than the filter, and be wrong the moment two currencies
+ *  appear in the window.
+ *
+ *  All three problems stay solved by asking the server instead of by summing:
+ *  `usePaymentReport` sends the same `paid_from`/`paid_to` the list sends, so the
+ *  headline describes exactly the rows underneath it; and payments in any other
+ *  currency are reported in `skipped_other_currency` rather than added at face
+ *  value, so a mixed window says so instead of quietly under-reporting.
  *
  *  The invoice reference and client name are a LOOKUP, not a filter: a payment
  *  carries `invoice_id` and nothing else, so the invoice list is read to turn
@@ -27,6 +32,7 @@ import {
   EmptyState,
   ErrorState,
   Field,
+  KpiCard,
   PageHeader,
   Pagination,
   Skeleton,
@@ -35,7 +41,12 @@ import {
   type TableSort,
 } from "@henrioutai/ui";
 
-import { useClients, useInvoices, usePaymentsList } from "../hooks/queries";
+import {
+  useClients,
+  useInvoices,
+  usePaymentReport,
+  usePaymentsList,
+} from "../hooks/queries";
 import { formatDate, formatMoney } from "../lib/format";
 import { t, type Lang } from "../lib/translations";
 import type { PaymentResponse } from "../types";
@@ -63,6 +74,13 @@ export function PaymentsReportPanel({
   // narrowing it fetches less rather than hiding more.
   const payments = usePaymentsList({
     companyId,
+    paidFrom: paidFrom ?? undefined,
+    paidTo: paidTo ?? undefined,
+  });
+  // The same window the list is filtered by, so the headline and the rows can
+  // never describe different money. Not derived from `payments.data`: that is
+  // paginated below, so summing it would total the visible page.
+  const report = usePaymentReport(companyId, {
     paidFrom: paidFrom ?? undefined,
     paidTo: paidTo ?? undefined,
   });
@@ -171,6 +189,33 @@ export function PaymentsReportPanel({
   return (
     <div className="bg-stack">
       <PageHeader title={t(lang, "payments.title")} subtitle={t(lang, "payments.subtitle")} />
+
+      {report.isLoading ? (
+        <div className="bg-kpi-grid">
+          <Skeleton variant="block" height="5.5rem" />
+          <Skeleton variant="block" height="5.5rem" />
+        </div>
+      ) : report.data ? (
+        <div className="bg-kpi-grid">
+          <KpiCard
+            label={t(lang, "payments.received")}
+            value={formatMoney(report.data.total, report.data.currency, lang)}
+            hint={`${report.data.payment_count} · ${t(lang, "payments.receivedHint")}`}
+          />
+          <KpiCard
+            label={t(lang, "payments.largest")}
+            value={formatMoney(report.data.largest, report.data.currency, lang)}
+            // Shown only when there is something to disclose. A window with no
+            // foreign-currency payment should not carry a note about them, and a
+            // window that has them must not look complete.
+            hint={
+              report.data.skipped_other_currency > 0
+                ? `${report.data.skipped_other_currency} · ${t(lang, "payments.otherCurrency")}`
+                : undefined
+            }
+          />
+        </div>
+      ) : null}
 
       <Card>
         <div className="bg-companyform__grid">
