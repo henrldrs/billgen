@@ -100,7 +100,7 @@ Quelles données à caractère personnel le système détient, pourquoi, pendant
 | Nom | Finalité | Localisation |
 |---|---|---|
 | Hébergeur (VPS) | Exécute l'API et la base de données. | À choisir — une région UE est requise. |
-| Prestataire d'envoi d'e-mails | Achemine les factures, les rappels et les réinitialisations de mot de passe. | À choisir. |
+| Prestataire d'envoi d'e-mails transactionnels | Achemine les factures, les rappels et les réinitialisations de mot de passe. | À choisir — une région UE est requise. |
 | Marchand de référence (Merchant of Record) | Encaisse les abonnements BillGen. | À choisir. |
 | Point d'accès Peppol | Transmet les factures électroniques vers le point d'accès du destinataire. | À choisir — un prestataire établi dans l'UE. |
 

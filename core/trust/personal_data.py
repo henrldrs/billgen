@@ -187,9 +187,14 @@ SUBPROCESSORS: tuple[Subprocessor, ...] = (
         in_use=False,
     ),
     Subprocessor(
-        name="Email provider",
+        #  The *sending* infrastructure, not the mailbox a human reads. It is
+        #  a subprocessor because invoice PDFs and client names pass through
+        #  it; the mailbox provider is not, because nothing routes customer
+        #  data there. Confusing the two is how a mailbox ends up carrying
+        #  bulk invoice delivery it was never rated for.
+        name="Transactional email provider",
         purpose="Delivers invoices, reminders and password resets.",
-        location="To be chosen.",
+        location="To be chosen — an EU region is required.",
         in_use=False,
     ),
     Subprocessor(

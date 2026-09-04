@@ -33,23 +33,68 @@ wish, and the queue is not for wishes.
 
 ## Open — in priority order
 
-### T-01 · Transactional mail provider
+### T-01 · Transactional mail — the sending path
     branch    DevOps / SRE          status  open
     needs     T-02 (job queue)
-    why       Blocker B1. No send path exists anywhere in api/ or core/.
-              It alone blocks J-04 (verification), J-07 (reset), J-12
-              (support), SEC-08 and SEC-09 — five journey stages behind one
-              vendor decision, which makes it the highest-leverage open item
-              in the tree.
-    do        Choose a provider (EU-hosted, since the DPA story is simpler and
-              §10 G5 already leans that way). Add a `core/notifications/`
-              port with a single `send(message)` and one adapter behind it,
-              so the provider is swappable and `core/` keeps no vendor import.
-              Wire the secret through `Settings` FIRST, then `.env.example` —
-              never the other way round (SEC-13).
+    why       Blocker B1. **This is the infrastructure the application sends
+              *through*, not a mailbox a human reads.** No send path exists
+              anywhere in api/ or core/. It alone blocks J-04 (verification),
+              J-07 (reset), J-12 (support), SEC-08 and SEC-09 — five journey
+              stages behind one vendor decision.
+    do        Choose a transactional provider (EU-hosted: it becomes a
+              subprocessor holding customer names and invoice PDFs, so an EU
+              region keeps the DPA story simple — the register already says
+              so). Add a `core/notifications/` port with a single
+              `send(message)` and one adapter behind it, so the provider is
+              swappable and `core/` keeps no vendor import. Secret through
+              `Settings` FIRST, then `.env.example` (SEC-13).
+
+              **Do not send through the mailbox provider.** A mailbox is rate
+              limited, shares an IP reputation you do not control, has no
+              bounce or complaint handling, and being flagged for bulk sending
+              costs you the mailbox as well as the delivery.
+
+              **Record delivery, do not assume it.** A password reset that
+              never arrives is an annoyance; an invoice that never arrives is
+              a commercial and legal event — payment terms run from delivery
+              and a customer can claim non-receipt. Pick a provider with
+              delivery webhooks and write the accepted/bounced result to the
+              audit log beside the invoice. That is the difference between
+              "we sent it" and "we can show we sent it".
     done when A test sends through a fake adapter and asserts the port is
               called with a rendered message; `GET /readyz` reports mail
-              reachable the way it already reports the PDF engine.
+              reachable the way it already reports the PDF engine; a bounce
+              lands in the audit log.
+
+### T-01b · The mailboxes — contact@ / info@
+    branch    Marketing / Henri     status  open — Henri's accounts
+    needs     —
+    why       Separate, smaller job from T-01 and often confused with it.
+              This is where a *human* reads mail sent to the company. The
+              marketing site has nowhere to point a contact link today.
+              LWS includes two mailboxes with `billgen.be`, zero used.
+    do        Create the mailbox, then set `NEXT_PUBLIC_CONTACT_EMAIL` on the
+              site (NEXT_SESSION §231).
+    done when A message sent to contact@billgen.be is read, and the site links
+              to it.
+
+### T-01c · SPF, DKIM and DMARC on billgen.be
+    branch    DevOps / Henri        status  open
+    needs     T-01 and T-01b (both add a sender)
+    why       The single thing that decides whether an invoice lands in an
+              inbox or in spam. **For an invoicing product that is not a
+              polish item** — an invoice in a spam folder is an invoice that
+              does not get paid, which is the product failing at its one job.
+    do        One SPF record covering **both** senders, DKIM for each, then
+              DMARC starting at `p=none` to observe before enforcing.
+
+              **The trap, already written down in NEXT_SESSION §233 and worth
+              repeating because it fails silently:** two SPF records on one
+              domain is not "both work", it is *invalid* — receivers treat it
+              as a permerror. The mailbox provider's SPF and the sending
+              provider's SPF must be **merged into a single record**.
+    done when A message from the application and a message from the mailbox
+              both pass SPF, DKIM and DMARC at an external checker.
 
 ### T-02 · Job queue
     branch    DevOps / SRE          status  open

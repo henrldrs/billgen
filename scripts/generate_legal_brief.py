@@ -119,7 +119,7 @@ FR: dict[str, str] = {
     "To be chosen.": "À choisir.",
     "To be chosen — an EU-established provider.": ("À choisir — un prestataire établi dans l'UE."),
     "Hosting provider (VPS)": "Hébergeur (VPS)",
-    "Email provider": "Prestataire d'envoi d'e-mails",
+    "Transactional email provider": "Prestataire d'envoi d'e-mails transactionnels",
     "Merchant of Record": "Marchand de référence (Merchant of Record)",
     "Peppol Access Point": "Point d'accès Peppol",
     # --- consent ---
