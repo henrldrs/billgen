@@ -579,7 +579,7 @@ footer{
     <a href="#path">Path to 100% <span class="n">38</span></a>
     <a href="#experience">Experience Layer (L6)</a>
     <a href="#features">Feature Index</a>
-    <a href="#security">Data &amp; Security Checklist</a>
+    <a href="#security">Production Readiness &amp; Security</a>
     <a href="#extensions">Possible Extensions</a>
     <a href="#start">Workflow Starter</a>
 
@@ -592,6 +592,7 @@ footer{
     <a href="#defects">Defects of Record <span class="n">4</span></a>
     <a href="#scaffolds">Scaffolded, Not Wired <span class="n">2</span></a>
     <a href="#audit">Audit System <span class="n">13</span></a>
+    <a href="#ownership">Work Distribution</a>
     <a href="#structure">Code Structure <span class="n"><span data-fact="tracked_files">671</span></span></a>
   </div>
 </nav>
@@ -1377,30 +1378,101 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
 <section id="security">
   <div class="sechead">
     <span class="sechead__id">§10</span>
-    <h2>Data &amp; Security Checklist</h2>
+    <h2>Production Readiness &amp; Security</h2>
+    <p class="sechead__sub">The layers that are invisible from the frontend. Not a checklist to tick once &mdash; the set of properties a new feature must not break.</p>
   </div>
+
+  <div class="note">
+    <p><strong>Why this section exists, and why it is not a checkbox list.</strong> The naive model of a web application is two boxes: frontend, backend. The real one is closer to <strong>thirty-seven</strong>, and eleven of the original thirteen are invisible from the screen &mdash; which is exactly why they are discovered late, after a customer, and expensively.</p>
+    <p>Every row below is a <em>property of the system</em>, not a task. The failure mode this section prevents is not ignorance of the rows. It is finishing the frontend and the API, feeling done, and meeting PROD-01 and PROD-06 the week after the first customer's data goes missing.</p>
+    <p class="muted">Cross-checked against OWASP Top 10:2025, OWASP ASVS 5.0, Twelve-Factor, AWS Well-Architected, Google SRE, DORA and ISO/IEC 25010:2023. Per-item verification tests live in <code>docs/MINIMAL_STACK.md</code>; the AI Act rows are argued in <code>ADR-0005</code>.</p>
+  </div>
+
+  <h3>Tier</h3>
+  <p>BillGen is <strong>T3 &mdash; regulated</strong>. Not aspirationally: it issues fiscal documents under a seven-year Belgian retention obligation, processes personal data belonging to its customers' customers, and ships AI-bearing features into the EU. There is no &ldquo;we are only small&rdquo; exemption &mdash; the tier is set by the data and the regime, not by headcount or revenue. Every row below is therefore in scope.</p>
+
+  <h3>A &middot; Security controls</h3>
+  <p class="muted">Statuses re-verified against the tree on 2026-09-04. <strong>Six rows had gone stale in the product's favour</strong> &mdash; the document was describing a weaker system than the one that exists. Staleness in that direction is still staleness: it is what downstream readers, human or machine, then repeat.</p>
 
   <div class="tw">
     <table>
       <thead><tr><th class="id">ID</th><th>Control</th><th>State</th><th>Evidence</th></tr></thead>
       <tbody>
-        <tr><td class="id">SEC-01</td><td>Multi-tenancy isolation</td><td><span class="chip c-done">done</span></td><td class="ev"><code>ContextVar</code> org scope; <code>guard_tenant</code>; <code>organization_id</code> on every business table; tested.</td></tr>
-        <tr><td class="id">SEC-02</td><td>Append-only audit log</td><td><span class="chip c-done">done</span></td><td class="ev">Every service writes one entry per use case; no hard delete of invoices.</td></tr>
-        <tr><td class="id">SEC-03</td><td>Gapless numbering</td><td><span class="chip c-done">done</span></td><td class="ev">Row-locked sequence; drafts carry no number.</td></tr>
-        <tr><td class="id">SEC-04</td><td>Boot-time config guards</td><td><span class="chip c-done">done</span></td><td class="ev">Dev JWT secret refuses to run hosted (<code>64415f1</code>).</td></tr>
-        <tr><td class="id">SEC-05</td><td>Dev server binding</td><td><span class="chip c-done">done</span></td><td class="ev">Vite pinned to <code>localhost</code>, never <code>0.0.0.0</code> — legacy audit finding C2.</td></tr>
-        <tr><td class="id">SEC-06</td><td>Backup &amp; restore</td><td><span class="chip c-done">done</span></td><td class="ev">Org-scoped export/restore (ADR-0003).</td></tr>
-        <tr><td class="id">SEC-07</td><td>Token refresh &amp; logout</td><td><span class="chip c-partial">partial</span></td><td class="ev">Works; individual sessions not enumerable or revocable.</td></tr>
-        <tr><td class="id">SEC-08</td><td>Password policy &amp; reset</td><td><span class="chip c-gap">gap</span></td><td class="ev">8-char minimum at signup; no change, no reset, no strength feedback.</td></tr>
+        <tr><td class="id">SEC-01</td><td>Multi-tenancy isolation</td><td><span class="chip c-done">done</span></td><td class="ev"><code>ContextVar</code> org scope; <code>guard_tenant</code>; <code>organization_id</code> on every business table; tested in <code>tests/api/test_tenant_isolation.py</code>. Enforced in the <strong>repository layer, not the database</strong> &mdash; see SEC-16.</td></tr>
+        <tr><td class="id">SEC-02</td><td>Append-only audit log</td><td><span class="chip c-done">done</span></td><td class="ev">Every service writes one entry per use case; no hard delete of invoices. The row carries no FK to users, so the trail outlives the account.</td></tr>
+        <tr><td class="id">SEC-03</td><td>Gapless numbering</td><td><span class="chip c-done">done</span></td><td class="ev">Row-locked sequence (<code>.with_for_update()</code>); drafts carry no number. <strong>Correct only on Postgres</strong> &mdash; see PROD-05.</td></tr>
+        <tr><td class="id">SEC-04</td><td>Boot-time config guards</td><td><span class="chip c-done">done</span></td><td class="ev"><code>api/config.py</code> <code>validate_for_boot</code>: production refuses the dev JWT secret, a secret under 32 bytes, or <code>desktop_mode</code> (<code>64415f1</code>).</td></tr>
+        <tr><td class="id">SEC-05</td><td>Dev server binding</td><td><span class="chip c-done">done</span></td><td class="ev">Vite pinned to <code>localhost</code>, never <code>0.0.0.0</code> &mdash; legacy audit finding C2.</td></tr>
+        <tr><td class="id">SEC-06</td><td>Backup &amp; restore</td><td><span class="chip c-partial">partial</span></td><td class="ev">Org-scoped export/restore with an audit entry on both (ADR-0003). <strong>Never rehearsed, never automated</strong> &mdash; see PROD-06. An untested restore is a belief, not a backup.</td></tr>
+        <tr><td class="id">SEC-07</td><td>Token refresh, sessions &amp; logout</td><td><span class="chip c-done">done</span></td><td class="ev"><strong>Was stale.</strong> JWT access + rotating refresh, and sessions <em>are</em> now enumerable and revocable: <code>list_sessions</code> / <code>revoke_session</code> in <code>api/security/auth_service.py</code>. The live set excludes revoked and expired.</td></tr>
+        <tr><td class="id">SEC-08</td><td>Password policy &amp; reset</td><td><span class="chip c-partial">partial</span></td><td class="ev"><strong>Was stale.</strong> Password <em>change</em> exists and is audited. Reset still absent &mdash; blocked on B1 (no mail), not on code.</td></tr>
         <tr><td class="id">SEC-09</td><td>Two-factor</td><td><span class="chip c-gap">gap</span></td><td class="ev">No TOTP enrolment or recovery codes.</td></tr>
-        <tr><td class="id">SEC-10</td><td>Rate limiting &amp; lockout</td><td><span class="chip c-gap">gap</span></td><td class="ev">No brute-force protection on <code>/auth/login</code>.</td></tr>
-        <tr><td class="id">SEC-11</td><td>Role-based authorisation</td><td><span class="chip c-gap">gap</span></td><td class="ev">Membership without roles — every member is effectively an owner.</td></tr>
-        <tr><td class="id">SEC-12</td><td>Retention &amp; deletion</td><td><span class="chip c-gap">gap</span></td><td class="ev">No policy, no soft-delete window, no post-cancellation rule.</td></tr>
-        <tr><td class="id">SEC-13</td><td>Secrets management</td><td><span class="chip c-partial">partial</span></td><td class="ev"><code>.env</code> + boot guards; no vault or rotation.</td></tr>
-        <tr><td class="id">SEC-14</td><td>Dependency scanning</td><td><span class="chip c-gap">gap</span></td><td class="ev">CI written but repo never pushed — no automated scan runs.</td></tr>
-        <tr><td class="id">SEC-15</td><td>Security event stream</td><td><span class="chip c-gap">gap</span></td><td class="ev">Logins, failures and revocations are not recorded as security events.</td></tr>
+        <tr><td class="id">SEC-10</td><td>Rate limiting &amp; lockout</td><td><span class="chip c-partial">partial</span></td><td class="ev"><strong>Was stale.</strong> <code>api/middleware/ratelimit.py</code> &mdash; in-memory sliding window per IP. Correct for one instance; it silently multiplies the limit by the instance count the day a second one starts. No backpressure. Needs a shared store before scaling.</td></tr>
+        <tr><td class="id">SEC-11</td><td>Role-based authorisation</td><td><span class="chip c-done">done</span></td><td class="ev"><strong>Was stale, and badly.</strong> Four-role matrix in <code>api/authz/matrix.py</code>, <em>enforced</em> with 403. Entitlements (402) are kept deliberately separate, so &ldquo;may not&rdquo; and &ldquo;has not paid for&rdquo; never collapse into one answer.</td></tr>
+        <tr><td class="id">SEC-12</td><td>Retention &amp; deletion</td><td><span class="chip c-gap">gap</span></td><td class="ev">The register knows retention beats erasure (<code>core/trust/personal_data.py</code>: invoices and clients survive an art. 17 request &mdash; deleting them would be a tax offence). <strong>No policy is expressed in code</strong>: no soft-delete window, no post-cancellation rule, no seven-year enforcement.</td></tr>
+        <tr><td class="id">SEC-13</td><td>Secrets management</td><td><span class="chip c-partial">partial</span></td><td class="ev"><code>.env</code> + boot guards, and <code>.env.example</code> documents only fields that actually exist &mdash; it says so in its own header, after previously advertising six variables the code never read. No vault, no rotation.</td></tr>
+        <tr><td class="id">SEC-14</td><td>Dependency scanning</td><td><span class="chip c-partial">partial</span></td><td class="ev"><strong>Was stale.</strong> The remote now exists, so CI is no longer inert: <code>uv.lock</code> pins the full tree and CI runs a dependency audit. The audit is <em>advisory</em> &mdash; it reports and does not block &mdash; and no SBOM is produced.</td></tr>
+        <tr><td class="id">SEC-15</td><td>Security event stream</td><td><span class="chip c-partial">partial</span></td><td class="ev"><strong>Was stale.</strong> <code>core/trust/security_events.py</code> classifies sign-ins, sign-outs, revocations, password changes, backups and restores by exposure. It also reports its own blind spot: <code>unrecorded()</code> returns what nothing writes &mdash; today, <strong>failed sign-ins</strong>, so a hundred wrong passwords leave no trace. Nothing <em>alerts</em> on any of it.</td></tr>
+        <tr><td class="id">SEC-16</td><td>Database-level row security</td><td><span class="chip c-gap">gap</span></td><td class="ev">No Postgres RLS. Tenancy is real and tested but lives one layer above the database, so a raw query or a future service that bypasses the repository is stopped by nothing. The belt exists; this is the braces.</td></tr>
+        <tr><td class="id">SEC-17</td><td>Injection resistance</td><td><span class="chip c-done">done</span></td><td class="ev"><strong>Structural, not disciplinary.</strong> Zero raw SQL in application code &mdash; every read and write goes through SQLAlchemy ORM behind repository ports, which parameterise by construction. The only <code>execute()</code> calls in the tree are <code>PRAGMA foreign_keys=ON</code> (<code>db/engine.py</code>) and literal DDL in migrations; neither touches user input. <em>The control is the architecture: it stays true by never introducing a raw-SQL path, not by remembering to escape.</em></td></tr>
+        <tr><td class="id">SEC-18</td><td>Error handling &amp; leak prevention</td><td><span class="chip c-done">done</span></td><td class="ev">A thorough exception-to-status map in <code>api/main.py</code> plus <code>core/services/errors.py</code>. Fails closed; no traceback reaches a caller.</td></tr>
       </tbody>
     </table>
+  </div>
+
+  <h3>B &middot; The layers the frontend cannot see</h3>
+  <p>These are the rows that separate code that runs from a system that can be operated, supported and defended. Ordered by what hurts first when they are missing.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th class="id">ID</th><th>Layer</th><th>State</th><th>Evidence &amp; what breaks without it</th></tr></thead>
+      <tbody>
+        <tr><td class="id">PROD-01</td><td>Error tracking</td><td><span class="chip c-none">none</span></td><td class="ev">Nothing collects a stack trace from a running server. <strong>You cannot support a customer whose error you never saw.</strong> An afternoon of work; the highest support-value row here.</td></tr>
+        <tr><td class="id">PROD-02</td><td>Correlation IDs</td><td><span class="chip c-none">none</span></td><td class="ev">Two log lines from the same request cannot be tied together. The audit engine already reports the absence (<code>scanners/operations.py</code>). Cheapest row in this table, and it is what makes every other observability row readable.</td></tr>
+        <tr><td class="id">PROD-03</td><td>Log aggregation</td><td><span class="chip c-none">none</span></td><td class="ev">structlog writes the right shape to stdout &mdash; and nothing collects it. An event stream into a void.</td></tr>
+        <tr><td class="id">PROD-04</td><td>Metrics &amp; alerting</td><td><span class="chip c-none">none</span></td><td class="ev">Latency, traffic, errors and saturation are all unmeasured, and nothing pages anyone. Alert on symptoms, not causes, when this is built.</td></tr>
+        <tr><td class="id">PROD-05</td><td>Dev/prod parity</td><td><span class="chip c-partial">partial</span></td><td class="ev">Dev is SQLite, prod is Postgres. The gapless-numbering lock (SEC-03) is correct only on Postgres. CI's sqlite/postgres matrix is the only thing keeping this honest &mdash; do not let it lapse.</td></tr>
+        <tr><td class="id">PROD-06</td><td>Automated backup + rehearsed restore</td><td><span class="chip c-none">none</span></td><td class="ev">Seven-year fiscal retention with no tested restore is <strong>the one failure that cannot be apologised for</strong>. The mechanism exists (SEC-06); the schedule and the rehearsal do not.</td></tr>
+        <tr><td class="id">PROD-07</td><td>Async work &amp; job queue</td><td><span class="chip c-none">none</span></td><td class="ev">No queue, no scheduler, no worker anywhere in the tree. <strong>Email and Peppol transmission both need one, and both are on the revenue path.</strong> Sending mail inside a request handler is how the first outage happens.</td></tr>
+        <tr><td class="id">PROD-08</td><td>Blob storage</td><td><span class="chip c-none">none</span></td><td class="ev">Blocker B2. Documents, company logos and expense scans all dangle on it.</td></tr>
+        <tr><td class="id">PROD-09</td><td>Hosting &amp; compute</td><td><span class="chip c-none">none</span></td><td class="ev">No VPS provisioned. Docker targets and a prod compose exist; nothing is deployed. Nothing above can be <em>verified</em> until this exists.</td></tr>
+        <tr><td class="id">PROD-10</td><td>Resilience patterns</td><td><span class="chip c-none">none</span></td><td class="ev">No timeout, retry or circuit-breaker policy. Cheap today &mdash; one outbound dependency. Expensive the moment Peppol, a payment gateway and a mail provider are all in the path, which is the same moment revenue is.</td></tr>
+        <tr><td class="id">PROD-11</td><td>Runbooks</td><td><span class="chip c-none">none</span></td><td class="ev">Documentation is a strength; runbooks are the missing half. No written procedure for restore, rollback, incident or key rotation. <em>Documentation explains the system; a runbook tells a tired person what to type at 3am.</em></td></tr>
+        <tr><td class="id">PROD-12</td><td>Accessibility audit</td><td><span class="chip c-partial">partial</span></td><td class="ev">Four-locale catalogue (<code>translations.ts</code>) and ~10 panel test files asserting through accessible roles &mdash; an unnamed-table regression was caught <em>as a test failure</em>, which is the mechanism working. No deliberate pass: no axe run, no contrast check, no keyboard traversal. Caught-by-accident is not verified.</td></tr>
+        <tr><td class="id">PROD-13</td><td>Caching &amp; CDN</td><td><span class="chip c-none">none</span></td><td class="ev">Deferred on purpose &mdash; read volume is zero. <strong>One constraint attaches in advance:</strong> whatever cache arrives must preserve AI provenance marking (AI-02), or a compliant generation path becomes a non-compliant delivery path, silently.</td></tr>
+        <tr><td class="id">PROD-14</td><td>Load balancing &amp; scaling</td><td><span class="chip c-none">none</span></td><td class="ev">Single instance. Two things to check the day this changes: SEC-10 and SEC-03.</td></tr>
+        <tr><td class="id">PROD-15</td><td>Cost visibility</td><td><span class="chip c-plan">later</span></td><td class="ev">Nothing to measure while nothing is hosted. The item to build the day PROD-09 lands is a <em>budget alarm</em>, not a dashboard.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>C &middot; AI Act controls</h3>
+  <p>In scope because BillGen ships AI features under its own name, which makes Henri a <strong>provider</strong> &mdash; not merely a deployer &mdash; regardless of who trained the model. Full argument in <code>ADR-0005</code>.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th class="id">ID</th><th>Control</th><th>State</th><th>Evidence</th></tr></thead>
+      <tbody>
+        <tr><td class="id">AI-01</td><td>Risk classification of record</td><td><span class="chip c-done">done</span></td><td class="ev"><code>core/trust/ai_transparency.py</code> registers every surface with its tier and, per surface, the specific way it could drift into Annex III. Documenting <em>why</em> high-risk obligations do not apply is itself the compliance artefact &mdash; an empty file is not evidence.</td></tr>
+        <tr><td class="id">AI-02</td><td>Art. 50 marking</td><td><span class="chip c-gap">gap</span></td><td class="ev">The ledger exists; <strong>no marker renders and no provenance metadata is attached at generation time</strong>. The duty applies from <strong>2 Aug 2026</strong>, not 2 Dec &mdash; December is a grace period for systems already on the market, which BillGen was not. <em>Launch blocker, not a backlog item.</em></td></tr>
+        <tr><td class="id">AI-03</td><td>Art. 4 AI system inventory</td><td><span class="chip c-none">none</span></td><td class="ev">Does not exist. The surface registry is not it &mdash; Art. 4 asks which model, which pinned version, whose, where inference runs, what data crosses the boundary, who was trained. Enforceable since 2 Aug 2026, applies at <strong>every</strong> risk tier. Hours of work, and its absence is an <em>aggravating factor in any other enforcement action</em>.</td></tr>
+        <tr><td class="id">AI-04</td><td>GPAI supplier governance</td><td><span class="chip c-none">none</span></td><td class="ev">One row per model: provider, pinned version, licence, where it runs, what leaves the boundary, when terms were last reviewed. &ldquo;No <code>:latest</code> in production&rdquo; is not an ops preference here &mdash; a floating tag makes the pinned-version column a lie, and the column <em>is</em> the obligation.</td></tr>
+        <tr><td class="id">AI-05</td><td>Annex III boundary held</td><td><span class="chip c-done">done</span></td><td class="ev">Every surface classifies a <strong>transaction</strong>, never scores a <strong>person</strong>. That is the whole light-touch position. The named red lines &mdash; creditworthiness scoring, CV screening, employee performance monitoring, emotion recognition &mdash; are recorded in ADR-0005 §2 so crossing one is a decision, never a drift.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="warn">
+    <p><strong>How to use this section when adding a feature.</strong> These rows are guardrails, so the question is never &ldquo;have I ticked them&rdquo; but &ldquo;does what I am about to build break one&rdquo;:</p>
+    <ul>
+      <li><strong>Does it read or write data?</strong> It goes through a repository port. Not for tidiness &mdash; that port is what makes SEC-01 and SEC-17 true, and a raw-SQL shortcut silently repeals both at once.</li>
+      <li><strong>Does it take longer than a request should, or call anyone external?</strong> It needs PROD-07, which does not exist yet. Say so, rather than putting it in a handler.</li>
+      <li><strong>Does a machine produce output a person reads?</strong> It enters the <code>ai_transparency</code> registry <em>before</em> it ships, with its tier and its drift path (AI-01, AI-02).</li>
+      <li><strong>Does it score a person rather than classify a transaction?</strong> Stop. That is Annex III, a conformity assessment, and a different product timeline (AI-05).</li>
+      <li><strong>Does it add a dependency, a secret, or an environment variable?</strong> SEC-13 and SEC-14 &mdash; and the field exists in <code>Settings</code> before it appears in <code>.env.example</code>, never the other way round.</li>
+      <li><strong>Does it store personal data, or a new kind of document?</strong> <code>core/trust/personal_data.py</code> gains a row with a purpose, a basis and a retention, or SEC-12 gets quietly worse.</li>
+    </ul>
+    <p class="muted">A status in this section with no evidence &mdash; a path, a command, an endpoint &mdash; is an opinion, not a status. And staleness runs both ways: six rows above described a <em>weaker</em> system than the one that exists, which is how a downstream analysis inherits a defect that was already fixed.</p>
   </div>
 </section>
 
@@ -2297,6 +2369,83 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
   verdict does not go stale the way a route table does.</p>
 </section>
 
+
+
+<!-- ================================================== OWNERSHIP -->
+<section id="ownership">
+  <div class="sechead">
+    <span class="sechead__id">&#167;21</span>
+    <h2>Work Distribution &amp; Ownership</h2>
+    <p class="sechead__sub">The same work, seen by <em>who does it</em> rather than by <em>what it is</em>. A division of labour for a company of ~50 &mdash; and, read today, the order in which one person hands work away.</p>
+  </div>
+
+  <div class="note">
+    <p><strong>Why this section is not premature.</strong> Every other section answers &ldquo;what is built.&rdquo; This one answers &ldquo;whose job is it.&rdquo; Those are different questions, and the second one is the one a solo founder cannot answer from the code &mdash; because when one person does every role, the roles become invisible, and invisible roles are the ones that get skipped.</p>
+    <p>Read it three ways. As a <strong>hiring order</strong>: which function relieves the most risk per head. As an <strong>outsourcing list</strong>: which rows can be bought as a service instead of a salary. As a <strong>gap check</strong>: a function with open rows and nobody named is not understaffed, it is <em>unowned</em> &mdash; and unowned work does not fail loudly, it simply never happens.</p>
+    <p class="muted">Every row points at IDs defined elsewhere in this document, so this section carries no facts of its own and cannot drift independently. Blockers B1/B2 are &#167;07; SEC-xx, PROD-xx and AI-xx are &#167;10; CMP-xx are the compliance matrix.</p>
+  </div>
+
+  <h3>A &middot; Build functions</h3>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Function</th><th>Owns here</th><th>Today</th><th>First thing to hand over</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Backend / API</strong></td><td class="ev">Domain rules in <code>core/</code>, the 24 routers, PROD-07 (job queue), the ADR-0006 conformity work: wire <code>template_snapshot</code>, move P1 to issue time, build P2.</td><td class="ev">Henri. The strongest area &mdash; past MVP, 554 tests.</td><td class="ev">Nothing yet. This is the part that must stay in-house longest: the domain rules <em>are</em> the product.</td></tr>
+        <tr><td><strong>Frontend / design system</strong></td><td class="ev"><code>henrioutai-ui</code>, <code>frontend-saas</code>, <code>frontend-electron</code>, the 25 never-rendered components, PROD-12 (accessibility audit).</td><td class="ev">Henri. Moves fastest &mdash; and that speed is exactly why the architecture appears frozen next to it.</td><td class="ev">Applying the system to screens. The <em>system</em> stays with Henri; mounting it does not.</td></tr>
+        <tr><td><strong>DevOps / SRE</strong></td><td class="ev">PROD-01 to PROD-06, PROD-09 to PROD-11, PROD-14. Hosting, observability, backups, runbooks, the CI that has never been watched run.</td><td class="ev"><strong>Unowned.</strong> Nine open rows, no machine, no rehearsed restore.</td><td class="ev"><strong>All of it, and first.</strong> Most of PROD-01 to PROD-04 is a managed service, not a hire &mdash; buy it before hiring it.</td></tr>
+        <tr><td><strong>Security</strong></td><td class="ev">SEC-09 (2FA), SEC-12 (retention in code), SEC-13 (vault/rotation), SEC-16 (Postgres RLS), the failed-login blind spot in SEC-15.</td><td class="ev">Henri. Better than it looks &mdash; SEC-17 is closed structurally, not by discipline.</td><td class="ev">An external penetration test before public launch. A review, not a role.</td></tr>
+        <tr><td><strong>Data / DBA</strong></td><td class="ev">C2 schema lifecycle, PROD-05 parity, SEC-16, the seven-year retention design, PROD-08 blob storage.</td><td class="ev">Henri &mdash; with a data architect within reach.</td><td class="ev">Review of the retention model and RLS. Two conversations, not a hire.</td></tr>
+        <tr><td><strong>QA / test</strong></td><td class="ev">554 backend tests, the frontend suite, PROD-12, release qualification.</td><td class="ev">Henri, and the discipline is real &mdash; the legal gate broke five existing tests and <em>every one was right to break</em>.</td><td class="ev">Nothing. At this size the tests are the specification; delegating them delegates the spec.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>B &middot; Domain and obligation functions</h3>
+  <p>These are the rows where being technically right is not the same as being right, and where a wrong answer is a liability rather than a bug.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Function</th><th>Owns here</th><th>Today</th><th>First thing to hand over</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Legal counsel</strong></td><td class="ev">The seven undrafted documents in <code>core/trust/legal.py</code> &mdash; terms, privacy policy, cookie policy, DPA, subprocessor list, SLA, Belgian legal notices. CMP-09 to CMP-11. ADR-0005 &#167;2's sole-trader caveat.</td><td class="ev"><strong>Unowned.</strong> The registry deliberately holds no legal text: a generated DPA that reads real is worse than a missing one, because it would be signed.</td><td class="ev"><strong>The DPA and the terms.</strong> Nothing can be sold B2B without them, and no amount of engineering substitutes. A jurist friend is the right first call.</td></tr>
+        <tr><td><strong>Belgian accountant</strong></td><td class="ev">Sign-off on the mandatory-mention enumeration in <code>invoice_compliance.py</code> and <code>core/rules/belgian_legal.py</code>. The VAT scenario matrix. The retention rule behind SEC-12.</td><td class="ev"><strong>Unowned.</strong> The code carries the caveat in its own docstring and has done since it was written.</td><td class="ev"><strong>The enumeration review.</strong> This gate refuses to issue invoices &mdash; a rule that is wrong in the strict direction walls a paying customer in, and one wrong in the loose direction ships an unlawful invoice.</td></tr>
+        <tr><td><strong>Compliance / AI governance</strong></td><td class="ev">AI-02 (marking, live now), AI-03 (Art. 4 inventory), AI-04 (GPAI supplier governance), AI-05 (holding the Annex III line per release).</td><td class="ev"><strong>Unowned, and accruing.</strong> Two obligations have been live since 2 Aug 2026.</td><td class="ev">Nothing &mdash; AI-03 is hours of work and needs product knowledge no outsider has. Do it, do not delegate it.</td></tr>
+        <tr><td><strong>Finance / billing ops</strong></td><td class="ev">The four entitlement tiers, 6 meters, 23 gated features. Merchant of Record selection, invoicing for BillGen itself, dunning, VAT on its own sales.</td><td class="ev">Henri. The model is designed; no money moves.</td><td class="ev">The MoR decision &mdash; a vendor choice that removes an entire EU VAT obligation from the roadmap.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>C &middot; Go-to-market and operations functions</h3>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Function</th><th>Owns here</th><th>Today</th><th>First thing to hand over</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Marketing / content</strong></td><td class="ev">The pre-sale site and its four locales. The e-invoicing mandate content series &mdash; the mandate <em>is</em> the demand driver, so explaining it is the product's marketing. The readiness quiz (see AI-05: keep it rule-based and it stays outside the AI Act entirely).</td><td class="ev">Henri. Site is live; deploys are manual.</td><td class="ev"><strong>The content series.</strong> Highest-leverage outsource in this table: it needs Belgian fiscal literacy and writing, not repository access.</td></tr>
+        <tr><td><strong>Partnerships / BD</strong></td><td class="ev">The Peppol Access Point contract, the payment provider, the banking CODA-PSD2 route &mdash; the entire <em>partner</em> row of the API taxonomy.</td><td class="ev"><strong>Unowned.</strong> Validated BIS 3.0 XML is produced and nothing transmits it.</td><td class="ev"><strong>The Access Point.</strong> Not engineering work &mdash; a contract and someone else's onboarding timeline. Start it early because the waiting is the cost.</td></tr>
+        <tr><td><strong>Support / success</strong></td><td class="ev">Depends entirely on PROD-01 and PROD-02. Onboarding, the help surface, the feedback route back into the roadmap.</td><td class="ev">No customers, so no load &mdash; and no tooling either.</td><td class="ev">Nothing until PROD-01 exists. <em>Support without error tracking is guesswork performed politely.</em></td></tr>
+        <tr><td><strong>HR / people ops</strong></td><td class="ev">Employment contracts, the AI-use policy (which Art. 4 requires anyway &mdash; see AI-03's role map and literacy records), onboarding and offboarding, access reviews, device policy.</td><td class="ev">Not applicable at one person &mdash; <strong>with one exception</strong>: Art. 4's literacy record applies to a sole operator too, and its artefacts are the seed of the eventual HR policy.</td><td class="ev">Nothing until the second person. But write AI-03 in a shape that a policy can grow out of, because it is the same table.</td></tr>
+        <tr><td><strong>Product / UX research</strong></td><td class="ev">The MVP boundary, the L1&ndash;L6 layering, which of the 58 unwired areas are real and which are scaffolding that should be deleted.</td><td class="ev">Henri, and it is the role most crowded out by building.</td><td class="ev">Nothing. This is the founder's job in the strict sense &mdash; it is the only row where being close to the code is an advantage rather than a cost.</td></tr>
+        <tr><td><strong>Docs / release mgmt</strong></td><td class="ev">This document, the ADRs, <code>SOLO_RUN.md</code>, the audit engine, and keeping generated sections generated.</td><td class="ev">Henri, well &mdash; but see the warning below.</td><td class="ev">Nothing. Automate instead: every hand-maintained claim is a future stale claim.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>The order, if money were spent tomorrow</h3>
+  <ol>
+    <li><strong>DevOps &mdash; bought, not hired.</strong> Nine open rows, and most of PROD-01 to PROD-04 are managed services costing tens of euros a month. Highest risk removed per euro, by a wide margin.</li>
+    <li><strong>The jurist, for the DPA and terms.</strong> Blocks B2B revenue outright. Cannot be engineered around.</li>
+    <li><strong>The accountant, for the mandatory-mention sign-off.</strong> The gate is live in <code>issue()</code> and is a legal claim the code cannot self-certify.</li>
+    <li><strong>The Peppol Access Point conversation.</strong> Not because it is urgent, but because it is <em>slow</em> &mdash; the queue starts when you join it.</li>
+    <li><strong>Marketing content.</strong> The mandate creates the demand; someone has to meet it in writing.</li>
+  </ol>
+
+  <div class="warn">
+    <p><strong>The failure mode this section is really about.</strong> A solo founder does not drop roles they have decided to skip. They drop the roles they never named &mdash; and the named-but-unowned rows above (DevOps, legal, compliance, partnerships) are precisely the ones with no daily feedback. Nothing on a screen goes red when there is no rehearsed restore. The frontend, by contrast, complains the moment it is neglected, so it gets the attention.</p>
+    <p>That asymmetry is why this document appears static beside the frontend: <strong>the visible layer reports its own state and the invisible ones do not.</strong> The remedy is not discipline &mdash; it is making the invisible rows produce evidence, which is what &#167;10 and the audit engine exist to do. A row here with no name against it is a decision, and it should be a deliberate one.</p>
+  </div>
+</section>
 
 <!-- ==================================================== STRUCTURE -->
 <section id="structure">

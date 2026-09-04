@@ -326,3 +326,61 @@ table and in `db/models/invoice.py` and nothing reads or writes it, which is
 what blocks the record sheet from rendering the template the client actually
 received; and `docs/billgen.bat` is still an untracked accidental copy.
 
+
+### Five reference documents folded in, 2026-09-04
+
+Henri dropped five files in `business model/themed/` and asked for their
+concerns to be absorbed into the architecture rather than copied into the repo.
+Four are distinct (`ai-act-blueprint.md` and `blueprint.md` are byte-identical).
+None was committed; all three findings below came from checking their claims
+against the code rather than from believing them.
+
+**The one that matters: a compliance date in the code was wrong, and wrong in
+the unsafe direction.** `core/trust/ai_transparency.py` planned against
+2026-12-02 and carried a comment asking for that date to be verified against the
+published text. It was verified, and 2 December is the end of a *watermarking
+grace period for systems already on the market* when Art. 50 became applicable
+on 2 August 2026. BillGen was not on the market then, so it never had a grace
+period. The module believed it had three months of runway; it had none, and had
+been in breach for a month. The constant is now derived from three named facts —
+`TRANSPARENCY_APPLICABLE_FROM`, `WATERMARK_GRACE_END`,
+`PLACED_ON_MARKET_BEFORE_OBLIGATION` — so the reasoning sits next to the number
+and the December date is kept visible as *the thing it is not*.
+**The lesson: a constant with a "confirm this" comment is a bug with a timer on
+it.** That comment was correct, honest, and load-bearing, and it still sat there
+for weeks. If a value is flagged unverified, verifying it is the work — the flag
+is not the mitigation.
+
+`template_snapshot` was independently re-found and is now written down as
+[ADR-0006](ARCHITECTURE/ADR-0006-invoice-conformity-layers.md) rather than as a
+line in this log, together with the P0–P3 conformity ordering it belongs to. P0
+is built (`invoice_compliance.py`), **P1 is built but fires at XML export rather
+than at issue** — so a PDF-only customer is never Peppol-checked at all — and
+P2 (PDF ↔ domain ↔ UBL ↔ database consistency) does not exist.
+
+`docs/MINIMAL_STACK.md` went from 13 layers to **37 items in nine sections**,
+each with BillGen's status and a path as evidence. The 24 additions are the
+ones a diagram does not show and an incident does: schema lifecycle, async work,
+secrets, dependency provenance, correlation IDs, alerting, security logging,
+runbooks, model pinning, evaluation, AI transparency. Three came out worse than
+expected — **no job queue at all** (and both email and Peppol transmission need
+one), **no correlation ID** (two log lines from one request cannot be tied
+together), **no Article 4 AI inventory** (live since 2 Aug 2026, applies at
+every risk tier, hours of work, and its absence is an aggravating factor in any
+*other* enforcement action). Two came out better: `api/config.py`'s
+`validate_for_boot` and the `security_events.unrecorded()` blind-spot reporting
+are both stronger than the old 13-layer table gave them credit for.
+
+*Deliberately not adopted:* `schema.sql` is a pgvector RAG corpus for a
+henriOutAI product — it does not belong in an invoicing database, and the ADR
+says so and takes only the forty-line `registry.*` shape from it. The Belgian
+blueprint's seven research agents are likewise a separate product; if built,
+they open a pull request against `core/rules/` for a human to accept, never a
+runtime dependency of the issuing path. **The blueprint's own golden rule is the
+argument**: a research system must not silently rewrite production legal rules,
+and those rules are what an accountant signs off on.
+
+*Open, and Henri's:* the three ADR-0006 work items in order (wire the snapshot
+at issue, move P1 to issue time, then build P2); the Art. 4 inventory; and
+whether the marketing readiness quiz stays rule-based — it is cheaper to keep it
+rule-based than to disclose it.
