@@ -637,44 +637,87 @@ const SKETCHES: Record<string, () => ReactNode> = {
   ),
   "settings/security": () => (
     <>
+      <ScaffoldNote>
+        Backend-ready except one: the session list, revocation, password change
+        and sign-in history all have endpoints behind them. Only 2FA has
+        nothing. A security score may only count checks that are really
+        performed — a meter that rewards an unenforced setting is decoration
+        that reads as assurance.
+      </ScaffoldNote>
       <ScaffoldHeading>Security score</ScaffoldHeading>
       <ScaffoldMeter percent={0} />
       <ScaffoldHeading>Active sessions</ScaffoldHeading>
       <ScaffoldTable columns={["Device", "Location", "Last active", ""]} rows={2} />
-      <ScaffoldButton wouldDo="revoke one refresh token">Revoke session</ScaffoldButton>
+      <ScaffoldButton wouldDo="revoke one refresh token — DELETE /users/me/sessions/{jti}">
+        Revoke session
+      </ScaffoldButton>
+      <ScaffoldHeading>Password</ScaffoldHeading>
+      <ScaffoldButton wouldDo="change the password and revoke every other session — POST /users/me/password">
+        Change password
+      </ScaffoldButton>
       <ScaffoldHeading>Two-factor authentication</ScaffoldHeading>
       <ScaffoldButton wouldDo="start TOTP enrolment">Enable 2FA</ScaffoldButton>
+      <ScaffoldHeading>Sign-in history</ScaffoldHeading>
+      <ScaffoldTable columns={["When", "Event", "Session"]} rows={3} />
+      <ScaffoldNote>
+        Buildable today from GET /activity/security — sign-ins, sign-outs,
+        revocations and password changes are all in the log. What is missing is
+        the failure side: no wrong password is ever recorded, so this list can
+        show every successful entry and none of the attempts.
+      </ScaffoldNote>
     </>
   ),
   "settings/team": () => (
     <>
       <ScaffoldTable columns={["Name", "Email", "Role", "Status"]} />
       <ScaffoldNote>
-        Roles the product needs: owner, administrator, accountant, employee,
-        viewer. OrgMembership exists in core/models but carries no role field.
+        Partly wired: GET /orgs/current/members lists the roles and PATCH sets
+        one, refusing to let the last owner strand the organization. The four
+        roles are owner, admin, member and viewer, enforced by api/authz. What
+        is missing is the invitation, which needs email (B1) — every org has
+        exactly one member until then.
       </ScaffoldNote>
       <ScaffoldButton wouldDo="email an invitation">Invite user</ScaffoldButton>
     </>
   ),
   "settings/privacy": () => (
     <>
+      <ScaffoldNote>
+        The register behind this screen is real — GET /trust/privacy/register
+        returns the art. 30 processing register and the subprocessor list, so
+        the reading half can be built now. The two buttons below are what is
+        still missing.
+      </ScaffoldNote>
+      <ScaffoldHeading>What we hold about you</ScaffoldHeading>
+      <ScaffoldTable columns={["Data", "Purpose", "Lawful basis", "Retention"]} rows={6} />
       <ScaffoldHeading>Your data</ScaffoldHeading>
       <ScaffoldButton wouldDo="produce a structured GDPR subject-access export">
         Download my data
       </ScaffoldButton>
       <ScaffoldButton wouldDo="start the account-deletion workflow">Delete my account</ScaffoldButton>
+      <ScaffoldNote>
+        The deletion dialog must print the register's `retained_on_erasure`
+        list. Issued invoices and the client contacts on them are frozen for
+        seven years by Belgian bookkeeping law, so an unqualified "delete
+        everything" is a promise the product is not allowed to keep.
+      </ScaffoldNote>
       <ScaffoldHeading>Consent</ScaffoldHeading>
       <ScaffoldTable columns={["Purpose", "Given", "Date"]} rows={2} />
     </>
   ),
   "settings/cookies": () => (
     <>
-      <ScaffoldTable columns={["Category", "Purpose", "Enabled"]} rows={3} />
+      <ScaffoldTable columns={["Category", "Purpose", "Running today", "Enabled"]} rows={4} />
       <ScaffoldNote>
-        Essential is always on. Analytics and marketing must default to off and
-        record consent with a timestamp. No analytics run today, which is the
-        only reason this is not already a compliance gap.
+        The four categories and their defaults come from
+        GET /trust/consent/categories: essential is locked on, and nothing else
+        may be pre-ticked — a pre-ticked box is not consent. Three of the four
+        have nothing running in them, which is the only reason no banner ships
+        yet. What is missing is storage: a decision has nowhere to be written.
       </ScaffoldNote>
+      <ScaffoldButton wouldDo="record the choice with a timestamp and the policy version">
+        Save preferences
+      </ScaffoldButton>
     </>
   ),
   "settings/integrations": () => (
@@ -717,6 +760,182 @@ const SKETCHES: Record<string, () => ReactNode> = {
         wizard cannot be resumed.
       </ScaffoldNote>
       <ScaffoldTable columns={["Step", "Backend", "Resumable"]} rows={9} />
+    </>
+  ),
+
+  // ------------------------------------------------------------- L4 — trust
+  //
+  //  Added 2026-09-04 with core/trust. Everything below has a registry or an
+  //  endpoint behind it now, so these sketches describe screens that can be
+  //  built rather than features waiting on a decision. Where a screen would be
+  //  empty, the sketch says why it is empty — an unexplained blank in a trust
+  //  surface reads as reassurance, which is the failure mode this whole layer
+  //  is about.
+
+  "activity/user": () => (
+    <>
+      <ScaffoldField label="Who" />
+      <ScaffoldTable columns={["When", "Who", "Action", "Record"]} />
+      <ScaffoldNote>
+        Backend-ready: GET /activity?actor_user_id filters in SQL. Until
+        invitations exist every organization has exactly one member, so the
+        picker has one entry — worth building anyway, because the filter is the
+        part that would otherwise be retrofitted onto a growing table.
+      </ScaffoldNote>
+    </>
+  ),
+  "activity/security": () => (
+    <>
+      <ScaffoldTable columns={["When", "Severity", "Event", "Who"]} rows={3} />
+      <ScaffoldNote>
+        GET /activity/security is a filter over the audit log — six of the
+        fourteen actions, classified by exposure. A full backup export ranks
+        above a sign-in; a restore ranks above both.
+      </ScaffoldNote>
+      <ScaffoldHeading>Not being watched</ScaffoldHeading>
+      <ScaffoldNote>
+        The response carries a `not_recorded` list and this screen must render
+        it. Sign-ins, sign-outs, session revocations and password changes are
+        all recorded — a *failed* sign-in is not, anywhere in the stack, so a
+        hundred wrong passwords in a minute leave no trace. An empty row here
+        must never read as calm. Showing the blind spot is the feature.
+      </ScaffoldNote>
+    </>
+  ),
+  "activity/system": () => (
+    <>
+      <ScaffoldTable columns={["When", "Subsystem", "Event", "Outcome"]} />
+      <ScaffoldNote>
+        Distinct from security events: this is the app talking about itself —
+        migrations, scheduled jobs, failed deliveries. Nothing runs on a
+        schedule yet, so there is genuinely nothing to report; the screen waits
+        on a job runner, not on an endpoint.
+      </ScaffoldNote>
+    </>
+  ),
+  "documents/trash": () => (
+    <>
+      <ScaffoldTable columns={["Document", "Deleted", "Deleted by", "Purges on"]} />
+      <ScaffoldNote>
+        Blocked on B2 (no blob storage). Design constraint worth fixing before
+        it is built: deletion here is a retention window, not destruction —
+        a soft delete with a purge date, so GDPR erasure and the seven-year
+        bookkeeping retention can disagree in public rather than silently.
+      </ScaffoldNote>
+    </>
+  ),
+
+  //  The Legal section. One registry (GET /trust/legal/documents) backs all of
+  //  it, and every document in that registry is undrafted — which is exactly
+  //  what these pages should say. Drafting is a lawyer's work; what engineering
+  //  owes is a page that states the status honestly instead of 404-ing.
+  legal: () => (
+    <>
+      <ScaffoldTable columns={["Document", "Status", "Version", "Blocks"]} rows={7} />
+      <ScaffoldNote>
+        Served publicly so the marketing site and the app read one source
+        (ROADMAP_IA §5, "write once, mount twice"). Seven documents, none
+        drafted. The registry knows which, and what each one blocks — legal
+        notices are already overdue, because the pre-sale site is live.
+      </ScaffoldNote>
+    </>
+  ),
+  "legal/terms": () => (
+    <>
+      <ScaffoldNote>
+        No drafted text. Beyond the prose this needs a version and a per-user
+        acceptance record: a term nobody can prove was shown is a term you do
+        not have.
+      </ScaffoldNote>
+      <ScaffoldTable columns={["Version", "Effective", "Accepted by you", "On"]} rows={1} />
+    </>
+  ),
+  "legal/privacy": () => (
+    <>
+      <ScaffoldNote>
+        No drafted text — but the substance exists as data:
+        GET /trust/privacy/register returns the art. 30 processing register
+        this document has to agree with, field for field. Draft from the
+        register, not from memory.
+      </ScaffoldNote>
+      <ScaffoldTable columns={["Data", "Purpose", "Lawful basis", "Retention"]} rows={6} />
+    </>
+  ),
+  "legal/cookies": () => (
+    <>
+      <ScaffoldNote>
+        No drafted text. The category table it must describe is already served
+        at GET /trust/consent/categories, and three of the four categories have
+        nothing running in them.
+      </ScaffoldNote>
+      <ScaffoldTable columns={["Category", "Purpose", "Running today"]} rows={4} />
+    </>
+  ),
+  "legal/dpa": () => (
+    <>
+      <ScaffoldNote>
+        The document that gates every B2B sale. BillGen is the processor and
+        the customer the controller — their clients' names and addresses are on
+        every invoice. Needs drafting, a countersignature flow, and it must
+        name the subprocessor list below it.
+      </ScaffoldNote>
+      <ScaffoldButton wouldDo="countersign the DPA and store the executed copy">
+        Request signed DPA
+      </ScaffoldButton>
+    </>
+  ),
+  "legal/subprocessors": () => (
+    <>
+      <ScaffoldTable columns={["Provider", "Purpose", "Location", "In use"]} rows={6} />
+      <ScaffoldNote>
+        Served from GET /trust/subprocessors with an `in_use` flag, so a
+        planned provider is never published as a current one. Two are live
+        today; the rest are placeholders the roadmap implies. Verify every row
+        against a signed contract before this page is published, and add change
+        notification — the DPA has to promise notice before another is added.
+      </ScaffoldNote>
+    </>
+  ),
+  "legal/ai-transparency": () => (
+    <>
+      <ScaffoldTable columns={["Surface", "Produces", "Confidence", "Marked"]} rows={3} />
+      <ScaffoldNote>
+        AI-generated output must be identifiable as such from 2026-12-02 — one
+        date, in core/trust/ai_transparency.py, and the endpoint reports
+        whether it is live yet. Nearly free to honour now: the TVA surfaces
+        already carry a confidence and wait for a human to confirm before a
+        suggestion counts. The marker itself is the missing half, and it
+        belongs beside each machine-made value rather than in a banner.
+      </ScaffoldNote>
+      <ScaffoldNote>
+        The boundary to stay behind: Annex III treats creditworthiness
+        evaluation of a natural person as high-risk. Explaining and educating
+        is minimal-risk; scoring someone's financial standing is not. Any
+        surface that starts rating a person needs a conformity assessment, not
+        a disclosure line.
+      </ScaffoldNote>
+    </>
+  ),
+  "legal/sla": () => (
+    <>
+      <ScaffoldNote>
+        Do not draft this before uptime is measured. /healthz answers a
+        request; it does not accumulate availability, and an SLA is a promise
+        about a number nobody is recording.
+      </ScaffoldNote>
+      <ScaffoldMeter percent={0} />
+    </>
+  ),
+  "legal/notices": () => (
+    <>
+      <ScaffoldField label="Legal entity" />
+      <ScaffoldField label="KBO / BCE number" />
+      <ScaffoldField label="Registered address" />
+      <ScaffoldNote>
+        The cheapest document of the seven and the only one already overdue:
+        Belgian law requires these on the site itself, and the pre-sale site is
+        live. An hour of copying the KBO record, not a drafting engagement.
+      </ScaffoldNote>
     </>
   ),
 };

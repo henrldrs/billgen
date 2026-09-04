@@ -7,6 +7,7 @@ Tenancy: every tenant-scoped query filters on core.tenancy.current_organization_
 and every write guards that the entity's organization_id matches the bound context.
 """
 
+from collections.abc import Collection
 from datetime import date
 from uuid import UUID
 
@@ -14,6 +15,7 @@ from sqlalchemy import delete, func, or_, select, update
 from sqlalchemy.orm import Session
 
 from core.models import (
+    AuditAction,
     AuditLogEntry,
     Client,
     Company,
@@ -671,6 +673,7 @@ class SqlAlchemyAuditLogRepository(AuditLogRepository):
         target_type: str | None = None,
         target_id: UUID | None = None,
         actor_user_id: UUID | None = None,
+        actions: Collection[AuditAction] | None = None,
     ) -> list[AuditLogEntry]:
         stmt = (
             select(AuditLogRow)
@@ -684,6 +687,11 @@ class SqlAlchemyAuditLogRepository(AuditLogRepository):
             stmt = stmt.where(AuditLogRow.target_id == target_id)
         if actor_user_id is not None:
             stmt = stmt.where(AuditLogRow.actor_user_id == actor_user_id)
+        if actions is not None:
+            #  An empty collection means "none of them", not "all of them" —
+            #  the IN below is what makes that true, and a `if actions:` here
+            #  would quietly turn a caller's empty filter into no filter.
+            stmt = stmt.where(AuditLogRow.action.in_([a.value for a in actions]))
         return [to_domain(AuditLogEntry, row) for row in self._s.execute(stmt).scalars()]
 
 

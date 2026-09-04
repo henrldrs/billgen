@@ -43,6 +43,7 @@ from .routers import (
     reports,
     search,
     templates,
+    trust,
     tva,
     users,
 )
@@ -214,6 +215,7 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
     app.include_router(tva.router)
     app.include_router(templates.router)
     app.include_router(backup.router)
+    app.include_router(trust.router)
     return app
 
 

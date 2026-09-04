@@ -38,19 +38,26 @@ product is complete.
 Nav links and command-palette entries carry the same signal — a small square
 marker, amber for partial, red for unwired.
 
+**This document measures the product, not the stack.** The six layers below are
+features; a section can be wired at L1 and still be sitting on infrastructure
+that has no error tracker and no rehearsed restore. That second axis lives in
+[MINIMAL_STACK.md](MINIMAL_STACK.md) — the thirteen layers of a production app
+and the API taxonomy, with BillGen's status against each. Read both before
+concluding anything is finished.
+
 ---
 
 ## 1. Where the product actually stands
 
-Measured over **114 leaf areas**:
+Measured over **115 leaf areas**, regenerated 2026-09-04:
 
 | | Count | Share |
 |---|---:|---:|
-| Fully wired | 22 | **19%** |
+| Fully wired | 34 | **30%** |
 | Partial | 33 | 29% |
-| No backend | 59 | 52% |
+| No backend | 48 | 42% |
 
-**166 distinct backend capabilities** are missing. That number is not a
+**149 distinct backend capabilities** are missing. That number is not a
 criticism — it is the honest size of "a real SaaS platform" versus "a working
 invoicing core", and the core is genuinely done.
 
@@ -60,47 +67,58 @@ invoicing core", and the core is genuinely done.
 |---|---:|---:|---:|---:|
 | Dashboard | 6 | 0 | 1 | 7 |
 | Sales | 7 | 1 | 6 | 14 |
-| Clients | 2 | 2 | 3 | 7 |
-| Catalog | 1 | 6 | 0 | 7 |
-| Reports | 3 | 4 | 2 | 9 |
-| Company | 0 | 6 | 3 | 9 |
+| Clients | 2 | 1 | 4 | 7 |
+| Catalog | 3 | 4 | 0 | 7 |
+| Reports | 5 | 2 | 2 | 9 |
+| Company | 4 | 2 | 3 | 9 |
 | Billing | 2 | 0 | 6 | 8 |
 | Documents | 0 | 0 | 7 | 7 |
 | Explore | 0 | 2 | 3 | 5 |
-| Activity | 1 | 1 | 3 | 5 |
-| Settings | 2 | 6 | 7 | 15 |
+| Activity | 3 | 0 | 2 | 5 |
+| Settings | 2 | 8 | 5 | 15 |
 | Help & support | 0 | 1 | 6 | 7 |
-| Legal | 0 | 0 | 8 | 8 |
+| Legal | 0 | 8 | 1 | 9 |
 | Onboarding | 0 | 1 | 0 | 1 |
 | Desktop (Windows) | 0 | 3 | 2 | 5 |
 
-**Company is still 0 wired, 6 partial, 3 none — but the reason changed.** Until
-2026-08-26 every field was reachable exactly once, at creation, because there
-was no `PATCH /companies/{id}`; a typo in a VAT number was permanent. The
-endpoint now exists and every model field except `logo_key` is editable, and
-`GET /companies/{id}/validation` will tell a form which identifier is wrong.
-All six partials are now waiting on an edit form, not on the server.
+**Company reached 4 wired**, from 0 as recently as 2026-08-26, when every field
+was reachable exactly once — at creation — because there was no
+`PATCH /companies/{id}` and a typo in a VAT number was permanent. That endpoint
+and `GET /companies/{id}/validation` shipped, and the edit form they were
+waiting on now exists.
 
-**The two movements on 2026-08-26 are both none → partial**, never → wired:
-Client history and the Payments report each got the endpoint they were
-missing and neither got a screen. That is the shape of the whole backend
-track right now — the server is ahead of the UI by six endpoints.
+**Legal went 0/0/8 to 0/8/1 without a line of prose being written.** That is
+what a registry buys: the documents are still undrafted, but the framework
+behind them — which documents exist, who they bind, which need acceptance — is
+tested data in `core/trust/legal.py` and served, so eight screens moved from
+"blocked on a decision" to "buildable". It is also the clearest example of why
+*partial* is a real state and not a euphemism.
 
 ### By layer
 
 | Layer | Wired | Partial | None | Total |
 |---|---:|---:|---:|---:|
-| **L1 — Core** | 15 | 6 | 0 | 21 |
-| **L2 — Business** | 5 | 13 | 22 | 40 |
-| **L3 — SaaS** | 0 | 2 | 18 | 20 |
-| **L4 — Trust** | 0 | 2 | 12 | 14 |
+| **L1 — Core** | 19 | 2 | 0 | 21 |
+| **L2 — Business** | 9 | 8 | 23 | 40 |
+| **L3 — SaaS** | 2 | 2 | 16 | 20 |
+| **L4 — Trust** | 2 | 11 | 2 | 15 |
 | **L5 — Platform** | 1 | 7 | 4 | 12 |
 | **L6 — Experience** | 1 | 3 | 3 | 7 |
 
-L1 has **zero** unwired areas. The invoicing core is finished. Everything past
-it is the SaaS wrapper, and L3 and L4 are entirely untouched — which matches
-the audit's finding that the engineering half closed and the commercial half
-did not.
+L1 has **zero** unwired areas and only two partials. The invoicing core is
+finished. Everything past it is the SaaS wrapper — which matches the audit's
+finding that the engineering half closed and the commercial half did not.
+
+**L4 moved on 2026-09-04** and the row above is the new count. It went from
+0 wired / 2 partial / 12 none to 2 / 11 / 2, and one node was added
+(`legal.ai`, AI transparency). Nothing was drafted and no consent was stored:
+what changed is that the *registries* now exist as tested data in `core/trust/`
+and are served — the legal framework, the GDPR art. 30 processing register, the
+subprocessor list, the cookie categories and the AI-surface ledger — so twelve
+screens went from "blocked on a decision" to "buildable this week". Two of the
+fourteen turned out to have been wired all along and mis-recorded: the actor
+filter on the activity log, and the sessions / password-change endpoints behind
+Settings › Security. L3 is still entirely untouched.
 
 ---
 
@@ -117,8 +135,12 @@ is the bulk of remaining product work.*
 onboarding, support. *Nothing started. Blocks charging money.*
 
 **L4 — Trust.** Security centre, GDPR, privacy centre, cookies, audit logs,
-backups, export/delete, legal documents. *Audit log and backup exist; the rest
-is nothing. Blocks selling to any business with a DPO.*
+backups, export/delete, legal documents, AI transparency. *Audit log, backup,
+sessions and password change are real; the registries behind privacy, cookies,
+the legal framework and AI disclosure landed 2026-09-04 as data in `core/trust/`
+and are served publicly at `/trust/*`. What is still missing is prose (seven
+undrafted documents), two workflows (GDPR export, account deletion) and one
+table (consent records). Blocks selling to any business with a DPO.*
 
 **L5 — Platform.** Integrations, Peppol transport, API, webhooks,
 import/export, offline/Windows, sync. *Peppol XML generation is done and
@@ -260,6 +282,15 @@ convert-to-invoice. The most-requested missing sales feature.
 Password change, session list and revocation, 2FA, GDPR export and account
 deletion, cookie consent, and the legal documents. Required before any B2B
 customer's DPO will sign.
+
+*Partly done 2026-09-04.* Password change and session revocation were already
+endpoints and only lacked a screen. The registries are built and tested
+(`core/trust/`, served at `/trust/*` — public, because a privacy policy behind
+a login is not a privacy policy). What is left in this sprint is genuinely
+three things: **2FA**, the **GDPR export and deletion workflows** (which must
+show what survives — invoices are frozen for seven years), and a **consent
+table**. Everything else here is now a frontend job. The seven legal documents
+are a lawyer's engagement, not a sprint item; the registry reports which.
 
 **Sprint 6 — Billing (B4)**
 Merchant-of-Record, plan model, usage metering, checkout. This is Phase 10 and
@@ -474,17 +505,38 @@ Named "Explore" rather than "Research": it is the app's internal search engine.
 - **Saved searches** *(none)*, **document search** *(none, blocked on B2)*,
   **activity search** *(partial — no free-text or date range)*.
 
-### 6.10 Activity — 1 wired / 1 partial / 3 none
+### 6.10 Activity — 3 wired / 0 partial / 2 none *(recounted 2026-09-04)*
 
 - **Audit log** *(wired)* — append-only, real.
-- **User activity** *(partial)* — entries carry an actor but cannot be filtered
-  by one.
+- **User activity** *(wired)* — `GET /activity?actor_user_id` filters in SQL.
+  The old note here said it could not; that was stale by a session.
 - **Notifications** *(none)* — the `NotificationCenter` component has existed in
   the design system since the UI build and has never had a data source. Needs a
   model, read/unread state, and a delivery channel.
-- **Security events / system events** *(none)*.
+- **Security events** *(wired 2026-09-04)* — `GET /activity/security`, a filter
+  over the audit log rather than a second table. Six of the fourteen actions
+  qualify, classified by exposure (a full backup export outranks a sign-in; a
+  restore outranks both). The response also carries `not_recorded`, and the
+  screen is required to render it. Sign-ins, sign-outs, session revocations and
+  password changes all *are* recorded — by `api/security/auth_service.py`,
+  which writes the row directly, which is why a grep for `AuditAction.LOGIN`
+  finds no callers and says otherwise. **What is not recorded is a failed
+  sign-in**: nothing anywhere writes an `error` entry, so a hundred wrong
+  passwords in a minute leave no trace. That is the one piece of
+  instrumentation still missing, and it is the line a security log exists for.
 
-### 6.11 Settings — 2 wired / 6 partial / 7 none
+  That same direct write is where a live defect turned up on 2026-09-04:
+  `auth_service` emits `session.revoke` and `password.change` as plain strings,
+  neither was a member of `AuditAction`, and `to_domain` validates the enum on
+  the way back — so **one session revocation made `GET /activity` return 422
+  for that organization permanently**, an append-only fiscal trail made
+  unreadable by a security feature. Both values are now in the enum, with a
+  regression test. It was found by revoking a session against a running server;
+  the grep that missed it is the same grep that produced the wrong claim above.
+- **System events** *(none)* — the app talking about itself: migrations, jobs,
+  failed deliveries. Waiting on a job runner, not on an endpoint.
+
+### 6.11 Settings — 2 wired / 8 partial / 5 none *(recounted 2026-09-04)*
 
 - **Backup & restore** *(wired)*, **Appearance** *(wired — correctly needs no
   endpoint)*.
@@ -498,19 +550,33 @@ Named "Explore" rather than "Research": it is the app's internal search engine.
   in the entitlement matrix, so the enforcement must itself be tier-gated. Also
   blocked on **B1** for invitations — signup always creates a *new* org, so
   every org currently has exactly one member.
-- **Security** *(none)* — password change, TOTP, session list and revocation,
-  login history. Refresh tokens exist server-side but are not listable or
-  individually revocable. A security score is a good framing device but it must
-  reflect real checks, not decoration.
+- **Security** *(partial)* — three of the four cards are backend-ready and
+  simply unbuilt: `GET /users/me/sessions` (live sign-ins only, since refresh
+  rotates), `DELETE /users/me/sessions/{jti}`, and `POST /users/me/password`
+  (which revokes the other sessions). Only **TOTP** has nothing behind it, and
+  login history turned out to have a source after all — sign-ins, sign-outs,
+  revocations and password changes are all in the log; only failed attempts are
+  not. A security score is a good framing device but it must reflect real
+  checks, not decoration.
 - **Email** *(none)* — **B1**.
 - **Notification preferences** *(none)* — per-channel toggles, depends on 6.10.
 - **Data & privacy** *(partial)* — `/backup/export` is an org backup, **not** a
-  GDPR subject-access export, and there is no account-deletion workflow. GDPR
-  touches the whole data lifecycle: personal data inventory, processing
-  register, consent records, subprocessors, export, deletion, retention.
-- **Cookies** *(none)* — essential always on, analytics and marketing default
-  to off, consent recorded with a timestamp. No analytics run today, which is
-  the only reason this is not already a compliance gap.
+  GDPR subject-access export, and there is no account-deletion workflow. Of the
+  lifecycle GDPR touches, the *documented* half now exists as data:
+  `GET /trust/privacy/register` returns the art. 30 processing register (six
+  datasets, each with a lawful basis, a retention and an erasure outcome) and
+  the subprocessor list, so the reading screen is buildable today. The two
+  actions are what remain, and the deletion one has a constraint that must
+  reach the UI: **issued invoices and the client contacts on them are retained
+  for seven years** under Belgian bookkeeping law, so an unqualified "delete
+  everything" is a promise the product is not allowed to keep. The dialog is
+  obliged to print the register's `retained_on_erasure` list.
+- **Cookies** *(partial)* — the four categories and their defaults are served
+  at `GET /trust/consent/categories`: essential locked on, nothing else
+  pre-tickable, because a pre-ticked box is not consent. Three of the four have
+  nothing running in them, which is the only reason this is not already a
+  compliance gap. What is missing is **storage** — a decision has nowhere to be
+  written — and the banner.
 - **Import** *(partial)* — only the FinanceFlow legacy backup format is
   understood. Generic CSV/Excel/UBL with column mapping is unbuilt.
 - **Export** *(partial)* — one button, one format.
@@ -534,7 +600,7 @@ Named "Explore" rather than "Research": it is the app's internal search engine.
   unused. Answering "why is my invoice not Peppol-compliant?" in place, next to
   the failing field, is worth more than a help centre.
 
-### 6.13 Legal — 0 wired / 0 partial / 8 none
+### 6.13 Legal — 0 wired / 8 partial / 1 none *(recounted 2026-09-04)*
 
 Two distinct things share this section:
 
@@ -543,6 +609,30 @@ DPA, subprocessor list, SLA, legal notices. The DPA is required before any
 Belgian business customer's DPO signs off. Legal notices (entity, company
 number, registered address) are legally required on the site itself. ToS needs
 a version and a per-user acceptance record, not just a page.
+
+*Built 2026-09-04 — the registry, deliberately not the text.* `core/trust/legal.py`
+holds the seven documents with their status, audience, what each blocks and
+whether it needs an acceptance record; `GET /trust/legal/documents` serves it,
+**publicly**, because the marketing site and the app must read one source and a
+privacy policy behind a login is not a privacy policy. The module holds no legal
+prose on purpose: a generated DPA that reads like a real one is worse than a
+missing one, because it would be signed. Engineering owns the ledger and reports
+which paragraphs are outstanding; a lawyer owns the paragraphs. All seven are
+still undrafted, and a test asserts that — it fails the day one is genuinely
+written, which is the moment to set its version and effective date.
+
+An eighth node joined the section: **AI transparency** (`legal/ai-transparency`).
+Machine-generated output has to be identifiable as such, and the date being
+planned against is **2026-12-02** — one constant, in
+`core/trust/ai_transparency.py`, so there is exactly one place to correct if the
+official text says otherwise. It is nearly free to honour now, because the TVA
+surfaces already carry a `confidence` and already refuse to count an unconfirmed
+suggestion; it is expensive to retrofit across every AI surface later. The
+registry also records the **Annex III boundary** per surface: creditworthiness
+evaluation of a natural person is high-risk, so any output that starts scoring
+someone's financial standing rather than explaining a number has left the
+minimal-risk tier and needs a conformity assessment, not a disclosure line.
+Today nothing does, and the one surface capable of drifting says so in writing.
 
 **Customer contracts** *(a product feature)* — active, expiring, expired,
 templates, archived. Unrelated to the above and should not share a model.

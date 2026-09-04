@@ -23,6 +23,15 @@ class AuditAction(str, Enum):
     LOGOUT = "logout"
     IMPORT = "import"
     ERROR = "error"
+    #  Written by api/security/auth_service.py, which builds AuditLogRow directly
+    #  and passes the action as a plain string. The column is a String, so the
+    #  writes always succeeded — and the *reads* did not: `to_domain` validates
+    #  this enum, so one session revocation made GET /activity return 422 for
+    #  that organization forever. Found 2026-09-04 by revoking a session against
+    #  a running server. The enum is the contract; a writer emitting a value it
+    #  does not list is the bug, and these two were the values.
+    SESSION_REVOKE = "session.revoke"
+    PASSWORD_CHANGE = "password.change"
 
 
 def _utcnow() -> datetime:

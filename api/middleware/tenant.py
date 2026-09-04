@@ -17,7 +17,13 @@ from ..security.errors import InvalidTokenError
 from ..security.jwt import JwtCodec
 
 _PUBLIC_EXACT = {"/", "/healthz", "/readyz", "/docs", "/redoc", "/openapi.json"}
-_PUBLIC_PREFIXES = ("/auth/",)
+#  `/trust/` is public on purpose (see routers/trust.py): the privacy policy,
+#  the subprocessor list and the cookie categories have to be readable by
+#  someone who has not signed up, and the marketing site serves them from the
+#  same endpoint the app does. Nothing under it touches an organization's data —
+#  the security-events view that does lives at `/activity/security`, behind auth
+#  like the rest of the log.
+_PUBLIC_PREFIXES = ("/auth/", "/trust/")
 
 
 def _is_public(path: str) -> bool:
