@@ -193,7 +193,23 @@ SUBPROCESSORS: tuple[Subprocessor, ...] = (
         #  data there. Confusing the two is how a mailbox ends up carrying
         #  bulk invoice delivery it was never rated for.
         name="Transactional email provider",
-        purpose="Delivers invoices, reminders and password resets.",
+        purpose=(
+            "Account mail — verification, password reset, support. Invoice "
+            "delivery to the customer's own client is planned and not built."
+        ),
+        location="To be chosen — an EU region is required.",
+        in_use=False,
+    ),
+    Subprocessor(
+        #  Deliberately a second row rather than a second purpose on the one
+        #  above. Marketing and transactional mail must not share a sending
+        #  reputation — a few complaints on a newsletter would poison the
+        #  domain that carries password resets — and they do not share a
+        #  lawful basis either: one is asked for, the other is consented to.
+        #  Two rows here is what keeps that separation visible to a reader of
+        #  the DPA rather than buried in a deployment decision.
+        name="Marketing email provider",
+        purpose="Newsletters and product announcements, to recorded opt-ins only.",
         location="To be chosen — an EU region is required.",
         in_use=False,
     ),

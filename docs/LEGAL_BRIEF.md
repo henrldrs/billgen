@@ -95,12 +95,13 @@ Quelles données à caractère personnel le système détient, pourquoi, pendant
 | GitHub | Code source et intégration continue. Aucune donnée client, sauf si un journal est collé dans un ticket. | États-Unis |
 | Vercel | Héberge le site vitrine de pré-lancement et son formulaire de captation. | États-Unis / points de présence UE |
 
-**Prévus, non encore engagés (4).** Mentionnés parce que le DPA doit renvoyer à une liste de sous-traitants, et parce que plusieurs d'entre eux posent en réalité la question du mécanisme de transfert :
+**Prévus, non encore engagés (5).** Mentionnés parce que le DPA doit renvoyer à une liste de sous-traitants, et parce que plusieurs d'entre eux posent en réalité la question du mécanisme de transfert :
 
 | Nom | Finalité | Localisation |
 |---|---|---|
 | Hébergeur (VPS) | Exécute l'API et la base de données. | À choisir — une région UE est requise. |
-| Prestataire d'envoi d'e-mails transactionnels | Achemine les factures, les rappels et les réinitialisations de mot de passe. | À choisir — une région UE est requise. |
+| Prestataire d'envoi d'e-mails transactionnels | Courriels liés au compte — vérification, réinitialisation de mot de passe, support. L'envoi de la facture au client de l'utilisateur est prévu mais non implémenté. | À choisir — une région UE est requise. |
+| Prestataire d'envoi d'e-mails marketing | Lettres d'information et annonces produit, aux seules personnes ayant donné un consentement enregistré. | À choisir — une région UE est requise. |
 | Marchand de référence (Merchant of Record) | Encaisse les abonnements BillGen. | À choisir. |
 | Point d'accès Peppol | Transmet les factures électroniques vers le point d'accès du destinataire. | À choisir — un prestataire établi dans l'UE. |
 

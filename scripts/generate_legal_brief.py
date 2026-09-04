@@ -106,9 +106,19 @@ FR: dict[str, str] = {
         "Héberge le site vitrine de pré-lancement et son formulaire de captation."
     ),
     "Runs the API and the database.": "Exécute l'API et la base de données.",
-    "Delivers invoices, reminders and password resets.": (
-        "Achemine les factures, les rappels et les réinitialisations de mot de passe."
+    (
+        "Account mail — verification, password reset, support. Invoice "
+        "delivery to the customer's own client is planned and not built."
+    ): (
+        "Courriels liés au compte — vérification, réinitialisation de mot de "
+        "passe, support. L'envoi de la facture au client de l'utilisateur est "
+        "prévu mais non implémenté."
     ),
+    "Newsletters and product announcements, to recorded opt-ins only.": (
+        "Lettres d'information et annonces produit, aux seules personnes ayant "
+        "donné un consentement enregistré."
+    ),
+    "Marketing email provider": "Prestataire d'envoi d'e-mails marketing",
     "Takes payment for BillGen subscriptions.": ("Encaisse les abonnements BillGen."),
     "Transmits e-invoices to the recipient's access point.": (
         "Transmet les factures électroniques vers le point d'accès du destinataire."

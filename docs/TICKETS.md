@@ -36,65 +36,93 @@ wish, and the queue is not for wishes.
 ### T-01 · Transactional mail — the sending path
     branch    DevOps / SRE          status  open
     needs     T-02 (job queue)
-    why       Blocker B1. **This is the infrastructure the application sends
-              *through*, not a mailbox a human reads.** No send path exists
-              anywhere in api/ or core/. It alone blocks J-04 (verification),
-              J-07 (reset), J-12 (support), SEC-08 and SEC-09 — five journey
-              stages behind one vendor decision.
-    do        Choose a transactional provider (EU-hosted: it becomes a
-              subprocessor holding customer names and invoice PDFs, so an EU
-              region keeps the DPA story simple — the register already says
-              so). Add a `core/notifications/` port with a single
-              `send(message)` and one adapter behind it, so the provider is
-              swappable and `core/` keeps no vendor import. Secret through
-              `Settings` FIRST, then `.env.example` (SEC-13).
+    why       Blocker B1. **The infrastructure the application sends
+              *through*, not a mailbox a human reads (T-01b, done).**
+              Three kinds of mail are planned, and they are not one job —
+              see the split below. This ticket is the first kind.
 
-              **Do not send through the mailbox provider.** A mailbox is rate
+              **The account loop.** J-04 verification, J-07 password reset,
+              SEC-08, SEC-09 recovery codes, J-12 support. Today a customer
+              who forgets a password is locked out permanently, which is the
+              cheapest way to lose someone who already paid.
+    do        Choose an EU-hosted transactional provider. Add a
+              `core/notifications/` port with a single `send(message)` and one
+              adapter behind it, so the provider is swappable and `core/`
+              keeps no vendor import. Secret through `Settings` FIRST, then
+              `.env.example` (SEC-13).
+
+              **Do not send through the mailbox provider.** It is rate
               limited, shares an IP reputation you do not control, has no
-              bounce or complaint handling, and being flagged for bulk sending
-              costs you the mailbox as well as the delivery.
-
-              **Record delivery, do not assume it.** A password reset that
-              never arrives is an annoyance; an invoice that never arrives is
-              a commercial and legal event — payment terms run from delivery
-              and a customer can claim non-receipt. Pick a provider with
-              delivery webhooks and write the accepted/bounced result to the
-              audit log beside the invoice. That is the difference between
-              "we sent it" and "we can show we sent it".
+              bounce handling, and being flagged for bulk sending costs the
+              mailbox as well as the delivery.
     done when A test sends through a fake adapter and asserts the port is
               called with a rendered message; `GET /readyz` reports mail
-              reachable the way it already reports the PDF engine; a bounce
-              lands in the audit log.
-
-### T-01b · The mailboxes — contact@ / info@
-    branch    Marketing / Henri     status  open — Henri's accounts
-    needs     —
-    why       Separate, smaller job from T-01 and often confused with it.
-              This is where a *human* reads mail sent to the company. The
-              marketing site has nowhere to point a contact link today.
-              LWS includes two mailboxes with `billgen.be`, zero used.
-    do        Create the mailbox, then set `NEXT_PUBLIC_CONTACT_EMAIL` on the
-              site (NEXT_SESSION §231).
-    done when A message sent to contact@billgen.be is read, and the site links
-              to it.
+              reachable the way it already reports the PDF engine.
 
 ### T-01c · SPF, DKIM and DMARC on billgen.be
     branch    DevOps / Henri        status  open
-    needs     T-01 and T-01b (both add a sender)
-    why       The single thing that decides whether an invoice lands in an
-              inbox or in spam. **For an invoicing product that is not a
-              polish item** — an invoice in a spam folder is an invoice that
-              does not get paid, which is the product failing at its one job.
-    do        One SPF record covering **both** senders, DKIM for each, then
-              DMARC starting at `p=none` to observe before enforcing.
+    needs     T-01 (T-01b is done and is already a live sender)
+    do        One SPF record covering **every** sender, DKIM for each, then
+              DMARC at `p=none` to observe before enforcing.
 
-              **The trap, already written down in NEXT_SESSION §233 and worth
-              repeating because it fails silently:** two SPF records on one
-              domain is not "both work", it is *invalid* — receivers treat it
-              as a permerror. The mailbox provider's SPF and the sending
-              provider's SPF must be **merged into a single record**.
-    done when A message from the application and a message from the mailbox
-              both pass SPF, DKIM and DMARC at an external checker.
+              **The trap, from NEXT_SESSION §233, repeated because it fails
+              silently:** two SPF records on one domain is not "both work", it
+              is *invalid* — receivers return a permerror and SPF fails
+              outright. The LWS record and the provider's record must be
+              **merged into a single record**.
+    done when Mail from the application and from the mailbox both pass SPF,
+              DKIM and DMARC at an external checker.
+
+### T-01d · Invoice delivery by email
+    branch    Backend / Product     status  open
+    needs     T-01
+    why       Henri 2026-09-04: the software should send the customer's
+              invoice to *their* client. **This does not exist today** —
+              invoices are generated and downloaded. `InvoiceStatus` has no
+              SENT or DELIVERED state (quotes have one; invoices do not) and
+              `invoice_service.py` says Peppol delivery is a separate track.
+
+              **This is the one kind of mail where delivery is a legal fact,
+              not a convenience.** Payment terms run from delivery and a
+              recipient can claim non-receipt, so the provider must give
+              delivery webhooks and the accepted/bounced result must land in
+              the audit log beside the invoice. That is the difference between
+              "we sent it" and "we can show we sent it".
+
+              **Scope note worth deciding before building:** for Belgian B2B
+              the mandate replaces PDF-by-email with structured e-invoices
+              over Peppol — emailing a PDF is the thing being regulated away.
+              So this is the B2C and small-client road, and Peppol is the B2B
+              one. Both are real; they are not substitutes for each other.
+    do        Add the delivery state to the invoice lifecycle (ADR-0002's
+              pending delivery track), send through the T-01 port, write the
+              webhook result to the audit log.
+    done when An issued invoice can be sent, its state reflects that, and a
+              bounce is visible in the activity log rather than silent.
+
+### T-01e · Marketing email — a separate stream, on purpose
+    branch    Marketing / DevOps    status  open
+    needs     T-01, T-16 (privacy policy), cookie/consent work
+    why       Henri 2026-09-04. Marketing mail is **not** transactional mail
+              with different words, and treating it as one breaks both:
+
+              **Legally** it is a different regime. Transactional mail is sent
+              because someone asked for a password reset; marketing needs
+              recorded opt-in, a working unsubscribe in every message, and a
+              lawful basis the privacy policy actually states. The consent
+              register already has a `marketing` category defaulting to off
+              and currently running nothing — that default is correct and
+              must survive this ticket.
+
+              **Technically** the two must not share a sending reputation. A
+              handful of spam complaints on a newsletter will poison the
+              domain that also carries password resets and invoices — so the
+              newsletter goes out on a separate subdomain or stream, and the
+              transactional path stays clean. This is the single most common
+              way a small SaaS breaks its own login flow.
+    done when A marketing send uses a stream that is not the transactional
+              one, every message carries an unsubscribe, and a test asserts
+              nobody is mailed without a recorded consent decision.
 
 ### T-02 · Job queue
     branch    DevOps / SRE          status  open
@@ -317,6 +345,13 @@ wish, and the queue is not for wishes.
     charged **on failure only**, so a correct sign-in never throttles a
     paying customer. Two tests, one for each half.
     Still open: per-account lockout, which needs T-12.
+
+### T-01b · The mailboxes — contact@ / info@  ·  2026-09-04
+    Done — Henri has access to both; LWS included two with `billgen.be`.
+    Two threads it leaves behind: the marketing site still needs
+    `NEXT_PUBLIC_CONTACT_EMAIL` pointed at it (NEXT_SESSION §231), and the
+    mailbox is now a **live sender**, which is why T-01c no longer waits for
+    the application to send anything.
 
 ### T-00e · The brief for counsel  ·  this session
     It was never written — not lost. Everything a lawyer needs was already in
