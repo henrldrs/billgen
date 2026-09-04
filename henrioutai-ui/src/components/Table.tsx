@@ -29,6 +29,11 @@ export interface TableProps<T> {
   onRowClick?: (row: T) => void;
   /** Rendered in place of the body when rows is empty. */
   empty?: ReactNode;
+  /** The table's accessible name. Worth setting wherever a second table can be
+   *  on screen at the same time — a record sheet over a list, say — because
+   *  "table" with no name is the only thing a screen reader, or a test, has to
+   *  tell the two apart. */
+  label?: string;
   className?: string;
 }
 
@@ -67,6 +72,7 @@ export function Table<T>({
   onSortChange,
   onRowClick,
   empty,
+  label,
   className,
 }: TableProps<T>) {
   const classes = ["bg-table", className].filter(Boolean).join(" ");
@@ -86,7 +92,7 @@ export function Table<T>({
 
   return (
     <div className="bg-table-wrap">
-      <table className={classes}>
+      <table className={classes} aria-label={label}>
         <thead>
           <tr>
             {columns.map((column) => {

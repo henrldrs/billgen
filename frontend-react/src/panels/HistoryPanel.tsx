@@ -9,10 +9,8 @@ import {
   Banner,
   Button,
   Card,
-  CopyButton,
   DatePicker,
-  Divider,
-  Drawer,
+  DocumentSheet,
   EmptyState,
   ErrorState,
   Field,
@@ -27,6 +25,8 @@ import {
   type TableSort,
 } from "@henrioutai/ui";
 import {
+  useClient,
+  useCompany,
   useDeleteInvoice,
   useInvoices,
   useIssueCreditNote,
@@ -38,6 +38,7 @@ import { ApiError } from "../lib/apiClient";
 import { documentFilename, saveBlob } from "../lib/download";
 import { formatDate, formatMoney } from "../lib/format";
 import { t, tPeppolError, type Lang } from "../lib/translations";
+import { InvoiceDocument } from "./InvoiceDocument";
 import { useApi } from "../providers/BillGenProvider";
 import type { InvoiceResponse } from "../types";
 
@@ -51,8 +52,9 @@ export interface HistoryPanelProps {
    * `key` of the status so switching tabs remounts with the new seed.
    */
   status?: string;
-  /** Open one invoice's full record screen. The drawer is the quick inspector;
-   *  this is the whole document, its lines, payments and audit history. */
+  /** Open one invoice's full record screen. The sheet is the quick look at the
+   *  document; this is the whole record — its lines, payments and audit
+   *  history — with the actions that are not on the sheet. */
   onOpenInvoice?: (invoiceId: string) => void;
 }
 
@@ -165,11 +167,20 @@ export function HistoryPanel({
     }
   };
 
-  // The drawer is addressed by id rather than by holding the invoice object, so
+  // The sheet is addressed by id rather than by holding the invoice object, so
   // it re-reads from the refreshed list after a mutation instead of showing a
   // stale copy of the row that was clicked.
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = invoices?.find((invoice) => invoice.id === selectedId);
+
+  // The two records the document draws its party blocks from. Both hooks are
+  // declared here, unconditionally, above every early return in this component
+  // — a hook placed next to the sheet it feeds would run only while the sheet
+  // is open, which is the exact "rendered more hooks than during the previous
+  // render" crash this codebase has already shipped twice. `useClient` is
+  // internally disabled until it has an id, so the closed state costs nothing.
+  const { data: company } = useCompany(companyId);
+  const { data: documentClient } = useClient(selected?.client_id);
 
   const [sort, setSort] = useState<TableSort>({ key: "issue_date", direction: "desc" });
   const [page, setPage] = useState(1);
@@ -318,6 +329,10 @@ export function HistoryPanel({
         ) : (
           <>
             <Table
+              // Named because the record sheet that opens over this list
+              // carries the invoice's own line table, and two unnamed tables on
+              // screen at once are indistinguishable to a screen reader.
+              label={t(lang, "history.title")}
               columns={columns}
               rows={visible}
               rowKey={(invoice) => invoice.id}
@@ -338,15 +353,20 @@ export function HistoryPanel({
         )}
       </Card>
 
-      {/* N3 — the record inspector. Every action except the single most common
-          one (download PDF) lives here rather than in the row: a row that ends
-          in five equal-weight buttons makes none of them readable, and Menu
-          cannot be used inside Table because .bg-table-wrap clips it. */}
-      <Drawer
+      {/* N3 — the record inspector, as the document itself.
+          Henri, 2026-09-04: it was a right-hand drawer, which put the invoice
+          in a column narrower than its own line table and stacked it between
+          the floating top bar and a blurred page. It is now a centred sheet of
+          paper carrying the real line table — see InvoiceDocument for why that
+          illustration is deliberately not the authoritative render.
+
+          Every action lives under the paper rather than in the row: a row that
+          ends in five equal-weight buttons makes none of them readable, and
+          Menu cannot be used inside Table because .bg-table-wrap clips it. */}
+      <DocumentSheet
         open={selected !== undefined}
         onClose={() => setSelectedId(null)}
         title={selected ? (selected.reference ?? t(lang, "history.draft")) : ""}
-        size="lg"
         footer={
           selected ? (
             <>
@@ -364,6 +384,59 @@ export function HistoryPanel({
               >
                 {t(lang, "history.downloadPdf")}
               </Button>
+
+              {/* Issued invoices only: a draft has no gapless number, so it can
+                  neither be exported to Peppol nor corrected by a credit note. */}
+              {selected.status !== "draft" && selected.status !== "voided" ? (
+                <>
+                  <Button
+                    variant="secondary"
+                    disabled={downloading === `${selected.id}:xml`}
+                    onClick={() =>
+                      void download("xml", selected.id, selected.reference ?? selected.id)
+                    }
+                  >
+                    {t(lang, "history.downloadXml")}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() =>
+                      setAction({
+                        kind: "payment",
+                        invoiceId: selected.id,
+                        reference: selected.reference ?? selected.id,
+                      })
+                    }
+                  >
+                    {t(lang, "history.payment")}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() =>
+                      setAction({
+                        kind: "credit_note",
+                        invoiceId: selected.id,
+                        reference: selected.reference ?? selected.id,
+                      })
+                    }
+                  >
+                    {t(lang, "history.creditNote")}
+                  </Button>
+                  <Button
+                    variant="danger"
+                    onClick={() =>
+                      setAction({
+                        kind: "void",
+                        invoiceId: selected.id,
+                        reference: selected.reference ?? selected.id,
+                      })
+                    }
+                  >
+                    {t(lang, "history.void")}
+                  </Button>
+                </>
+              ) : null}
+
               {selected.status === "draft" ? (
                 <>
                   <Button
@@ -396,79 +469,14 @@ export function HistoryPanel({
         }
       >
         {selected ? (
-          <>
-            <dl className="bg-totals">
-              <dt>{t(lang, "history.status")}</dt>
-              <dd><Badge status={selected.status as never} /></dd>
-              <dt>{t(lang, "history.date")}</dt>
-              <dd>{formatDate(selected.issue_date, lang)}</dd>
-              <dt>{t(lang, "history.total")}</dt>
-              <dd>{formatMoney(selected.total_ttc, selected.currency, lang)}</dd>
-            </dl>
-
-            {selected.reference ? (
-              <p>
-                <span className="bg-num">{selected.reference}</span>{" "}
-                <CopyButton value={selected.reference} label={t(lang, "history.reference")} />
-              </p>
-            ) : null}
-
-            <Divider />
-
-            {/* Issued invoices only: a draft has no gapless number, so it can
-                neither be exported to Peppol nor corrected by a credit note. */}
-            {selected.status !== "draft" && selected.status !== "voided" ? (
-              <div className="bg-panel__actions">
-                <Button
-                  variant="secondary"
-                  disabled={downloading === `${selected.id}:xml`}
-                  onClick={() =>
-                    void download("xml", selected.id, selected.reference ?? selected.id)
-                  }
-                >
-                  {t(lang, "history.downloadXml")}
-                </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() =>
-                    setAction({
-                      kind: "payment",
-                      invoiceId: selected.id,
-                      reference: selected.reference ?? selected.id,
-                    })
-                  }
-                >
-                  {t(lang, "history.payment")}
-                </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() =>
-                    setAction({
-                      kind: "credit_note",
-                      invoiceId: selected.id,
-                      reference: selected.reference ?? selected.id,
-                    })
-                  }
-                >
-                  {t(lang, "history.creditNote")}
-                </Button>
-                <Button
-                  variant="danger"
-                  onClick={() =>
-                    setAction({
-                      kind: "void",
-                      invoiceId: selected.id,
-                      reference: selected.reference ?? selected.id,
-                    })
-                  }
-                >
-                  {t(lang, "history.void")}
-                </Button>
-              </div>
-            ) : null}
-          </>
+          <InvoiceDocument
+            invoice={selected}
+            company={company}
+            client={documentClient}
+            lang={lang}
+          />
         ) : null}
-      </Drawer>
+      </DocumentSheet>
 
       <Modal
         open={action !== null}

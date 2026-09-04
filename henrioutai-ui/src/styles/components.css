@@ -4987,3 +4987,327 @@ hr.bg-divider {
   z-index: -1;
 }
 
+/* ==== document sheet: an invoice, centred, on paper =======================
+ * Henri, 2026-09-04: the record inspector was a right-hand drawer, and it put
+ * the invoice in a column narrower than its own line table while sandwiching
+ * it between the floating top bar and a blurred page. "Maybe instead of
+ * outputting the invoice on the side, we centralise it? Make it the table of
+ * the invoice, to illustrate as if it were a document."
+ *
+ * So the surface stops being glass. Everything else in this system is glass
+ * over a gradient, and that is exactly why the paper reads as a document: it
+ * is the one opaque, un-tinted, squared-off surface in the application, and
+ * the eye takes it for what the client will actually receive. Glass here would
+ * have made the invoice look like one more panel.
+ * ======================================================================== */
+
+.bg-docsheet__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem 1rem 0;
+  overflow: auto;
+  background: var(--bg-backdrop-dim);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.bg-docsheet__frame {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 52rem;
+  margin: auto;
+}
+
+/* The chrome — title and close — sits above the paper, never on it. A window
+   title bar welded to the top of a sheet of paper is the thing that stops it
+   reading as a sheet of paper. */
+.bg-docsheet__chrome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: #fff;
+}
+.bg-docsheet__title {
+  margin: 0;
+  font-size: var(--bg-text-body);
+  font-weight: var(--bg-weight-button-strong);
+  letter-spacing: 0.01em;
+}
+.bg-docsheet__close {
+  border: none;
+  background: color-mix(in srgb, #fff 14%, transparent);
+  color: inherit;
+  font-size: 1.15rem;
+  line-height: 1;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.bg-docsheet__close:hover {
+  background: color-mix(in srgb, #fff 24%, transparent);
+}
+.bg-docsheet__close:focus-visible {
+  outline: 3px solid var(--bg-focus-ring-color);
+  outline-offset: 2px;
+}
+
+/* The paper. Deliberately NOT var(--bg-surface): that follows the theme into
+   the deep field, and an invoice previewed in dark mode is still printed on
+   white. What the client receives does not have a dark variant. */
+.bg-docsheet {
+  background: var(--brand-logo-paper);
+  color: var(--brand-slate-900);
+  border-radius: 4px;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  box-sizing: border-box;
+  box-shadow: var(--bg-shadow-overlay);
+  overflow-x: auto;
+}
+.bg-docsheet:focus-visible {
+  outline: 3px solid var(--bg-focus-ring-color);
+  outline-offset: 3px;
+}
+
+/* Page-shaped, so a two-line invoice still reads as a page rather than a strip.
+   A flat `min-height` and not `aspect-ratio` or a percentage: a percentage
+   resolves against the frame's height, the frame's height is auto, and the
+   whole declaration was silently inert — and `aspect-ratio` would size the box
+   from its width and let a long invoice overflow its own paper. This grows. */
+.bg-docsheet--a4 {
+  min-height: 28rem;
+}
+
+/* Sticky, because the paper is usually taller than the window and the backdrop
+   is what scrolls. Without this the actions sit under the foot of the document
+   and a person has to scroll past the whole invoice to reach "Download PDF". */
+.bg-docsheet__actions {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  /* Bled to the frame's edges and given its own ground: sticky buttons with a
+     transparent strip behind them let the invoice's own lines run underneath,
+     which reads as a rendering fault rather than as a toolbar. */
+  margin: 0 -0.75rem;
+  padding: 0.85rem 0.75rem 1rem;
+  background: linear-gradient(
+    to top,
+    var(--bg-backdrop-dim) 0%,
+    var(--bg-backdrop-dim) 62%,
+    transparent 100%
+  );
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ---- what goes on the paper --------------------------------------------- */
+
+.bg-invdoc__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+.bg-invdoc__kind {
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: 0.02em;
+  font-weight: var(--bg-weight-button-strong);
+}
+.bg-invdoc__ref {
+  margin: 0.15rem 0 0;
+  font-family: var(--bg-font-mono);
+  font-size: var(--bg-text-helper);
+  color: color-mix(in srgb, var(--brand-slate-900) 65%, transparent);
+}
+
+/* Issuer and client, side by side — the two blocks every invoice opens with. */
+.bg-invdoc__parties {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+.bg-invdoc__party-label {
+  margin: 0 0 0.35rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--brand-slate-900) 55%, transparent);
+}
+.bg-invdoc__party {
+  margin: 0;
+  font-style: normal;
+  line-height: 1.5;
+  font-size: var(--bg-text-helper);
+}
+.bg-invdoc__party strong {
+  display: block;
+  font-size: var(--bg-text-body);
+}
+
+.bg-invdoc__dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem 2.5rem;
+  margin: 1.75rem 0 0;
+  font-size: var(--bg-text-helper);
+}
+.bg-invdoc__dates div {
+  min-width: 7rem;
+}
+.bg-invdoc__dates dt {
+  font-size: 0.7rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--brand-slate-900) 55%, transparent);
+}
+.bg-invdoc__dates dd {
+  margin: 0.15rem 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The line table — the part Henri asked to be the illustration. Ruled, not
+   striped: an invoice is ruled. */
+.bg-invdoc__table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 2rem;
+  font-size: var(--bg-text-helper);
+}
+.bg-invdoc__table th {
+  text-align: left;
+  padding: 0 0 0.5rem;
+  border-bottom: 1.5px solid color-mix(in srgb, var(--brand-slate-900) 45%, transparent);
+  font-size: 0.7rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  font-weight: var(--bg-weight-button-strong);
+  color: color-mix(in srgb, var(--brand-slate-900) 65%, transparent);
+  white-space: nowrap;
+}
+.bg-invdoc__table td {
+  padding: 0.7rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--brand-slate-900) 12%, transparent);
+  vertical-align: top;
+}
+.bg-invdoc__table th + th,
+.bg-invdoc__table td + td {
+  padding-left: 1rem;
+}
+.bg-invdoc__num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Totals, right-aligned under the table's own right edge. */
+.bg-invdoc__totals {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+/* `width: max-content` so the two auto columns size to the widest label and
+   the widest amount instead of stretching across the flex line — without it
+   the grid fills the sheet and the totals detach from the table above them. */
+.bg-invdoc__totals dl {
+  display: grid;
+  grid-template-columns: auto auto;
+  /* No column gap — the separation is `dd`'s padding instead. A gap would cut
+     the rule above the grand total into two segments with a hole between them,
+     since `display: contents` leaves nothing to draw one continuous border on. */
+  gap: 0.4rem 0;
+  margin: 0;
+  width: max-content;
+  max-width: 100%;
+  min-width: 16rem;
+  font-size: var(--bg-text-helper);
+}
+.bg-invdoc__totals dt {
+  color: color-mix(in srgb, var(--brand-slate-900) 65%, transparent);
+}
+.bg-invdoc__totals dd {
+  margin: 0;
+  padding-left: 2.5rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+/* `display: contents` so the two cells land in the parent grid's columns
+   rather than in a row of their own — the rule above them has to line up with
+   the numbers, not with a wrapper. */
+.bg-invdoc__grand {
+  display: contents;
+}
+.bg-invdoc__grand dt,
+.bg-invdoc__grand dd {
+  padding-top: 0.5rem;
+  border-top: 1.5px solid color-mix(in srgb, var(--brand-slate-900) 45%, transparent);
+  font-size: var(--bg-text-body);
+  font-weight: var(--bg-weight-button-strong);
+  color: var(--brand-slate-900);
+}
+
+/* The mandatory mentions, and the payment instruction. Small, at the foot,
+   where they are on the printed document. */
+.bg-invdoc__foot {
+  margin-top: 2.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid color-mix(in srgb, var(--brand-slate-900) 12%, transparent);
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: color-mix(in srgb, var(--brand-slate-900) 70%, transparent);
+}
+.bg-invdoc__foot p {
+  margin: 0 0 0.35rem;
+}
+.bg-invdoc__mention {
+  color: var(--brand-slate-900);
+  font-weight: var(--bg-weight-button-strong);
+}
+
+/* A voided or draft invoice still has to be readable — it is a record — but it
+   must never be mistaken for a live document at a glance. */
+.bg-invdoc__stamp {
+  float: right;
+  margin: -0.25rem 0 0.5rem 1rem;
+  padding: 0.25rem 0.75rem;
+  border: 2px solid currentColor;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: var(--bg-weight-button-strong);
+  transform: rotate(-4deg);
+}
+.bg-invdoc__stamp--voided {
+  color: var(--bg-danger);
+}
+.bg-invdoc__stamp--draft {
+  color: color-mix(in srgb, var(--brand-slate-900) 45%, transparent);
+}
+/* Green, and the only stamp that is: PAID is the one piece of good news a
+   document carries, and the accent is what the product uses to say so. */
+.bg-invdoc__stamp--paid {
+  color: var(--brand-logo-green);
+}
+
+@media (max-width: 640px) {
+  .bg-docsheet__backdrop {
+    padding: 1rem 0.5rem;
+  }
+  .bg-docsheet--a4 {
+    min-height: 0;
+  }
+}

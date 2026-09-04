@@ -3,18 +3,79 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
-import { BASE, COMPANY_ID, invoiceRecord, renderWithProvider } from "../test/utils";
+import {
+  BASE,
+  COMPANY_ID,
+  companyRecord,
+  invoiceRecord,
+  renderWithProvider,
+} from "../test/utils";
 import { HistoryPanel } from "./HistoryPanel";
 
 const server = setupServer();
 
+/** The two records the record sheet draws its party blocks from.
+ *
+ *  Registered once, for every test in this file, rather than added to each
+ *  `server.use(...)`: the sheet asks for them the moment a row is clicked, and
+ *  a test that only cares about the Void button should not have to know that.
+ *  They were unhandled at first and the panel degraded quietly — which is the
+ *  behaviour the component was written to have, and exactly why the omission
+ *  cost nothing visible and had to be found in the MSW log. */
+beforeEach(() => {
+  server.use(
+    http.get(`${BASE}/companies/:id`, () =>
+      HttpResponse.json(
+        companyRecord({
+          legal_name: "Acme Consulting SPRL",
+          vat_number: "BE0123456749",
+          address_line1: "Rue de la Loi 1",
+          postal_code: "1000",
+          city: "Bruxelles",
+          iban: "BE68539007547034",
+        }),
+      ),
+    ),
+    http.get(`${BASE}/clients/:id`, () =>
+      HttpResponse.json({
+        id: "c-1",
+        organization_id: "org-1",
+        company_id: COMPANY_ID,
+        name: "Big Corp",
+        contact_person: null,
+        email: null,
+        phone: null,
+        vat_number: "BE9876543265",
+        address_line1: "Grote Markt 5",
+        postal_code: "2000",
+        city: "Antwerpen",
+        country_code: "BE",
+        is_business: true,
+        notes: null,
+      }),
+    ),
+  );
+});
+
+/** The invoice list, by name.
+ *
+ *  Named rather than "the only table on screen", which it stopped being when
+ *  the record inspector became a document sheet carrying the invoice's own line
+ *  table. Three tests failed on the ambiguity, which is the accessibility bug
+ *  showing up as a test failure: two unnamed tables are two unnamed tables to a
+ *  screen reader too.
+ */
+async function listTable() {
+  return screen.findByRole("table", { name: "Invoices" });
+}
+
 /**
  * Actions moved out of the table row and into the N3 record inspector (a row
  * ending in five equal-weight buttons made none of them readable). Every action
- * test therefore opens the drawer first by clicking the row.
+ * test therefore opens the sheet first by clicking the row.
  */
 async function openInvoice(user: ReturnType<typeof userEvent.setup>, reference: string) {
-  const table = await screen.findByRole("table");
+  const table = await listTable();
   // A draft shows "Draft" in both the reference cell and the status Badge, so
   // match the row rather than a cell and click that.
   const row = within(table).getAllByText(reference)[0].closest("tr");
@@ -37,7 +98,7 @@ test("renders invoices with status badges", async () => {
   );
 
   renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
-  const table = within(await screen.findByRole("table"));
+  const table = within(await listTable());
   expect(table.getByText("ACME-BC07012026")).toBeInTheDocument();
   expect(table.getByText("Paid")).toBeInTheDocument(); // Badge renders the canonical label
   expect(table.getAllByText("€1,512.50")).toHaveLength(2);
@@ -68,7 +129,7 @@ test("voiding an invoice asks for a reason and refreshes the list", async () => 
   );
   await user.click(within(dialog).getByRole("button", { name: "Record" }));
 
-  const table = within(await screen.findByRole("table"));
+  const table = within(await listTable());
   expect(await table.findByText("Voided")).toBeInTheDocument();
   // voided invoices lose their correction actions
   expect(screen.queryByRole("button", { name: "Void" })).not.toBeInTheDocument();
@@ -185,7 +246,7 @@ test("a draft shows a Draft placeholder and badge, with its actions in the drawe
 
   renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
   const user = userEvent.setup();
-  const table = within(await screen.findByRole("table"));
+  const table = within(await listTable());
 
   // "Draft" appears twice on the row: once as the reference placeholder (a
   // draft has no gapless number yet) and once as the status badge.
@@ -228,7 +289,7 @@ test("issuing a draft confirms then assigns a number", async () => {
   const dialog = await screen.findByRole("dialog", { name: /Issue/ });
   await user.click(within(dialog).getByRole("button", { name: "Confirm" }));
 
-  const table = within(await screen.findByRole("table"));
+  const table = within(await listTable());
   expect(await table.findByText("Issued")).toBeInTheDocument();
   expect(table.getByText("ACME-BC07012026")).toBeInTheDocument();
   expect(issueBody).toEqual({}); // no date overrides sent
@@ -302,7 +363,7 @@ test("recording a payment posts amount and the date picked in the calendar", asy
   await user.click(await screen.findByRole("button", { name: "Today" }));
   await user.click(within(dialog).getByRole("button", { name: "Record" }));
 
-  const table = within(await screen.findByRole("table"));
+  const table = within(await listTable());
   expect(await table.findByText("Partially paid")).toBeInTheDocument();
 });
 
@@ -324,4 +385,114 @@ test("the status filter is a Select and drives the server-side query", async () 
   // The filter is a query parameter, not a client-side predicate over an
   // already-fetched list — that is the whole point of the control existing.
   await waitFor(() => expect(seen).toContain("paid"));
+});
+
+/* ---- the record sheet, as a document ------------------------------------
+ * Henri, 2026-09-04, replacing the right-hand drawer. What is worth pinning is
+ * not the layout — that will keep moving — but the two claims the sheet makes:
+ * it renders the invoice's OWN lines, and the stamp is a statement about the
+ * document rather than a second copy of the status badge.
+ * ---------------------------------------------------------------------- */
+
+test("the record sheet renders the invoice as a document, with its lines", async () => {
+  server.use(
+    http.get(`${BASE}/invoices`, () =>
+      HttpResponse.json([
+        invoiceRecord("inv-1", "ACME-BC07012026", {
+          lines: [
+            {
+              line_number: 1,
+              description: "Consulting — July",
+              quantity: "10.000000",
+              unit_price: "125.00",
+              product_id: null,
+              vat: { category: "S", rate: "21.00", legal_mention: null },
+              discount: null,
+            },
+          ],
+        }),
+      ]),
+    ),
+  );
+
+  renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
+  const user = userEvent.setup();
+  const sheet = await openInvoice(user, "ACME-BC07012026");
+
+  // Both parties, off the two records the sheet fetches for itself.
+  expect(sheet.getByText("Acme Consulting SPRL")).toBeInTheDocument();
+  expect(sheet.getByText("Big Corp")).toBeInTheDocument();
+
+  const lines = within(sheet.getByRole("table", { name: "Invoice lines" }));
+  expect(lines.getByText("Consulting — July")).toBeInTheDocument();
+  // "10", not "10.000000" — the wire spells a quantity six decimals deep and a
+  // document does not.
+  expect(lines.getByText("10")).toBeInTheDocument();
+  expect(lines.getByText("21 %")).toBeInTheDocument();
+});
+
+test("a zero-rated line prints its exempting mention on the paper", async () => {
+  server.use(
+    http.get(`${BASE}/invoices`, () =>
+      HttpResponse.json([
+        invoiceRecord("inv-1", "ACME-BC07012026", {
+          lines: [
+            {
+              line_number: 1,
+              description: "Cross-border consulting",
+              quantity: "1",
+              unit_price: "1000.00",
+              product_id: null,
+              vat: {
+                category: "AE",
+                rate: "0.00",
+                legal_mention: "Autoliquidation — Article 51, §2, 5° du Code de la TVA",
+              },
+              discount: null,
+            },
+          ],
+        }),
+      ]),
+    ),
+  );
+
+  renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
+  const user = userEvent.setup();
+  const sheet = await openInvoice(user, "ACME-BC07012026");
+
+  // The one sentence that makes a zero-rated invoice lawful. If it ever stops
+  // rendering, the document is wrong in a way no total would reveal.
+  expect(
+    sheet.getByText("Autoliquidation — Article 51, §2, 5° du Code de la TVA"),
+  ).toBeInTheDocument();
+});
+
+test("only draft, paid and voided are stamped", async () => {
+  server.use(
+    http.get(`${BASE}/invoices`, () =>
+      HttpResponse.json([
+        invoiceRecord("inv-1", "ACME-BC07012026", { status: "issued" }),
+        invoiceRecord("inv-2", "ACME-BC07012027", { status: "paid" }),
+        invoiceRecord("inv-3", "ACME-BC07012028", { status: "overdue" }),
+      ]),
+    ),
+  );
+
+  renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
+  const user = userEvent.setup();
+
+  // `issued` is what an invoice IS — a stamp on every ordinary invoice would
+  // make the stamp mean nothing.
+  const issued = await openInvoice(user, "ACME-BC07012026");
+  expect(issued.queryByText("Paid")).not.toBeInTheDocument();
+  await user.keyboard("{Escape}");
+
+  const paid = await openInvoice(user, "ACME-BC07012027");
+  expect(paid.getByText("Paid")).toBeInTheDocument();
+  await user.keyboard("{Escape}");
+
+  // `overdue` describes the receivable and moves with the calendar. Permanent
+  // ink must not carry a claim the paper cannot keep.
+  const overdue = await openInvoice(user, "ACME-BC07012028");
+  expect(overdue.queryByText("Overdue")).not.toBeInTheDocument();
 });

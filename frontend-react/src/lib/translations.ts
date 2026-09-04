@@ -331,6 +331,60 @@ const MESSAGES = {
     es: "El cliente no tiene NIF-IVA (B2C). Peppol es solo B2B/B2G — use el PDF.",
   },
   "history.draft": { en: "Draft", fr: "Brouillon", nl: "Concept", es: "Borrador" },
+  "history.voided": { en: "Voided", fr: "Annulée", nl: "Geannuleerd", es: "Anulada" },
+  "history.paidStamp": { en: "Paid", fr: "Payée", nl: "Betaald", es: "Pagada" },
+
+  /* ---- the invoice as a document ------------------------------------------
+   * The words that appear ON the paper, not in the interface around it. They
+   * are separated from `invoice.*` (the composer's labels) on purpose: a
+   * composer field can be called "Client", the document has to say "Billed to",
+   * and the day one of them is reworded the other must not move with it.
+   * ---------------------------------------------------------------------- */
+  /* The heading on the paper. NOT `invoice.title`, which is the composer's
+     "New invoice" — a document that calls itself "New invoice" is a screenshot
+     of a form, not an invoice. */
+  "invoiceDoc.title": { en: "Invoice", fr: "Facture", nl: "Factuur", es: "Factura" },
+  "invoiceDoc.from": { en: "From", fr: "Émetteur", nl: "Afzender", es: "Emisor" },
+  "invoiceDoc.to": { en: "Billed to", fr: "Facturé à", nl: "Gefactureerd aan", es: "Facturado a" },
+  "invoiceDoc.issueDate": {
+    en: "Issue date",
+    fr: "Date de facture",
+    nl: "Factuurdatum",
+    es: "Fecha de factura",
+  },
+  "invoiceDoc.dueDate": {
+    en: "Due date",
+    fr: "Échéance",
+    nl: "Vervaldatum",
+    es: "Vencimiento",
+  },
+  "invoiceDoc.description": {
+    en: "Description",
+    fr: "Désignation",
+    nl: "Omschrijving",
+    es: "Descripción",
+  },
+  "invoiceDoc.quantity": { en: "Qty", fr: "Qté", nl: "Aantal", es: "Cant." },
+  "invoiceDoc.unitPrice": {
+    en: "Unit price",
+    fr: "Prix unitaire",
+    nl: "Eenheidsprijs",
+    es: "Precio unitario",
+  },
+  "invoiceDoc.vat": { en: "VAT", fr: "TVA", nl: "Btw", es: "IVA" },
+  "invoiceDoc.lineTotal": { en: "Amount", fr: "Montant", nl: "Bedrag", es: "Importe" },
+  "invoiceDoc.lines": {
+    en: "Invoice lines",
+    fr: "Lignes de facture",
+    nl: "Factuurregels",
+    es: "Líneas de factura",
+  },
+  "invoiceDoc.payTo": {
+    en: "Payable to",
+    fr: "Paiement sur le compte",
+    nl: "Te betalen op rekening",
+    es: "Pago en la cuenta",
+  },
   "history.issue": { en: "Issue", fr: "Émettre", nl: "Uitgeven", es: "Emitir" },
   "history.issueConfirm": {
     en: "Issue this draft? A gapless invoice number will be assigned and the invoice becomes final — this cannot be undone.",
@@ -992,6 +1046,11 @@ const MESSAGES = {
   "audit.login": { en: "Signed in", fr: "Connexion", nl: "Aangemeld", es: "Inicio de sesión" },
   "audit.logout": { en: "Signed out", fr: "Déconnexion", nl: "Afgemeld", es: "Cierre de sesión" },
   "audit.error": { en: "Error", fr: "Erreur", nl: "Fout", es: "Error" },
+  //  Written by api/security/auth_service.py, and unlabelled until 2026-09-04 —
+  //  tAuditAction falls back to the wire value, so the activity log read
+  //  "session.revoke" in every language.
+  "audit.session.revoke": { en: "Session revoked", fr: "Session révoquée", nl: "Sessie ingetrokken", es: "Sesión revocada" },
+  "audit.password.change": { en: "Password changed", fr: "Mot de passe modifié", nl: "Wachtwoord gewijzigd", es: "Contraseña cambiada" },
 
   // ---- VAT report -------------------------------------------------------------
   // Every string here has to survive being read by an accountant. The caveat

@@ -65,6 +65,7 @@ export { Combobox, type ComboboxProps, type ComboboxOption } from "./components/
 export { DatePicker, type DatePickerProps } from "./components/DatePicker";
 export { FileUpload, type FileUploadProps } from "./components/FileUpload";
 export { Drawer, type DrawerProps } from "./components/Drawer";
+export { DocumentSheet, type DocumentSheetProps } from "./components/DocumentSheet";
 export { Stepper, type StepperProps, type StepItem } from "./components/Stepper";
 export {
   StatusTimeline,
