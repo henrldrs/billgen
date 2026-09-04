@@ -22,7 +22,7 @@ from db.models import (
 
 from .errors import EmailAlreadyRegisteredError, InvalidCredentialsError, InvalidTokenError
 from .jwt import JwtCodec, TokenPair
-from .password import hash_password, verify_password
+from .password import hash_password, verify_password, waste_time
 
 MIN_PASSWORD_LENGTH = 8
 DESKTOP_EMAIL = "desktop@localhost.billgen"
@@ -77,9 +77,7 @@ class AuthService:
         access = self._codec.issue_access(user_id, org_id, role)
         refresh, jti, expires_at = self._codec.issue_refresh(user_id, org_id)
         session.add(
-            RefreshTokenRow(
-                jti=jti, user_id=user_id, organization_id=org_id, expires_at=expires_at
-            )
+            RefreshTokenRow(jti=jti, user_id=user_id, organization_id=org_id, expires_at=expires_at)
         )
         return TokenPair(
             access_token=access,
@@ -137,14 +135,16 @@ class AuthService:
             user = session.execute(
                 select(UserRow).where(UserRow.email == email, UserRow.is_active)
             ).scalar_one_or_none()
-            credential = (
-                session.get(UserCredentialRow, user.id) if user is not None else None
-            )
-            if (
-                user is None
-                or credential is None
-                or not verify_password(credential.password_hash, password)
-            ):
+            credential = session.get(UserCredentialRow, user.id) if user is not None else None
+            #  Spend the verification even when there is nothing to verify, so
+            #  an unknown address and a wrong password cost the same. The
+            #  message was already identical; the *timing* was not, and that is
+            #  what made this endpoint answer "is this person a customer".
+            #  See `password.waste_time` (SEC-19).
+            if user is None or credential is None:
+                waste_time()
+                raise InvalidCredentialsError("Invalid email or password")
+            if not verify_password(credential.password_hash, password):
                 raise InvalidCredentialsError("Invalid email or password")
 
             membership_rows = list(
@@ -157,9 +157,7 @@ class AuthService:
 
             memberships = [(m.organization_id, m.role) for m in membership_rows]
             if organization_id is not None:
-                selected = next(
-                    (m for m in memberships if m[0] == organization_id), None
-                )
+                selected = next((m for m in memberships if m[0] == organization_id), None)
                 if selected is None:
                     raise InvalidCredentialsError("Not a member of that organization")
             else:
@@ -301,9 +299,11 @@ class AuthService:
             ).scalars():
                 row.revoked_at = now
 
-            membership = session.execute(
-                select(OrgMembershipRow).where(OrgMembershipRow.user_id == user_id)
-            ).scalars().first()
+            membership = (
+                session.execute(select(OrgMembershipRow).where(OrgMembershipRow.user_id == user_id))
+                .scalars()
+                .first()
+            )
             if membership is not None:
                 session.add(
                     AuditLogRow(
@@ -327,16 +327,12 @@ class AuthService:
 
             if user is None:
                 org = OrganizationRow(id=uuid4(), name="My Business")
-                user = UserRow(
-                    id=uuid4(), email=DESKTOP_EMAIL, display_name="Local user"
-                )
+                user = UserRow(id=uuid4(), email=DESKTOP_EMAIL, display_name="Local user")
                 session.add_all([org, user])
                 session.flush()
                 session.add_all(
                     [
-                        OrgMembershipRow(
-                            organization_id=org.id, user_id=user.id, role="owner"
-                        ),
+                        OrgMembershipRow(organization_id=org.id, user_id=user.id, role="owner"),
                         UserCredentialRow(
                             user_id=user.id,
                             # random: desktop login is via bootstrap, never password

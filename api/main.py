@@ -65,6 +65,7 @@ def _register_exception_handlers(app: FastAPI) -> None:
     exception-to-status mapping is a contract worth reading on its own, and
     it is the part most likely to grow.
     """
+
     @app.exception_handler(AuthError)
     async def auth_error_handler(request: Request, exc: AuthError):  # noqa: ANN202
         return JSONResponse(status_code=exc.status_code, content={"detail": str(exc)})
@@ -101,9 +102,7 @@ def _register_exception_handlers(app: FastAPI) -> None:
             status_code=422,
             content={
                 "detail": "Invoice is not deliverable over Peppol",
-                "errors": [
-                    {"field": e.field, "message_key": e.message_key} for e in exc.errors
-                ],
+                "errors": [{"field": e.field, "message_key": e.message_key} for e in exc.errors],
             },
         )
 
@@ -206,7 +205,9 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
 
     app.add_middleware(TenantBindingMiddleware, codec=codec)
     app.add_middleware(
-        RateLimitMiddleware, requests_per_minute=settings.rate_limit_per_minute
+        RateLimitMiddleware,
+        requests_per_minute=settings.rate_limit_per_minute,
+        auth_failures_per_minute=settings.auth_failures_per_minute,
     )
     app.add_middleware(
         CORSMiddleware,

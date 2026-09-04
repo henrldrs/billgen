@@ -14,6 +14,13 @@ the end.
 
 ## Resume protocol — do this first, every time
 
+**Then open [TICKETS.md](TICKETS.md) and take the top open ticket.** That file
+exists so a session does not spend its first half re-deriving what the last one
+already knew. Each ticket names its files, what it blocks, and the assertion
+that closes it. The architecture document is what you check work *against*;
+the queue is what you take work *from*. Do not start an unqueued task without
+saying why.
+
 Nothing here depends on remembering a conversation. Four commands tell you
 exactly where the last session stopped:
 
@@ -384,3 +391,48 @@ and those rules are what an accountant signs off on.
 at issue, move P1 to issue time, then build P2); the Art. 4 inventory; and
 whether the marketing readiness quiz stays rule-based — it is cheaper to keep it
 rule-based than to disclose it.
+
+### The queue arrives, and two security holes close, 2026-09-04 (late)
+
+Henri's question was the right one: *why re-check state every session instead
+of leaving a list?* So [TICKETS.md](TICKETS.md) now exists, the resume protocol
+points at it, and the architecture document points at it too — with the reason
+they are separate files written down, because it is the thing that will be
+argued about later. **A state document that also holds a to-do list stops being
+trustworthy as either.** The architecture says what is true; the queue says
+what to do about it. Eighteen open tickets, in priority order, each naming its
+files and the assertion that closes it.
+
+The rule that matters in that file: **no ticket without a `done when`, written
+before the work starts.** A ticket you cannot verify is a wish.
+
+Two holes found by reading `api/security/` and `api/middleware/` rather than
+the docs, and both closed the same session:
+
+- **SEC-19, the login timing oracle.** The reply shape was already identical
+  for an unknown address and a wrong password — someone had thought about
+  enumeration. The *timing* was not: `verify_password` ran only when a user row
+  was found, so an unknown address answered in about a millisecond and a known
+  one took the full Argon2id verify. Measured after the fix: **115.5 ms against
+  123.5 ms, 1.07×.** Before it, roughly a thousandfold. That endpoint was
+  answering "is this person a BillGen customer" to anyone who asked in a loop —
+  a disclosure about *the customer's* business, not ours. The test asserts the
+  deliberate spend rather than the wall clock, because a timing assertion on a
+  shared CI runner is a flake generator.
+- **SEC-20, the untiered rate limit.** One global per-IP budget rated
+  `/auth/login` exactly like scrolling invoices — 172,800 guesses a day from one
+  address at 120/min. Auth paths now draw on a separate small bucket, checked
+  *before* the request so a caller over the limit never reaches the hasher, and
+  charged **on failure only**. The second half is the one worth remembering:
+  a limiter that counted successes would throttle a paying customer out of
+  their own account, so there is a test for exactly that.
+
+Both fixes are half-measures in the same specific way, and the file says so:
+per-account lockout needs a record of failed sign-ins that nothing writes
+(T-12). An IP bucket does not stop one guess per account across many addresses.
+
+*What did not change:* the good news from the same audit, recorded because it
+is evidence rather than reassurance — **Argon2id**, not bcrypt; JWT decode pins
+`algorithms=[HS256]`, closing algorithm confusion; CORS defaults to a named
+origin with an explicit guard against `*`; and zero raw SQL, so injection is
+closed by the shape of the code rather than by anyone remembering to escape.

@@ -2944,6 +2944,8 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
     </table>
   </div>
 
+  <div class="note"><p><strong>The queue lives in <code>docs/TICKETS.md</code>.</strong> This document says what is true; the queue says what to do about it, in order, with the assertion that closes each item. They are deliberately separate files: a state document that also holds a to-do list stops being trustworthy as either, and the queue has to be editable by someone who is not editing the architecture.</p></div>
+
   <h3>The order, if money were spent tomorrow</h3>
   <ol>
     <li><strong>DevOps &mdash; bought, not hired.</strong> Nine open rows, and most of PROD-01 to PROD-04 are managed services costing tens of euros a month. Highest risk removed per euro, by a wide margin.</li>

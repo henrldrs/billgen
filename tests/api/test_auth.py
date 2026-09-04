@@ -92,6 +92,43 @@ async def test_unknown_email_401_same_shape_as_wrong_password(client):
     assert response.status_code == 401
 
 
+async def test_unknown_email_costs_the_same_as_a_wrong_password(client, monkeypatch):
+    """SEC-19. The reply shape was always identical; the *timing* was not.
+
+    `verify_password` used to run only when a user row was found, so an unknown
+    address answered in about a millisecond and a known one took the full
+    Argon2id verify — roughly a thousandfold difference, measurable from
+    anywhere, turning login into a "is this person a customer" oracle.
+
+    Asserted by observing the deliberate spend rather than by timing the call,
+    because a wall-clock assertion on a shared CI runner is a flake generator.
+    The measurement that justified the fix lives in the commit message.
+    """
+    from api.security import auth_service
+
+    spent = []
+    monkeypatch.setattr(auth_service, "waste_time", lambda: spent.append(1))
+
+    assert (
+        await client.post(
+            "/auth/login",
+            json={"email": "ghost@example.com", "password": "whatever-pass"},
+        )
+    ).status_code == 401
+    assert spent == [1], "unknown address must still pay for a verification"
+
+    #  And the real path must not pay twice: a found user verifies for real.
+    spent.clear()
+    await signup(client)
+    assert (
+        await client.post(
+            "/auth/login",
+            json={"email": "alice@example.com", "password": "wrong-password"},
+        )
+    ).status_code == 401
+    assert spent == [], "a found user is verified for real, not with the dummy"
+
+
 async def test_refresh_rotation(client):
     payload = await signup(client)
     old_refresh = payload["tokens"]["refresh_token"]
@@ -106,9 +143,7 @@ async def test_refresh_rotation(client):
     assert replay.status_code == 401
 
     # the rotated one works
-    second = await client.post(
-        "/auth/refresh", json={"refresh_token": new_tokens["refresh_token"]}
-    )
+    second = await client.post("/auth/refresh", json={"refresh_token": new_tokens["refresh_token"]})
     assert second.status_code == 200
 
 
@@ -187,3 +222,45 @@ async def test_an_unsupported_language_is_refused(client):
     headers = bearer(await signup(client))
     response = await client.patch("/users/me", headers=headers, json={"language": "de"})
     assert response.status_code == 422
+
+
+async def test_repeated_failed_logins_are_throttled_before_correct_ones(client):
+    """SEC-20. The auth budget is separate from the browsing budget, and it is
+    charged on failure only.
+
+    A single global per-IP limit rated /auth/login exactly like scrolling a
+    list — at 120/min that is 172,800 guesses a day from one address. The
+    separate bucket is small; the important half of the assertion is the
+    second one, that a *correct* sign-in never pays into it, because a limiter
+    that counts successes locks customers out of their own accounts.
+    """
+    await signup(client)
+
+    for _ in range(12):
+        await client.post(
+            "/auth/login",
+            json={"email": "alice@example.com", "password": "wrong-password"},
+        )
+
+    blocked = await client.post(
+        "/auth/login",
+        json={"email": "alice@example.com", "password": "correct-horse-battery"},
+    )
+    assert blocked.status_code == 429, "guessing must hit the auth bucket"
+
+
+async def test_successful_logins_never_pay_into_the_auth_bucket(client):
+    """The half of SEC-20 that protects the customer rather than the account.
+
+    The auth bucket is small — ten a minute — so if correct sign-ins were
+    charged to it, anyone with several devices or a flaky connection would
+    throttle themselves out of a product they are paying for. Fifteen correct
+    logins in a row must all succeed.
+    """
+    await signup(client)
+    for attempt in range(15):
+        response = await client.post(
+            "/auth/login",
+            json={"email": "alice@example.com", "password": "s3cret-pass"},
+        )
+        assert response.status_code == 200, f"a working password throttled on attempt {attempt + 1}"

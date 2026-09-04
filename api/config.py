@@ -30,6 +30,10 @@ class Settings(BaseSettings):
 
     # Requests per minute per client IP; 0 disables the limiter.
     rate_limit_per_minute: int = 120
+    #  Failed sign-ins per IP per minute (SEC-20). Deliberately small:
+    #  a person mistyping a password a few times stays under it, and an
+    #  attacker guessing meets it almost at once. Only failures count.
+    auth_failures_per_minute: int = 10
 
     # Desktop build: enables POST /auth/desktop-bootstrap (single local user).
     # MUST stay false for hosted SaaS — it mints an account with no credentials.
@@ -69,26 +73,18 @@ def validate_for_boot(settings: Settings) -> list[str]:
                 "a credential-less account and must never be hosted."
             )
         if "*" in settings.cors_origin_list:
-            warnings.append(
-                "CORS allows every origin ('*') in production — restrict CORS_ORIGINS."
-            )
+            warnings.append("CORS allows every origin ('*') in production — restrict CORS_ORIGINS.")
         dev_origins = [
             origin
             for origin in settings.cors_origin_list
             if "localhost" in origin or "127.0.0.1" in origin
         ]
         if dev_origins:
-            warnings.append(
-                f"CORS allows dev origins in production: {', '.join(dev_origins)}"
-            )
+            warnings.append(f"CORS allows dev origins in production: {', '.join(dev_origins)}")
         if settings.database_url.startswith("sqlite"):
-            warnings.append(
-                "SQLite on a production start — hosted SaaS should run Postgres."
-            )
+            warnings.append("SQLite on a production start — hosted SaaS should run Postgres.")
     elif settings.jwt_secret == _DEV_JWT_SECRET:
-        warnings.append(
-            "Running with the dev jwt_secret default — fine locally, never hosted."
-        )
+        warnings.append("Running with the dev jwt_secret default — fine locally, never hosted.")
 
     return warnings
 
