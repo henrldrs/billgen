@@ -54,11 +54,53 @@ def env():
             postal_code="2000",
             city="Antwerpen",
         )
-        client2 = Client(organization_id=org.id, company_id=company.id, name="Zeta Works")
+        # Filled in 2026-09-04, when issue() grew the legal completeness gate.
+        # It used to be a bare name, because nothing had ever required more of a
+        # client you send an invoice to — and two tests were issuing invoices to
+        # it, which the gate correctly refuses: an invoice with no customer
+        # address and no VAT number is not a VAT invoice. The fixtures were
+        # producing documents the law forbids, and only now is that visible.
+        client2 = Client(
+            organization_id=org.id,
+            company_id=company.id,
+            name="Zeta Works",
+            vat_number="BE0999999922",  # mod-97 valid
+            address_line1="Havenlaan 12",
+            postal_code="9000",
+            city="Gent",
+        )
+        # The cross-border counterpart. Reverse charge and intra-Community
+        # supply are only lawful towards a VAT-identified business in ANOTHER
+        # member state, so every test of those categories needs a client like
+        # this one — the Belgian default cannot stand in for it.
+        client_nl = Client(
+            organization_id=org.id,
+            company_id=company.id,
+            name="Van Dijk Holding BV",
+            vat_number="NL123456789B01",
+            address_line1="Keizersgracht 100",
+            postal_code="1015 CS",
+            city="Amsterdam",
+            country_code="NL",
+        )
+        # A private individual: no VAT number and no obligation to have one.
+        # Distinct from "a business whose VAT number is missing", which is a
+        # blocking finding — `is_business` is what separates the two.
+        client_b2c = Client(
+            organization_id=org.id,
+            company_id=company.id,
+            name="Walk-in",
+            address_line1="Somewhere 1",
+            postal_code="1000",
+            city="Bruxelles",
+            is_business=False,
+        )
         with uow_factory() as uow:
             uow.companies.add(company)
             uow.clients.add(client)
             uow.clients.add(client2)
+            uow.clients.add(client_nl)
+            uow.clients.add(client_b2c)
             uow.commit()
 
         yield SimpleNamespace(
@@ -67,6 +109,8 @@ def env():
             company=company,
             client=client,
             client2=client2,
+            client_nl=client_nl,
+            client_b2c=client_b2c,
         )
 
     dispose_test_engine(engine)

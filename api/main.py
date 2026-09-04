@@ -10,7 +10,12 @@ from pydantic import ValidationError
 from sqlalchemy.engine import Engine
 
 from core.pdf import PdfEngineUnavailableError
-from core.services import BusinessRuleError, NotFoundError, PeppolValidationError
+from core.services import (
+    BusinessRuleError,
+    InvoiceComplianceError,
+    NotFoundError,
+    PeppolValidationError,
+)
 from core.tenancy import TenantContextError, TenantViolationError
 from db.engine import make_engine
 from db.repositories import SqlAlchemyUnitOfWork
@@ -67,6 +72,28 @@ def _register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(NotFoundError)
     async def not_found_handler(request: Request, exc: NotFoundError):  # noqa: ANN202
         return JSONResponse(status_code=404, content={"detail": str(exc)})
+
+    @app.exception_handler(InvoiceComplianceError)
+    async def invoice_compliance_handler(request: Request, exc: InvoiceComplianceError):  # noqa: ANN202
+        # Declared before the Peppol handler because it is the narrower type of
+        # the two only by accident of the class tree — both extend
+        # BusinessRuleError, and FastAPI resolves the most specific registered
+        # class, so order does not decide it. Kept adjacent because a reader
+        # comparing the two payloads should not have to hunt.
+        return JSONResponse(
+            status_code=422,
+            content={
+                "detail": "Invoice is not legally complete",
+                "errors": [
+                    {
+                        "field": f.field,
+                        "message_key": f.message_key,
+                        "legal_basis": f.legal_basis,
+                    }
+                    for f in exc.findings
+                ],
+            },
+        )
 
     @app.exception_handler(PeppolValidationError)
     async def peppol_validation_handler(request: Request, exc: PeppolValidationError):  # noqa: ANN202

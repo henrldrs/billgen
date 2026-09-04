@@ -236,7 +236,7 @@
           "desktop"
         ],
         "summary": "Set Desktop Plan Tier",
-        "description": "Move the local dev organization onto a tier, so the entitlement layer can\nbe exercised without a checkout provider.\n\n404 unless desktop_mode, exactly like the bootstrap above: a hosted\ndeployment must not expose a way to grant itself a plan. That is the whole\nsecurity argument for this endpoint, and it is the same one that lets the\nbootstrap mint a session.\n\n**It deletes any SubscriptionRow.** `resolve_tier` prefers an active\nsubscription over `Organization.plan_tier`, so writing the column alone\nwould appear to do nothing the moment a subscription exists \u2014 the switch\nwould silently not work and the next person would go looking in the wrong\nplace. Checkout is the deferred half of B4 and nothing writes that row yet;\nwhen something does, this stays honest by clearing it.",
+        "description": "Move the local dev organization onto a tier, so the entitlement layer can\nbe exercised without a checkout provider.\n\n404 unless desktop_mode, exactly like the bootstrap above: a hosted\ndeployment must not expose a way to grant itself a plan. That is the whole\nsecurity argument for this endpoint, and it is the same one that lets the\nbootstrap mint a session.\n\n**It deletes any SubscriptionRow.** `resolve_tier` prefers an active\nsubscription over `Organization.plan_tier`, so writing the column alone\nwould appear to do nothing the moment a subscription exists — the switch\nwould silently not work and the next person would go looking in the wrong\nplace. Checkout is the deferred half of B4 and nothing writes that row yet;\nwhen something does, this stays honest by clearing it.",
         "operationId": "set_desktop_plan_tier_desktop_plan_tier_post",
         "requestBody": {
           "content": {
@@ -297,7 +297,7 @@
           "users"
         ],
         "summary": "Update Me",
-        "description": "Edit your own profile.\n\nNo permission is declared and none is right: this is a person changing their\nown display name, which every role including `viewer` may do. The identity\nit acts on comes from the token, not the request body, so there is nothing\nhere to authorize *against* \u2014 a user cannot address anyone else's profile.",
+        "description": "Edit your own profile.\n\nNo permission is declared and none is right: this is a person changing their\nown display name, which every role including `viewer` may do. The identity\nit acts on comes from the token, not the request body, so there is nothing\nhere to authorize *against* — a user cannot address anyone else's profile.",
         "operationId": "update_me_users_me_patch",
         "requestBody": {
           "content": {
@@ -339,7 +339,7 @@
           "users"
         ],
         "summary": "My Sessions",
-        "description": "Live sign-ins for the caller.\n\nRefresh tokens rotate, so this lists only what is still valid \u2014 the whole\ntable would show every refresh the browser has ever performed and read as a\nsecurity incident rather than a session list.",
+        "description": "Live sign-ins for the caller.\n\nRefresh tokens rotate, so this lists only what is still valid — the whole\ntable would show every refresh the browser has ever performed and read as a\nsecurity incident rather than a session list.",
         "operationId": "my_sessions_users_me_sessions_get",
         "responses": {
           "200": {
@@ -402,7 +402,7 @@
           "users"
         ],
         "summary": "Change My Password",
-        "description": "Change your own password, proving the current one first.\n\nEvery other session is revoked on success \u2014 someone changing a password\nbecause they believe it was seen needs the sessions it opened closed, and\nleaving them alive makes the change cosmetic. The caller's own refresh token\ngoes with them, so the client must sign in again.",
+        "description": "Change your own password, proving the current one first.\n\nEvery other session is revoked on success — someone changing a password\nbecause they believe it was seen needs the sessions it opened closed, and\nleaving them alive makes the change cosmetic. The caller's own refresh token\ngoes with them, so the client must sign in again.",
         "operationId": "change_my_password_users_me_password_post",
         "requestBody": {
           "content": {
@@ -484,7 +484,7 @@
           "organizations"
         ],
         "summary": "Set Member Role",
-        "description": "Change what one member may do.\n\nGuarded by `company.write` \u2014 an admin permission \u2014 because a role decides\nwhat someone may do to the organization's records, which is the same class\nof act as editing the legal entity.\n\nRefuses to change your own role. Not paternalism: the last owner demoting\nthemselves leaves an organization nobody can administer, and the check that\nwould allow it safely (is there another owner?) is one nobody remembers to\nwrite. Ask another owner.",
+        "description": "Change what one member may do.\n\nGuarded by `company.write` — an admin permission — because a role decides\nwhat someone may do to the organization's records, which is the same class\nof act as editing the legal entity.\n\nRefuses to change your own role. Not paternalism: the last owner demoting\nthemselves leaves an organization nobody can administer, and the check that\nwould allow it safely (is there another owner?) is one nobody remembers to\nwrite. Ask another owner.",
         "operationId": "set_member_role_orgs_current_members__user_id__patch",
         "parameters": [
           {
@@ -696,7 +696,7 @@
           "companies"
         ],
         "summary": "Validate Company",
-        "description": "Per-field verdict on this company's own identifiers (VAT mod-97, IBAN\nISO 13616, BIC ISO 9362) plus what is still missing before it could act as a\nPeppol supplier.\n\n`core/rules/identifiers.py` has been able to answer this since the Peppol\nport; nothing ever offered it to a settings form, so a VAT typo was only\ndiscovered at export time. Supplier side only \u2014 see\n`CompanyValidationResponse`.",
+        "description": "Per-field verdict on this company's own identifiers (VAT mod-97, IBAN\nISO 13616, BIC ISO 9362) plus what is still missing before it could act as a\nPeppol supplier.\n\n`core/rules/identifiers.py` has been able to answer this since the Peppol\nport; nothing ever offered it to a settings form, so a VAT typo was only\ndiscovered at export time. Supplier side only — see\n`CompanyValidationResponse`.",
         "operationId": "validate_company_companies__company_id__validation_get",
         "parameters": [
           {
@@ -1415,7 +1415,7 @@
           "invoices"
         ],
         "summary": "Create Invoice",
-        "description": "Create a DRAFT invoice \u2014 no number is consumed. Finalize it with\nPOST /invoices/{id}/issue.\n\nThe monthly invoice allowance is consumed **here**, at creation, not at\nissue. Issuing is the legally load-bearing act and must never be the step\nthat fails for a commercial reason: a Belgian sole trader who has drafted an\ninvoice has to be able to finalize it.",
+        "description": "Create a DRAFT invoice — no number is consumed. Finalize it with\nPOST /invoices/{id}/issue.\n\nThe monthly invoice allowance is consumed **here**, at creation, not at\nissue. Issuing is the legally load-bearing act and must never be the step\nthat fails for a commercial reason: a Belgian sole trader who has drafted an\ninvoice has to be able to finalize it.",
         "operationId": "create_invoice_invoices_post",
         "requestBody": {
           "required": true,
@@ -1603,7 +1603,7 @@
           "invoices"
         ],
         "summary": "Duplicate Invoice",
-        "description": "Copy an invoice into a new DRAFT dated today. No number is consumed and\nnothing on the source changes \u2014 including an issued or voided source, which\nis the common case (re-billing last month's work).",
+        "description": "Copy an invoice into a new DRAFT dated today. No number is consumed and\nnothing on the source changes — including an issued or voided source, which\nis the common case (re-billing last month's work).",
         "operationId": "duplicate_invoice_invoices__invoice_id__duplicate_post",
         "parameters": [
           {
@@ -1702,6 +1702,50 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InvoiceResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/{invoice_id}/compliance": {
+      "get": {
+        "tags": [
+          "invoices"
+        ],
+        "summary": "Invoice Compliance",
+        "description": "Is this a valid Belgian VAT invoice, and may it be issued?\n\nThe same verdict `POST /{id}/issue` refuses on, offered read-only so a\ncomposer can show it before the button rather than after the 422. Answering\nit twice is the point: issuing is irreversible, and a person should be able\nto see what is missing while the document can still be edited.\n\nUnauthenticated writes are impossible anyway, and this reads nothing a `GET\n/invoices/{id}` does not already return — so it carries no permission of its\nown, exactly like the invoice read beside it.",
+        "operationId": "invoice_compliance_invoices__invoice_id__compliance_get",
+        "parameters": [
+          {
+            "name": "invoice_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Invoice Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceComplianceResponse"
                 }
               }
             }
@@ -1892,7 +1936,7 @@
           "invoices"
         ],
         "summary": "Invoice Peppol",
-        "description": "Peppol BIS 3.0 XML. Every tier can do this \u2014 Peppol is the Belgian\ndifferentiator, not an upsell \u2014 but the monthly *document* allowance\napplies: distinct invoices exported this period, counted from the\nEXPORT_PEPPOL audit entries. Re-downloading an invoice already exported\nthis period is free, even at the cap.",
+        "description": "Peppol BIS 3.0 XML. Every tier can do this — Peppol is the Belgian\ndifferentiator, not an upsell — but the monthly *document* allowance\napplies: distinct invoices exported this period, counted from the\nEXPORT_PEPPOL audit entries. Re-downloading an invoice already exported\nthis period is free, even at the cap.",
         "operationId": "invoice_peppol_invoices__invoice_id__peppol_xml_get",
         "parameters": [
           {
@@ -1974,7 +2018,7 @@
           "quotes"
         ],
         "summary": "List Quotes",
-        "description": "`status` filters on the *stored* status. Expiry is derived, so filtering\non it would mean querying a value no column holds \u2014 read `effective_status`\noff each row instead.",
+        "description": "`status` filters on the *stored* status. Expiry is derived, so filtering\non it would mean querying a value no column holds — read `effective_status`\noff each row instead.",
         "operationId": "list_quotes_quotes_get",
         "parameters": [
           {
@@ -2174,7 +2218,7 @@
           "quotes"
         ],
         "summary": "Send Quote",
-        "description": "Record that the offer went out. Nothing is emailed \u2014 that waits on B1.\nWhat this buys today is a date, which is what \"you never replied to our\nquote of the 3rd\" is made of.",
+        "description": "Record that the offer went out. Nothing is emailed — that waits on B1.\nWhat this buys today is a date, which is what \"you never replied to our\nquote of the 3rd\" is made of.",
         "operationId": "send_quote_quotes__quote_id__send_post",
         "parameters": [
           {
@@ -2218,7 +2262,7 @@
           "quotes"
         ],
         "summary": "Accept Quote",
-        "description": "The customer said yes. Still no invoice \u2014 POST /quotes/{id}/convert.",
+        "description": "The customer said yes. Still no invoice — POST /quotes/{id}/convert.",
         "operationId": "accept_quote_quotes__quote_id__accept_post",
         "parameters": [
           {
@@ -2339,7 +2383,7 @@
           "quotes"
         ],
         "summary": "Expire Quote",
-        "description": "Write the derived expiry down \u2014 closing out a pipeline by hand, and the\nonly way to expire an offer early.",
+        "description": "Write the derived expiry down — closing out a pipeline by hand, and the\nonly way to expire an offer early.",
         "operationId": "expire_quote_quotes__quote_id__expire_post",
         "parameters": [
           {
@@ -2383,7 +2427,7 @@
           "quotes"
         ],
         "summary": "Convert Quote",
-        "description": "Turn an accepted quote into a DRAFT invoice, once.\n\nRequires `invoice.write`, not `quote.write`: this creates an invoice, and\nthe permission has to match what comes out rather than what went in.\n\nUnmetered, deliberately. The invoice allowance is consumed at draft\ncreation, which this performs \u2014 but refusing to convert a signed offer\nbecause a monthly counter is full would block the one thing the customer\nhas already agreed to pay for. The draft it produces is counted like any\nother the moment the next one is created.",
+        "description": "Turn an accepted quote into a DRAFT invoice, once.\n\nRequires `invoice.write`, not `quote.write`: this creates an invoice, and\nthe permission has to match what comes out rather than what went in.\n\nUnmetered, deliberately. The invoice allowance is consumed at draft\ncreation, which this performs — but refusing to convert a signed offer\nbecause a monthly counter is full would block the one thing the customer\nhas already agreed to pay for. The draft it produces is counted like any\nother the moment the next one is created.",
         "operationId": "convert_quote_quotes__quote_id__convert_post",
         "parameters": [
           {
@@ -2866,7 +2910,7 @@
           "reference"
         ],
         "summary": "Vat Treatment",
-        "description": "Which VAT category this seller/buyer pair implies, and the mention it needs.\n\n`core.rules.vat.pick_category` has existed since the domain was written and\nno route called it, so every invoice line shipped `category: \"S\"` \u2014 correct\nfor a Belgian seller billing a Belgian customer, and wrong for the two cases\nthat make the rule worth having: intra-EU B2B, which is reverse-charged and\ncarries a mandatory Article 51 \u00a72 mention, and export outside the EU.\n\nAdvisory on purpose. This does not overwrite what the composer sends: the\ncaller knows things the data does not (a client flagged as a business that\nis buying privately, an exemption that turns on the service). Defaulting is\nthe job; deciding is not.",
+        "description": "Which VAT category this seller/buyer pair implies, and the mention it needs.\n\n`core.rules.vat.pick_category` has existed since the domain was written and\nno route called it, so every invoice line shipped `category: \"S\"` — correct\nfor a Belgian seller billing a Belgian customer, and wrong for the two cases\nthat make the rule worth having: intra-EU B2B, which is reverse-charged and\ncarries a mandatory Article 51 §2 mention, and export outside the EU.\n\nAdvisory on purpose. This does not overwrite what the composer sends: the\ncaller knows things the data does not (a client flagged as a business that\nis buying privately, an exemption that turns on the service). Defaulting is\nthe job; deciding is not.",
         "operationId": "vat_treatment_vat_treatment_get",
         "parameters": [
           {
@@ -2936,7 +2980,7 @@
           "reference"
         ],
         "summary": "Sequences",
-        "description": "Where each numbering series currently stands.\n\nRead-only, and deliberately so: `next_value` allocates inside the\ntransaction that consumes it (ADR-0001's gapless rule), so anything here\nthat could increment a counter would mint a hole in a legal series. This\nreads `snapshot`, which the backup path has used since ADR-0003.\n\nA series absent from the table has never been used, and is reported at zero\nrather than omitted \u2014 the numbering screen needs to show every series a\ncompany has, including the ones it has not started.",
+        "description": "Where each numbering series currently stands.\n\nRead-only, and deliberately so: `next_value` allocates inside the\ntransaction that consumes it (ADR-0001's gapless rule), so anything here\nthat could increment a counter would mint a hole in a legal series. This\nreads `snapshot`, which the backup path has used since ADR-0003.\n\nA series absent from the table has never been used, and is reported at zero\nrather than omitted — the numbering screen needs to show every series a\ncompany has, including the ones it has not started.",
         "operationId": "sequences_sequences_get",
         "parameters": [
           {
@@ -3135,7 +3179,7 @@
           "reports"
         ],
         "summary": "Vat",
-        "description": "`period` is a year (`2026`), a quarter (`2026-Q3`) or a month\n(`2026-07`). Output VAT only \u2014 see `VatReportResponse`.",
+        "description": "`period` is a year (`2026`), a quarter (`2026-Q3`) or a month\n(`2026-07`). Output VAT only — see `VatReportResponse`.",
         "operationId": "vat_reports_vat_get",
         "parameters": [
           {
@@ -3533,7 +3577,7 @@
           "search"
         ],
         "summary": "Search",
-        "description": "Find invoices, credit notes, clients and products matching `q`.\n\nA term shorter than two characters returns nothing rather than everything:\nthe palette fires on every keystroke, and one character matches most of any\ntable. That is an empty result, not a 422 \u2014 the user is still typing, and an\nerror for an unfinished word is noise.",
+        "description": "Find invoices, credit notes, clients and products matching `q`.\n\nA term shorter than two characters returns nothing rather than everything:\nthe palette fires on every keystroke, and one character matches most of any\ntable. That is an empty result, not a 422 — the user is still typing, and an\nerror for an unfinished word is noise.",
         "operationId": "search_search_get",
         "parameters": [
           {
@@ -3542,10 +3586,10 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "What to look for \u2014 a reference, a name, a VAT number",
+              "description": "What to look for — a reference, a name, a VAT number",
               "title": "Q"
             },
-            "description": "What to look for \u2014 a reference, a name, a VAT number"
+            "description": "What to look for — a reference, a name, a VAT number"
           },
           {
             "name": "limit",
@@ -3686,13 +3730,59 @@
         }
       }
     },
+    "/activity/security": {
+      "get": {
+        "tags": [
+          "activity"
+        ],
+        "summary": "List Security Events",
+        "description": "The security slice of the audit log, and what is not being watched.\n\nA filter over an existing table, not a new subsystem — which is why this is\nthe cheapest screen in L4. The `not_recorded` half is the part that matters:\nsign-in, sign-out and failed operations have no producer anywhere in the\nstack, so an organization with a quiet log is an organization nobody is\nlogging, and the screen has to be able to say that rather than render a\nreassuring empty table.",
+        "operationId": "list_security_events_activity_security_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityEventsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/alerts": {
       "get": {
         "tags": [
           "alerts"
         ],
         "summary": "List Alerts",
-        "description": "Overdue invoices, forgotten drafts, clients missing a VAT number, and the\ncompany's own identifiers \u2014 worst first.\n\n`today` is accepted so the answer can be asked for a given day rather than\nonly for now; without it the engine could not be tested at all.",
+        "description": "Overdue invoices, forgotten drafts, clients missing a VAT number, and the\ncompany's own identifiers — worst first.\n\n`today` is accepted so the answer can be asked for a given day rather than\nonly for now; without it the engine could not be tested at all.",
         "operationId": "list_alerts_alerts_get",
         "parameters": [
           {
@@ -3929,7 +4019,7 @@
           "expenses"
         ],
         "summary": "Import Expense",
-        "description": "Record one supplier document from extraction output.\n\nThe client supplies `extracted` because extraction is a vendor decision\nnobody has made (\u00a73 of the blueprint). Keeping that an explicit request\nfield leaves the seam visible; when an extractor ships inside the product it\nfills this in and the service does not change.",
+        "description": "Record one supplier document from extraction output.\n\nThe client supplies `extracted` because extraction is a vendor decision\nnobody has made (§3 of the blueprint). Keeping that an explicit request\nfield leaves the seam visible; when an extractor ships inside the product it\nfills this in and the service does not change.",
         "operationId": "import_expense_expenses_import_post",
         "requestBody": {
           "content": {
@@ -4242,7 +4332,7 @@
           "templates"
         ],
         "summary": "Update Template",
-        "description": "Edit the draft. Published versions are untouched \u2014 that is the point.",
+        "description": "Edit the draft. Published versions are untouched — that is the point.",
         "operationId": "update_template_templates__template_id__patch",
         "parameters": [
           {
@@ -4331,7 +4421,7 @@
           "templates"
         ],
         "summary": "Get Snapshot",
-        "description": "The published version an invoice would store if issued now.\n\n404s while the template has never been published, which is the honest answer\n\u2014 there is no version to attach, and inventing one from the draft is exactly\nthe mutable-layout failure the snapshot prevents.",
+        "description": "The published version an invoice would store if issued now.\n\n404s while the template has never been published, which is the honest answer\n— there is no version to attach, and inventing one from the draft is exactly\nthe mutable-layout failure the snapshot prevents.",
         "operationId": "get_snapshot_templates__template_id__snapshot_get",
         "parameters": [
           {
@@ -4486,7 +4576,7 @@
           "backup"
         ],
         "summary": "Restore Backup",
-        "description": "Disaster recovery: restore a backup into the current organization.\nRefuses (409) unless the organization has no companies yet \u2014 merging into\nlive data would break the gapless-numbering guarantee.",
+        "description": "Disaster recovery: restore a backup into the current organization.\nRefuses (409) unless the organization has no companies yet — merging into\nlive data would break the gapless-numbering guarantee.",
         "operationId": "restore_backup_backup_restore_post",
         "requestBody": {
           "content": {
@@ -4518,6 +4608,170 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/trust/legal/documents": {
+      "get": {
+        "tags": [
+          "trust"
+        ],
+        "summary": "List Legal Documents",
+        "description": "The seven documents, drafted or not.\n\nReturns the undrafted ones too, with `drafted: false`. Hiding them would\nmake the endpoint agree with the marketing site's footer and disagree with\nreality — the list of what is missing is the useful half right now.",
+        "operationId": "list_legal_documents_trust_legal_documents_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LegalDocumentResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Legal Documents Trust Legal Documents Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/trust/legal/documents/{key}": {
+      "get": {
+        "tags": [
+          "trust"
+        ],
+        "summary": "Get Legal Document",
+        "operationId": "get_legal_document_trust_legal_documents__key__get",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegalDocumentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/trust/subprocessors": {
+      "get": {
+        "tags": [
+          "trust"
+        ],
+        "summary": "List Subprocessors",
+        "description": "Every third party, live or planned.\n\n`in_use` separates the two. A planned subprocessor published as a current\none is a false statement in a document the DPA points at, so the flag\ntravels with the row rather than being decided by the caller.",
+        "operationId": "list_subprocessors_trust_subprocessors_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SubprocessorResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Subprocessors Trust Subprocessors Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/trust/privacy/register": {
+      "get": {
+        "tags": [
+          "trust"
+        ],
+        "summary": "Get Privacy Register",
+        "description": "The GDPR art. 30 register, as data rather than as a Word file.",
+        "operationId": "get_privacy_register_trust_privacy_register_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivacyRegisterResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/trust/consent/categories": {
+      "get": {
+        "tags": [
+          "trust"
+        ],
+        "summary": "List Consent Categories",
+        "description": "What a cookie banner would offer, and what actually runs in each row.\n\nThree of the four categories have an empty `in_use` today. That is the\nhonest state of the product and the reason no banner is shipped yet — not\na placeholder to be filled in with plausible-sounding trackers.",
+        "operationId": "list_consent_categories_trust_consent_categories_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ConsentCategoryResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Consent Categories Trust Consent Categories Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/trust/ai-transparency": {
+      "get": {
+        "tags": [
+          "trust"
+        ],
+        "summary": "Get Ai Transparency",
+        "description": "Which outputs are machine-made, and whether the marking duty is live.\n\n`obligation_live` lets one screen render a countdown before the date and an\nobligation after it. BillGen marks either way; the flag decides the wording,\nnot the marker.",
+        "operationId": "get_ai_transparency_trust_ai_transparency_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiTransparencyResponse"
                 }
               }
             }
@@ -4609,6 +4863,113 @@
           "timestamp"
         ],
         "title": "ActivityEntryResponse"
+      },
+      "AiSurfaceResponse": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "produces": {
+            "type": "string",
+            "title": "Produces"
+          },
+          "module": {
+            "type": "string",
+            "title": "Module"
+          },
+          "risk": {
+            "type": "string",
+            "title": "Risk"
+          },
+          "confidence_field": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence Field"
+          },
+          "human_confirms": {
+            "type": "boolean",
+            "title": "Human Confirms"
+          },
+          "requires_marking": {
+            "type": "boolean",
+            "title": "Requires Marking"
+          },
+          "crosses_annex_iii": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Crosses Annex Iii"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "produces",
+          "module",
+          "risk",
+          "confidence_field",
+          "human_confirms",
+          "requires_marking",
+          "crosses_annex_iii",
+          "note"
+        ],
+        "title": "AiSurfaceResponse"
+      },
+      "AiTransparencyResponse": {
+        "properties": {
+          "obligation_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Obligation Date"
+          },
+          "obligation_live": {
+            "type": "boolean",
+            "title": "Obligation Live"
+          },
+          "surfaces": {
+            "items": {
+              "$ref": "#/components/schemas/AiSurfaceResponse"
+            },
+            "type": "array",
+            "title": "Surfaces"
+          }
+        },
+        "type": "object",
+        "required": [
+          "obligation_date",
+          "obligation_live",
+          "surfaces"
+        ],
+        "title": "AiTransparencyResponse",
+        "description": "What must be marked as machine-generated, and from when."
       },
       "AlertResponse": {
         "properties": {
@@ -4960,7 +5321,7 @@
           "skipped_other_currency"
         ],
         "title": "ClientReportResponse",
-        "description": "Revenue and debt per client \u2014 see\n`core.services.reporting_service.ClientReport`. Clients with no invoices in\nthe period are absent rather than zeroed; `GET /clients` is the customer\nlist."
+        "description": "Revenue and debt per client — see\n`core.services.reporting_service.ClientReport`. Clients with no invoices in\nthe period are absent rather than zeroed; `GET /clients` is the customer\nlist."
       },
       "ClientResponse": {
         "properties": {
@@ -5282,7 +5643,7 @@
           "skipped_other_currency"
         ],
         "title": "ClientStatsResponse",
-        "description": "Client 360's header. `average_days_to_payment` covers fully-paid invoices\nonly \u2014 a partially paid one has no settlement date yet."
+        "description": "Client 360's header. `average_days_to_payment` covers fully-paid invoices\nonly — a partially paid one has no settlement date yet."
       },
       "ClientUpdateRequest": {
         "properties": {
@@ -5981,7 +6342,7 @@
         },
         "type": "object",
         "title": "CompanyUpdateRequest",
-        "description": "PATCH semantics: only provided fields change (B3).\n\n`organization_id` and `id` are immutable. `logo_key` is deliberately absent \u2014\nit is set by blob storage (B2), not by the client."
+        "description": "PATCH semantics: only provided fields change (B3).\n\n`organization_id` and `id` are immutable. `logo_key` is deliberately absent —\nit is set by blob storage (B2), not by the client."
       },
       "CompanyValidationResponse": {
         "properties": {
@@ -6022,7 +6383,43 @@
           "missing_for_peppol"
         ],
         "title": "CompanyValidationResponse",
-        "description": "Whether a company's own identifiers hold up, and whether it could act as\na Peppol supplier at all.\n\n`peppol_ready` is about the *supplier* half only: the customer half of the\ngate needs a client, and a B2C client fails it no matter how correct this\ncompany is. So a `peppol_ready: true` company can still be refused at export\ntime \u2014 this endpoint exists to fix typos in a settings form, not to promise\ndelivery."
+        "description": "Whether a company's own identifiers hold up, and whether it could act as\na Peppol supplier at all.\n\n`peppol_ready` is about the *supplier* half only: the customer half of the\ngate needs a client, and a B2C client fails it no matter how correct this\ncompany is. So a `peppol_ready: true` company can still be refused at export\ntime — this endpoint exists to fix typos in a settings form, not to promise\ndelivery."
+      },
+      "ComplianceFindingResponse": {
+        "properties": {
+          "field": {
+            "type": "string",
+            "title": "Field"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "message_key": {
+            "type": "string",
+            "title": "Message Key"
+          },
+          "legal_basis": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legal Basis"
+          }
+        },
+        "type": "object",
+        "required": [
+          "field",
+          "severity",
+          "message_key",
+          "legal_basis"
+        ],
+        "title": "ComplianceFindingResponse",
+        "description": "One mandatory mention that is missing, or one statement that contradicts\nanother.\n\n`field` addresses the record that has to change — `company.vat_number`,\n`client.address`, `line.2.vat` — so a screen can offer the fix rather than\nonly the complaint. `message_key` is stable; the wording is the frontend's.\n`legal_basis` is the citation, and is null for advisory findings, which have\nnone by definition."
       },
       "Confidence": {
         "type": "string",
@@ -6032,6 +6429,47 @@
           "low"
         ],
         "title": "Confidence"
+      },
+      "ConsentCategoryResponse": {
+        "properties": {
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "purpose": {
+            "type": "string",
+            "title": "Purpose"
+          },
+          "essential": {
+            "type": "boolean",
+            "title": "Essential"
+          },
+          "default_on": {
+            "type": "boolean",
+            "title": "Default On"
+          },
+          "in_use": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "In Use"
+          }
+        },
+        "type": "object",
+        "required": [
+          "category",
+          "label",
+          "purpose",
+          "essential",
+          "default_on",
+          "in_use"
+        ],
+        "title": "ConsentCategoryResponse"
       },
       "CreditNoteIssueRequest": {
         "properties": {
@@ -6225,6 +6663,86 @@
         ],
         "title": "Currency"
       },
+      "DataSetResponse": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "subject": {
+            "type": "string",
+            "title": "Subject"
+          },
+          "fields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Fields"
+          },
+          "purpose": {
+            "type": "string",
+            "title": "Purpose"
+          },
+          "basis": {
+            "type": "string",
+            "title": "Basis"
+          },
+          "retention": {
+            "type": "string",
+            "title": "Retention"
+          },
+          "exportable": {
+            "type": "boolean",
+            "title": "Exportable"
+          },
+          "erasure": {
+            "type": "string",
+            "title": "Erasure"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "subject",
+          "fields",
+          "purpose",
+          "basis",
+          "retention",
+          "exportable",
+          "erasure",
+          "source",
+          "note"
+        ],
+        "title": "DataSetResponse"
+      },
       "DevTierRequest": {
         "properties": {
           "plan_tier": {
@@ -6350,7 +6868,7 @@
           "status"
         ],
         "title": "DocumentCheck",
-        "description": "One validation result (\u00a74).\n\n`code` and `context` only \u2014 the sentence shown to the user is the\nfrontend's, exactly as `GET /alerts` already does it. A server that ships\nprose ships it in one language."
+        "description": "One validation result (§4).\n\n`code` and `context` only — the sentence shown to the user is the\nfrontend's, exactly as `GET /alerts` already does it. A server that ships\nprose ships it in one language."
       },
       "EntitlementsResponse": {
         "properties": {
@@ -6397,7 +6915,7 @@
           "usage"
         ],
         "title": "EntitlementsResponse",
-        "description": "Everything the UI needs to render itself correctly for this plan.\n\nThe frontend uses this to hide or badge what the plan does not include. It\nis **not** the enforcement point \u2014 every gated endpoint re-checks\nserver-side and answers 402. A hidden button is UX; a refused request is\nthe rule."
+        "description": "Everything the UI needs to render itself correctly for this plan.\n\nThe frontend uses this to hide or badge what the plan does not include. It\nis **not** the enforcement point — every gated endpoint re-checks\nserver-side and answers 402. A hidden button is UX; a refused request is\nthe rule."
       },
       "ExpenseImportRequest": {
         "properties": {
@@ -6719,7 +7237,7 @@
         "additionalProperties": false,
         "type": "object",
         "title": "ExtractedFields",
-        "description": "What extraction (\u00a73) believes it read off the document.\n\nEvery field is optional. A scan that yielded a supplier and nothing else is\na real outcome, and the record has to be able to hold it \u2014 an extractor\nthat must produce a total will invent one."
+        "description": "What extraction (§3) believes it read off the document.\n\nEvery field is optional. A scan that yielded a supplier and nothing else is\na real outcome, and the record has to be able to hold it — an extractor\nthat must produce a total will invent one."
       },
       "ExtractedFields-Output": {
         "properties": {
@@ -6853,7 +7371,7 @@
         "additionalProperties": false,
         "type": "object",
         "title": "ExtractedFields",
-        "description": "What extraction (\u00a73) believes it read off the document.\n\nEvery field is optional. A scan that yielded a supplier and nothing else is\na real outcome, and the record has to be able to hold it \u2014 an extractor\nthat must produce a total will invent one."
+        "description": "What extraction (§3) believes it read off the document.\n\nEvery field is optional. A scan that yielded a supplier and nothing else is\na real outcome, and the record has to be able to hold it — an extractor\nthat must produce a total will invent one."
       },
       "HTTPValidationError": {
         "properties": {
@@ -7004,6 +7522,44 @@
           "issues"
         ],
         "title": "ImportReportResponse"
+      },
+      "InvoiceComplianceResponse": {
+        "properties": {
+          "invoice_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Invoice Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "conforming": {
+            "type": "boolean",
+            "title": "Conforming"
+          },
+          "issuable": {
+            "type": "boolean",
+            "title": "Issuable"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/ComplianceFindingResponse"
+            },
+            "type": "array",
+            "title": "Findings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "invoice_id",
+          "status",
+          "conforming",
+          "issuable",
+          "findings"
+        ],
+        "title": "InvoiceComplianceResponse",
+        "description": "Whether this invoice is a valid Belgian VAT invoice, and may be issued.\n\n`conforming` is about the document: no blocking finding, so every mandatory\nmention is present and nothing on it contradicts itself. `issuable` adds the\nstate machine — an already-issued invoice is conforming and not issuable,\nand the two must stay separate or a screen cannot tell \"fix this\" from\n\"this is already done\".\n\nAdvisory findings are returned alongside the blocking ones and never affect\neither boolean."
       },
       "InvoiceCreateRequest": {
         "properties": {
@@ -7714,6 +8270,89 @@
         ],
         "title": "KpiResponse"
       },
+      "LegalDocumentResponse": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "ia_path": {
+            "type": "string",
+            "title": "Ia Path"
+          },
+          "audience": {
+            "type": "string",
+            "title": "Audience"
+          },
+          "requires_acceptance": {
+            "type": "boolean",
+            "title": "Requires Acceptance"
+          },
+          "drafted": {
+            "type": "boolean",
+            "title": "Drafted"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          },
+          "effective_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective Date"
+          },
+          "blocks": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Blocks"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "title",
+          "ia_path",
+          "audience",
+          "requires_acceptance",
+          "drafted",
+          "version",
+          "effective_date",
+          "blocks",
+          "note"
+        ],
+        "title": "LegalDocumentResponse"
+      },
       "LoginRequest": {
         "properties": {
           "email": {
@@ -7927,7 +8566,7 @@
           "exhausted"
         ],
         "title": "MeterUsageResponse",
-        "description": "One allowance and how much of it is spent.\n\n`limit: null` means unlimited. `period` is set only for the meters that\nreset monthly (invoices, Peppol documents); the standing totals \u2014 clients,\nproducts, companies, seats \u2014 carry `null`."
+        "description": "One allowance and how much of it is spent.\n\n`limit: null` means unlimited. `period` is set only for the meters that\nreset monthly (invoices, Peppol documents); the standing totals — clients,\nproducts, companies, seats — carry `null`."
       },
       "MethodBucketResponse": {
         "properties": {
@@ -8210,7 +8849,7 @@
           "skipped_other_currency"
         ],
         "title": "PaymentReportResponse",
-        "description": "Cash in over a period, split by method \u2014 see\n`core.services.reporting_service.PaymentReport`.\n\n`period` filters on the day the money arrived, not on the invoice it\nsettles, so this and the invoice report legitimately disagree across a\nquarter boundary."
+        "description": "Cash in over a period, split by method — see\n`core.services.reporting_service.PaymentReport`.\n\n`period` filters on the day the money arrived, not on the invoice it\nsettles, so this and the invoice report legitimately disagree across a\nquarter boundary."
       },
       "PaymentResponse": {
         "properties": {
@@ -8349,6 +8988,39 @@
         ],
         "title": "PlansResponse",
         "description": "The whole commercial matrix, so a pricing or upgrade screen renders from\nthe server's table instead of a second copy maintained in TypeScript."
+      },
+      "PrivacyRegisterResponse": {
+        "properties": {
+          "datasets": {
+            "items": {
+              "$ref": "#/components/schemas/DataSetResponse"
+            },
+            "type": "array",
+            "title": "Datasets"
+          },
+          "retained_on_erasure": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Retained On Erasure"
+          },
+          "subprocessors": {
+            "items": {
+              "$ref": "#/components/schemas/SubprocessorResponse"
+            },
+            "type": "array",
+            "title": "Subprocessors"
+          }
+        },
+        "type": "object",
+        "required": [
+          "datasets",
+          "retained_on_erasure",
+          "subprocessors"
+        ],
+        "title": "PrivacyRegisterResponse",
+        "description": "The art. 30 register, plus the two lists a privacy screen has to show.\n\n`retained_on_erasure` is not a convenience — it is the list a deletion\ndialog is obliged to display, because \"delete everything\" is false while\nseven years of invoices are legally frozen."
       },
       "ProductCreateRequest": {
         "properties": {
@@ -8536,7 +9208,7 @@
           "skipped_other_currency"
         ],
         "title": "ProductReportResponse",
-        "description": "Volume and mix by invoice line \u2014 see\n`core.services.reporting_service.ProductReport`. Amounts are line net HT and\ncarry no share of any invoice-level discount, so this legitimately sums\nhigher than the net revenue in /reports/invoices."
+        "description": "Volume and mix by invoice line — see\n`core.services.reporting_service.ProductReport`. Amounts are line net HT and\ncarry no share of any invoice-level discount, so this legitimately sums\nhigher than the net revenue in /reports/invoices."
       },
       "ProductResponse": {
         "properties": {
@@ -8878,7 +9550,7 @@
           "invoice_status"
         ],
         "title": "QuoteConvertResponse",
-        "description": "What conversion produced: the closed quote, and a DRAFT invoice.\n\nA draft, not an invoice \u2014 the gapless number is still consumed by\nPOST /invoices/{id}/issue and nowhere else."
+        "description": "What conversion produced: the closed quote, and a DRAFT invoice.\n\nA draft, not an invoice — the gapless number is still consumed by\nPOST /invoices/{id}/issue and nowhere else."
       },
       "QuoteCreateRequest": {
         "properties": {
@@ -9207,7 +9879,7 @@
           "review_required"
         ],
         "title": "RecoveryTreatment",
-        "description": "\u00a75. `REVIEW_REQUIRED` is not a fifth colour \u2014 it is the absence of a\nconclusion, and it must never be silently rendered as a deduction."
+        "description": "§5. `REVIEW_REQUIRED` is not a fifth colour — it is the absence of a\nconclusion, and it must never be silently rendered as a deduction."
       },
       "RefreshRequest": {
         "properties": {
@@ -9422,6 +10094,58 @@
         ],
         "title": "SearchResponse"
       },
+      "SecurityEventResponse": {
+        "properties": {
+          "entry": {
+            "$ref": "#/components/schemas/ActivityEntryResponse"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entry",
+          "kind",
+          "severity",
+          "label"
+        ],
+        "title": "SecurityEventResponse"
+      },
+      "SecurityEventsResponse": {
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/SecurityEventResponse"
+            },
+            "type": "array",
+            "title": "Events"
+          },
+          "not_recorded": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Not Recorded"
+          }
+        },
+        "type": "object",
+        "required": [
+          "events",
+          "not_recorded"
+        ],
+        "title": "SecurityEventsResponse",
+        "description": "Events, and the blind spots — deliberately in the same payload.\n\nA list on its own would let the screen render an empty table as calm.\n`not_recorded` names the actions nothing writes yet (sign-in, sign-out,\nfailures), so the absence of events is displayed as missing instrumentation\nrather than as a clean bill of health."
+      },
       "SequenceEntry": {
         "properties": {
           "scope": {
@@ -9498,7 +10222,7 @@
           "expires_at"
         ],
         "title": "SessionResponse",
-        "description": "One live sign-in.\n\nDeliberately without device, browser or location. `audit_log` has columns\nfor IP and user agent and nothing writes them, so a \"Chrome on Windows,\nBrussels\" line here would be invented rather than reported \u2014 and the privacy\ninventory says that data is not collected."
+        "description": "One live sign-in.\n\nDeliberately without device, browser or location. `audit_log` has columns\nfor IP and user agent and nothing writes them, so a \"Chrome on Windows,\nBrussels\" line here would be invented rather than reported — and the privacy\ninventory says that data is not collected."
       },
       "SignupRequest": {
         "properties": {
@@ -9600,6 +10324,34 @@
         ],
         "title": "StatusBucketResponse"
       },
+      "SubprocessorResponse": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "purpose": {
+            "type": "string",
+            "title": "Purpose"
+          },
+          "location": {
+            "type": "string",
+            "title": "Location"
+          },
+          "in_use": {
+            "type": "boolean",
+            "title": "In Use"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "purpose",
+          "location",
+          "in_use"
+        ],
+        "title": "SubprocessorResponse"
+      },
       "TemplateAppearance": {
         "properties": {
           "brand_color": {
@@ -9662,7 +10414,7 @@
         "additionalProperties": false,
         "type": "object",
         "title": "TemplateAppearance",
-        "description": "One brand colour, and token names for everything else.\n\nThis started life refusing colour outright. That was right for the app's\nchrome and wrong for a *document*: an invoice is the customer's own\nstationery, and a company that cannot put its colour on it will not use the\nstudio. What survives from the original decision is the shape, which is the\npart that mattered \u2014 **one** colour in **one** field, not a hex per block,\nwhich is how a template becomes unreadable and impossible to re-skin."
+        "description": "One brand colour, and token names for everything else.\n\nThis started life refusing colour outright. That was right for the app's\nchrome and wrong for a *document*: an invoice is the customer's own\nstationery, and a company that cannot put its colour on it will not use the\nstudio. What survives from the original decision is the shape, which is the\npart that mattered — **one** colour in **one** field, not a hex per block,\nwhich is how a template becomes unreadable and impossible to re-skin."
       },
       "TemplateBlock": {
         "properties": {
@@ -9873,7 +10625,7 @@
           "appearance"
         ],
         "title": "TemplateSnapshotResponse",
-        "description": "What an issued invoice stores, by value.\n\n`template_id` is present so a screen can say where a document's layout came\nfrom \u2014 it is *not* what the renderer resolves. Resolving the id would give\nwhatever the template says today, which is the failure the snapshot exists\nto prevent."
+        "description": "What an issued invoice stores, by value.\n\n`template_id` is present so a screen can say where a document's layout came\nfrom — it is *not* what the renderer resolves. Resolving the id would give\nwhatever the template says today, which is the failure the snapshot exists\nto prevent."
       },
       "TemplateUpdateRequest": {
         "properties": {
@@ -9917,7 +10669,7 @@
         },
         "type": "object",
         "title": "TemplateUpdateRequest",
-        "description": "Every field optional \u2014 this edits the draft, and a studio that autosaves\none panel should not have to send the other three back."
+        "description": "Every field optional — this edits the draft, and a studio that autosaves\none panel should not have to send the other three back."
       },
       "TierQuotaResponse": {
         "properties": {
@@ -10282,7 +11034,7 @@
           "breakdown"
         ],
         "title": "TvaPositionResponse",
-        "description": "The period position.\n\n`confirmed_recoverable` and `potential_recoverable` are separate fields and\nthere is no combined total \u2014 the blueprint's locked decision, enforced here\nby the absence of the field rather than by a note. `estimated_payable` uses\nonly the confirmed half."
+        "description": "The period position.\n\n`confirmed_recoverable` and `potential_recoverable` are separate fields and\nthere is no combined total — the blueprint's locked decision, enforced here\nby the absence of the field rather than by a note. `estimated_payable` uses\nonly the confirmed half."
       },
       "UserMeResponse": {
         "properties": {
@@ -10368,7 +11120,7 @@
         },
         "type": "object",
         "title": "UserUpdateRequest",
-        "description": "A user editing their own profile.\n\nDisplay name only. Changing an email address is an identity change, not a\nprofile edit \u2014 the new address has to be verified before it becomes the\nlogin, and verification needs email transport the product does not have\n(blocker B1). Accepting it here would let someone lock themselves out of\ntheir own account with a typo."
+        "description": "A user editing their own profile.\n\nDisplay name only. Changing an email address is an identity change, not a\nprofile edit — the new address has to be verified before it becomes the\nlogin, and verification needs email transport the product does not have\n(blocker B1). Accepting it here would let someone lock themselves out of\ntheir own account with a typo."
       },
       "VATIn": {
         "properties": {
@@ -10714,7 +11466,7 @@
           "skipped_other_currency"
         ],
         "title": "VatReportResponse",
-        "description": "Output VAT only \u2014 see `core.services.reporting_service.VatReport`. The\ncaveat rides along in the payload so a UI cannot present this as a return\nready to file."
+        "description": "Output VAT only — see `core.services.reporting_service.VatReport`. The\ncaveat rides along in the payload so a UI cannot present this as a return\nready to file."
       },
       "VatTreatmentResponse": {
         "properties": {

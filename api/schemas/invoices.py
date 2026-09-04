@@ -110,3 +110,40 @@ class InvoiceResponse(BaseModel):
     voided_at: datetime | None
     voided_reason: str | None
     voided_by_credit_note_id: UUID | None
+
+
+class ComplianceFindingResponse(BaseModel):
+    """One mandatory mention that is missing, or one statement that contradicts
+    another.
+
+    `field` addresses the record that has to change — `company.vat_number`,
+    `client.address`, `line.2.vat` — so a screen can offer the fix rather than
+    only the complaint. `message_key` is stable; the wording is the frontend's.
+    `legal_basis` is the citation, and is null for advisory findings, which have
+    none by definition.
+    """
+
+    field: str
+    severity: str
+    message_key: str
+    legal_basis: str | None
+
+
+class InvoiceComplianceResponse(BaseModel):
+    """Whether this invoice is a valid Belgian VAT invoice, and may be issued.
+
+    `conforming` is about the document: no blocking finding, so every mandatory
+    mention is present and nothing on it contradicts itself. `issuable` adds the
+    state machine — an already-issued invoice is conforming and not issuable,
+    and the two must stay separate or a screen cannot tell "fix this" from
+    "this is already done".
+
+    Advisory findings are returned alongside the blocking ones and never affect
+    either boolean.
+    """
+
+    invoice_id: UUID
+    status: str
+    conforming: bool
+    issuable: bool
+    findings: list[ComplianceFindingResponse]

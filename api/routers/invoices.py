@@ -12,6 +12,7 @@ from ..deps import current_user_id, get_uow_factory
 from ..entitlements import Meter, pdf_branded, require_peppol_quota, require_quota
 from ..schemas.invoices import (
     DiscountIn,
+    InvoiceComplianceResponse,
     InvoiceCreateRequest,
     InvoiceLineIn,
     InvoicePreviewRequest,
@@ -173,6 +174,26 @@ def get_invoice(
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
 ):
     return _to_response(InvoiceService(uow_factory).get(invoice_id))
+
+
+@router.get("/{invoice_id}/compliance", response_model=InvoiceComplianceResponse)
+def invoice_compliance(
+    invoice_id: UUID,
+    uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+):
+    """Is this a valid Belgian VAT invoice, and may it be issued?
+
+    The same verdict `POST /{id}/issue` refuses on, offered read-only so a
+    composer can show it before the button rather than after the 422. Answering
+    it twice is the point: issuing is irreversible, and a person should be able
+    to see what is missing while the document can still be edited.
+
+    Unauthenticated writes are impossible anyway, and this reads nothing a `GET
+    /invoices/{id}` does not already return — so it carries no permission of its
+    own, exactly like the invoice read beside it."""
+    return InvoiceComplianceResponse.model_validate(
+        InvoiceService(uow_factory).compliance(invoice_id), from_attributes=True
+    )
 
 
 @router.post("/{invoice_id}/void", response_model=InvoiceResponse)

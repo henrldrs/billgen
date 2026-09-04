@@ -85,9 +85,13 @@ def test_rates_split_into_their_own_grids(env):
 
 def test_category_not_rate_decides_the_grid_for_zero_rated_lines(env):
     """Reverse charge and export are both 0% — only the category separates them."""
+    # `client_nl`, not the Belgian default: reverse charge and intra-Community
+    # supply are only lawful towards a VAT-identified business in another member
+    # state, and issue() now enforces that. This fixture was building three
+    # documents the law forbids in order to test how they are reported.
     for category in (VATCategory.REVERSE_CHARGE, VATCategory.EXPORT, VATCategory.INTRA_EU):
         issue_invoice(
-            env.uow_factory, company_id=env.company.id, client_id=env.client.id,
+            env.uow_factory, company_id=env.company.id, client_id=env.client_nl.id,
             issue_date=JULY_4, lines=[_line("0", category)],
         )
 

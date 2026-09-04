@@ -1,4 +1,11 @@
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    # Import-time only: invoice_compliance imports nothing from here, so this is
+    # not a cycle — it is kept behind the guard so the runtime import graph stays
+    # one-directional and obviously so.
+    from .invoice_compliance import ComplianceFinding
 
 
 class NotFoundError(RuntimeError):
@@ -27,3 +34,20 @@ class PeppolValidationError(BusinessRuleError):
         self.errors: list[FieldError] = list(errors)
         summary = ", ".join(f"{e.field}:{e.message_key}" for e in self.errors)
         super().__init__(f"Peppol validation failed ({summary})")
+
+
+class InvoiceComplianceError(BusinessRuleError):
+    """The draft is missing a mandatory legal mention, or contradicts itself, and
+    must not be frozen into an issued VAT invoice.
+
+    Distinct from ``PeppolValidationError`` on purpose, even though the two
+    overlap on the party fields: Peppol is a *transport* gate that a PDF-only
+    customer never meets, this is a *document* gate that every invoice meets.
+    Carries the blocking findings so the API can return a structured 422 the
+    composer can render field by field; advisory findings are deliberately not
+    carried, because nothing here was refused on their account."""
+
+    def __init__(self, findings: "list[ComplianceFinding]") -> None:
+        self.findings: list[ComplianceFinding] = list(findings)
+        summary = ", ".join(f"{f.field}:{f.message_key}" for f in self.findings)
+        super().__init__(f"Invoice is not legally complete ({summary})")

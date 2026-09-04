@@ -658,6 +658,35 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/invoices/{invoice_id}/compliance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Invoice Compliance
+         * @description Is this a valid Belgian VAT invoice, and may it be issued?
+         *
+         *     The same verdict `POST /{id}/issue` refuses on, offered read-only so a
+         *     composer can show it before the button rather than after the 422. Answering
+         *     it twice is the point: issuing is irreversible, and a person should be able
+         *     to see what is missing while the document can still be edited.
+         *
+         *     Unauthenticated writes are impossible anyway, and this reads nothing a `GET
+         *     /invoices/{id}` does not already return — so it carries no permission of its
+         *     own, exactly like the invoice read beside it.
+         */
+        get: operations["invoice_compliance_invoices__invoice_id__compliance_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/invoices/{invoice_id}/void": {
         parameters: {
             query?: never;
@@ -1315,6 +1344,33 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/activity/security": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Security Events
+         * @description The security slice of the audit log, and what is not being watched.
+         *
+         *     A filter over an existing table, not a new subsystem — which is why this is
+         *     the cheapest screen in L4. The `not_recorded` half is the part that matters:
+         *     sign-in, sign-out and failed operations have no producer anywhere in the
+         *     stack, so an organization with a quiet log is an organization nobody is
+         *     logging, and the screen has to be able to say that rather than render a
+         *     reassuring empty table.
+         */
+        get: operations["list_security_events_activity_security_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/alerts": {
         parameters: {
             query?: never;
@@ -1600,6 +1656,139 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/trust/legal/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Legal Documents
+         * @description The seven documents, drafted or not.
+         *
+         *     Returns the undrafted ones too, with `drafted: false`. Hiding them would
+         *     make the endpoint agree with the marketing site's footer and disagree with
+         *     reality — the list of what is missing is the useful half right now.
+         */
+        get: operations["list_legal_documents_trust_legal_documents_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/trust/legal/documents/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Legal Document */
+        get: operations["get_legal_document_trust_legal_documents__key__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/trust/subprocessors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Subprocessors
+         * @description Every third party, live or planned.
+         *
+         *     `in_use` separates the two. A planned subprocessor published as a current
+         *     one is a false statement in a document the DPA points at, so the flag
+         *     travels with the row rather than being decided by the caller.
+         */
+        get: operations["list_subprocessors_trust_subprocessors_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/trust/privacy/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Privacy Register
+         * @description The GDPR art. 30 register, as data rather than as a Word file.
+         */
+        get: operations["get_privacy_register_trust_privacy_register_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/trust/consent/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Consent Categories
+         * @description What a cookie banner would offer, and what actually runs in each row.
+         *
+         *     Three of the four categories have an empty `in_use` today. That is the
+         *     honest state of the product and the reason no banner is shipped yet — not
+         *     a placeholder to be filled in with plausible-sounding trackers.
+         */
+        get: operations["list_consent_categories_trust_consent_categories_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/trust/ai-transparency": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Ai Transparency
+         * @description Which outputs are machine-made, and whether the marking duty is live.
+         *
+         *     `obligation_live` lets one screen render a countdown before the date and an
+         *     obligation after it. BillGen marks either way; the flag decides the wording,
+         *     not the marker.
+         */
+        get: operations["get_ai_transparency_trust_ai_transparency_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1632,6 +1821,44 @@ export interface components {
              * Format: date-time
              */
             timestamp: string;
+        };
+        /** AiSurfaceResponse */
+        AiSurfaceResponse: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Produces */
+            produces: string;
+            /** Module */
+            module: string;
+            /** Risk */
+            risk: string;
+            /** Confidence Field */
+            confidence_field: string | null;
+            /** Human Confirms */
+            human_confirms: boolean;
+            /** Requires Marking */
+            requires_marking: boolean;
+            /** Crosses Annex Iii */
+            crosses_annex_iii: string | null;
+            /** Note */
+            note: string | null;
+        };
+        /**
+         * AiTransparencyResponse
+         * @description What must be marked as machine-generated, and from when.
+         */
+        AiTransparencyResponse: {
+            /**
+             * Obligation Date
+             * Format: date
+             */
+            obligation_date: string;
+            /** Obligation Live */
+            obligation_live: boolean;
+            /** Surfaces */
+            surfaces: components["schemas"]["AiSurfaceResponse"][];
         };
         /**
          * AlertResponse
@@ -2078,10 +2305,46 @@ export interface components {
             missing_for_peppol: string[];
         };
         /**
+         * ComplianceFindingResponse
+         * @description One mandatory mention that is missing, or one statement that contradicts
+         *     another.
+         *
+         *     `field` addresses the record that has to change — `company.vat_number`,
+         *     `client.address`, `line.2.vat` — so a screen can offer the fix rather than
+         *     only the complaint. `message_key` is stable; the wording is the frontend's.
+         *     `legal_basis` is the citation, and is null for advisory findings, which have
+         *     none by definition.
+         */
+        ComplianceFindingResponse: {
+            /** Field */
+            field: string;
+            /** Severity */
+            severity: string;
+            /** Message Key */
+            message_key: string;
+            /** Legal Basis */
+            legal_basis: string | null;
+        };
+        /**
          * Confidence
          * @enum {string}
          */
         Confidence: "high" | "medium" | "low";
+        /** ConsentCategoryResponse */
+        ConsentCategoryResponse: {
+            /** Category */
+            category: string;
+            /** Label */
+            label: string;
+            /** Purpose */
+            purpose: string;
+            /** Essential */
+            essential: boolean;
+            /** Default On */
+            default_on: boolean;
+            /** In Use */
+            in_use: string[];
+        };
         /** CreditNoteIssueRequest */
         CreditNoteIssueRequest: {
             /**
@@ -2161,6 +2424,31 @@ export interface components {
          * @enum {string}
          */
         Currency: "EUR" | "USD" | "GBP" | "JPY" | "CAD" | "AUD";
+        /** DataSetResponse */
+        DataSetResponse: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Subject */
+            subject: string;
+            /** Fields */
+            fields: string[];
+            /** Purpose */
+            purpose: string;
+            /** Basis */
+            basis: string;
+            /** Retention */
+            retention: string;
+            /** Exportable */
+            exportable: boolean;
+            /** Erasure */
+            erasure: string;
+            /** Source */
+            source: string | null;
+            /** Note */
+            note: string | null;
+        };
         /** DevTierRequest */
         DevTierRequest: {
             plan_tier: components["schemas"]["PlanTier"];
@@ -2421,6 +2709,34 @@ export interface components {
             /** Issues */
             issues: components["schemas"]["ImportIssue"][];
         };
+        /**
+         * InvoiceComplianceResponse
+         * @description Whether this invoice is a valid Belgian VAT invoice, and may be issued.
+         *
+         *     `conforming` is about the document: no blocking finding, so every mandatory
+         *     mention is present and nothing on it contradicts itself. `issuable` adds the
+         *     state machine — an already-issued invoice is conforming and not issuable,
+         *     and the two must stay separate or a screen cannot tell "fix this" from
+         *     "this is already done".
+         *
+         *     Advisory findings are returned alongside the blocking ones and never affect
+         *     either boolean.
+         */
+        InvoiceComplianceResponse: {
+            /**
+             * Invoice Id
+             * Format: uuid
+             */
+            invoice_id: string;
+            /** Status */
+            status: string;
+            /** Conforming */
+            conforming: boolean;
+            /** Issuable */
+            issuable: boolean;
+            /** Findings */
+            findings: components["schemas"]["ComplianceFindingResponse"][];
+        };
         /** InvoiceCreateRequest */
         InvoiceCreateRequest: {
             /**
@@ -2640,6 +2956,29 @@ export interface components {
             };
             /** Overdue Count */
             overdue_count: number;
+        };
+        /** LegalDocumentResponse */
+        LegalDocumentResponse: {
+            /** Key */
+            key: string;
+            /** Title */
+            title: string;
+            /** Ia Path */
+            ia_path: string;
+            /** Audience */
+            audience: string;
+            /** Requires Acceptance */
+            requires_acceptance: boolean;
+            /** Drafted */
+            drafted: boolean;
+            /** Version */
+            version: string | null;
+            /** Effective Date */
+            effective_date: string | null;
+            /** Blocks */
+            blocks: string[];
+            /** Note */
+            note: string | null;
         };
         /** LoginRequest */
         LoginRequest: {
@@ -2896,6 +3235,22 @@ export interface components {
         PlansResponse: {
             /** Tiers */
             tiers: components["schemas"]["TierResponse"][];
+        };
+        /**
+         * PrivacyRegisterResponse
+         * @description The art. 30 register, plus the two lists a privacy screen has to show.
+         *
+         *     `retained_on_erasure` is not a convenience — it is the list a deletion
+         *     dialog is obliged to display, because "delete everything" is false while
+         *     seven years of invoices are legally frozen.
+         */
+        PrivacyRegisterResponse: {
+            /** Datasets */
+            datasets: components["schemas"]["DataSetResponse"][];
+            /** Retained On Erasure */
+            retained_on_erasure: string[];
+            /** Subprocessors */
+            subprocessors: components["schemas"]["SubprocessorResponse"][];
         };
         /** ProductCreateRequest */
         ProductCreateRequest: {
@@ -3253,6 +3608,31 @@ export interface components {
             /** Truncated */
             truncated: boolean;
         };
+        /** SecurityEventResponse */
+        SecurityEventResponse: {
+            entry: components["schemas"]["ActivityEntryResponse"];
+            /** Kind */
+            kind: string;
+            /** Severity */
+            severity: string;
+            /** Label */
+            label: string;
+        };
+        /**
+         * SecurityEventsResponse
+         * @description Events, and the blind spots — deliberately in the same payload.
+         *
+         *     A list on its own would let the screen render an empty table as calm.
+         *     `not_recorded` names the actions nothing writes yet (sign-in, sign-out,
+         *     failures), so the absence of events is displayed as missing instrumentation
+         *     rather than as a clean bill of health.
+         */
+        SecurityEventsResponse: {
+            /** Events */
+            events: components["schemas"]["SecurityEventResponse"][];
+            /** Not Recorded */
+            not_recorded: string[];
+        };
         /**
          * SequenceEntry
          * @description One numbering series and where it currently stands.
@@ -3345,6 +3725,17 @@ export interface components {
             count: number;
             /** Total Ttc */
             total_ttc: string;
+        };
+        /** SubprocessorResponse */
+        SubprocessorResponse: {
+            /** Name */
+            name: string;
+            /** Purpose */
+            purpose: string;
+            /** Location */
+            location: string;
+            /** In Use */
+            in_use: boolean;
         };
         /**
          * TemplateAppearance
@@ -5088,6 +5479,37 @@ export interface operations {
             };
         };
     };
+    invoice_compliance_invoices__invoice_id__compliance_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceComplianceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     void_invoice_invoices__invoice_id__void_post: {
         parameters: {
             query?: never;
@@ -6182,6 +6604,37 @@ export interface operations {
             };
         };
     };
+    list_security_events_activity_security_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecurityEventsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_alerts_alerts_get: {
         parameters: {
             query: {
@@ -6717,6 +7170,137 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_legal_documents_trust_legal_documents_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LegalDocumentResponse"][];
+                };
+            };
+        };
+    };
+    get_legal_document_trust_legal_documents__key__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LegalDocumentResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_subprocessors_trust_subprocessors_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubprocessorResponse"][];
+                };
+            };
+        };
+    };
+    get_privacy_register_trust_privacy_register_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrivacyRegisterResponse"];
+                };
+            };
+        };
+    };
+    list_consent_categories_trust_consent_categories_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsentCategoryResponse"][];
+                };
+            };
+        };
+    };
+    get_ai_transparency_trust_ai_transparency_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiTransparencyResponse"];
                 };
             };
         };

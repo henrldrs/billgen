@@ -5,7 +5,6 @@ import pytest
 
 from core.einvoicing.ubl_builder import CUSTOMIZATION_ID_BIS, NS_CAC, NS_CBC
 from core.models import (
-    Client,
     Discount,
     DiscountType,
     InvoiceLine,
@@ -133,17 +132,16 @@ def test_belgian_elements_on_bis_profile(env):
 
 
 def test_gate_blocks_b2c_customer(env):
-    """A customer with no VAT is B2C — Peppol export must be refused."""
-    with organization_context(env.org.id):
-        b2c = Client(
-            organization_id=env.org.id, company_id=env.company.id,
-            name="Walk-in", address_line1="Somewhere 1", country_code="BE",
-        )
-        with env.uow_factory() as uow:
-            uow.clients.add(b2c)
-            uow.commit()
+    """A customer with no VAT is B2C — Peppol export must be refused.
+
+    The shared `client_b2c` fixture rather than a local one, and the difference
+    matters: it carries `is_business=False`. A client with no VAT number that
+    still claims to be a business fails the *issue* gate before Peppol is ever
+    reached, which would have made this test prove the wrong thing. As written
+    it proves what it says — the invoice is perfectly lawful and Peppol still
+    refuses it, because the two gates answer different questions."""
     invoice = issue_invoice(
-        env.uow_factory, company_id=env.company.id, client_id=b2c.id
+        env.uow_factory, company_id=env.company.id, client_id=env.client_b2c.id
     )
     with pytest.raises(PeppolValidationError) as exc:
         PeppolService(env.uow_factory).generate_invoice_xml(invoice.id)
@@ -164,6 +162,9 @@ def test_gate_blocks_invalid_supplier_iban(env):
 
 
 def test_reverse_charge_has_exemption_reason(env):
+    # `client_nl`, because reverse charge onto a Belgian customer is not reverse
+    # charge — issue() now refuses it, and this fixture used to build exactly
+    # that document.
     lines = [
         InvoiceLine(
             line_number=1,
@@ -173,7 +174,12 @@ def test_reverse_charge_has_exemption_reason(env):
             vat=VATRate(category=VATCategory.REVERSE_CHARGE, rate=Decimal("0")),
         )
     ]
-    invoice = _issue_invoice(env, lines=lines)
+    invoice = issue_invoice(
+        env.uow_factory,
+        company_id=env.company.id,
+        client_id=env.client_nl.id,
+        lines=lines,
+    )
     xml = PeppolService(env.uow_factory).generate_invoice_xml(invoice.id)
     root = ET.fromstring(xml)
 

@@ -27,7 +27,7 @@ async def seeded(client):
     headers = bearer(await signup(client))
     company = await create_company(client, headers)
     record = await create_client_record(
-        client, headers, company["id"], name="Brasserie du Nord", vat_number="BE0999999900"
+        client, headers, company["id"], name="Brasserie du Nord", vat_number="BE0999999922"
     )
     issued = await create_invoice(client, headers, company["id"], record["id"])
     return headers, company, record, issued
@@ -72,7 +72,7 @@ async def test_a_client_is_found_by_name_email_or_vat(client):
     by_name = await search(client, headers, "brasserie")
     assert [h["id"] for h in by_name["hits"] if h["kind"] == "client"] == [record["id"]]
 
-    by_vat = await search(client, headers, "BE0999999900")
+    by_vat = await search(client, headers, "BE0999999922")
     assert [h["id"] for h in by_vat["hits"] if h["kind"] == "client"] == [record["id"]]
 
     by_email = await search(client, headers, "pay@zuid.be")

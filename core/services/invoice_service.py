@@ -13,7 +13,8 @@ from ..models import (
 from ..repository import UnitOfWork
 from ..rules import InvoiceTotals, invoice_totals
 from . import _audit
-from .errors import BusinessRuleError, NotFoundError
+from .errors import BusinessRuleError, InvoiceComplianceError, NotFoundError
+from .invoice_compliance import InvoiceCompliance, check_invoice_compliance
 from .numbering_service import allocate_invoice_numbers
 
 DEFAULT_PAYMENT_TERM_DAYS = 30
@@ -140,6 +141,27 @@ class InvoiceService:
                 or invoice.due_date
                 or effective_issue_date + timedelta(days=DEFAULT_PAYMENT_TERM_DAYS)
             )
+            # The legal gate, and it runs *before* the number is allocated: a
+            # refused issue must leave the gapless series untouched, or a
+            # rejected draft burns a number that no document will ever carry.
+            #
+            # Checked against the dates this issue would actually write rather
+            # than the ones on the draft, because issue() invents a due date
+            # when the draft has none — checking the draft would report a
+            # missing due date the transition was about to supply.
+            compliance = check_invoice_compliance(
+                invoice.model_copy(
+                    update={
+                        "issue_date": effective_issue_date,
+                        "due_date": effective_due_date,
+                    }
+                ),
+                company,
+                client,
+            )
+            if compliance.blocking:
+                raise InvoiceComplianceError(compliance.blocking)
+
             totals = invoice_totals(invoice.lines, invoice.invoice_discount, invoice.currency)
             reference, seq_global = allocate_invoice_numbers(
                 uow, company, client, effective_issue_date
@@ -236,6 +258,29 @@ class InvoiceService:
             if invoice is None:
                 raise NotFoundError(f"Invoice {invoice_id} not found")
             return invoice
+
+    def compliance(self, invoice_id: UUID) -> InvoiceCompliance:
+        """The same verdict `issue` gates on, offered read-only.
+
+        A composer needs it before the button is pressed, and an issued invoice
+        needs it afterwards as the record of what it carries — one call, two
+        readings, which is why the check itself knows nothing about issuing.
+
+        Deliberately *not* the effective-date substitution `issue` makes: this
+        answers for the invoice as it stands, so a draft with no due date says
+        so rather than reporting on a date it does not have yet.
+        """
+        with self._uow_factory() as uow:
+            invoice = uow.invoices.get(invoice_id)
+            if invoice is None:
+                raise NotFoundError(f"Invoice {invoice_id} not found")
+            company = uow.companies.get(invoice.company_id)
+            if company is None:
+                raise NotFoundError(f"Company {invoice.company_id} not found")
+            client = uow.clients.get(invoice.client_id)
+            if client is None:
+                raise NotFoundError(f"Client {invoice.client_id} not found")
+            return check_invoice_compliance(invoice, company, client)
 
     def list(
         self,

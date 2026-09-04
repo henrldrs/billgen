@@ -14,11 +14,18 @@ from .credit_note_service import CreditNoteService
 from .errors import (
     BusinessRuleError,
     FieldError,
+    InvoiceComplianceError,
     NotFoundError,
     PeppolValidationError,
 )
 from .expense_service import ExpenseService
 from .import_service import ImportService
+from .invoice_compliance import (
+    ComplianceFinding,
+    ComplianceSeverity,
+    InvoiceCompliance,
+    check_invoice_compliance,
+)
 from .invoice_service import InvoiceService
 from .organization_service import OrganizationService
 from .payment_service import PaymentService
@@ -41,11 +48,15 @@ __all__ = [
     "ClientService",
     "CompanyService",
     "CompanyValidation",
+    "ComplianceFinding",
+    "ComplianceSeverity",
     "CreditNoteService",
     "ExpenseService",
     "FieldError",
     "HitKind",
     "ImportService",
+    "InvoiceCompliance",
+    "InvoiceComplianceError",
     "InvoiceService",
     "KpiSummary",
     "NotFoundError",
@@ -63,6 +74,7 @@ __all__ = [
     "SearchService",
     "TemplateService",
     "Severity",
+    "check_invoice_compliance",
     "effective_status",
     "validate_company_identifiers",
 ]
