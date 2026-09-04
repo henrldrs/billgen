@@ -56,6 +56,18 @@
         "3007"
       ],
       "port": 3007
+    },
+    {
+      "name": "docs",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8099",
+        "--directory",
+        "docs"
+      ],
+      "port": 8099
     }
   ]
 }
