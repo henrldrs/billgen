@@ -2354,6 +2354,12 @@ textarea.bg-field__input {
   display: flex;
   flex-direction: column;
   position: relative;
+  /* A stacking context on purpose, and the only one between the document root
+     and the application's overlays. It exists so `.bg-app-shell__texture` can
+     sit at `z-index: -1` — above this element's own background, below every
+     child — without anything else needing a `z-index` to stay above it. See
+     the note on that rule for what the alternative cost. */
+  isolation: isolate;
   background: var(--bg-app-backdrop);
   color: var(--bg-ink);
   font-family: var(--bg-font-sans);
@@ -4959,17 +4965,25 @@ hr.bg-divider {
 
 /* The shell's texture layer. `position: fixed` rather than absolute: the field
    is a property of the window, not of the document, so it must not scroll with
-   a long invoice list and it must not stretch to the height of one. */
+   a long invoice list and it must not stretch to the height of one.
+
+   `z-index: -1` inside the shell's own stacking context (`isolation: isolate`,
+   at the top of `.bg-app-shell`) rather than `0` with the nav and content
+   lifted to `1` above it. The lifted version worked and cost the whole overlay
+   band: a `z-index` on the content column traps everything the content renders
+   inside it, and the content column is where the drawer, the modals and the
+   command palette mount. `.bg-drawer__backdrop { z-index: 50 }` became 50
+   *within a layer of 1*, so a drawer that is supposed to cover the top bar was
+   painted underneath it, and the nav popups — trapped the same way at the same
+   level — opened behind the dashboard cards, which is how this was found.
+
+   The rule that generalises: a decorative layer belongs *below* the content in
+   its own negative band, never above it by pushing the content up. Pushing the
+   content up re-levels every overlay in the application at once, and the ones
+   that break are the ones nobody thought to look at. */
 .bg-app-shell__texture {
   position: fixed;
   inset: 0;
-  z-index: 0;
+  z-index: -1;
 }
 
-/* Everything above it. Without this the nav and the content stack below the
-   texture in paint order and the motif draws over the invoices. */
-.bg-app-shell__nav,
-.bg-app-shell__content {
-  position: relative;
-  z-index: 1;
-}
