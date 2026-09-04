@@ -77,10 +77,11 @@ to anything else in §5b.
 
 | | |
 |---|---|
-| Python | **485 collected, exit 0** |
-| Frontend | **172 passed** (`npm run test`, 29 files), typecheck clean across all four workspaces |
+| Python | **553 collected, exit 0** |
+| Frontend | **175 passed** (`npm run test`, 29 files), typecheck clean across all four workspaces |
 | `ruff check` | clean. CI runs `ruff check .` only — the tree is *not* `ruff format` clean and was not before, so do not reformat it as a side errand |
-| Architecture doc | in sync, v0.11 |
+| Architecture doc | **stale** — four commits landed after the last sync (`sync-architecture --check` will say so) |
+| ROADMAP_IA | regenerated 2026-09-04 from `ia.ts`: 115 areas, 34 wired, 30% |
 | Unpushed | everything on `audit-engine-and-scaffolds` since `2e15e79` — count it with the first command in the resume protocol rather than trusting a number here, which is stale the moment the next commit lands |
 
 ---
@@ -275,3 +276,53 @@ nothing.
 number), created to verify item 8. That database is disposable and rebuilds
 itself; the client is worth keeping, because reverse charge cannot be looked at
 without a non-Belgian business on file.
+
+### Henri at the keyboard, 2026-09-04
+
+Two streams ran in this one working tree at the same time — an L4 trust session
+and this one — which is worth recording as a working condition rather than as an
+incident. It went fine, and the thing that made it fine was that neither stream
+touched the other's files except three: `api/main.py`, `openapi.json` and
+`api.d.ts`. Those three were enough to make a clean commit impossible without
+splitting them by hand. **If it happens again, agree who owns `api/main.py`
+first** — it is the file every backend feature has to touch, and it is the only
+real contention point in this repo.
+
+Four commits, in dependency order, `550188a`..`ac1e319`.
+
+- **A decoration re-levelled every overlay in the application.** Henri saw a nav
+  popup behind the dashboard cards; the cause was `3c938e2` giving the content
+  column a `z-index`, which trapped the drawer, the modals and the palette
+  inside a layer of 1 while the nav sat at 40. The menu was the only symptom
+  anybody noticed. Fixed by putting the texture in a negative band under an
+  `isolation: isolate` shell, so nothing else needs a `z-index` at all.
+  **The rule: a decorative layer goes below the content, never above it by
+  lifting the content.** Lifting the content re-levels every overlay at once.
+
+- **The invoice record became a document.** His call, and the right one — the
+  drawer showed a three-line summary of an invoice in a column narrower than the
+  invoice's own table. It is now a centred sheet of paper with the real line
+  table. Two traps on the way, both of the same family as the ones already
+  written down here: `bg-doc__*` was a namespace the Template Studio already
+  owned, and two unnamed tables broke three tests, which is an accessibility bug
+  arriving as a test failure.
+
+- **`issue()` grew a legal gate.** The load-bearing irreversible transition had
+  never checked whether the document it was freezing was a lawful VAT invoice.
+  It does now, before the number is allocated, refusing blockers and reporting
+  advisories. **Five existing tests broke and every one was right to** — the
+  fixtures had been building documents Belgian law forbids, because nothing had
+  ever looked. That is the same lesson as §17b: a green suite proved the code
+  ran, not that what it produced was correct.
+
+- **L4 turned five undecided questions into tested registries**, and found a
+  live bug doing it: `session.revoke` was written to the audit log as a string
+  the `AuditAction` enum did not list, so one revocation made `GET /activity`
+  return 422 for that organization permanently. Found against a running server.
+
+*Open, and Henri's:* the architecture doc needs regenerating (four commits
+stale); `template_snapshot` is a **dead column** — it exists on the invoices
+table and in `db/models/invoice.py` and nothing reads or writes it, which is
+what blocks the record sheet from rendering the template the client actually
+received; and `docs/billgen.bat` is still an untracked accidental copy.
+
