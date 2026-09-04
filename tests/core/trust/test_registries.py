@@ -185,10 +185,26 @@ def test_every_ai_surface_must_be_marked():
 
 
 def test_the_marking_duty_is_read_from_one_date():
+    """And that date is 2 August 2026, not 2 December.
+
+    The December date is real but it is the end of a grace period for systems
+    already on the market when the obligation applied. BillGen was not, so the
+    grace period does not reach it — see ADR-0005. This test exists because the
+    module previously asserted the December date, which would have let the
+    product ship unmarked through a window it never had.
+    """
     obligation = ai_transparency.TRANSPARENCY_OBLIGATION_DATE
-    assert obligation == date(2026, 12, 2)
-    assert not ai_transparency.marking_due(date(2026, 12, 1))
-    assert ai_transparency.marking_due(date(2026, 12, 2))
+    assert obligation == date(2026, 8, 2)
+    assert obligation == ai_transparency.TRANSPARENCY_APPLICABLE_FROM
+    assert not ai_transparency.marking_due(date(2026, 8, 1))
+    assert ai_transparency.marking_due(date(2026, 8, 2))
+
+
+def test_the_grace_period_is_recorded_and_does_not_apply():
+    """The correction turns on one boolean, so the boolean is asserted."""
+    assert ai_transparency.PLACED_ON_MARKET_BEFORE_OBLIGATION is False
+    assert date(2026, 12, 2) == ai_transparency.WATERMARK_GRACE_END
+    assert ai_transparency.TRANSPARENCY_OBLIGATION_DATE != ai_transparency.WATERMARK_GRACE_END
 
 
 def test_the_tva_surfaces_carry_confidence_and_wait_for_a_human():

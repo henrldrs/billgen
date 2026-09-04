@@ -78,7 +78,10 @@ async def test_ai_transparency_reports_one_date_and_no_high_risk_surface(client)
 
     assert response.status_code == 200, response.text
     body = response.json()
-    assert body["obligation_date"] == "2026-12-02"
+    #  2 August, not 2 December: the December date is a grace period BillGen
+    #  does not qualify for. ADR-0005.
+    assert body["obligation_date"] == "2026-08-02"
+    assert body["obligation_live"] is True
     assert all(surface["risk"] != "high" for surface in body["surfaces"])
     assert all(surface["requires_marking"] for surface in body["surfaces"])
 
@@ -131,9 +134,7 @@ async def test_a_sign_in_and_a_revocation_reach_the_security_view(client):
     """The two ends of the session story, on the screen that exists for it."""
     payload = await signup(client)
     headers = bearer(payload)
-    await client.post(
-        "/auth/login", json={"email": "alice@example.com", "password": "s3cret-pass"}
-    )
+    await client.post("/auth/login", json={"email": "alice@example.com", "password": "s3cret-pass"})
 
     sessions = await client.get("/users/me/sessions", headers=headers)
     await client.delete(f"/users/me/sessions/{sessions.json()[0]['jti']}", headers=headers)

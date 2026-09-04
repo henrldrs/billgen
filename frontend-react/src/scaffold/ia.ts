@@ -1320,7 +1320,7 @@ export const IA: IaSection[] = [
         layer: "L4",
         endpoints: ["GET /trust/ai-transparency"],
         missing: ["the marker itself, rendered beside every machine-made value"],
-        note: "AI-generated output must be identifiable as such from 2026-12-02 — one date, in core/trust/ai_transparency.py. Nearly free now (the TVA surfaces already carry confidence and wait for a human to confirm) and expensive to retrofit across every AI surface later. Annex III — creditworthiness scoring of a natural person — is the boundary to stay behind: education, never assessment.",
+        note: "AI-generated output must be identifiable as such — and the duty has been live since 2026-08-02, not 2026-12-02 as this once said. December is the end of a grace period for systems already on the market when the obligation applied; BillGen was not, so it never had one (ADR-0005). One derived date, in core/trust/ai_transparency.py. Nearly free now (the TVA surfaces already carry confidence and wait for a human to confirm) and expensive to retrofit across every AI surface later. Annex III — creditworthiness scoring of a natural person — is the boundary to stay behind: education, never assessment.",
       },
       {
         key: "legal.sla",

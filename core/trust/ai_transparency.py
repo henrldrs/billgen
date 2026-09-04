@@ -4,12 +4,18 @@ Two rules from the EU AI Act land on this product, and they land in opposite
 places.
 
 **Marking (art. 50).** Output produced by a model has to be identifiable as
-such. The date Henri is working to is **2 December 2026** — see
-`TRANSPARENCY_OBLIGATION_DATE` below and the caveat on it. That is roughly
-three months out, and the cost curve is the whole reason this module exists
-now rather than then: `confidence` and the reason codes already ride along with
-every TVA suggestion (`core/tva/models.py`), so marking is a rendering decision
-today and a migration across every AI surface later.
+such. This module used to plan against **2 December 2026**, on a caveat that
+asked for the date to be checked against the published text. It was checked
+(2026-09-04, ADR-0005) and it was wrong for this product: 2 December is the end
+of a *grace period that BillGen does not qualify for*. The obligation has been
+live since **2 August 2026**. See the constants below, which now record the
+derivation rather than a single number, and `docs/ARCHITECTURE/ADR-0005`.
+
+The cost curve is still the reason this module exists: `confidence` and the
+reason codes already ride along with every TVA suggestion
+(`core/tva/models.py`), so marking is a rendering decision today and a
+migration across every AI surface later. What changed is that it is no longer a
+decision with three months of runway in front of it.
 
 **Classification (Annex III).** Creditworthiness evaluation of a natural person
 is high-risk. Nothing in BillGen does that, and the registry below is where it
@@ -18,6 +24,15 @@ rather than explaining, budgeting or educating — has crossed into Annex III an
 needs a conformity assessment, not a disclosure banner. `crosses_annex_iii`
 records the specific drift each surface is capable of, so the boundary is
 reviewed per feature instead of remembered.
+
+**What this module is not.** It is a registry of *product surfaces*, not the
+Article 4 **AI system inventory**. Article 4 asks a different set of questions —
+which model, which pinned version, whose model, where inference runs, what data
+crosses the boundary, who was trained on what — and none of them have a column
+here. That inventory does not exist yet; it is item **I4** in
+`docs/MINIMAL_STACK.md`. Article 4 has also been enforceable since 2 August
+2026, and applies at *every* risk tier, so a page full of minimal-risk surfaces
+does not discharge it.
 
 Nothing here calls a model. This is the ledger the UI and the reviewers read.
 """
@@ -35,16 +50,38 @@ class RiskTier(str, Enum):
 
     MINIMAL = "minimal"
     LIMITED = "limited"  # transparency obligations attach
-    HIGH = "high"        # Annex III — none of BillGen is here, and that is the point
+    HIGH = "high"  # Annex III — none of BillGen is here, and that is the point
 
 
-#  The date the marking obligation is being planned against.
-#
-#  Sourced from Henri's compliance note, not from the Official Journal. Confirm
-#  it against the published text before it is quoted to a customer or written
-#  into the privacy policy — a date in a compliance banner is a factual claim,
-#  and this constant exists so there is exactly one place to correct.
-TRANSPARENCY_OBLIGATION_DATE = date(2026, 12, 2)
+#  Article 50 transparency became applicable on this date. It is not a deadline
+#  BillGen is approaching; it is a date that has passed.
+TRANSPARENCY_APPLICABLE_FROM = date(2026, 8, 2)
+
+#  The end of the watermarking grace period. This is the 2 December 2026 that
+#  the module previously treated as its own deadline, and the correction is what
+#  the date *attaches to*: the grace period covers systems already placed on the
+#  market before TRANSPARENCY_APPLICABLE_FROM. It is kept as a named constant
+#  precisely so nobody reads it off a compliance summary again and concludes it
+#  applies here.
+WATERMARK_GRACE_END = date(2026, 12, 2)
+
+#  Was BillGen on the market before the obligation applied? No — the pre-sale
+#  beta had not shipped on 2 August 2026. So the grace period does not apply,
+#  and the transparency layer has to be in the *first* shipped version rather
+#  than added as a fast-follow. One boolean, because the whole correction turns
+#  on it.
+PLACED_ON_MARKET_BEFORE_OBLIGATION = False
+
+#: The date this product's marking duty actually starts. Derived, not asserted,
+#: so the reasoning stays next to the number — a date in a compliance banner is
+#: a factual claim, and this is the one place to correct it.
+#:
+#: Verified 2026-09-04 against the consolidated reading in ADR-0005. The earlier
+#: value (2026-12-02) came from a vendor compliance note and was the grace-period
+#: end, misread as the obligation date.
+TRANSPARENCY_OBLIGATION_DATE = (
+    WATERMARK_GRACE_END if PLACED_ON_MARKET_BEFORE_OBLIGATION else TRANSPARENCY_APPLICABLE_FROM
+)
 
 
 class AiSurface(BaseModel):
@@ -152,6 +189,11 @@ def marking_due(today: date | None = None) -> bool:
     countdown before the date and an obligation after it, from one source. Note
     that BillGen intends to mark regardless — this decides the wording of the
     warning in the trust screen, not whether the marker is drawn.
+
+    Since the correction in ADR-0005 this returns True for every real `today`.
+    The countdown branch is dead for this product and is kept only because the
+    function is honest about the general case; the screen it feeds should now
+    read as an obligation, never as a deadline.
     """
     return (today or date.today()) >= TRANSPARENCY_OBLIGATION_DATE
 

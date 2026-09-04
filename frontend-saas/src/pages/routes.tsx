@@ -900,12 +900,15 @@ const SKETCHES: Record<string, () => ReactNode> = {
     <>
       <ScaffoldTable columns={["Surface", "Produces", "Confidence", "Marked"]} rows={3} />
       <ScaffoldNote>
-        AI-generated output must be identifiable as such from 2026-12-02 — one
-        date, in core/trust/ai_transparency.py, and the endpoint reports
-        whether it is live yet. Nearly free to honour now: the TVA surfaces
-        already carry a confidence and wait for a human to confirm before a
-        suggestion counts. The marker itself is the missing half, and it
-        belongs beside each machine-made value rather than in a banner.
+        AI-generated output must be identifiable as such, and the duty has
+        been live since 2026-08-02 — not 2026-12-02, which is the end of a
+        grace period for systems already on the market when the obligation
+        applied. BillGen was not, so it never had one (ADR-0005). The date is
+        derived in core/trust/ai_transparency.py and the endpoint reports it.
+        Nearly free to honour now: the TVA surfaces already carry a confidence
+        and wait for a human to confirm before a suggestion counts. The marker
+        itself is the missing half, and it belongs beside each machine-made
+        value rather than in a banner.
       </ScaffoldNote>
       <ScaffoldNote>
         The boundary to stay behind: Annex III treats creditworthiness
