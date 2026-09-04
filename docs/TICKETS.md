@@ -206,14 +206,19 @@ wish, and the queue is not for wishes.
               what must be retained, and writes an audit entry naming both.
 
 ### T-16 · The DPA and terms
-    branch    Legal counsel         status  open
+    branch    Legal counsel         status  open — waiting on Henri, not on code
     needs     —
     why       CMP-09. Seven documents, none drafted. Blocks B2B revenue
               outright (J-11). The registry deliberately holds no legal
               text: a generated DPA that reads real is worse than a missing
               one, because it would be signed.
-    do        **Not an engineering ticket.** Commission it. The registry says
-              which document blocks what; take that list to the jurist.
+    do        **The brief now exists** — `docs/LEGAL_BRIEF.md`, in French,
+              generated from the three trust registries by
+              `scripts/generate_legal_brief.py`. It carries the seven
+              documents and what each blocks, the art. 30 processing
+              register, live and planned subprocessors, the cookie
+              categories, and six questions only counsel can answer.
+              Send it. Do not hand-edit it — regenerate.
     done when `legal.undrafted()` returns fewer than seven, and each drafted
               document carries a version and an effective date.
 
@@ -228,15 +233,22 @@ wish, and the queue is not for wishes.
     done when The caveat at the top of the module is replaced by a name and
               a date.
 
-### T-18 · Delete or generate `system-architecture.html.txt`
-    branch    Docs                  status  open
-    needs     Henri's call — it is a tracked file
-    why       It is a byte copy of the HTML with a `.txt` extension, and
-              nothing regenerates it. It sat eleven commits stale and is
-              plausibly what a downstream analysis read, which is how a fixed
-              defect came back as a finding. A `.txt` also cannot honour the
-              `<meta charset>`, so it renders as mojibake even when current.
-    done when Either the file is gone, or `sync-architecture` writes it.
+### T-18 · Keep the `.txt` in sync
+    branch    Docs                  status  open — one line of CI away
+    needs     —
+    why       It was a byte copy of the HTML with nothing regenerating it, so
+              it sat eleven commits stale and a downstream analysis read it
+              and reported defects already fixed. **Not deletable** — Henri
+              uses it to paste the architecture into an IDE, which is a real
+              workflow the HTML does not serve.
+    do        `scripts/architecture_to_text.py` now renders it properly:
+              headings, prose and tables, entities decoded, style and script
+              dropped, prose-heavy tables emitted as records so no evidence
+              is truncated. 279 KB -> 137 KB. What remains is wiring
+              `--check` into CI so it can never go stale again, alongside
+              `generate_legal_brief.py --check` and
+              `sync-architecture --check`.
+    done when CI fails on a stale `.txt` or a stale legal brief.
 
 ---
 
@@ -260,6 +272,20 @@ wish, and the queue is not for wishes.
     charged **on failure only**, so a correct sign-in never throttles a
     paying customer. Two tests, one for each half.
     Still open: per-account lockout, which needs T-12.
+
+### T-00e · The brief for counsel  ·  this session
+    It was never written — not lost. Everything a lawyer needs was already in
+    `core/trust/`, so `docs/LEGAL_BRIEF.md` is generated from those registries
+    rather than typed: a hand-written brief would disagree with the code within
+    a month, and a policy drafted from a stale brief describes a system that
+    does not exist. French, because the reader is. Untranslated registry
+    strings are marked « ⚠ à traduire » rather than silently passed through in
+    English — which caught one wrong key on the first run.
+
+### T-00f · The `.txt` becomes a real rendering  ·  this session
+    Was a byte copy including 150 KB of CSS and JS, and could never honour
+    `<meta charset>` — so it arrived as mojibake in an editor even when
+    current. Now rendered: 279 KB -> 137 KB, nothing truncated.
 
 ### T-00d · The missing charset  ·  `554b9fe`
     The architecture document never declared one. Served over HTTP it was
