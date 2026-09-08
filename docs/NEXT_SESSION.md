@@ -228,7 +228,8 @@ deployed**. `next build` is clean: eight static pages, two route handlers.
 2. **Point `billgen.be` at Vercel.** Add the domain in Vercel → Settings →
    Domains and paste the exact A/CNAME values it prints into the LWS zone.
    **Keep the nameservers at LWS** — moving them to Vercel breaks mail.
-3. **Create `contact@billgen.be`** (two mailboxes included, zero used), then
+3. ~~**Create `contact@billgen.be`**~~ **DONE** — `contact@` and `info@` both
+   exist as of 2026-09-08; both included mailboxes are now used. Then
    set `NEXT_PUBLIC_CONTACT_EMAIL` in Vercel and **redeploy** — it is inlined
    at build time. If Resend is later verified on the domain, its SPF must be
    *merged* with the LWS SPF record; two SPF records is a silent failure.

@@ -184,7 +184,7 @@ It has three jobs it is genuinely good at, and they are worth doing:
 
 | # | Item | State |
 |---|---|---|
-| 4.1 | Create `contact@billgen.be` | **urgent** — it is in the signature of an email already sent to a prospect, and [NEXT_SESSION.md:231](NEXT_SESSION.md:231) records **zero of two** mailboxes used. Replies to it currently go nowhere. |
+| 4.1 | `NEXT_PUBLIC_CONTACT_EMAIL` → Vercel, then **redeploy** | **todo** — `contact@billgen.be` and `info@billgen.be` both exist (confirmed 2026-09-08; NEXT_SESSION.md:231 recorded this as pending and was stale). The site falls back to `henrioutai@proton.me` in `src/lib/content/index.ts:40` until the variable is set, and it is inlined at build time — setting it without a redeploy changes nothing. |
 | 4.2 | Point `billgen.be` at Vercel | todo — keep nameservers at LWS, mail lives there |
 | 4.3 | Upstash credentials → waitlist/inquiry | built, 503 until configured |
 | 4.4 | Mentions légales + privacy notice | blocked on W1 |
