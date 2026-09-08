@@ -10,6 +10,11 @@ The permanent map is [HANDOFF.md](../HANDOFF.md). The handover note is
 one continuing run**, updated as items are finished rather than rewritten at
 the end.
 
+The **business** half of the launch — registration, contracts, hosting the beta
+for a real client — is not in this queue. It lives in
+[BETA_LAUNCH_PLAN.md](BETA_LAUNCH_PLAN.md), because an empty code queue and a
+blocked launch are two different states and conflating them hides the second.
+
 ---
 
 ## Resume protocol — do this first, every time
