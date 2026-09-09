@@ -58,8 +58,8 @@ Then read **§ Queue** below and start at the first item marked `QUEUED`.
    A half-edit with no note is the one state this protocol cannot recover from.
 3. **Update § Queue in the same commit as the work.** A ledger that lags the
    tree is worse than no ledger, because it is believed.
-4. **Do not push.** See § Boundaries. Ten commits are waiting for Henri; adding
-   to that pile is correct, publishing it is not.
+4. **Do not push.** See § Boundaries. Commits are waiting for Henri; adding to
+   that pile is correct, publishing it is not.
 
 ---
 
@@ -81,19 +81,22 @@ which it cannot know.
 | 7 | A total on the payments report → `GET /reports/payments` | `DONE` | Ships in *feat: the payments screen prints the server's total*. The endpoint grew `paid_from`/`paid_to` so the headline totals the same window the rows are filtered by. Verified in the app: narrowing the window moved both to € 0,00 together. |
 | 8 | The composer's VAT category default → `GET /vat-treatment` | `DONE` | Ships in *feat: the composer stops charging Belgian VAT to everyone*. Verified in the app against a real Dutch client: category `AE`, rate 0%, Article 51 §2 mention shown; switching back to a Belgian client restores 21% and drops the notice. |
 
+| 9 | T-24 · Phase 0 hygiene | `DONE` | `19cfb5d`…`12ce164`, eight commits. Closed in [TICKETS.md](TICKETS.md) § Done with what moved where. Henri scheduled it on 2026-09-09 and its `do` list sanctioned the deletions. |
+
 **The queue is empty.** Items 6–8 were the three the handover note sanctioned
 explicitly: *"None of these invents a screen; each connects a control that is
 already drawn."* That sanction is what makes them safe to do without Henri, and
-it extends to nothing else — see § Boundaries.
+it extends to nothing else — see § Boundaries. Item 9 came from
+[TICKETS.md](TICKETS.md), which is where the next one comes from too.
 
 ### Health, as of the last run
 
 | | |
 |---|---|
-| Python | **553 collected, exit 0** |
+| Python | **557 collected, exit 0** |
 | Frontend | **175 passed** (`npm run test`, 29 files), typecheck clean across all four workspaces |
 | `ruff check` | clean. CI runs `ruff check .` only — the tree is *not* `ruff format` clean and was not before, so do not reformat it as a side errand |
-| Architecture doc | **stale** — four commits landed after the last sync (`sync-architecture --check` will say so) |
+| Architecture doc | **in sync** as of `12ce164` — both `sync-architecture --check` and `architecture_to_text.py --check` green |
 | ROADMAP_IA | regenerated 2026-09-04 from `ia.ts`: 115 areas, 34 wired, 30% |
 | Unpushed | everything on `main` after `origin/main` — count it with the first command in the resume protocol rather than trusting a number here, which is stale the moment the next commit lands. Three trees became one on 2026-09-09: the worktree and its branch were removed, the remote-only docs commit `fde1edc` was folded in as `a5b3948`, and `main` fast-forwarded to the former `audit-engine-and-scaffolds` head |
 
