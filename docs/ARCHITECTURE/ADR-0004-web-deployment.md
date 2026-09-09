@@ -81,14 +81,15 @@ deployed by GitHub Actions from a tag.**
    restores. ADR-0003's logical export is an application feature and does not
    substitute for database-level backups.
 
-3. **The image ships Chromium, not just WeasyPrint.** HANDOFF §0 names
-   WeasyPrint the Docker/SaaS fallback, which would mean desktop renders a
-   legally-binding invoice through Chromium while SaaS renders the same
-   invoice through WeasyPrint — two engines, two visual outputs, for the same
-   document. Fidelity wins over image size: install Chromium via
-   `playwright install --with-deps chromium`, keep WeasyPrint as fallback
-   only, and add a golden-file test that the two engines agree before ever
-   relying on the fallback.
+3. **The image ships Chromium, and only Chromium.** The handover note used
+   to name a second, GTK-based engine as the Docker/SaaS fallback, which
+   would have meant desktop rendering a legally-binding invoice through one
+   engine while SaaS rendered the same invoice through another — two engines,
+   two visual outputs, for the same document. Fidelity wins over image size:
+   install Chromium via `playwright install --with-deps chromium`.
+   *(Amended 2026-09-09, T-24: the fallback was deleted rather than kept. It
+   was never installed in the image and never had the golden-file test this
+   ADR asked for, so it was a second appearance nobody had ever looked at.)*
 
 4. **Redis backs the rate limiter.** This is the one place the conventional
    stack's Redis is not optional for us: without it, the limiter is

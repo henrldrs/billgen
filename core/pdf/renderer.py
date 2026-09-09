@@ -11,13 +11,14 @@ _env = Environment(
 
 
 class PdfEngineUnavailableError(RuntimeError):
-    """No HTML->PDF engine is usable. HTML rendering still works everywhere; only
-    the HTML->PDF byte step needs an engine.
+    """The HTML->PDF engine is not usable. HTML rendering still works everywhere;
+    only the HTML->PDF byte step needs an engine.
 
-    Primary engine is headless Chromium via Playwright (cross-platform, renders
-    the templates pixel-perfect, bundles into the desktop .exe). Install with:
+    The engine is headless Chromium via Playwright (cross-platform, renders the
+    templates pixel-perfect, bundles into the desktop .exe). Install with:
     ``pip install playwright`` then ``python -m playwright install chromium``.
-    WeasyPrint (GTK/Pango) is kept as a fallback for the Docker/SaaS image."""
+    There is deliberately no second engine: two engines mean one invoice with
+    two appearances, and only one of them was ever looked at."""
 
 
 def render_html(template_filename: str, context: dict) -> str:
@@ -76,22 +77,13 @@ def _chromium_pdf(html: str) -> bytes:
         return runner.run(render())
 
 
-def _weasyprint_pdf(html: str) -> bytes:
-    from weasyprint import HTML  # noqa: PLC0415 — deliberate lazy import
-
-    return HTML(string=html).write_pdf()
-
-
 def html_to_pdf(html: str) -> bytes:
-    """Try Chromium first, then WeasyPrint. Raise PdfEngineUnavailableError only
-    if neither engine can render (the API maps that to 503)."""
-    errors: list[str] = []
-    for engine in (_chromium_pdf, _weasyprint_pdf):
-        try:
-            return engine(html)
-        except Exception as exc:  # ImportError, missing browser, missing native libs
-            # First line only: Playwright appends a multi-line box-drawing
-            # banner that bloats logs and chokes legacy console codepages.
-            message = str(exc).splitlines()[0] if str(exc) else repr(exc)
-            errors.append(f"{engine.__name__}: {message}")
-    raise PdfEngineUnavailableError("; ".join(errors))
+    """Render through Chromium. Raise PdfEngineUnavailableError if it cannot
+    (the API maps that to 503)."""
+    try:
+        return _chromium_pdf(html)
+    except Exception as exc:  # ImportError, missing browser, launch failure
+        # First line only: Playwright appends a multi-line box-drawing banner
+        # that bloats logs and chokes legacy console codepages.
+        message = str(exc).splitlines()[0] if str(exc) else repr(exc)
+        raise PdfEngineUnavailableError(f"_chromium_pdf: {message}") from exc

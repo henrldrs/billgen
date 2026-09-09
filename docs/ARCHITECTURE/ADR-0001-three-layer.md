@@ -24,8 +24,8 @@ Adopt a three-layer split, with persistence as a separate technical layer:
 
 1. **CORE** (`/core`) — pure Python. Domain models (Pydantic), use-case services,
    rules (VAT, discounts, gapless numbering, Belgian legal mentions), abstract
-   repository ports, PDF rendering (WeasyPrint + Jinja2), e-invoicing (UBL 2.1 /
-   EN 16931). No FastAPI, no ORM, no React imports.
+   repository ports, PDF rendering (headless Chromium + Jinja2), e-invoicing (UBL
+   2.1 / EN 16931). No FastAPI, no ORM, no React imports.
 2. **API** (`/api`) — FastAPI. HTTP surface only. JWT auth, tenant scoping
    (org_id from claims into a ContextVar), request/response validation
    (Pydantic). Delegates every business decision to CORE.
@@ -50,9 +50,9 @@ Adopt a three-layer split, with persistence as a separate technical layer:
   port/adapter inversion. One codebase, two persistence backings.
 - Frontends cannot express any rule the API does not publish, so business
   logic drift between UI and server is structurally impossible.
-- PDF and Peppol XML are generated server-side (one engine each: WeasyPrint,
-  UBL builder), eliminating the jsPDF + ReportLab + fpdf2 triple duplication
-  in the legacy code.
+- PDF and Peppol XML are generated server-side (one engine each: headless
+  Chromium, UBL builder), eliminating the jsPDF + ReportLab + fpdf2 triple
+  duplication in the legacy code.
 - Invoice numbering is enforced by a `sequence` table with row locks
   (per-organization, monotonic, gapless). Hard-delete is disallowed at the
   repository level; correction goes through credit notes.

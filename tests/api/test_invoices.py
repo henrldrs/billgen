@@ -212,7 +212,7 @@ async def test_invoice_pdf_endpoint(client):
     headers, company, record = await _setup(client)
     invoice = await create_invoice(client, headers, company["id"], record["id"])
 
-    # 200 when a PDF engine is present (Chromium/WeasyPrint), else a clean 503.
+    # 200 when Chromium is installed, else a clean 503.
     # The endpoint renders in Starlette's threadpool, where sync Chromium works.
     response = await client.get(f"/invoices/{invoice['id']}/pdf", headers=headers)
     assert response.status_code in (200, 503)

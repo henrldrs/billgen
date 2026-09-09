@@ -15,7 +15,7 @@ from .conftest import ISSUE_DATE, issue_invoice, make_lines
 
 
 def _pdf_engine_available() -> bool:
-    """Any usable HTML->PDF engine (Chromium or WeasyPrint)."""
+    """Whether Chromium is installed and can render."""
     from core.pdf import PdfEngineUnavailableError, html_to_pdf  # noqa: PLC0415
 
     try:

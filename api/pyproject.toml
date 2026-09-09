@@ -12,8 +12,6 @@ dependencies = [
   "argon2-cffi>=23",
   "pydantic-settings>=2.4",
   "structlog>=24",
-  "httpx>=0.27",
-  "stripe>=11",
 ]
 
 [build-system]

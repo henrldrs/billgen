@@ -49,7 +49,7 @@ the other doc) needs at least these three behaviors, not one.
 ### Preview of templates — **◑ partial, not confirmed as a real feature yet**
 
 What's confirmed: 4 PDF templates exist and render (`fr_standard`,
-`fr_detailed`, `nl_minimal`, `credit_note` — WeasyPrint + Jinja2,
+`fr_detailed`, `nl_minimal`, `credit_note` — headless Chromium + Jinja2,
 `COMPARISON_demo_vs_new.md` §9), and `Company.default_pdf_template` lets a
 company pick one at the settings level. Separately, a **draft invoice
 generates a watermarked PDF** ("not a valid invoice") before issuance — that's
@@ -61,7 +61,7 @@ between "templates exist" and "template preview is a feature."
 
 ### PDF generation — **✔ implemented**
 
-Server-side, WeasyPrint + Jinja2, renders from the same stored `Decimal`
+Server-side, headless Chromium + Jinja2, renders from the same stored `Decimal`
 totals used for the legal record (not recomputed at render time — this was a
 deliberate improvement over the old client-side jsPDF approach, per
 COMPARISON §9). Draft watermarking implemented. No confirmed "managed filing"
