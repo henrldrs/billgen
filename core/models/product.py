@@ -6,6 +6,7 @@ from pydantic import Field
 
 from ._base import TenantModel
 from .currency import Currency
+from .tax import SupplyKind
 
 
 class BillingType(str, Enum):
@@ -33,6 +34,10 @@ class Product(TenantModel):
     currency: Currency = Currency.EUR
 
     billing_type: BillingType = BillingType.FIXED
+    # Fiscal, not commercial. Defaults to SERVICES because that is what a
+    # Belgian SMB sells; getting it wrong on a domestic sale changes nothing,
+    # and on a cross-border one it changes which article the invoice cites.
+    supply_kind: SupplyKind = SupplyKind.SERVICES
     status: ProductStatus = ProductStatus.ACTIVE
     pipeline_stage: str | None = None
 

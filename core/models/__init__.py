@@ -9,7 +9,7 @@ from .organization import Organization, PlanTier
 from .payment import Payment, PaymentMethod
 from .product import BillingType, Product, ProductStatus
 from .quote import Quote, QuoteStatus
-from .tax import VATCategory, VATRate
+from .tax import SupplyKind, VATCategory, VATRate
 from .template import (
     REQUIRED_BLOCKS,
     BlockKind,
@@ -53,6 +53,7 @@ __all__ = [
     "QuoteStatus",
     "Role",
     "User",
+    "SupplyKind",
     "VATCategory",
     "VATRate",
 ]

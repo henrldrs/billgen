@@ -18,6 +18,7 @@ const LINE = {
   quantity: "2",
   unit_price: "625.00",
   product_id: null,
+  supply_kind: "services",
   vat: { category: "S", rate: "21.0", legal_mention: null },
   discount: null,
 };

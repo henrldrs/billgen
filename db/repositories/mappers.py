@@ -98,6 +98,7 @@ def _invoice_line_to_row(invoice: Invoice, line: InvoiceLine) -> InvoiceLineRow:
         quantity=line.quantity,
         unit_price=line.unit_price,
         product_id=line.product_id,
+        supply_kind=line.supply_kind.value,
         vat_category=line.vat.category.value,
         vat_rate=line.vat.rate,
         vat_legal_mention=line.vat.legal_mention,
@@ -126,6 +127,7 @@ def row_to_invoice(row: InvoiceRow) -> Invoice:
                     "quantity": line.quantity,
                     "unit_price": line.unit_price,
                     "product_id": line.product_id,
+                    "supply_kind": line.supply_kind,
                     "vat": {
                         "category": line.vat_category,
                         "rate": line.vat_rate,
@@ -188,6 +190,7 @@ def _credit_note_line_to_row(credit_note: CreditNote, line: CreditNoteLine) -> C
         quantity=line.quantity,
         unit_price=line.unit_price,
         product_id=line.product_id,
+        supply_kind=line.supply_kind.value,
         vat_category=line.vat.category.value,
         vat_rate=line.vat.rate,
         vat_legal_mention=line.vat.legal_mention,
@@ -216,6 +219,7 @@ def row_to_credit_note(row: CreditNoteRow) -> CreditNote:
                     "quantity": line.quantity,
                     "unit_price": line.unit_price,
                     "product_id": line.product_id,
+                    "supply_kind": line.supply_kind,
                     "vat": {
                         "category": line.vat_category,
                         "rate": line.vat_rate,
@@ -271,6 +275,7 @@ def _quote_line_to_row(quote: Quote, line: InvoiceLine) -> QuoteLineRow:
         quantity=line.quantity,
         unit_price=line.unit_price,
         product_id=line.product_id,
+        supply_kind=line.supply_kind.value,
         vat_category=line.vat.category.value,
         vat_rate=line.vat.rate,
         vat_legal_mention=line.vat.legal_mention,
@@ -299,6 +304,7 @@ def row_to_quote(row: QuoteRow) -> Quote:
                     "quantity": line.quantity,
                     "unit_price": line.unit_price,
                     "product_id": line.product_id,
+                    "supply_kind": line.supply_kind,
                     "vat": {
                         "category": line.vat_category,
                         "rate": line.vat_rate,

@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from ..models import VATCategory, VATRate
+from ..models import SupplyKind, VATCategory, VATRate
 
 BELGIAN_STANDARD_RATES: list[Decimal] = [
     Decimal("0"),
@@ -24,14 +24,20 @@ def pick_category(
     client_country: str,
     client_has_vat_number: bool,
     seller_country: str,
+    supply_kind: SupplyKind = SupplyKind.SERVICES,
 ) -> VATCategory:
     """Given buyer/seller context, return the applicable EN 16931 VAT category.
 
     Rules (Belgian seller default):
       - Domestic (same country): STANDARD
-      - Intra-EU B2B with a client VAT number: REVERSE_CHARGE (autoliquidation)
+      - Intra-EU B2B with a client VAT number: REVERSE_CHARGE for services
+        (autoliquidation, Art. 51 §2), INTRA_EU for goods (exempt
+        intra-Community supply, Art. 39bis)
       - Intra-EU B2C or B2B without VAT number: STANDARD (seller charges its own VAT)
       - Outside EU: EXPORT (zero-rated)
+
+    `supply_kind` defaults to SERVICES, which is what the caller meant before
+    the parameter existed — so an existing caller keeps the answer it had.
     """
     client_country = client_country.upper()
     seller_country = seller_country.upper()
@@ -41,6 +47,8 @@ def pick_category(
 
     if client_country in EU_MEMBER_STATES:
         if client_is_business and client_has_vat_number:
+            if supply_kind is SupplyKind.GOODS:
+                return VATCategory.INTRA_EU
             return VATCategory.REVERSE_CHARGE
         return VATCategory.STANDARD
 

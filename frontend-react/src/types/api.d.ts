@@ -1063,6 +1063,11 @@ export interface paths {
          *     that make the rule worth having: intra-EU B2B, which is reverse-charged and
          *     carries a mandatory Article 51 §2 mention, and export outside the EU.
          *
+         *     `supply_kind` splits that intra-EU B2B case in two, which nothing could do
+         *     before: services are reverse-charged (Art. 51 §2), goods are an exempt
+         *     intra-Community supply (Art. 39bis). It defaults to services, so a caller
+         *     that does not ask gets the answer it got yesterday.
+         *
          *     Advisory on purpose. This does not overwrite what the composer sends: the
          *     caller knows things the data does not (a client flagged as a business that
          *     is buying privately, an exemption that turns on the service). Defaulting is
@@ -2775,6 +2780,11 @@ export interface components {
             unit_price: number | string;
             /** Product Id */
             product_id?: string | null;
+            /**
+             * Supply Kind
+             * @default services
+             */
+            supply_kind?: string;
             vat?: components["schemas"]["VATIn"];
             discount?: components["schemas"]["DiscountIn"] | null;
         };
@@ -2790,6 +2800,8 @@ export interface components {
             unit_price: string;
             /** Product Id */
             product_id: string | null;
+            /** Supply Kind */
+            supply_kind: string;
             vat: components["schemas"]["VATOut"];
             discount: components["schemas"]["DiscountOut"] | null;
         };
@@ -3278,6 +3290,11 @@ export interface components {
              */
             billing_type?: string;
             /**
+             * Supply Kind
+             * @default services
+             */
+            supply_kind?: string;
+            /**
              * Status
              * @default active
              */
@@ -3351,6 +3368,8 @@ export interface components {
             currency: string;
             /** Billing Type */
             billing_type: string;
+            /** Supply Kind */
+            supply_kind: string;
             /** Status */
             status: string;
             /** Pipeline Stage */
@@ -3392,6 +3411,8 @@ export interface components {
             currency?: string | null;
             /** Billing Type */
             billing_type?: string | null;
+            /** Supply Kind */
+            supply_kind?: string | null;
             /** Status */
             status?: string | null;
             /** Pipeline Stage */
@@ -3737,6 +3758,23 @@ export interface components {
             /** In Use */
             in_use: boolean;
         };
+        /**
+         * SupplyKind
+         * @description Goods or services — the fiscal distinction, not a catalogue label.
+         *
+         *     It exists because the two are treated differently the moment a sale
+         *     crosses a border: intra-EU B2B *services* are reverse-charged to the buyer
+         *     (Art. 51 §2), while intra-EU B2B *goods* are an exempt intra-Community
+         *     supply (Art. 39bis). Same customer, same country, different article on the
+         *     invoice — and nothing in the data could tell them apart before this.
+         *
+         *     Not to be confused with the commercial distinction between a packaged
+         *     offer and labour by measure: a weekly transport package and a cleaning job
+         *     are both SERVICES here. `Product.billing_type` and `Product.category` are
+         *     what organise the catalogue.
+         * @enum {string}
+         */
+        SupplyKind: "goods" | "services";
         /**
          * TemplateAppearance
          * @description One brand colour, and token names for everything else.
@@ -6208,6 +6246,7 @@ export interface operations {
             query: {
                 company_id: string;
                 client_id: string;
+                supply_kind?: components["schemas"]["SupplyKind"];
                 lang?: string | null;
             };
             header?: never;

@@ -2910,7 +2910,7 @@
           "reference"
         ],
         "summary": "Vat Treatment",
-        "description": "Which VAT category this seller/buyer pair implies, and the mention it needs.\n\n`core.rules.vat.pick_category` has existed since the domain was written and\nno route called it, so every invoice line shipped `category: \"S\"` — correct\nfor a Belgian seller billing a Belgian customer, and wrong for the two cases\nthat make the rule worth having: intra-EU B2B, which is reverse-charged and\ncarries a mandatory Article 51 §2 mention, and export outside the EU.\n\nAdvisory on purpose. This does not overwrite what the composer sends: the\ncaller knows things the data does not (a client flagged as a business that\nis buying privately, an exemption that turns on the service). Defaulting is\nthe job; deciding is not.",
+        "description": "Which VAT category this seller/buyer pair implies, and the mention it needs.\n\n`core.rules.vat.pick_category` has existed since the domain was written and\nno route called it, so every invoice line shipped `category: \"S\"` — correct\nfor a Belgian seller billing a Belgian customer, and wrong for the two cases\nthat make the rule worth having: intra-EU B2B, which is reverse-charged and\ncarries a mandatory Article 51 §2 mention, and export outside the EU.\n\n`supply_kind` splits that intra-EU B2B case in two, which nothing could do\nbefore: services are reverse-charged (Art. 51 §2), goods are an exempt\nintra-Community supply (Art. 39bis). It defaults to services, so a caller\nthat does not ask gets the answer it got yesterday.\n\nAdvisory on purpose. This does not overwrite what the composer sends: the\ncaller knows things the data does not (a client flagged as a business that\nis buying privately, an exemption that turns on the service). Defaulting is\nthe job; deciding is not.",
         "operationId": "vat_treatment_vat_treatment_get",
         "parameters": [
           {
@@ -2931,6 +2931,15 @@
               "type": "string",
               "format": "uuid",
               "title": "Client Id"
+            }
+          },
+          {
+            "name": "supply_kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SupplyKind",
+              "default": "services"
             }
           },
           {
@@ -7713,6 +7722,11 @@
             ],
             "title": "Product Id"
           },
+          "supply_kind": {
+            "type": "string",
+            "title": "Supply Kind",
+            "default": "services"
+          },
           "vat": {
             "$ref": "#/components/schemas/VATIn"
           },
@@ -7767,6 +7781,10 @@
             ],
             "title": "Product Id"
           },
+          "supply_kind": {
+            "type": "string",
+            "title": "Supply Kind"
+          },
           "vat": {
             "$ref": "#/components/schemas/VATOut"
           },
@@ -7788,6 +7806,7 @@
           "quantity",
           "unit_price",
           "product_id",
+          "supply_kind",
           "vat",
           "discount"
         ],
@@ -9081,6 +9100,11 @@
             "title": "Billing Type",
             "default": "fixed"
           },
+          "supply_kind": {
+            "type": "string",
+            "title": "Supply Kind",
+            "default": "services"
+          },
           "status": {
             "type": "string",
             "title": "Status",
@@ -9266,6 +9290,10 @@
             "type": "string",
             "title": "Billing Type"
           },
+          "supply_kind": {
+            "type": "string",
+            "title": "Supply Kind"
+          },
           "status": {
             "type": "string",
             "title": "Status"
@@ -9305,6 +9333,7 @@
           "unit_price",
           "currency",
           "billing_type",
+          "supply_kind",
           "status",
           "pipeline_stage",
           "default_vat_rate",
@@ -9439,6 +9468,17 @@
               }
             ],
             "title": "Billing Type"
+          },
+          "supply_kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supply Kind"
           },
           "status": {
             "anyOf": [
@@ -10351,6 +10391,15 @@
           "in_use"
         ],
         "title": "SubprocessorResponse"
+      },
+      "SupplyKind": {
+        "type": "string",
+        "enum": [
+          "goods",
+          "services"
+        ],
+        "title": "SupplyKind",
+        "description": "Goods or services — the fiscal distinction, not a catalogue label.\n\nIt exists because the two are treated differently the moment a sale\ncrosses a border: intra-EU B2B *services* are reverse-charged to the buyer\n(Art. 51 §2), while intra-EU B2B *goods* are an exempt intra-Community\nsupply (Art. 39bis). Same customer, same country, different article on the\ninvoice — and nothing in the data could tell them apart before this.\n\nNot to be confused with the commercial distinction between a packaged\noffer and labour by measure: a weekly transport package and a cleaning job\nare both SERVICES here. `Product.billing_type` and `Product.category` are\nwhat organise the catalogue."
       },
       "TemplateAppearance": {
         "properties": {

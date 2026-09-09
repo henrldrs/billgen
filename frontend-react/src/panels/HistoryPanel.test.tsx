@@ -406,6 +406,7 @@ test("the record sheet renders the invoice as a document, with its lines", async
               quantity: "10.000000",
               unit_price: "125.00",
               product_id: null,
+              supply_kind: "services",
               vat: { category: "S", rate: "21.00", legal_mention: null },
               discount: null,
             },
@@ -443,6 +444,7 @@ test("a zero-rated line prints its exempting mention on the paper", async () => 
               quantity: "1",
               unit_price: "1000.00",
               product_id: null,
+              supply_kind: "services",
               vat: {
                 category: "AE",
                 rate: "0.00",

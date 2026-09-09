@@ -150,6 +150,47 @@ def test_free_tier_pdf_has_brand_footer(env):
     assert "data:image/png;base64," in html  # self-contained embedded logo
 
 
+def test_a_mixed_invoice_prints_both_mandatory_mentions(env):
+    """Goods and services to the same intra-EU business are two exemptions on
+    one document, and both articles are mandatory. The context derives mentions
+    from the set of line categories, so this is the assertion that the set is
+    what it looks at (T-26)."""
+    from core.models import InvoiceLine, SupplyKind, VATCategory, VATRate  # noqa: PLC0415
+    from core.pdf import build_invoice_context, get_template  # noqa: PLC0415
+
+    invoice = issue_invoice(
+        env.uow_factory,
+        company_id=env.company.id,
+        client_id=env.client_nl.id,
+        issue_date=ISSUE_DATE,
+        lines=[
+            InvoiceLine(
+                line_number=1,
+                description="Deep cleaning, 100 m2",
+                quantity=Decimal("1"),
+                unit_price=Decimal("500.00"),
+                supply_kind=SupplyKind.SERVICES,
+                vat=VATRate(category=VATCategory.REVERSE_CHARGE, rate=Decimal("0")),
+            ),
+            InvoiceLine(
+                line_number=2,
+                description="Cleaning products, 20 units",
+                quantity=Decimal("20"),
+                unit_price=Decimal("15.00"),
+                supply_kind=SupplyKind.GOODS,
+                vat=VATRate(category=VATCategory.INTRA_EU, rate=Decimal("0")),
+            ),
+        ],
+    )
+
+    spec = get_template("fr_standard")
+    ctx = build_invoice_context(invoice, env.company, env.client_nl, spec)
+    mentions = " | ".join(ctx["mentions"])
+
+    assert "51" in mentions
+    assert "39bis" in mentions
+
+
 def test_branding_can_be_suppressed(env):
     # The `branded` seam lets a future paid plan drop the footer (Phase 10).
     from core.pdf import build_invoice_context, get_template, render_html  # noqa: PLC0415

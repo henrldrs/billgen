@@ -92,6 +92,9 @@ class CreditNoteLineRow(Base):
         Numeric(MONEY_PRECISION, MONEY_SCALE), nullable=False
     )
     product_id: Mapped[UUID | None] = mapped_column(Uuid)
+    supply_kind: Mapped[str] = mapped_column(
+        String(10), nullable=False, default="services"
+    )
 
     vat_category: Mapped[str] = mapped_column(String(2), nullable=False, default="S")
     vat_rate: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False)

@@ -11,7 +11,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends
 
-from core.models import VATCategory
+from core.models import SupplyKind, VATCategory
 from core.pdf.registry import TEMPLATES
 from core.repository import UnitOfWork
 from core.repository.sequence_repo import (
@@ -86,6 +86,7 @@ def list_pdf_templates() -> PdfTemplatesResponse:
 _REASONS: dict[VATCategory, str] = {
     VATCategory.STANDARD: "vat.reason.domestic",
     VATCategory.REVERSE_CHARGE: "vat.reason.intra_eu_b2b",
+    VATCategory.INTRA_EU: "vat.reason.intra_eu_goods",
     VATCategory.EXPORT: "vat.reason.outside_eu",
 }
 
@@ -94,6 +95,7 @@ _REASONS: dict[VATCategory, str] = {
 def vat_treatment(
     company_id: UUID,
     client_id: UUID,
+    supply_kind: SupplyKind = SupplyKind.SERVICES,
     lang: str | None = None,
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
 ) -> VatTreatmentResponse:
@@ -104,6 +106,11 @@ def vat_treatment(
     for a Belgian seller billing a Belgian customer, and wrong for the two cases
     that make the rule worth having: intra-EU B2B, which is reverse-charged and
     carries a mandatory Article 51 §2 mention, and export outside the EU.
+
+    `supply_kind` splits that intra-EU B2B case in two, which nothing could do
+    before: services are reverse-charged (Art. 51 §2), goods are an exempt
+    intra-Community supply (Art. 39bis). It defaults to services, so a caller
+    that does not ask gets the answer it got yesterday.
 
     Advisory on purpose. This does not overwrite what the composer sends: the
     caller knows things the data does not (a client flagged as a business that
@@ -118,6 +125,7 @@ def vat_treatment(
         client_country=client.country_code,
         client_has_vat_number=bool(client.vat_number),
         seller_country=company.country_code,
+        supply_kind=supply_kind,
     )
     rate = build_rate(category, seller_country=company.country_code)
     language = lang or company.default_language

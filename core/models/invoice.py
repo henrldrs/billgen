@@ -8,7 +8,7 @@ from pydantic import Field
 from ._base import DomainModel, TenantModel
 from .currency import Currency
 from .discount import Discount
-from .tax import VATRate
+from .tax import SupplyKind, VATRate
 
 
 class InvoiceStatus(str, Enum):
@@ -26,6 +26,10 @@ class InvoiceLine(DomainModel):
     quantity: Decimal = Field(gt=Decimal("0"))
     unit_price: Decimal = Field(ge=Decimal("0"))
     product_id: UUID | None = None
+    # Copied from the product at composition and frozen at issue with
+    # everything else on the line: the catalogue may be re-classified later,
+    # and a document that was correct when issued stays correct.
+    supply_kind: SupplyKind = SupplyKind.SERVICES
     vat: VATRate = Field(default_factory=VATRate)
     discount: Discount | None = None
 

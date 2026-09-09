@@ -6,7 +6,7 @@ from pydantic import Field
 
 from ._base import DomainModel, TenantModel
 from .currency import Currency
-from .tax import VATRate
+from .tax import SupplyKind, VATRate
 
 
 class CreditNoteLine(DomainModel):
@@ -15,6 +15,7 @@ class CreditNoteLine(DomainModel):
     quantity: Decimal = Field(gt=Decimal("0"))
     unit_price: Decimal = Field(ge=Decimal("0"))
     product_id: UUID | None = None
+    supply_kind: SupplyKind = SupplyKind.SERVICES
     vat: VATRate = Field(default_factory=VATRate)
 
 

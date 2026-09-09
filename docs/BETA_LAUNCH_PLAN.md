@@ -60,7 +60,7 @@ Owner: Henri. Nothing here is code and nothing here can be delegated.
 **Fedasil cumul: cleared.** Confirmed 2026-09-08 — no conflict-of-interest
 restriction applies. This was previously treated as a gate; it is not.
 
-### The four questions for the accountant hour
+### The questions for the accountant hour
 
 Go in with these, not with "what should I do":
 
@@ -74,6 +74,11 @@ Go in with these, not with "what should I do":
 4. **Intracommunity services listing** for a Dutch B2B client — what do I file
    and when? (Triggered specifically by Emilia; would not exist if she were
    Belgian.)
+5. **Goods vs services on a cross-border B2B invoice.** BillGen now decides
+   between Article 51 §2 (reverse charge, services) and Article 39bis (exempt
+   intra-Community supply, goods) from a field on the product. Confirm that
+   split, and confirm which code each lands under on the listing — the software
+   prints the article, so a wrong mapping is printed on a real invoice.
 
 ### Why the address decision is urgent
 

@@ -1294,6 +1294,12 @@ const MESSAGES = {
     nl: "Intracommunautair B2B — btw verlegd naar de klant.",
     es: "B2B intracomunitario — IVA con inversión del sujeto pasivo.",
   },
+  "vat.reason.intra_eu_goods": {
+    en: "Intra-EU B2B supply of goods — exempt.",
+    fr: "Livraison intracommunautaire de biens — exemptée.",
+    nl: "Intracommunautaire levering van goederen — vrijgesteld.",
+    es: "Entrega intracomunitaria de bienes — exenta.",
+  },
   "vat.reason.outside_eu": {
     en: "Export outside the EU — no Belgian VAT.",
     fr: "Exportation hors UE — pas de TVA belge.",

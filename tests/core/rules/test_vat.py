@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from core.models import VATCategory
+from core.models import SupplyKind, VATCategory
 from core.rules import build_rate, default_rate_for_belgium, pick_category
 
 
@@ -22,6 +22,40 @@ def test_intra_eu_b2b_with_vat_number_is_reverse_charge():
         seller_country="BE",
     )
     assert cat is VATCategory.REVERSE_CHARGE
+
+
+def test_intra_eu_b2b_goods_are_an_exempt_supply_not_a_reverse_charge():
+    """The distinction the rule could not make before T-26. Same buyer, same
+    country, same VAT number — a different article on the invoice."""
+    kwargs = dict(
+        client_is_business=True,
+        client_country="FR",
+        client_has_vat_number=True,
+        seller_country="BE",
+    )
+    assert pick_category(supply_kind=SupplyKind.GOODS, **kwargs) is VATCategory.INTRA_EU
+    assert (
+        pick_category(supply_kind=SupplyKind.SERVICES, **kwargs)
+        is VATCategory.REVERSE_CHARGE
+    )
+    # The default is what every caller meant before the parameter existed.
+    assert pick_category(**kwargs) is VATCategory.REVERSE_CHARGE
+
+
+def test_goods_change_nothing_domestically_or_outside_the_eu():
+    """A field that only matters at a border should only matter at a border."""
+    for country, expected in (("BE", VATCategory.STANDARD), ("US", VATCategory.EXPORT)):
+        for kind in SupplyKind:
+            assert (
+                pick_category(
+                    client_is_business=True,
+                    client_country=country,
+                    client_has_vat_number=True,
+                    seller_country="BE",
+                    supply_kind=kind,
+                )
+                is expected
+            )
 
 
 def test_intra_eu_b2c_is_standard():

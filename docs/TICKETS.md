@@ -59,44 +59,12 @@ wish, and the queue is not for wishes.
               `Documents\BillGen\billgen.db` on disk. `tests/desktop/` covers
               the three resolution branches, the one-way migration, and that
               `BILLGEN_DATA_DIR` beats both.
-
-### T-26 · Goods or services — the field that makes Article 39bis reachable
-    branch    Backend               status  open
-    needs     —
-    why       `core/rules/vat.py:44` returns `REVERSE_CHARGE` for **every**
-              intra-EU B2B sale, because nothing tells it whether the supply is
-              goods or services. `VATCategory.INTRA_EU` exists,
-              `core/rules/belgian_legal.py:14` carries its Article 39bis
-              mention in four languages, and `invoice_compliance.py:354`
-              validates it — and no input can ever select it. A Belgian seller
-              shipping goods to a Dutch business gets an invoice citing Article
-              51 §2 where it should cite 39bis. Henri chose the fiscal reading
-              over a catalogue label on 2026-09-09; it leaves §MVP's "a service
-              and a product share a table" intact, because this is a field and
-              not a second record type.
-
-              Worth knowing before using it: the commercial intuition and the
-              fiscal one diverge. A €100/week transport package is a *service*
-              in VAT terms, and so is cleaning. The catalogue distinction — a
-              packaged offer versus labour by measure — is already served by
-              `billing_type` and `category` on the same model.
-    do        A `SupplyKind` enum (`goods` | `services`) on
-              `core/models/product.py`, defaulting to `services`, carried onto
-              the invoice line at composition so a mixed invoice stays
-              expressible. `resolve_category()` takes it and returns INTRA_EU
-              for goods where it returns REVERSE_CHARGE for services. An
-              invoice carrying both prints both mentions —
-              `core/pdf/context.py` derives them per line. Alembic revision.
-              **The mapping goes to the accountant hour first**
-              (BETA_LAUNCH_PLAN §W1, question 4); `belgian_legal.py` already
-              says the wording needs a licensed sign-off, and this decides
-              which article a real cross-border invoice carries.
-    done when A goods line to an EU business with a VAT number resolves
-              INTRA_EU and prints Article 39bis; a services line to the same
-              client resolves REVERSE_CHARGE and prints Article 51 §2; an
-              invoice carrying one of each prints both;
-              `test_invoice_compliance.py` covers all three and the existing
-              Dutch-client test passes unchanged.
+              **Half done, `6c6a1a2`:** `desktop/paths.py` resolves in four
+              steps, `migrate_legacy_data()` moves an old install once and
+              refuses to merge, and six tests in
+              `tests/desktop/test_paths.py` cover both. The other half is
+              the install-and-uninstall assertion, which cannot be made
+              until T-30 produces a package to install.
 
 ### T-19 · One shell — the desktop is the SaaS shell plus an adapter
     branch    Frontend              status  open
@@ -633,6 +601,33 @@ wish, and the queue is not for wishes.
 ---
 
 ## Done
+
+### T-26 · Goods or services — Article 39bis becomes reachable  ·  `f0a1e5d`
+    `core/rules/vat.py` returned REVERSE_CHARGE for every intra-EU B2B sale,
+    because nothing told it what kind of supply it was. `VATCategory.INTRA_EU`,
+    its Article 39bis mention in four languages and its compliance check all
+    existed and were unreachable: a Belgian seller shipping goods to a Dutch
+    business was issued an invoice citing Article 51 §2.
+
+    `SupplyKind` (goods | services) lands on `core/models/tax.py` beside
+    `VATCategory`, because it is a fiscal fact and not a catalogue label. The
+    product carries it, the invoice, credit-note and quote lines freeze a copy
+    at composition, and `pick_category` splits the intra-EU B2B case on it.
+    Everything defaults to `services`, which is the answer every caller was
+    already getting, so the migration backfills existing rows with the
+    treatment their documents were issued under.
+
+    Two things it deliberately is not. It is **not the catalogue distinction**
+    Henri described — a €100/week transport package and a cleaning job are both
+    services in VAT terms; `billing_type` and `category` are what separate a
+    packaged offer from labour by measure. And it is **not yet user-visible**:
+    the field is on the API and defaults correctly, the control to set it
+    belongs with the catalogue panel.
+
+    Still owed: the accountant's confirmation of the mapping, now question 5 of
+    the hour in BETA_LAUNCH_PLAN §W1. `belgian_legal.py` already said the
+    wording needs a licensed sign-off, and this decides which article a real
+    cross-border invoice carries.
 
 ### T-24 · Phase 0 hygiene  ·  `19cfb5d`…`2707470`
 

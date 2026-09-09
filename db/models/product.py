@@ -24,6 +24,7 @@ class ProductRow(TenantRowMixin, Base):
     currency: Mapped[str] = mapped_column(String(3), nullable=False, default="EUR")
 
     billing_type: Mapped[str] = mapped_column(String(20), nullable=False, default="fixed")
+    supply_kind: Mapped[str] = mapped_column(String(10), nullable=False, default="services")
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
     pipeline_stage: Mapped[str | None] = mapped_column(String(100))
 

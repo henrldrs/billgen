@@ -22,6 +22,7 @@ class InvoiceLineIn(BaseModel):
     quantity: Decimal = Field(gt=Decimal("0"))
     unit_price: Decimal = Field(ge=Decimal("0"))
     product_id: UUID | None = None
+    supply_kind: str = "services"
     vat: VATIn = Field(default_factory=VATIn)
     discount: DiscountIn | None = None
 
@@ -84,6 +85,7 @@ class InvoiceLineOut(BaseModel):
     quantity: Decimal
     unit_price: Decimal
     product_id: UUID | None
+    supply_kind: str
     vat: VATOut
     discount: DiscountOut | None
 

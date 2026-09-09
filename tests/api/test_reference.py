@@ -122,6 +122,29 @@ async def test_an_intra_eu_business_is_reverse_charged(client):
     assert body["reason"] == "vat.reason.intra_eu_b2b"
 
 
+async def test_intra_eu_goods_cite_article_39bis_not_51(client):
+    """`VATCategory.INTRA_EU`, its four-language mention and its compliance
+    check all existed; nothing could reach them until `supply_kind` did."""
+    headers = bearer(await signup(client))
+    company, record = await _pair(
+        client, headers, name="Dutch BV", country_code="NL", vat_number="NL123456789B01"
+    )
+
+    body = await _treatment(client, headers, company, record, supply_kind="goods")
+
+    assert body["category"] == "K"
+    assert Decimal(str(body["rate"])) == Decimal("0")
+    assert "39bis" in body["legal_mention"]
+    assert body["reason"] == "vat.reason.intra_eu_goods"
+
+    # Same client, same call, services: the other article.
+    services = await _treatment(
+        client, headers, company, record, supply_kind="services"
+    )
+    assert services["category"] == "AE"
+    assert "51" in services["legal_mention"]
+
+
 async def test_an_intra_eu_consumer_still_pays_belgian_vat(client):
     """No VAT number, no reverse charge — the seller charges its own rate."""
     headers = bearer(await signup(client))

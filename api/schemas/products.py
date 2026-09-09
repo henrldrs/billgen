@@ -12,6 +12,7 @@ class ProductCreateRequest(BaseModel):
     unit_price: Decimal = Field(ge=Decimal("0"))
     currency: str = "EUR"
     billing_type: str = "fixed"
+    supply_kind: str = "services"
     status: str = "active"
     pipeline_stage: str | None = None
     default_vat_rate: Decimal = Field(default=Decimal("21.0"), ge=0, le=100)
@@ -25,6 +26,7 @@ class ProductUpdateRequest(BaseModel):
     unit_price: Decimal | None = Field(default=None, ge=Decimal("0"))
     currency: str | None = None
     billing_type: str | None = None
+    supply_kind: str | None = None
     status: str | None = None
     pipeline_stage: str | None = None
     default_vat_rate: Decimal | None = Field(default=None, ge=0, le=100)
@@ -41,6 +43,7 @@ class ProductResponse(BaseModel):
     unit_price: Decimal
     currency: str
     billing_type: str
+    supply_kind: str
     status: str
     pipeline_stage: str | None
     default_vat_rate: Decimal
