@@ -21,6 +21,7 @@ depends on remembering a conversation, which is the point of both.
 | The launch's business half | `docs/BETA_LAUNCH_PLAN.md` |
 | Colours, type, tokens | `docs/BRAND_TOKENS.md` |
 | Every screen and how wired it is | `frontend-react/src/scaffold/ia.ts` → `docs/ROADMAP_IA.md` |
+| What Henri wants built, in his words | the `.txt` specs in `docs/` — onboarding, settings, dashboard, SaaS appearance |
 | Legal and compliance posture | `core/trust/` → generated into `docs/LEGAL_BRIEF.md` |
 
 A fact that belongs in two of these belongs in one of them with a link from the

@@ -233,7 +233,7 @@ wish, and the queue is not for wishes.
               today's. The rehearsed restore itself is T-23's evidence, not a
               second note.
 
-### T-29 · Where your data lives, said in the app
+### T-29 · The guided first run — and where the data lives, said inside it
     branch    Frontend              status  blocked
     needs     T-25, T-27, T-28 — and a drawing from Henri
     why       A beta tester holding her own clients' personal data on her own
@@ -241,20 +241,44 @@ wish, and the queue is not for wishes.
               place she will ever read about them. Today nothing in the UI says
               where the database is, what is in it, how long it is kept, or
               what a backup does and does not protect.
-    do        A Settings → Data & privacy section: the **resolved** data
-              directory with an "open folder" control, what each folder holds,
-              the retention position, the GDPR summary already generated from
-              `core/trust/` into `docs/LEGAL_BRIEF.md`, and the backup and
-              restore controls. A first-run explanation shown once, and a
-              prompt on the first export that the passphrase cannot be
-              recovered. Each panel links to the guide and support section
-              rather than restating it — one wording, one place to correct it.
-    done when The section shows the path `app_data_dir()` actually resolved,
-              asserted by a test rather than hard-coded; the first-run
-              explanation shows once and not again; every legal sentence on the
-              screen is generated from `core/trust/` rather than typed into a
-              component. Blocked until the layout is drawn — new screens are
-              Henri's (SOLO_RUN § Boundaries).
+
+              Henri 2026-09-09: that explanation does not belong in a settings
+              page nobody opens. It belongs in the **guided first run** — the
+              authoritative walkthrough that takes the user across the app
+              once, collects credentials, logo and VAT identifiers, completes
+              the organization's single company, and has the beta contract
+              signed in the same pass. Signing it there is what makes "you can
+              always find it in Settings → Documents" a true sentence rather
+              than a hope.
+
+              The flow is already specified in `docs/onboarding feature .txt`,
+              Henri's own: five steps, entity type with KBO mod-97 validation,
+              progressive scaffolding by business profile rather than a tour,
+              seeded data, and a first invoice inside three minutes.
+    do        One wizard, shown once, resumable. It ends with: a company whose
+              identifiers pass `core/rules/identifiers.py` (reuse the existing
+              `GET /companies/{id}/validation` as the completion gate rather
+              than a second rule set), a logo, a chosen data directory (T-25),
+              and an accepted contract stored as a `Document` of kind
+              `contract` (T-27) — which therefore lands in the backup (T-28).
+
+              What the wizard says once, **Settings → Data & privacy** keeps
+              permanently: the *resolved* data directory with an "open folder"
+              control, what each folder holds, the retention position, the GDPR
+              summary already generated from `core/trust/` into
+              `docs/LEGAL_BRIEF.md`, and the backup and restore controls. Plus
+              the prompt, before the first encrypted export, that the
+              passphrase cannot be recovered. Every panel links to the guide
+              and support section rather than restating it — one wording, one
+              place to correct it.
+    done when The wizard cannot be completed with a company that fails
+              validation; the accepted contract appears as a `Document` row and
+              in `GET /backup/export`; the settings section shows the path
+              `app_data_dir()` actually resolved, asserted by a test rather
+              than hard-coded; the first run shows once and not again; and
+              every legal sentence on screen is generated from `core/trust/`
+              rather than typed into a component. Blocked until the layout is
+              drawn — new screens are Henri's (SOLO_RUN § Boundaries).
 
 ### T-30 · The shipped package — MSIX, slimmed, and legal
     branch    Desktop               status  open
