@@ -602,7 +602,7 @@ wish, and the queue is not for wishes.
 
 ## Done
 
-### T-26 · Goods or services — Article 39bis becomes reachable  ·  `f0a1e5d`
+### T-26 · Goods or services — Article 39bis becomes reachable  ·  `8fb7064`
     `core/rules/vat.py` returned REVERSE_CHARGE for every intra-EU B2B sale,
     because nothing told it what kind of supply it was. `VATCategory.INTRA_EU`,
     its Article 39bis mention in four languages and its compliance check all

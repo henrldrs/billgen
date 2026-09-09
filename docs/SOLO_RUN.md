@@ -82,21 +82,25 @@ which it cannot know.
 | 8 | The composer's VAT category default → `GET /vat-treatment` | `DONE` | Ships in *feat: the composer stops charging Belgian VAT to everyone*. Verified in the app against a real Dutch client: category `AE`, rate 0%, Article 51 §2 mention shown; switching back to a Belgian client restores 21% and drops the notice. |
 
 | 9 | T-24 · Phase 0 hygiene | `DONE` | `19cfb5d`…`12ce164`, eight commits. Closed in [TICKETS.md](TICKETS.md) § Done with what moved where. Henri scheduled it on 2026-09-09 and its `do` list sanctioned the deletions. |
+| 10 | T-25 · the data directory leaves the package container | `IN PROGRESS` | `6c6a1a2`. `desktop/paths.py` resolves in four steps and moves a legacy install once; six tests. The other half — install a package, uninstall it, find the database still there — cannot be asserted until T-30 builds one. |
+| 11 | T-26 · goods or services | `DONE` | `8fb7064`. Article 39bis was unreachable: every intra-EU B2B sale came back reverse-charged because nothing said what kind of supply it was. Owed: the accountant confirms the mapping (BETA_LAUNCH_PLAN §W1, question 5). |
 
-**The queue is empty.** Items 6–8 were the three the handover note sanctioned
-explicitly: *"None of these invents a screen; each connects a control that is
-already drawn."* That sanction is what makes them safe to do without Henri, and
-it extends to nothing else — see § Boundaries. Item 9 came from
-[TICKETS.md](TICKETS.md), which is where the next one comes from too.
+**This ledger's own list is closed.** Items 6–8 were the three the handover
+note sanctioned explicitly: *"None of these invents a screen; each connects a
+control that is already drawn."* That sanction is what made them safe to do
+without Henri, and it extends to nothing else — see § Boundaries. From item 9
+on, work comes from [TICKETS.md](TICKETS.md) and this table only records what
+happened to it.
 
 ### Health, as of the last run
 
 | | |
 |---|---|
-| Python | **557 collected, exit 0** |
+| Python | **567 collected, exit 0** | 
 | Frontend | **175 passed** (`npm run test`, 29 files), typecheck clean across all four workspaces |
 | `ruff check` | clean. CI runs `ruff check .` only — the tree is *not* `ruff format` clean and was not before, so do not reformat it as a side errand |
 | Architecture doc | **in sync** as of `12ce164` — both `sync-architecture --check` and `architecture_to_text.py --check` green |
+| Migrations | head is `d1c4f8a26b70` (supply kind). A dev database from before 2026-09-09 needs `alembic upgrade head`, and a desktop install migrates itself on boot |
 | ROADMAP_IA | regenerated 2026-09-04 from `ia.ts`: 115 areas, 34 wired, 30% |
 | Unpushed | everything on `main` after `origin/main` — count it with the first command in the resume protocol rather than trusting a number here, which is stale the moment the next commit lands. Three trees became one on 2026-09-09: the worktree and its branch were removed, the remote-only docs commit `fde1edc` was folded in as `a5b3948`, and `main` fast-forwarded to the former `audit-engine-and-scaffolds` head |
 
