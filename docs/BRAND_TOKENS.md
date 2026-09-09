@@ -119,7 +119,12 @@ no existing token changed value — so the block is reversible by deleting it.
 | | Hex | What it is |
 |---|---|---|
 | `--bg-accent` | `#10B981` | **Canonical.** The app's action colour, pinned by the guard test in `frontend-react/src/scaffold/tokens.test.ts`. |
-| `--brand-logo-green` | `#529984` | What the mark in `docs/BillGen_logo.png` actually is, sampled rather than guessed. |
+| `--brand-logo-green` | `#529984` | What the green in the mark actually is, sampled from the raster original rather than guessed. |
+
+The raster the sampling was done on — `docs/BillGen_logo.png`, 852 KB — was
+deleted in T-24 once `assets/brand/billgen-mark.svg` became the source of the
+mark. It is recoverable with `git show b6ae363:docs/BillGen_logo.png`, which is
+the only reason this number is still checkable.
 
 Both are correct and they are different greens. The site discovered this the
 hard way: a brighter emerald button beside the `#529984` wordmark in one header

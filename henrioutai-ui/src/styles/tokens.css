@@ -305,7 +305,7 @@
  * colour and its background in the app. Two things arrive, and neither
  * repoints a token that already existed.
  *
- * 1. THE LOGO PALETTE, sampled from docs/BillGen_logo.png rather than guessed:
+ * 1. THE LOGO PALETTE, sampled from the raster original rather than guessed:
  *    the navy of "Bill", the green of "Gen", the warm paper behind them. That
  *    green is #529984, which is NOT the #10B981 --bg-accent maps to. Both are
  *    correct and they are different greens: #10B981 is the app's canonical
