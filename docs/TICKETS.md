@@ -33,6 +33,78 @@ wish, and the queue is not for wishes.
 
 ## Open — in priority order
 
+### T-19 · One shell — the desktop is the SaaS shell plus an adapter
+    branch    Frontend              status  open
+    needs     —
+    why       Henri 2026-09-09: Emilia's build is the SaaS frontend wrapped
+              for the desktop. Today `frontend-electron/src/DesktopShell.tsx`
+              is a second implementation of
+              `frontend-saas/src/pages/AppShell.tsx` (690 diff lines) and
+              already lags it — SOLO_RUN item 9 is the first instance. Two
+              shells means every fix is done twice or forgotten once.
+    do        Step 1, one line: `variant="floating"` + `ThemeSwitcher` on
+              DesktopShell. Step 2: move AppShell into `@billgen/ui` taking a
+              `PlatformAdapter` { tokenStore, resolveBaseUrl, persistTheme,
+              navigate, surface }; DesktopShell becomes the adapter. Move
+              `lib/theme.ts` into the package — it is identical in both shells.
+    done when `DesktopShell.tsx` ≤ 80 lines, both shells render from one
+              AppShell, and `TopNavPopups.test.tsx` passes unchanged.
+
+### T-20 · A sidecar that runs without Python on the machine
+    branch    Desktop               status  open
+    needs     —
+    why       `src-tauri/src/main.rs` spawns `python -m desktop.bootstrap`
+              (`BILLGEN_PYTHON` override). Emilia's laptop has no Python.
+              HANDOFF Phase 12 names PyInstaller; the lazier option is the
+              python.org *embeddable* distribution (~10 MB) shipped as a Tauri
+              resource with `BILLGEN_PYTHON` pointed at it. Try that first;
+              freeze only if Playwright refuses to run from it.
+    done when `tauri build` produces an NSIS installer that starts the API on
+              a clean Windows VM with no Python installed, and `/healthz`
+              answers.
+
+### T-21 · PDFs through the installed Edge
+    branch    Backend / Desktop     status  open
+    needs     —
+    why       `core/pdf/renderer.py` launches Playwright's own Chromium, a
+              ~150 MB download on first run that a desktop user cannot be
+              asked for. Every Windows 11 machine has Edge, and Playwright
+              drives it with `channel="msedge"`.
+    do        One more attempt in `_chromium_pdf`, tried first on Windows:
+              `p.chromium.launch(channel="msedge", args=[...])`. Keep the
+              bundled-Chromium path for the container.
+    done when `test_real_pdf_bytes` passes on a machine with Edge and no
+              Playwright browser downloaded.
+
+### T-22 · Emilia's license file
+    branch    Desktop / Henri       status  open
+    needs     T-20
+    why       `desktop/licensing.py` verifies an Ed25519-signed license file
+              offline (email, plan, expiry, optional hardware id). An absent
+              license is still allowed (beta grace). Nothing is hosted, and
+              nothing needs to be.
+    do        Generate a key pair once — the private key stays with Henri and
+              never enters the repo. `sign_license({...})` for her, expiry at
+              the end of the beta. Turn `require_license` on in the packaged
+              build so the file is what gates it; embed the public key.
+    done when The packaged app refuses to start without the file and starts
+              with it; `test_tampered_payload_rejected` already covers the
+              signature.
+
+### T-23 · Backup on close, restore rehearsed on her machine
+    branch    Desktop               status  open
+    needs     T-20
+    why       Her data lives only in `%APPDATA%\BillGen`. ADR-0003's export
+              exists as an endpoint and a panel; nothing runs it unasked. No
+              job runner is needed on the desktop — the sidecar has a
+              shutdown.
+    do        On sidecar shutdown, write the backup export to
+              `%APPDATA%\BillGen\backups\<date>.zip`, keep the last 30.
+              During the first Teams call, restore one into a scratch
+              database and compare — T-06 performed where the data is.
+    done when A dated note in `docs/` says a restore was performed on her
+              machine, from which file, and what was compared.
+
 ### T-01 · Transactional mail — the sending path
     branch    DevOps / SRE          status  open
     needs     T-02 (job queue)
@@ -162,6 +234,8 @@ wish, and the queue is not for wishes.
     needs     —
     why       PROD-09. Docker targets and a prod compose exist; nothing is
               deployed. Almost nothing else can be *verified*.
+              Deferred for the first beta client (2026-09-09, W3): Emilia
+              gets the desktop build. This stays the SaaS answer.
     done when `/healthz` answers over TLS on a hostname that is not this
               workstation, and CI has been watched going green once.
 

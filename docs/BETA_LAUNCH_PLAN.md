@@ -148,6 +148,42 @@ Reasoning, kept because the reversal will look arbitrary in six months:
   W1 *as well*.
 - Every hosted blocker is work required for the SaaS anyway.
 
+**Reversed 2026-09-09: Emilia gets a desktop build with a license file, not a
+hosted instance.** Written beside the 2026-09-08 decision rather than over it,
+so both sets of reasons survive the next time this is argued.
+
+The reason that won: responsibility for *her clients'* data. A hosted instance
+makes henriOutai a processor of personal data belonging to her clients, which
+needs the DPA (W2), a domiciliation address and a machine we operate. A desktop
+build keeps that data on her laptop; we hold only her name, e-mail and license,
+and she is the controller of her own accounting data, as she is with any
+desktop tool today. The DPA drops out of the beta; a short beta agreement
+replaces it. Nothing is hosted for licensing either — the license is a signed
+file, verified offline (`desktop/licensing.py`).
+
+What it costs, accepted with eyes open:
+
+- Support is a guided first install plus a Teams call; no crash reporting
+  reaches us (F4 ❌ stays).
+- Backups are hers. The app writes one on close, and the restore is rehearsed
+  **on her machine** during the first call — that is T-06, done where the data is.
+- The installer is unsigned until W1 makes an EV certificate purchasable;
+  SmartScreen shows a warning, clicked through on the call.
+- Updates are a reinstall; no Tauri updater in the beta.
+
+What it needs — the desktop path, [TICKETS.md](TICKETS.md) T-19…T-23:
+
+- **One shell.** The desktop is the SaaS shell plus a platform adapter, not the
+  second implementation it is today (T-19).
+- A sidecar that runs without Python installed (T-20).
+- PDFs through the Edge already on her machine, before any Chromium download (T-21).
+- Her license file, signed offline (T-22).
+- Backup on close (T-23).
+
+Consequences elsewhere: the MVP-scope note in `system-architecture.html` said
+desktop packaging was out; it is now in for one client. ADR-0004 keeps the VPS
+as the SaaS answer — 3.2–3.6 below move to "when the SaaS has a customer".
+
 **Public-signup blockers are not one-client blockers.** ADR-0004 names email a
 hard gate because "a forgotten password is a permanent lockout" — true for
 public signup, but for one hand-held beta client it collapses to resetting a

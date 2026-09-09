@@ -793,7 +793,7 @@ What is billed. One record type with a unit, a price and a VAT rate; a service a
 
 Explicitly out of the MVP
 
-Each of these exists in the backend and is not part of the first release surface: quotes, credit notes, payments, expenses, reports, multi-company, search, Peppol export, desktop packaging.
+Each of these exists in the backend and is not part of the first release surface: quotes, credit notes, payments, expenses, reports, multi-company, search, Peppol export, desktop packaging — with one exception recorded 2026-09-09: the first beta client receives a licensed desktop build, so packaging is in scope for her and only her (BETA_LAUNCH_PLAN §W3, TICKETS T-19–T-23).
 
 One reading to confirm. The scope as given was “template customization, management of clients, services/products and clients” — clients appear twice. This section reads that as three record types plus invoice issue as the thing they serve, on the grounds that an invoicing MVP without invoices is not a product. If the intent was different, this is the section to correct first.
 

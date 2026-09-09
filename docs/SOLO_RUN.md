@@ -30,7 +30,7 @@ Nothing here depends on remembering a conversation. Four commands tell you
 exactly where the last session stopped:
 
 ```bash
-git log --oneline origin/audit-engine-and-scaffolds..HEAD
+git log --oneline origin/main..HEAD
 ```
 
 ```bash
@@ -94,7 +94,7 @@ to anything else in §5b.
 | `ruff check` | clean. CI runs `ruff check .` only — the tree is *not* `ruff format` clean and was not before, so do not reformat it as a side errand |
 | Architecture doc | **stale** — four commits landed after the last sync (`sync-architecture --check` will say so) |
 | ROADMAP_IA | regenerated 2026-09-04 from `ia.ts`: 115 areas, 34 wired, 30% |
-| Unpushed | everything on `audit-engine-and-scaffolds` since `2e15e79` — count it with the first command in the resume protocol rather than trusting a number here, which is stale the moment the next commit lands |
+| Unpushed | everything on `main` after `origin/main` — count it with the first command in the resume protocol rather than trusting a number here, which is stale the moment the next commit lands. Three trees became one on 2026-09-09: the worktree and its branch were removed, the remote-only docs commit `fde1edc` was folded in as `a5b3948`, and `main` fast-forwarded to the former `audit-engine-and-scaffolds` head |
 
 ---
 

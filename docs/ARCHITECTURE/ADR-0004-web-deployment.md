@@ -3,6 +3,11 @@
 Status: **proposed** (2026-07-16) · Owner: Henri · Track: deployment path
 (HANDOFF §9), stage 3 — "web deploy"
 
+Amended 2026-09-09: still the SaaS topology, unchanged. For the first beta
+client the desktop build precedes it again — her data must not be hosted by
+us — see `docs/BETA_LAUNCH_PLAN.md` §W3 and TICKETS T-19…T-23. The VPS path is
+deferred for her, not abandoned.
+
 ## Context
 
 The deployment path decided 2026-07-12 is **safety net → desktop installer →
