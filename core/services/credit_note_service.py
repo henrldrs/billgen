@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, time
 from uuid import UUID
 
 from ..models import AuditAction, CreditNote, CreditNoteLine, InvoiceStatus
@@ -69,10 +69,19 @@ class CreditNoteService:
             )
             saved = uow.credit_notes.add(credit_note)
 
+            # The void is an act of the credit note, so it is dated by the credit
+            # note: a backdated avoir cancels its invoice on the day it claims,
+            # not the day it was keyed in. The clock is kept when the two agree.
+            now = datetime.now(UTC)
+            voided_at = (
+                now
+                if issue_date == now.date()
+                else datetime.combine(issue_date, time.min, tzinfo=UTC)
+            )
             voided = invoice.model_copy(
                 update={
                     "status": InvoiceStatus.VOIDED,
-                    "voided_at": datetime.now(UTC),
+                    "voided_at": voided_at,
                     "voided_reason": reason,
                     "voided_by_credit_note_id": saved.id,
                 }

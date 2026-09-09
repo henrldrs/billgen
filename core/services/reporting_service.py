@@ -959,7 +959,9 @@ class ReportingService:
             if invoice.status is InvoiceStatus.VOIDED:
                 events.append(
                     TimelineEvent(
-                        # voided_at is a UTC timestamp; the timeline is day-grained.
+                        # voided_at is a UTC timestamp; the timeline is
+                        # day-grained. A void caused by a credit note carries
+                        # that note's issue date, so the pair lands on one day.
                         at=(
                             invoice.voided_at.date()
                             if invoice.voided_at
@@ -1002,6 +1004,8 @@ class ReportingService:
             )
 
         # Newest first; ties broken by kind so a payment recorded on the same day
-        # as its invoice does not sort above the invoice it settles.
-        events.sort(key=lambda e: (e.at, _TIMELINE_ORDER.get(e.kind, 9)), reverse=True)
+        # as its invoice does not sort above the invoice it settles. The rank is
+        # negated because `reverse` applies to the whole key - without that the
+        # tie-break runs backwards and a void sorts above its own invoice.
+        events.sort(key=lambda e: (e.at, -_TIMELINE_ORDER.get(e.kind, 9)), reverse=True)
         return events[:limit]

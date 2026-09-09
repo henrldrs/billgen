@@ -5,6 +5,7 @@ and invoice duplication.
 Every one of these existed only as "fetch everything and do it in the browser".
 """
 
+from datetime import date
 from decimal import Decimal
 
 from .conftest import (
@@ -229,12 +230,13 @@ async def test_client_timeline_is_commercial_not_audit(client):
         headers=headers,
     )
     cancelled = await create_invoice(client, headers, company["id"], record["id"])
+    today = date.today()
     await client.post(
         "/credit-notes",
         json={
             "invoice_id": cancelled["id"],
             "reason": "cancelled",
-            "issue_date": "2026-09-09",
+            "issue_date": today.isoformat(),
         },
         headers=headers,
     )
@@ -243,11 +245,13 @@ async def test_client_timeline_is_commercial_not_audit(client):
     assert response.status_code == 200, response.text
     events = response.json()
 
+    # Newest first, and the same-day tie-break puts the credit note above the
+    # void it causes - both are dated by the note, never by the wall clock.
     kinds = [e["kind"] for e in events]
-    assert kinds[0] == "credit_note_issued"  # newest first
+    assert kinds[:2] == ["credit_note_issued", "invoice_voided"]
+    assert [e["at"] for e in events[:2]] == [today.isoformat()] * 2
     assert "payment_received" in kinds
     assert kinds.count("invoice_issued") == 2
-    assert "invoice_voided" in kinds  # the credit note voided its invoice
 
     payment = next(e for e in events if e["kind"] == "payment_received")
     assert Decimal(str(payment["amount"])) == Decimal("1512.50")
