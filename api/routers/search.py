@@ -7,8 +7,8 @@ customer's name, and until now the answer was "not found".
 Ungated on purpose, for now. `search` is a graded feature in the commercial
 matrix (`basic` / `full` / `advanced`) and, like every graded value, it is read
 by the frontend to pick a variant and enforced by no endpoint. Adding a server
-check here is a product decision, not a bug fix — see docs/NEXT_SESSION.md §4.6,
-which is still open.
+check here is a product decision, not a bug fix — see docs/SOLO_RUN.md,
+§ Open decisions parked for him, where it is still open.
 """
 
 from collections.abc import Callable

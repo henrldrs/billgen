@@ -109,7 +109,7 @@ wish, and the queue is not for wishes.
     needs     —
     why       `src-tauri/src/main.rs` spawns `python -m desktop.bootstrap`
               (`BILLGEN_PYTHON` override). Emilia's laptop has no Python.
-              HANDOFF Phase 12 names PyInstaller; the lazier option is the
+              The desktop plan named PyInstaller; the lazier option is the
               python.org *embeddable* distribution (~10 MB) shipped as a Tauri
               resource with `BILLGEN_PYTHON` pointed at it. Try that first;
               freeze only if Playwright refuses to run from it.
@@ -191,8 +191,7 @@ wish, and the queue is not for wishes.
     do        One SPF record covering **every** sender, DKIM for each, then
               DMARC at `p=none` to observe before enforcing.
 
-              **The trap, from NEXT_SESSION §233, repeated because it fails
-              silently:** two SPF records on one domain is not "both work", it
+              **The trap, repeated because it fails silently:** two SPF records on one domain is not "both work", it
               is *invalid* — receivers return a permerror and SPF fails
               outright. The LWS record and the provider's record must be
               **merged into a single record**.
@@ -477,7 +476,7 @@ wish, and the queue is not for wishes.
 ### T-01b · The mailboxes — contact@ / info@  ·  2026-09-04
     Done — Henri has access to both; LWS included two with `billgen.be`.
     Two threads it leaves behind: the marketing site still needs
-    `NEXT_PUBLIC_CONTACT_EMAIL` pointed at it (NEXT_SESSION §231), and the
+    `NEXT_PUBLIC_CONTACT_EMAIL` pointed at it (BETA_LAUNCH_PLAN §W4 4.1), and the
     mailbox is now a **live sender**, which is why T-01c no longer waits for
     the application to send anything.
 

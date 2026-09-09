@@ -201,7 +201,8 @@ FEATURES: dict[PlanTier, dict[str, bool | str]] = {
         # instead of each of them holding their own subscription. The billing
         # owner gets an administration surface — seats, per-entity usage,
         # consolidated reporting — that a single-user plan has no use for.
-        # The shell that renders it is unbuilt; see docs/NEXT_SESSION.md.
+        # The shell that renders it is unbuilt; see docs/SOLO_RUN.md,
+        # § Open decisions parked for him.
         "team_administration": True,
         "priority_support": "priority",
     },

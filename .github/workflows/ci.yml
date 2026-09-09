@@ -1,7 +1,8 @@
 # BillGen CI — quality gate on every push/PR (ADR-0004).
 #
-# Still inert until the repo has a GitHub remote. Nothing here has ever
-# executed: treat the first run as the experiment it is, not as a regression.
+# The remote exists (`origin`, github.com/henrldrs/billgen) and `main` has been
+# pushed, so this is live rather than inert. What it has actually done is in the
+# Actions tab, not here — a workflow file is not evidence that it ran green.
 
 name: CI
 

@@ -53,9 +53,9 @@ filing error carrying BillGen's name.
 ## Integrating it — the order that works
 
 1. **`db/models/expense.py` + repository.** Mirror `db/models/quote.py`. Watch
-   the constraint-naming trap from `docs/NEXT_SESSION.md` §3: two unique
-   constraints whose first column is `organization_id` collapse to one name
-   under the `uq` convention and Postgres rejects the table.
+   the constraint-naming trap in [HANDBOOK.md](../../docs/HANDBOOK.md) §5:
+   two unique constraints whose first column is `organization_id` collapse to
+   one name under the `uq` convention and Postgres rejects the table.
 2. **Alembic revision.** `alembic revision --autogenerate`, then read it.
 3. **`core/services/expense_service.py`.** Owns the state transitions, and is
    the only place `can_transition` is called. Follow `QuoteService` — and note

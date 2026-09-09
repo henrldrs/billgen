@@ -8,7 +8,7 @@ only place a gapless number is consumed.
 No quota. `Meter.INVOICES` counts invoices, and metering offers against the
 invoice allowance would mean a customer pays for work they did not win. Whether
 quotes get an allowance of their own is a pricing decision, not a bug — see
-docs/NEXT_SESSION.md.
+docs/SOLO_RUN.md, § Open decisions parked for him.
 """
 
 from collections.abc import Callable

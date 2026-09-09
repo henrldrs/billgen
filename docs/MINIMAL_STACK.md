@@ -116,7 +116,7 @@ a status.
 | # | Item | Tier | BillGen | Evidence |
 |---|---|---|---|---|
 | **H1** | Cost visibility and control | T1+ | ➖→❌ | Nothing to measure while nothing is hosted. Becomes ❌ the day D7 is provisioned, and the item to build then is a budget alarm, not a dashboard. |
-| **H2** | Documentation and runbooks | T1+ | ⚠️ | Documentation is a genuine strength — `docs/ARCHITECTURE/` ADRs, `ROADMAP_IA.md`, `SOLO_RUN.md`, `ENVIRONMENT_REFERENCE.md`, and an audit engine that regenerates the architecture doc's volatile parts. **Runbooks are the missing half**: there is no written procedure for restore, rollback, incident, or key rotation. Documentation explains the system; a runbook tells a tired person what to type at 3am. |
+| **H2** | Documentation and runbooks | T1+ | ⚠️ | Documentation is a genuine strength — `docs/ARCHITECTURE/` ADRs, `ROADMAP_IA.md`, `SOLO_RUN.md`, `HANDBOOK.md`, and an audit engine that regenerates the architecture doc's volatile parts. **Runbooks are the missing half**: there is no written procedure for restore, rollback, incident, or key rotation. Documentation explains the system; a runbook tells a tired person what to type at 3am. |
 | **H3** | Sustainability | T2+ | ➖ | Deferred on purpose. Revisit when D7 exists and there is a machine whose size is a choice. |
 
 ### I · AI-bearing systems

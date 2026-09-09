@@ -1,7 +1,7 @@
 # ADR-0003 — Organization backup & restore
 
 Status: **accepted** (2026-07-12) · Owner: Henri · Track: foundation hardening,
-punch-list item "backup/restore" (HANDOFF §9)
+punch-list item "backup/restore" (now TICKETS T-06, T-23)
 
 ## Context
 

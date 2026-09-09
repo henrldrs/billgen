@@ -137,5 +137,4 @@ retention wins for fiscal documents. Deletion is therefore *scoped*, not uniform
 
 - [ADR-0001](ADR-0001-three-layer.md) — the three-layer split this builds on.
 - `core/services/invoice_service.py` (current create-time issuance), `numbering_service.py`.
-- Peppol validation outcome + BE→BIS switch: `HANDOFF.md` §9.
-- Audit context: `docs/AUDIT_PROGRESS_vs_demo.md`.
+- Peppol validation outcome + BE→BIS switch: commit `771e903`.

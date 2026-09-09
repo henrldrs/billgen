@@ -53,8 +53,9 @@ Owner: Henri. Nothing here is code and nothing here can be delegated.
 | 1.1 | Book the accountant hour | **todo** | Longest lead time. Book before doing anything in 1.2–1.5. |
 | 1.2 | Decide domiciliation address | **todo** | The one decision materially cheaper before registration. See below. |
 | 1.3 | Register at the guichet (Xerius) | blocked on 1.1–1.2 | Xerius doubles as the social insurance fund. |
-| 1.4 | VAT regime — standard, not franchise | decided | Recorded in [NEXT_SESSION.md](NEXT_SESSION.md) §S3: we sell VAT software to B2B who deduct anyway, and registering lets us deduct Vercel, domains, hardware. |
+| 1.4 | VAT regime — standard, not franchise | decided | We sell VAT and Peppol software to B2B customers who deduct anyway, and registering lets us deduct Vercel, domains and hardware. It also puts us inside the Belgian B2B e-invoicing mandate — dogfooding, and a line the site can use. |
 | 1.5 | Social insurance affiliation (*indépendant complémentaire*) | blocked on 1.3 | Mandatory, not optional, even as a secondary activity. |
+| 1.6 | Business bank account | **todo** | Before signing anything, confirm **CODA / CAMT.053 export and API access**. Reconciling a payment against the `+++/+++` structured communication is a BillGen feature and we are our own first test case. Compare Hello bank! Pro and Qonto on exactly that axis, not on the monthly fee. |
 
 **Fedasil cumul: cleared.** Confirmed 2026-09-08 — no conflict-of-interest
 restriction applies. This was previously treated as a gate; it is not.
@@ -143,7 +144,7 @@ Reasoning, kept because the reversal will look arbitrary in six months:
   rehearsed"*. On a laptop in another country, holding data under a seven-year
   retention obligation.
 - Desktop still needs a **frozen sidecar, an NSIS installer, an activation flow
-  and an EV certificate** ([HANDOFF.md:43](../HANDOFF.md:43), all Phase 12). The
+  and an EV certificate** ([TICKETS.md](TICKETS.md) T-20, T-22). The
   EV certificate requires a registered business, so the desktop path is gated on
   W1 *as well*.
 - Every hosted blocker is work required for the SaaS anyway.
@@ -220,7 +221,7 @@ It has three jobs it is genuinely good at, and they are worth doing:
 
 | # | Item | State |
 |---|---|---|
-| 4.1 | `NEXT_PUBLIC_CONTACT_EMAIL` → Vercel, then **redeploy** | **todo** — `contact@billgen.be` and `info@billgen.be` both exist (confirmed 2026-09-08; NEXT_SESSION.md:231 recorded this as pending and was stale). The site falls back to `henrioutai@proton.me` in `src/lib/content/index.ts:40` until the variable is set, and it is inlined at build time — setting it without a redeploy changes nothing. |
+| 4.1 | `NEXT_PUBLIC_CONTACT_EMAIL` → Vercel, then **redeploy** | **todo** — `contact@billgen.be` and `info@billgen.be` both exist (confirmed 2026-09-08). The site falls back to `henrioutai@proton.me` in `src/lib/content/index.ts:40` until the variable is set, and it is inlined at build time — setting it without a redeploy changes nothing. |
 | 4.2 | Point `billgen.be` at Vercel | todo — keep nameservers at LWS, mail lives there |
 | 4.3 | Upstash credentials → waitlist/inquiry | built, 503 until configured |
 | 4.4 | Mentions légales + privacy notice | blocked on W1 |
@@ -230,6 +231,44 @@ It has three jobs it is genuinely good at, and they are worth doing:
 The local site repo is **12 commits ahead of origin** and deploys are manual.
 Verify what is actually live before telling a client a page exists — the PT
 locale is committed locally but may never have been deployed.
+
+**The site, in one block.** Repo `github.com/henrldrs/pre_sale_billgen`
+(public), working copy at `../billgen_presale_website`, Vercel project
+`billgen.be`, Next.js 16 static, one route per locale, no server functions
+beyond `/api/waitlist` and `/api/inquiry`. Four locales — EN, FR, NL and PT-PT
+— with English as the source of truth in `src/lib/content/`, so a translation
+that drops a key fails the build.
+
+Three traps it has already sprung, each of which cost a session:
+
+- **`npx vercel --prod` uploads the working copy, not `main`.** Until 4.5 is
+  done it can ship uncommitted work, and a deploy that looks stale is usually a
+  branch problem — check `git branch -vv` before anything else. The site served
+  the old FinanceFlow page for six months because a rebrand branch was never
+  merged while a note claimed it had been.
+- **`NEXT_PUBLIC_*` is inlined at build time.** Setting the variable without a
+  redeploy changes nothing (that is 4.1).
+- **Lightning CSS strips `backdrop-filter: url(#id) …` from the built
+  stylesheet**, so the frosted-glass cards set the filter inline in
+  `components/glass.tsx`. If the frost ever vanishes after a refactor, look
+  there first.
+
+**Positioning, from the competitor benchmark** (Billit, Dexxter, Accountable,
+Moneybird): Peppol is commoditised — three of the four give it away and one is
+an access point — and the free fiduciaire portal is already occupied. Nobody
+sells provable correctness, which is the ground BillGen owns. The headline is
+*correct before it leaves, provable after*, and the four languages have to say
+the same thing.
+
+**Domain and mail, settled 2026-09-02.** `billgen.be` is delegated —
+`ns17`–`ns20.lwsdns.com`, zone editable, expiry 25-08-2027. **Keep the
+nameservers at LWS**: mail records live there and moving them to Vercel breaks
+the mailbox. If LWS ever blocks on identity, the account name is
+`HENRIQUE D RIBEIRO` against an ID reading `HENRIQUE DOUGLAS RIBEIRO DA SILVA`
+— ask for a *correction of the holder's name*, never a change of holder, which
+for `.be` is a transfer of ownership with its own procedure. **`billgen.com` is
+not available**: it is a live fuel-bill-generator business claiming the name
+BillGen in its schema.org markup. That is a naming question, still open.
 
 ### henrioutai.com / .space
 
@@ -263,6 +302,21 @@ a page saying who you are, not a bespoke site.
 records it verified in the running app against a real Dutch client: VAT category
 `AE`, 0%, Article 51 §2 mention shown. The product can issue her invoice the day
 the number exists.
+
+### The Netherlands prospect
+
+Someone asked for a BillGen demo for Dutch invoicing and floated a partnership.
+Two things to be honest about before that conversation:
+
+- **BillGen is Belgium-specific by construction.** The UBL carries the Belgian
+  elements and the VAT handling is Belgian. A Netherlands version is a second
+  compliance profile, not a locale switch — a real project, not a demo flag.
+- **What can be shown today** is the export pipeline, the numbering guarantees,
+  the template versioning and the multi-company separation. None of those are
+  country-specific, and that is a strong demo.
+
+Treat it as evidence, not a commitment. The `market` field on the site's
+request form exists so this stops being one anecdote and starts being a count.
 
 ### Two corrections carried from this session
 

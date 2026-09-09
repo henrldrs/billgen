@@ -1,7 +1,7 @@
 # ADR-0004 — Web deployment topology
 
 Status: **proposed** (2026-07-16) · Owner: Henri · Track: deployment path
-(HANDOFF §9), stage 3 — "web deploy"
+(now TICKETS T-05), stage 3 — "web deploy"
 
 Amended 2026-09-09: still the SaaS topology, unchanged. For the first beta
 client the desktop build precedes it again — her data must not be hosted by

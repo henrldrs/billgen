@@ -14,8 +14,8 @@ depends on remembering a conversation, which is the point of both.
 |---|---|
 | What to work on next | `docs/TICKETS.md` — the queue, in priority order |
 | Where the last session stopped | `docs/SOLO_RUN.md` — the live ledger |
-| How to run, test and package it | `HANDOFF.md` |
-| Environment variables | `docs/ENVIRONMENT_REFERENCE.md`, `.env.example` |
+| How to run it, how a request flows, what has already bitten | `docs/HANDBOOK.md` |
+| Environment variables | `.env.example` — the reference, not a second document |
 | How the system is shaped, and why | `docs/ARCHITECTURE/system-architecture.html` (read the `.txt`), `ADR-0001`…`ADR-0006` |
 | Production readiness, layer by layer | `docs/MINIMAL_STACK.md` |
 | The launch's business half | `docs/BETA_LAUNCH_PLAN.md` |
