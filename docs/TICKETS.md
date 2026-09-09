@@ -602,7 +602,7 @@ wish, and the queue is not for wishes.
 
 ## Done
 
-### T-32 · The partner tier — granted, never bought  ·  `PENDING`
+### T-32 · The partner tier — granted, never bought  ·  `1ebb784`
     Beta testers need the template studio, which is gated on
     `pdf_templates_premium`: False on free and starter, True on business. The
     first instinct is to put them on `business`, and it makes two things
