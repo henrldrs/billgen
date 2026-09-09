@@ -791,9 +791,15 @@ Products & services
 
 What is billed. One record type with a unit, a price and a VAT rate; a service and a product are two sides of the same coin and share a table.
 
+Amended 2026-09-09. They still share a table. A supply_kind field (goods | services) is added as the fiscal classification, not a catalogue label — it is the input resolve_category() has always lacked, and without it Article 39bis is unreachable. TICKETS T-26.
+
 Explicitly out of the MVP
 
 Each of these exists in the backend and is not part of the first release surface: quotes, credit notes, payments, expenses, reports, multi-company, search, Peppol export, desktop packaging — with one exception recorded 2026-09-09: the first beta client receives a licensed desktop build, so packaging is in scope for her and only her (BETA_LAUNCH_PLAN §W3, TICKETS T-19–T-23).
+
+Confirmed 2026-09-09, and held. Asked whether credit notes or payments should return for the licensed beta build, Henri kept the scope as fixed. The consequence to be aware of rather than discover: an issued invoice cannot lawfully be deleted, so a beta tester’s mistake is corrected by a credit note — and the surface offers none. It is a support burden and not a legal dead end, because the sidecar carries the whole API and the credit-note endpoints are present, merely unexposed. A correction is one call Henri makes; it is not something she can do alone.
+
+Added for the desktop beta, and not billing surface: a data-custody layer — the document mirror on disk, the encrypted carryable backup, and the in-app explanation of where the data lives (T-27, T-28, T-29). None of it issues or changes a document, so the exclusion list above stands unmodified.
 
 One reading to confirm. The scope as given was “template customization, management of clients, services/products and clients” — clients appear twice. This section reads that as three record types plus invoice issue as the thing they serve, on the grounds that an invoicing MVP without invoices is not a product. If the intent was different, this is the section to correct first.
 

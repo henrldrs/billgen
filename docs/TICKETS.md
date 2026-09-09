@@ -33,6 +33,71 @@ wish, and the queue is not for wishes.
 
 ## Open — in priority order
 
+### T-25 · The data directory leaves the package container
+    branch    Desktop               status  open
+    needs     —
+    why       `desktop/paths.py:15` puts the database, the log, the JWT secret
+              and the license under `%APPDATA%\BillGen`. Under MSIX that path
+              is virtualised into the package container and **removed with the
+              package on uninstall** — seven years of legally-binding invoices
+              with it. This tree has been bitten by that virtualisation once
+              already: `core/pdf/renderer.py:27` moved the browser cache into
+              the project tree for the same reason. MSIX also has no installer
+              UI — it installs silently, with no wizard — so the location
+              cannot be asked for at install time and has to be a first-run
+              choice.
+    do        `app_data_dir()` resolves in order: `BILLGEN_DATA_DIR`, then a
+              path recorded in a config file beside the executable, then the
+              default `%USERPROFILE%\Documents\BillGen`. First run offers the
+              default and a "choose another folder" control — Emilia points it
+              at her `D:` drive there. For an existing install: if the old
+              `%APPDATA%` database exists and the new location does not, move
+              the folder once and leave a marker. Never sync in both
+              directions; a split brain over an invoice series is worse than a
+              missing one.
+    done when A packaged build, installed and uninstalled, leaves
+              `Documents\BillGen\billgen.db` on disk. `tests/desktop/` covers
+              the three resolution branches, the one-way migration, and that
+              `BILLGEN_DATA_DIR` beats both.
+
+### T-26 · Goods or services — the field that makes Article 39bis reachable
+    branch    Backend               status  open
+    needs     —
+    why       `core/rules/vat.py:44` returns `REVERSE_CHARGE` for **every**
+              intra-EU B2B sale, because nothing tells it whether the supply is
+              goods or services. `VATCategory.INTRA_EU` exists,
+              `core/rules/belgian_legal.py:14` carries its Article 39bis
+              mention in four languages, and `invoice_compliance.py:354`
+              validates it — and no input can ever select it. A Belgian seller
+              shipping goods to a Dutch business gets an invoice citing Article
+              51 §2 where it should cite 39bis. Henri chose the fiscal reading
+              over a catalogue label on 2026-09-09; it leaves §MVP's "a service
+              and a product share a table" intact, because this is a field and
+              not a second record type.
+
+              Worth knowing before using it: the commercial intuition and the
+              fiscal one diverge. A €100/week transport package is a *service*
+              in VAT terms, and so is cleaning. The catalogue distinction — a
+              packaged offer versus labour by measure — is already served by
+              `billing_type` and `category` on the same model.
+    do        A `SupplyKind` enum (`goods` | `services`) on
+              `core/models/product.py`, defaulting to `services`, carried onto
+              the invoice line at composition so a mixed invoice stays
+              expressible. `resolve_category()` takes it and returns INTRA_EU
+              for goods where it returns REVERSE_CHARGE for services. An
+              invoice carrying both prints both mentions —
+              `core/pdf/context.py` derives them per line. Alembic revision.
+              **The mapping goes to the accountant hour first**
+              (BETA_LAUNCH_PLAN §W1, question 4); `belgian_legal.py` already
+              says the wording needs a licensed sign-off, and this decides
+              which article a real cross-border invoice carries.
+    done when A goods line to an EU business with a VAT number resolves
+              INTRA_EU and prints Article 39bis; a services line to the same
+              client resolves REVERSE_CHARGE and prints Article 51 §2; an
+              invoice carrying one of each prints both;
+              `test_invoice_compliance.py` covers all three and the existing
+              Dutch-client test passes unchanged.
+
 ### T-19 · One shell — the desktop is the SaaS shell plus an adapter
     branch    Frontend              status  open
     needs     —
@@ -83,13 +148,30 @@ wish, and the queue is not for wishes.
               offline (email, plan, expiry, optional hardware id). An absent
               license is still allowed (beta grace). Nothing is hosted, and
               nothing needs to be.
+
+              Two halves of this are currently zero, where the ticket assumed
+              one line. **`desktop/bootstrap.py` never calls `check_license`**
+              — the module is a tested library nothing invokes. And
+              `hardware_id` round-trips through the signature
+              (`licensing.py:44`, `:87`) without ever being compared to the
+              machine running it. Henri 2026-09-09: the beta copy is bound to
+              its OS install.
     do        Generate a key pair once — the private key stays with Henri and
               never enters the repo. `sign_license({...})` for her, expiry at
-              the end of the beta. Turn `require_license` on in the packaged
-              build so the file is what gates it; embed the public key.
+              the end of the beta. Add `machine_fingerprint()`: on Windows,
+              `MachineGuid` from `HKLM\SOFTWARE\Microsoft\Cryptography` —
+              stable across reboots and hardware swaps, changes on an OS
+              reinstall, which is the binding asked for. Not the MAC (docking
+              stations and VPN adapters move it) and not an IP address.
+              `check_license` compares it when the payload carries one. Call it
+              from `bootstrap.py` with `require_license` on in the packaged
+              build; embed the public key. Write down the reissue path — a
+              dead laptop must not be a dead business.
     done when The packaged app refuses to start without the file and starts
-              with it; `test_tampered_payload_rejected` already covers the
-              signature.
+              with it; a license signed for another machine is refused on this
+              one and the error names why; `bootstrap` fails closed, not open,
+              when the public key is missing; `test_tampered_payload_rejected`
+              already covers the signature.
 
 ### T-23 · Backup on close, restore rehearsed on her machine
     branch    Desktop               status  open
@@ -104,6 +186,134 @@ wish, and the queue is not for wishes.
               database and compare — T-06 performed where the data is.
     done when A dated note in `docs/` says a restore was performed on her
               machine, from which file, and what was compared.
+
+### T-27 · The documents leave the database
+    branch    Desktop / Backend     status  open
+    needs     T-25
+    why       Nothing is written to disk except the SQLite database — PDFs
+              render on demand and are never kept. Henri 2026-09-09: the data
+              folder should hold the invoices, and the backup should carry the
+              documents, the contracts and the policies. Under a seven-year
+              retention duty, a document that exists only while the app runs is
+              a thin guarantee.
+    do        On issue, write the rendered PDF to
+              `<data dir>/invoices/<year>/<reference>.pdf`. **The database
+              stays authoritative and the folder is written, never read back**
+              — otherwise a user tidying a folder silently edits the legal
+              record, and that is the one failure this must not have. A
+              `Document` row (kind: invoice | contract | policy | other; path;
+              sha256; created_at) registers each file so `BackupService.export`
+              can carry it. One-shot re-render for anything issued before this
+              lands.
+    done when Issuing an invoice leaves a PDF under `invoices/<year>/`;
+              deleting that file changes no endpoint's answer; the export
+              carries the document rows and their hashes; a restore into an
+              empty database reports which files are missing instead of
+              failing.
+
+### T-28 · A backup that can be carried
+    branch    Desktop               status  open
+    needs     T-23, T-27
+    why       `BackupService.export` already produces readable JSON — which is
+              what Henri wants for everyday access, and exactly what must not
+              travel on a USB stick unprotected: it is every client's name,
+              address and VAT number in one file. A beta tester needs one
+              artifact she can move off the machine without becoming a breach.
+    do        `GET /backup/export?encrypt=true` wraps the same JSON plus the
+              T-27 documents in an archive encrypted with a passphrase —
+              AES-256-GCM, scrypt KDF, salt and parameters in a plaintext
+              header. `cryptography` is already a dependency. The plain export
+              does not change. Restore accepts both and asks for a passphrase
+              only when the header says so. **The passphrase is never stored
+              and cannot be recovered**, and the UI says so before the first
+              export rather than after.
+    done when An encrypted export restores into an empty database with the
+              right passphrase; a wrong passphrase fails with a distinct error
+              and no partial write; the plain export is byte-identical to
+              today's. The rehearsed restore itself is T-23's evidence, not a
+              second note.
+
+### T-29 · Where your data lives, said in the app
+    branch    Frontend              status  blocked
+    needs     T-25, T-27, T-28 — and a drawing from Henri
+    why       A beta tester holding her own clients' personal data on her own
+              laptop is a controller with obligations, and the app is the only
+              place she will ever read about them. Today nothing in the UI says
+              where the database is, what is in it, how long it is kept, or
+              what a backup does and does not protect.
+    do        A Settings → Data & privacy section: the **resolved** data
+              directory with an "open folder" control, what each folder holds,
+              the retention position, the GDPR summary already generated from
+              `core/trust/` into `docs/LEGAL_BRIEF.md`, and the backup and
+              restore controls. A first-run explanation shown once, and a
+              prompt on the first export that the passphrase cannot be
+              recovered. Each panel links to the guide and support section
+              rather than restating it — one wording, one place to correct it.
+    done when The section shows the path `app_data_dir()` actually resolved,
+              asserted by a test rather than hard-coded; the first-run
+              explanation shows once and not again; every legal sentence on the
+              screen is generated from `core/trust/` rather than typed into a
+              component. Blocked until the layout is drawn — new screens are
+              Henri's (SOLO_RUN § Boundaries).
+
+### T-30 · The shipped package — MSIX, slimmed, and legal
+    branch    Desktop               status  open
+    needs     T-20, T-21, T-25
+    why       As it stands the sidecar would ship around 200 MB, most of it a
+              Chromium the app should never download on a beta tester's
+              connection; it would ship readable source; and a redistributed
+              build carries third-party licences it names nowhere.
+    do        Bundle the embeddable Python as a Tauri resource. Exclude
+              `psycopg[binary]` — the desktop is SQLite-only and never imports
+              it — and Playwright's browsers, since T-21 drives the installed
+              Edge. Trim the stdlib (tkinter, test, idlelib, turtle, ensurepip,
+              pydoc_data). `python -OO -m compileall`, ship `.pyc` without
+              `.py`: safe **here** because `api.d.ts` is generated at build
+              time from an unstripped tree, so §11c's docstring exception does
+              not bite the desktop artifact — it still binds the SaaS image.
+              Strip `#` comments in the packaging step only (§11c: comments
+              must not ship, and must not be deleted). Generate
+              `THIRD-PARTY-NOTICES.txt` from `uv.lock`. `tauri.conf.json:30`
+              targets `nsis` today; add the MSIX target.
+    done when The installed package is under 120 MB; the build output contains
+              no `.py` outside the resource loader; the notice file names every
+              package in `uv.lock`; the app starts on a clean Windows VM with
+              no Python and no Playwright browsers; and a fresh checkout still
+              has every comment it has today.
+
+### T-31 · Sign in with Google, then Microsoft
+    branch    Backend / Frontend    status  open
+    needs     —
+    why       The hosted beta targets 100 clients and 10 concurrent, so scale
+              decides nothing here; hours, subprocessors and outage surface do.
+              ADR-0004 rejected a managed IdP and called the self-rolled auth
+              tenant-safe and tested — one OIDC provider does not overturn
+              that, and a managed IdP would be a third subprocessor against a
+              list BETA_LAUNCH_PLAN wants kept at two. The real prize: a
+              Google-verified sign-in **cannot be locked out by a forgotten
+              password**, which takes the edge off ADR-0004's own "a hosted
+              product where a forgotten password is a permanent lockout is not
+              shippable" while T-01 is still open.
+    do        A `user_identities` table — `(provider, subject)` primary key →
+              `user_id` — beside the existing `user_credentials`, where a
+              password is already one credential kind and not a column on the
+              user (`db/models/credential.py:11`). Two endpoints per provider:
+              `/auth/{provider}/start` (PKCE + state) and
+              `/auth/{provider}/callback` (verify the id_token against the
+              provider's JWKS, find-or-create, then the **existing**
+              `_issue_pair()`). The provider answers only "which human is
+              this"; BillGen still mints the token carrying `org_id` and
+              `role`, so `core/tenancy.py` and every isolation test are
+              untouched. Trust the `email` claim only when `email_verified`.
+              Google first; Microsoft/Entra is the same path with a different
+              discovery document. Apple deferred — €99/yr, an ES256 client
+              secret that expires every six months, and a private-relay address
+              that is a poor business contact on an invoice.
+    done when A Google sign-in creates user, organization and owner membership
+              on first use and reuses all three on the second; a password user
+              signing in with the same verified address links rather than
+              duplicates; a forged id_token is refused;
+              `tests/api/test_tenant_isolation.py` passes unchanged.
 
 ### T-01 · Transactional mail — the sending path
     branch    DevOps / SRE          status  open
