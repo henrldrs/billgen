@@ -35,7 +35,7 @@ npm install
 
 # Python side: system pip, no venv — exact package list in docs/HANDOFF.md §8
 
-# Local Postgres + MinIO for SaaS dev (optional; SQLite works out of the box)
+# Local Postgres for SaaS dev (optional; SQLite works out of the box)
 docker compose up -d
 ```
 

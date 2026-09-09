@@ -8,8 +8,8 @@
 # Postgres is deliberately absent — ADR-0004 puts it off-box and managed, so
 # DATABASE_URL points at an external host. Redis is equally absent, and that is
 # deliberate too: nothing in the code speaks Redis yet, and a container no code
-# connects to is exactly the mistake docker-compose.yml already makes with
-# MinIO. It arrives with the code that uses it, not before.
+# connects to is the mistake the dev docker-compose.yml made with MinIO for a
+# year (removed, T-24). It arrives with the code that uses it, not before.
 
 services:
   # One-shot schema upgrade. The API waits for this to exit 0, so migrations

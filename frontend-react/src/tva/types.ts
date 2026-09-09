@@ -1,9 +1,19 @@
 /** The shapes the TVA panels consume.
  *
- *  Scaffold — see README.md. These are hand-written because no endpoint exists
- *  to generate them from; `src/types/api.d.ts` comes from the API's OpenAPI
- *  schema, and the moment `GET /tva/...` ships, these types should be deleted
- *  and replaced by the generated ones rather than kept in sync by hand.
+ *  Scaffold — see README.md. Hand-written, and no longer because the endpoints
+ *  are missing: `/tva/position` and `/expenses` ship, and `src/types/api.d.ts`
+ *  carries their schemas. They are not the same shapes, which is why this file
+ *  survived T-24's sweep:
+ *
+ *    - `ExpenseSummary` is a view model — supplier, number, date and total are
+ *      flat fields. `ExpenseResponse` nests them under `extracted` and adds the
+ *      ids, timestamps and `needs_attention` the panels never read.
+ *    - `TvaPosition` is `TvaPositionResponse` minus `period_start`,
+ *      `period_end` and `is_complete`.
+ *    - `ExpenseCheck` and `ImportProgress` have no generated counterpart at all.
+ *
+ *  So this is a mapping job, not a deletion: it belongs to the ticket that
+ *  reshapes these panels with Henri, not to a hygiene pass.
  */
 
 import type { CheckStatus, Confidence, ExpenseState, RecoveryTreatment } from "./states";
