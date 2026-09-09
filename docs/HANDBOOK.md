@@ -16,7 +16,7 @@ Double-click **`billgen.bat`** at the repo root. Menu:
   way to exercise the whole product.
 - **[2] Desktop app** — the native Tauri window. First run compiles Rust for a
   few minutes, then it is fast. Self-contained: its own SQLite in
-  `%APPDATA%\BillGen`, auto-login, no signup.
+  `Documents\BillGen`, auto-login, no signup.
 - **[3] Run all tests** — Python and frontend.
 - **[4] First-time setup** — `npm install` plus a DB migrate. Fresh clone only.
 
@@ -147,8 +147,10 @@ VAT.
   SDK 10.0.26100 and WebView2 are already installed.
 - **Databases.** `var/billgen.dev.db` is the SQLite dev database, with smoke
   data (`henri@example.com` / `beta-password-1`). The desktop app uses a
-  separate one in `%APPDATA%\BillGen`. Postgres for SaaS work comes from
-  `docker compose up -d`.
+  separate one under `%USERPROFILE%\Documents\BillGen` — deliberately not
+  `%APPDATA%`, which an MSIX package virtualises and deletes on uninstall
+  (`desktop/paths.py` carries the resolution order; `BILLGEN_DATA_DIR`
+  overrides it). Postgres for SaaS work comes from `docker compose up -d`.
 - **Settings** are read by `api/config.py` from the environment; every variable
   is documented in `.env.example`, which is the reference rather than a second
   document that can disagree with it.

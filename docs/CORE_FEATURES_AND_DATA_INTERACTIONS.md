@@ -103,7 +103,7 @@ for, not something CORE confirms either way.
 
 ### DB / persistence — **✔ implemented**
 
-SQLAlchemy 2.x + Alembic migrations; SQLite (desktop, `%APPDATA%\BillGen`) or
+SQLAlchemy 2.x + Alembic migrations; SQLite (desktop, `Documents\BillGen`) or
 Postgres (SaaS) behind the same repository ports — one CORE, two backings.
 
 ---

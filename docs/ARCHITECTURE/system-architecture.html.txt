@@ -202,8 +202,9 @@ FE-02 · SaaS web (V02)
 
 FE-03 · Windows desktop (V01)
     State: partial
-    Evidence / what is missing: Tauri shell compiles; own SQLite in %APPDATA%; auto-login,
-    no signup. Mounts 17 library components. No IA, no sync, no signed installer.
+    Evidence / what is missing: Tauri shell compiles; own SQLite under Documents\BillGen;
+    auto-login, no signup. Mounts 17 library components. No IA, no sync, no signed
+    installer.
 
 FE-04 · Mobile (V0)
     State: gap
@@ -1764,8 +1765,8 @@ frontend-saas/ · 21
     directories above.
 
 frontend-electron/ · 37
-    What it is: L4, the Tauri desktop shell. Own local SQLite in %APPDATA%, auto-login, no
-    sync. Despite the name it is Tauri, not Electron.
+    What it is: L4, the Tauri desktop shell. Own local SQLite under Documents\BillGen,
+    auto-login, no sync. Despite the name it is Tauri, not Electron.
     What breaks without it: The desktop product. Currently mounts 17 components and consumes
     no IA.
 
@@ -2828,7 +2829,7 @@ Email transport · Send, reminders, password reset (B1)
     Host (planned): Postmark anticipated
     State: no component exists
 
-Desktop · Tauri shell, local SQLite in %APPDATA%
+Desktop · Tauri shell, local SQLite under Documents\BillGen
     Host (planned): the user's machine
     State: unsigned installer
 
@@ -2987,8 +2988,8 @@ RTO — desktop · user-paced
     Current capability: ADR-0003 export/restore ships
 
 RPO — desktop · last backup
-    Why that number: The SQLite file in %APPDATA% is the only copy of the business's books.
-    The user is the backup schedule, which means the product must nag.
+    Why that number: The SQLite file in the user's data directory is the only copy of the
+    business's books. The user is the backup schedule, which means the product must nag.
     Current capability: manual export only — no reminder, no automatic copy
 
 On the failover instance: no, and not yet. Active-active across regions at one node and

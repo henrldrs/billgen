@@ -28,15 +28,15 @@ def test_prepare_database_migrates_to_head(tmp_path, monkeypatch):
     assert {"invoices", "user_credentials", "refresh_tokens", "sequences"} <= tables
 
 
-def test_app_data_paths_under_appdata(tmp_path, monkeypatch):
-    monkeypatch.setenv("APPDATA", str(tmp_path))
+def test_app_data_paths_follow_the_data_dir(tmp_path, monkeypatch):
+    monkeypatch.setenv("BILLGEN_DATA_DIR", str(tmp_path / "BillGen"))
     assert paths.app_data_dir() == tmp_path / "BillGen"
     assert paths.database_url().startswith("sqlite:///")
     assert paths.database_url().endswith("BillGen/billgen.db")
 
 
 def test_load_or_create_secret_is_stable(tmp_path, monkeypatch):
-    monkeypatch.setenv("APPDATA", str(tmp_path))
+    monkeypatch.setenv("BILLGEN_DATA_DIR", str(tmp_path / "BillGen"))
     paths.ensure_app_dir()
     first = bootstrap.load_or_create_secret()
     second = bootstrap.load_or_create_secret()
@@ -45,7 +45,7 @@ def test_load_or_create_secret_is_stable(tmp_path, monkeypatch):
 
 
 def test_configure_environment_sets_desktop_env(tmp_path, monkeypatch):
-    monkeypatch.setenv("APPDATA", str(tmp_path))
+    monkeypatch.setenv("BILLGEN_DATA_DIR", str(tmp_path / "BillGen"))
     for key in ("DATABASE_URL", "DESKTOP_MODE", "JWT_SECRET"):
         monkeypatch.delenv(key, raising=False)
 

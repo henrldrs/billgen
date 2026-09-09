@@ -24,8 +24,7 @@ depends on remembering a conversation, which is the point of both.
 | What Henri wants built, in his words | the `.txt` specs in `docs/` — onboarding, settings, dashboard, SaaS appearance |
 | Legal and compliance posture | `core/trust/` → generated into `docs/LEGAL_BRIEF.md` |
 
-A fact that belongs in two of these belongs in one of them with a link from the
-other. Two copies disagree within a month.
+A fact in two of these belongs in one, linked from the other — copies disagree.
 
 ## The four commands that say where things stand
 

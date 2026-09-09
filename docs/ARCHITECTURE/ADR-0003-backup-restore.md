@@ -9,7 +9,7 @@ BillGen stores legally-binding Belgian invoices. The April 2026 audit's
 mom-track flagged data loss as the top private-use risk (C1/H1); the rebuild
 solved the *fragility* root cause (localStorage → real DB) but a user-facing
 backup/restore has been the biggest remaining data-safety gap — especially on
-desktop, where the SQLite file in `%APPDATA%\BillGen` is the only copy of the
+desktop, where the SQLite file in the user's data directory is the only copy of the
 business's bookkeeping.
 
 Two hard constraints shape the design:

@@ -50,6 +50,9 @@ def prepare_database(database_url: str) -> None:
 def configure_environment() -> str:
     """Set env for the API process (DB, secret, desktop mode). Returns the db url."""
     paths.ensure_app_dir()
+    # An install that predates the move out of %APPDATA% carries its database
+    # there. One-way, and a no-op on every run after the first (T-25).
+    paths.migrate_legacy_data()
     database_url = paths.database_url()
     os.environ["DATABASE_URL"] = database_url
     os.environ["DESKTOP_MODE"] = "true"
