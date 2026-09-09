@@ -33,6 +33,60 @@ wish, and the queue is not for wishes.
 
 ## Open — in priority order
 
+### T-24 · Phase 0 hygiene — the clean-up that fits in a day
+    branch    Solo session          status  open
+    needs     —
+    why       Raio-X BillGen (2026-09-09): the repository costs more to read
+              than to change. Every item here is mechanical, needs no design
+              decision, and must not take more than a day away from T-19…T-23.
+              Henri scheduled it on 2026-09-09; the deletions below are its
+              content, so a session may perform them.
+    do        In this order, one commit per item, suite green after each:
+              1. Fix the client timeline. `core/services/reporting_service.py`
+                 sorts with `reverse=True`, so `_TIMELINE_ORDER` is inverted
+                 against its own comment; `invoice_voided` is dated from the
+                 wall-clock `voided_at` while the credit note uses its
+                 `issue_date`; `tests/api/test_insights.py` hard-codes
+                 2026-09-09. Negate the order in the sort key, date the void
+                 from the credit note that caused it (in `credit_note_service`,
+                 where both are written), and make the test use dates relative
+                 to today.
+              2. Delete the 29 `.gitkeep` and the 10 empty placeholder dirs
+                 (api/integrations, db/seed, tests/e2e, tests/ui,
+                 tests/fixtures, core/einvoicing/fixtures, infra/scripts,
+                 infra/github-actions, frontend-saas/src/pages/legal,
+                 frontend-react/src/contexts, frontend-react/src/assets/fonts).
+              3. Drop `stripe` and `lxml` (0 references), move `httpx` to the
+                 dev group, delete `weasyprint` and `_weasyprint_pdf`; correct
+                 ADR-0001, README and HANDOFF where they still name WeasyPrint.
+                 `uv lock` afterwards; the Dockerfile already installs neither.
+              4. Delete the MinIO service from `docker-compose.yml`. Replace
+                 `frontend-react/src/tva/types.ts` with the generated types
+                 only if the names map 1:1; otherwise leave it for T-19.
+              5. Delete `docs/.claude/`, the untracked `docs/ARCHITECTURE.zip`,
+                 and `docs/BillGen_logo.png` after grepping for references
+                 (the source is `assets/brand/billgen-mark.svg`).
+              6. Write a root `CLAUDE.md` (≤ 80 lines): where each kind of
+                 fact lives, the four resume commands, the boundaries (no
+                 push, no new screens, scaffolds on hold), and what never to
+                 read (`api.d.ts`, `openapi.json`, `billgen-audit/audits/`,
+                 `system-architecture.html` — use the `.txt` by section).
+              7. Fold HANDOFF §1/§4/§5/§6/§10 and ENVIRONMENT_REFERENCE into
+                 `docs/HANDBOOK.md` (≤ 12 KB), delete both originals, delete
+                 NEXT_SESSION.md after moving §S into BETA_LAUNCH_PLAN §W4,
+                 cut SOLO_RUN's Log (git log carries it). Fix the CI header
+                 comment and README's stale claims (Playwright e2e, "no venv",
+                 HANDOFF path).
+              8. Regenerate the architecture document: `sync-architecture`,
+                 then `scripts/architecture_to_text.py`.
+    done when `python -m pytest tests -q` green on a day other than the one the
+              fix landed; `git ls-files | grep -c .gitkeep` = 0;
+              `grep -ri weasyprint --include=*.py --include=*.md --include=*.toml .`
+              finds nothing outside git history; exactly one file says "read
+              this first"; every `](path)` in docs/ resolves;
+              `sync-architecture --check` and `architecture_to_text.py --check`
+              both green; tree clean; nothing pushed.
+
 ### T-19 · One shell — the desktop is the SaaS shell plus an adapter
     branch    Frontend              status  open
     needs     —
