@@ -296,6 +296,7 @@ a page saying who you are, not a bespoke site.
 | Market | Netherlands | Belgium |
 | Pillars | BillGen beta + consultancy (planning, marketing, inbox triage) | Brand (flyer, logo, site) + tariffs + BillGen |
 | BillGen delivery | **hosted instance** (W3) | **desktop, local** — never leaves her machine |
+| Plan | `partner` tier — Business capability, one company, template studio included; granted, never bought (T-32) | same |
 | Status | call 2026-09-07; welcome email sent 2026-09-08 | logo done; flyer text and tariffs done, incl. her own correction round |
 | Next action | **send the intake form** | scope sheet + palette alignment to the new logo |
 | Blocked by | form → meeting 2 → proposal | nothing until the invoice |

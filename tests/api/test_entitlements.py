@@ -103,6 +103,87 @@ async def test_plans_publishes_the_whole_matrix(client):
     assert tiers["business"]["features"]["vat_report"] == "advanced"
 
 
+# ── the partner tier ───────────────────────────────────────────────────────
+
+
+async def test_partner_gets_the_template_studio_without_buying_business(client):
+    """The point of the tier: a beta partner is handed Business capability
+    without being recorded as a Business customer who never paid."""
+    headers, _company, _record = await free_org(client)
+    set_tier(client, "partner")
+
+    body = (await client.get("/entitlements", headers=headers)).json()
+
+    assert body["tier"] == "partner"
+    assert body["features"]["pdf_templates_premium"] is True
+    assert body["features"]["pdf_remove_branding"] is True
+    assert body["features"]["credit_notes"] is True
+
+
+async def test_partner_runs_one_business_and_is_not_offered_a_switcher(client):
+    """Henri, 2026-09-09: one business per beta tester. The quota and the
+    feature flag have to agree, or the UI draws a control that always 402s."""
+    headers, company, _record = await free_org(client)
+    set_tier(client, "partner")
+
+    body = (await client.get("/entitlements", headers=headers)).json()
+    usage = {item["meter"]: item for item in body["usage"]}
+    assert usage["companies"]["limit"] == 1
+    assert usage["invoices"]["limit"] == 250  # Business's allowance, kept
+    assert body["features"]["multi_company"] is False
+
+    # And the server refuses the second company, whatever rendered.
+    second = await client.post(
+        "/companies",
+        json={"name": "Second BV", "vat_number": "BE0999999922", "country_code": "BE"},
+        headers=headers,
+    )
+    assert second.status_code == 402, second.text
+    assert company["id"]  # the first one is untouched
+
+
+async def test_partner_is_never_offered_for_sale_or_as_an_upgrade(client):
+    """`GET /plans` renders TIER_ORDER, and `cheapest_tier_with` walks it. A
+    tier that cannot be bought must appear in neither, or a paying customer is
+    told to upgrade to a plan with no price."""
+    from api.entitlements.matrix import (  # noqa: PLC0415
+        FEATURES,
+        QUOTAS,
+        TIER_ORDER,
+        cheapest_tier_with,
+    )
+    from core.models import PlanTier  # noqa: PLC0415
+
+    assert PlanTier.PARTNER not in TIER_ORDER
+    # ...but it is fully described, or resolving it would KeyError at runtime.
+    assert PlanTier.PARTNER in QUOTAS
+    assert PlanTier.PARTNER in FEATURES
+
+    for feature in FEATURES[PlanTier.PARTNER]:
+        assert cheapest_tier_with(feature) is not PlanTier.PARTNER, feature
+
+    alice = await signup(client)
+    tiers = (await client.get("/plans", headers=bearer(alice))).json()["tiers"]
+    assert "partner" not in {t["tier"] for t in tiers}
+
+
+async def test_a_402_from_a_partner_still_names_a_purchasable_tier(client):
+    """The upgrade hint has to be actionable. A partner over the company quota
+    is pointed at Business, which exists and has a price."""
+    headers, _company, _record = await free_org(client)
+    set_tier(client, "partner")
+
+    body = (
+        await client.post(
+            "/companies",
+            json={"name": "Second BV", "vat_number": "BE0999999922", "country_code": "BE"},
+            headers=headers,
+        )
+    ).json()
+    assert body["error"] == "usage_limit_reached"
+    assert body["required_tier"] in {"business", "business_pro"}
+
+
 # ── quotas refuse creation ─────────────────────────────────────────────────
 
 

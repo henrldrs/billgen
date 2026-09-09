@@ -602,6 +602,42 @@ wish, and the queue is not for wishes.
 
 ## Done
 
+### T-32 · The partner tier — granted, never bought  ·  `PENDING`
+    Beta testers need the template studio, which is gated on
+    `pdf_templates_premium`: False on free and starter, True on business. The
+    first instinct is to put them on `business`, and it makes two things
+    permanently untrue — "how many Business organizations are there" stops
+    being answerable, and a partnership that ends looks like churn.
+
+    Henri asked whether it could be a *role* instead. It cannot: `role`
+    (owner/admin/member) is authz inside an organization and
+    `api/authz/matrix.py` keeps role names out of the routers deliberately;
+    entitlements are resolved from `PlanTier` on the organization or its
+    subscription. So it had to be a tier.
+
+    `PlanTier.PARTNER` carries Business's features and quotas with two
+    deviations Henri set: `COMPANIES: 1`, because a beta tester runs one
+    business, and therefore `multi_company: False` — leaving it True with a
+    quota of one would draw a company switcher whose every use is refused, and
+    a control that cannot work is worse than an absent one.
+
+    **It is absent from `TIER_ORDER` on purpose**, and that is the load-bearing
+    part. Two things read that list and both are about selling: `GET /plans`
+    renders exactly it, and `cheapest_tier_with()` walks it to answer "upgrade
+    to X". A tier that is granted has no price, so a paying Starter customer
+    hitting a quota must never be pointed at it. Four tests pin this: the
+    capability, the single company (quota *and* flag), the absence from both
+    selling paths, and that a partner's own 402 still names a tier that can
+    actually be bought.
+
+    Two knock-ons worth knowing. The licence file already carries `plan` in its
+    signed payload, so an offline desktop licence can say `partner` and seed the
+    organization's tier with no server involved — which is what T-22 needs. And
+    `tTier` falls back to title-casing an unknown wire value, so "Partner"
+    renders correctly in all four languages with no new copy to review; a
+    partner viewing the plans comparison sees the four purchasable tiers with
+    none marked current, which is accurate.
+
 ### T-26 · Goods or services — Article 39bis becomes reachable  ·  `8fb7064`
     `core/rules/vat.py` returned REVERSE_CHARGE for every intra-EU B2B sale,
     because nothing told it what kind of supply it was. `VATCategory.INTRA_EU`,

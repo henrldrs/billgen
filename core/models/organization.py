@@ -18,6 +18,11 @@ class PlanTier(str, Enum):
     STARTER = "starter"
     BUSINESS = "business"
     BUSINESS_PRO = "business_pro"
+    # Not on the sellable ladder. A beta partner is given Business capability
+    # without being recorded as a Business customer who never paid, which keeps
+    # "how many Business organizations are there" an answerable question.
+    # `api/entitlements/matrix.py` omits it from TIER_ORDER on purpose.
+    PARTNER = "partner"
 
 
 class Organization(IdentifiedModel):

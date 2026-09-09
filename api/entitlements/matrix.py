@@ -76,6 +76,18 @@ QUOTAS: dict[PlanTier, dict[Meter, int | None]] = {
         Meter.SEATS: 3,
         Meter.PEPPOL_DOCUMENTS: 100,
     },
+    # Business's allowances, with one company: a beta partner runs one
+    # business, so a second would be refused by the quota anyway (Henri,
+    # 2026-09-09). Seats stay at Business's three — nothing can create a second
+    # user yet, so the number is not the constraint.
+    PlanTier.PARTNER: {
+        Meter.INVOICES: 250,
+        Meter.CLIENTS: 1000,
+        Meter.PRODUCTS: 1000,
+        Meter.COMPANIES: 1,
+        Meter.SEATS: 3,
+        Meter.PEPPOL_DOCUMENTS: 100,
+    },
     PlanTier.BUSINESS_PRO: {
         Meter.INVOICES: 1000,
         Meter.CLIENTS: None,
@@ -171,6 +183,37 @@ FEATURES: dict[PlanTier, dict[str, bool | str]] = {
         "team_administration": False,
         "priority_support": True,
     },
+    # Business's capabilities, including the template studio, which is the
+    # point of the tier. `multi_company` is the one deviation: with
+    # COMPANIES: 1 above, leaving it True would draw a company switcher whose
+    # every second company is refused — a control that cannot work is worse
+    # than an absent one. Flip it and the quota together or not at all.
+    PlanTier.PARTNER: {
+        "credit_notes": True,
+        "pdf_export": True,
+        "backup_export": True,
+        "backup_restore": True,
+        "backup_automatic": True,
+        "backup_scheduled": True,
+        "backup_history": True,
+        "import_legacy": "full",
+        "pdf_remove_branding": True,
+        "pdf_templates_premium": True,
+        "pdf_customization": "advanced",
+        "peppol_export": True,
+        "vat_report": "advanced",
+        "dashboard": "advanced",
+        "search": "full",
+        "audit_history": "full",
+        "payment_tracking": "full",
+        "recurring_invoices": True,
+        "accountant_export": "structured",
+        "multi_company": False,
+        "company_level_settings": True,
+        "roles_permissions": True,
+        "team_administration": False,
+        "priority_support": True,
+    },
     PlanTier.BUSINESS_PRO: {
         "credit_notes": True,
         "pdf_export": True,
@@ -211,6 +254,11 @@ FEATURES: dict[PlanTier, dict[str, bool | str]] = {
 
 # Which tier is the cheapest that includes a given feature — the `required_tier`
 # a 402 hands back so the upgrade modal can name the right plan.
+# The **sellable** ladder, lowest first. Two things read it and both are about
+# selling: `GET /plans` renders exactly this list, and `cheapest_tier_with()`
+# walks it to answer "upgrade to X for that". PlanTier.PARTNER is deliberately
+# absent — it is granted, never bought, so a paying customer who hits a quota
+# must never be told to upgrade to a plan that has no price.
 TIER_ORDER: list[PlanTier] = [
     PlanTier.FREE,
     PlanTier.STARTER,

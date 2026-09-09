@@ -649,10 +649,10 @@ B3 · No PATCH /companies/{id}
 B4 · No subscription/plan model
     Class: Business logic
     State: server done
-    Fan-out: Shipped 2026-08-26 — see §16. Four tiers, six meters, atomic quota guards, a
-    uniform 402, and PdfService(branded=…) honouring pdf_remove_branding. What is left is a
-    checkout provider (deliberately deferred) and every screen: no meter, badge or upgrade
-    path renders yet.
+    Fan-out: Shipped 2026-08-26 — see §16. Four sellable tiers and one granted, six meters,
+    atomic quota guards, a uniform 402, and PdfService(branded=…) honouring
+    pdf_remove_branding. What is left is a checkout provider (deliberately deferred) and
+    every screen: no meter, badge or upgrade path renders yet.
 
 These are the cheapest wins on the board — the Python exists and works, only the HTTP surface is absent.
   - core/rules/vat.py — exposed, unused GET /vat-rates ships the categories and rates, and the frontend still hardcodes 21/12/6/0. The endpoint closed the architectural gap; deleting the TypeScript copy closes the correctness risk, and that has not been done.
@@ -865,7 +865,7 @@ Build in dependency order — each step unlocks the next tier.
   - api — GDPR export, account deletion, consent records
   - saas — Security centre, Privacy centre, cookie preferences
   - legal — ToS with versioned acceptance, Privacy Policy, Cookie Policy, DPA, subprocessors, SLA, BE legal notices
-  - core/api — the entitlement layer: four tiers, six meters, atomic quota guards, uniform 402 · §16
+  - core/api — the entitlement layer: four sellable tiers plus partner, six meters, atomic quota guards, uniform 402 · §16
   - core/pdf — free-tier branding is real: PdfService(branded=…) defaults to True, so a forgetful call site over-brands rather than giving the paid feature away
   - integrations — Merchant-of-Record; never render a card field, provider-hosted only. The adapter writes SubscriptionRow and nothing else has to change
   - integrations — Peppol Access Point transport + round-trip test
@@ -1559,6 +1559,7 @@ Longest lead time and widest fan-out, so start it early and in dependency order:
 
 Both are trivial to change today and expensive once a real subscription references them:
   - naming — free / starter / business / business_pro is final unless the fourth becomes organization. Renaming is a string change until a subscription row points at it
+  - partner — a fifth tier that is granted, never bought (T-32, 2026-09-09). Business capability with COMPANIES: 1 and multi_company: False, for the beta testers who are handed the template studio. Deliberately absent from TIER_ORDER, which is the sellable ladder: GET /plans renders exactly that list and cheapest_tier_with() walks it, so a paying customer can never be told to upgrade to a plan with no price. It is also why the comparison tables below have four columns and not five — they are the pricing matrix, and this tier is not priced.
   - product — what the Business Pro shell actually is. Decided in principle: the top tier's differentiator is an administration surface for the billing owner — several people under one bill — not a better VAT screen. Encoded as team_administration: True and vat_report: "consolidated". Nothing renders either. Needs design: seats, per-entity usage, consolidated reporting, member management
 
 In parallel, blocking nothing: the L6 experience list is entirely frontend and depends on no endpoint. Items L6-01 through L6-03 — panel styling, heading weight, button contrast — are hours of work and change the perceived quality of every screen in the product.
@@ -1711,7 +1712,7 @@ What is still open here. GET /clients/{id}/stats is the only endpoint left on th
 Repo Map
 --------
 
-What every directory is for, and the record of what was removed on 2026-08-26. 645 tracked files.
+What every directory is for, and the record of what was removed on 2026-08-26. 647 tracked files.
 
 A repository that cannot be read cheaply is a repository that gets misread. This section names the purpose of every top-level directory, so nothing in the tree is unexplained, and records what left.
 
@@ -1733,12 +1734,12 @@ api/ · 72
     What breaks without it: No frontend can reach the domain. core/ would still pass its
     tests.
 
-db/ · 36
+db/ · 37
     What it is: SQLAlchemy models and the Alembic migration history. The concrete
     implementation behind core/repository/'s abstract ports.
     What breaks without it: Nothing persists. The domain would run entirely in memory.
 
-tests/ · 66
+tests/ · 67
     What it is: 557 backend tests. Includes the palette guard test and the icon-grammar
     guard test, both build-failing.
     What breaks without it: The brand decisions at 4e39460 and 81d2c66 become suggestions
@@ -1874,7 +1875,7 @@ Tiers
 
 4
 
-free · starter · business · business_pro
+free · starter · business · business_pro + partner
 
 Meters
 
@@ -2513,7 +2514,7 @@ trust/                        6
 tva/                          7
 utils/                        4
 db/                           4
-migrations/                   11
+migrations/                   12
 models/                       17
 repositories/                 4
 desktop/                      4
@@ -2536,9 +2537,9 @@ tests/                        1
 api/                          28
 core/                         30
 db/                           4
-desktop/                      3
+desktop/                      4
 files at the repository root  15
-Total tracked                 645
+Total tracked                 647
 
 Reading the layers
 
