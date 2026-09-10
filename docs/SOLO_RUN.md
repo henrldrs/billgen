@@ -101,7 +101,7 @@ happened to it.
 | | |
 |---|---|
 | Python | **571 collected, exit 0** | 
-| Frontend | **192 passed** (`npm run test`, 30 files), typecheck clean across all four workspaces |
+| Frontend | **193 passed** (`npm run test`, 30 files), typecheck clean across all four workspaces |
 | `ruff check` | clean. CI runs `ruff check .` only — the tree is *not* `ruff format` clean and was not before, so do not reformat it as a side errand |
 | Architecture doc | **in sync** as of `12ce164` — both `sync-architecture --check` and `architecture_to_text.py --check` green |
 | Migrations | head is `d1c4f8a26b70` (supply kind). A dev database from before 2026-09-09 needs `alembic upgrade head`, and a desktop install migrates itself on boot |

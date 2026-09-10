@@ -10,6 +10,13 @@
  * that has no backend yet. All @import rules must precede any style rule, so
  * this belongs here rather than at the end of the file.
  * When this import can be deleted, the app is finished. */
+/* The shared shell's own rules — the language toggle, the studio's
+ * document-type switcher, the dev tier switcher. They live beside the
+ * shell in the package rather than in one app's stylesheet, which is
+ * where they were when the desktop started rendering the same shell and
+ * got none of them. */
+@import "@billgen/ui/src/shell/shell.css";
+
 @import "@billgen/ui/src/scaffold/scaffold.css";
 
 /* The template studio (catalog/templates). Scoped to .bg-ws-* and .bg-doc.
@@ -36,41 +43,3 @@ body {
   margin-bottom: 0.75rem;
   font-size: var(--bg-text-helper);
 }
-
-/* Document-type switcher above the template list. */
-.bg-ws-doc-kinds { margin: var(--bg-space-3, 12px) 0; }
-
-.bg-dev-tier { display: flex; flex-direction: column; gap: 12px; }
-.bg-dev-tier__head { display: flex; gap: 12px; align-items: flex-start; }
-.bg-dev-tier__head p { margin: 4px 0 0; color: var(--bg-ink-soft); font-size: var(--bg-text-helper); max-width: 60ch; }
-.bg-dev-tier__options { display: flex; flex-wrap: wrap; gap: 8px; }
-.bg-dev-tier__error { color: var(--bg-danger); font-size: var(--bg-text-helper); margin: 0; }
-
-/* Language toggle in the top bar. */
-.bg-langtoggle { position: relative; }
-.bg-langtoggle__trigger {
-  min-width: 2.5rem; padding: .35rem .6rem; cursor: pointer;
-  font: inherit; font-size: var(--bg-text-helper); font-weight: 600; letter-spacing: .05em;
-  color: var(--bg-topbar-ink, var(--bg-ink)); background: transparent;
-  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
-  border-radius: var(--bg-radius-sm);
-}
-.bg-langtoggle__trigger:hover { background: color-mix(in srgb, currentColor 12%, transparent); }
-.bg-langtoggle__trigger:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
-.bg-langtoggle__menu {
-  position: absolute; right: 0; top: calc(100% + .4rem); z-index: 40;
-  min-width: 11rem; padding: .3rem;
-  background: var(--bg-surface); color: var(--bg-ink);
-  border: 1px solid var(--bg-line); border-radius: var(--bg-radius-md);
-  box-shadow: var(--bg-shadow-overlay, 0 12px 32px rgb(0 0 0 / .18));
-  display: flex; flex-direction: column; gap: 2px;
-}
-.bg-langtoggle__item {
-  display: flex; align-items: center; gap: .6rem; width: 100%;
-  padding: .45rem .6rem; cursor: pointer; text-align: left;
-  font: inherit; font-size: var(--bg-text-label);
-  background: transparent; color: inherit; border: 0; border-radius: var(--bg-radius-sm);
-}
-.bg-langtoggle__item:hover { background: var(--bg-surface-alt); }
-.bg-langtoggle__item.is-active { background: var(--bg-accent-soft, var(--bg-surface-alt)); font-weight: 600; }
-.bg-langtoggle__code { font-size: var(--bg-text-helper); color: var(--bg-ink-soft); min-width: 1.6rem; }

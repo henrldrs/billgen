@@ -96,6 +96,15 @@ export interface InvoiceDetailPanelProps {
    *  copy is a different record, so a screen that stayed put would be showing
    *  the original while claiming something was created. */
   onDuplicated?: (invoiceId: string) => void;
+  /** Whether to show the Delivery block — the one action on this screen that
+   *  does not exist yet.
+   *
+   *  False on a handed-over build, on Henri's instruction (2026-09-10): email
+   *  transport is out of the first release, so a panel explaining that Send
+   *  needs an endpoint nobody has written is a note to the developers printed
+   *  on a customer's invoice screen. The shell passes
+   *  `exposure === "all"`. */
+  showUnbuilt?: boolean;
 }
 
 export function InvoiceDetailPanel({
@@ -105,6 +114,7 @@ export function InvoiceDetailPanel({
   onOpenClient,
   onDeleted,
   onDuplicated,
+  showUnbuilt = true,
 }: InvoiceDetailPanelProps) {
   const api = useApi();
   const invoice = useInvoice(invoiceId);
@@ -299,6 +309,7 @@ export function InvoiceDetailPanel({
                 lang={lang}
                 isDraft={isDraft}
                 isFinal={isFinal}
+                showUnbuilt={showUnbuilt}
                 downloading={downloading}
                 pending={actionPending}
                 onDownloadXml={() => void download("xml")}
@@ -675,6 +686,7 @@ function ActionsCard({
   lang,
   isDraft,
   isFinal,
+  showUnbuilt,
   downloading,
   pending,
   onDownloadXml,
@@ -688,6 +700,7 @@ function ActionsCard({
   lang: Lang;
   isDraft: boolean;
   isFinal: boolean;
+  showUnbuilt: boolean;
   downloading: string | null;
   pending: boolean;
   onDownloadXml: () => void;
@@ -744,7 +757,7 @@ function ActionsCard({
         </Button>
       </div>
 
-      {detail ? (
+      {detail && showUnbuilt ? (
         <>
           <Divider />
           {/* The one action still fiction stays in the scaffold kit rather than

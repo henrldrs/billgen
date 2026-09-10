@@ -468,7 +468,7 @@ const BUILT: Record<string, Screen> = {
   // registered only in App.tsx, so its sketch never rendered and the node fell
   // through to the bare scaffold page. It is now the real record screen: every
   // endpoint that scaffold listed as "already usable" was in fact usable.
-  "sales/invoices/id/:invoiceId": ({ lang }) => {
+  "sales/invoices/id/:invoiceId": ({ lang, exposure }) => {
     const { invoiceId } = useParams();
     const navigate = useNavigate();
     if (!invoiceId) return null;
@@ -476,6 +476,10 @@ const BUILT: Record<string, Screen> = {
       <InvoiceDetailPanel
         invoiceId={invoiceId}
         lang={lang}
+        //  The Delivery block explains that Send needs an endpoint nobody has
+        //  written. That is a note to the developers, and it does not belong
+        //  on a customer's invoice screen (Henri, 2026-09-10).
+        showUnbuilt={exposure === "all"}
         onBack={() => navigate("/app/sales/invoices")}
         onOpenClient={(clientId) => navigate(`/app/customers/clients/${clientId}`)}
         onDeleted={() => navigate("/app/sales/invoices")}

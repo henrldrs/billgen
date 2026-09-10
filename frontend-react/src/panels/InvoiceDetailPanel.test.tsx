@@ -153,6 +153,23 @@ test("delivery stays scaffolded — Send and Duplicate are not real buttons", as
   expect(screen.getByText(/POST \/invoices\/\{id\}\/send/)).toBeInTheDocument();
 });
 
+test("a handed-over build shows no Delivery block at all", async () => {
+  //  Henri, 2026-09-10: email transport is out of the first release, so a
+  //  panel explaining that Send needs an endpoint nobody has written is a note
+  //  to the developers printed on a customer's invoice screen. The shell
+  //  passes `showUnbuilt={exposure === "all"}`.
+  stubDetail();
+  renderWithProvider(<InvoiceDetailPanel invoiceId="inv-1" showUnbuilt={false} />);
+
+  //  The real actions are untouched — this hides the fiction, not the screen.
+  expect(await screen.findByRole("button", { name: "Void" })).toBeEnabled();
+  expect(screen.getByRole("button", { name: "Credit note" })).toBeEnabled();
+
+  expect(screen.queryByRole("button", { name: /Send/ })).not.toBeInTheDocument();
+  expect(screen.queryByText(/POST \/invoices\/\{id\}\/send/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/no server behind/i)).not.toBeInTheDocument();
+});
+
 test("a draft offers issue and delete, and no correction actions", async () => {
   server.use(
     http.get(`${BASE}/invoices/inv-1`, () =>

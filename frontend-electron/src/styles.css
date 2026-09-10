@@ -6,6 +6,19 @@
 @import "@henrioutai/ui/styles/tokens.css";
 @import "@henrioutai/ui/styles/components.css";
 
+/* The shared shell's own rules. Missing here until 2026-09-10, which is why
+ * the language control rendered as a bare code with no button around it: the
+ * shell moved into the package (T-19) and its stylesheet did not follow. */
+@import "@billgen/ui/src/shell/shell.css";
+
+/* The scaffold kit. A packaged build offers no unbuilt screens
+ * (`exposure="mvp"`), but a dev build shows the whole IA and needs these. */
+@import "@billgen/ui/src/scaffold/scaffold.css";
+
+/* The template studio (catalog/templates) — the beta partner's own screen, so
+ * this is not optional here. Scoped to .bg-ws-* and .bg-doc. */
+@import "@billgen/ui/src/workspace/workspace.css";
+
 body {
   margin: 0;
   font-family: var(--bg-font-sans, "Segoe UI", system-ui, -apple-system, sans-serif);

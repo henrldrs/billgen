@@ -1,0 +1,114 @@
+/* Styles the shared shell needs, wherever it is mounted.
+ *
+ * These lived in `frontend-saas/src/styles.css` while the shell did. When the
+ * shell moved into this package (T-19) they did not follow it, so the desktop
+ * — which was suddenly rendering the same components — rendered them with no
+ * rules at all: the language control came out as a bare code with no button
+ * around it and no menu, and the template studio would have come out unstyled
+ * for the same reason. Anything the shell renders belongs here, next to it.
+ *
+ * `@billgen/ui/src/shell/shell.css`, imported by both apps.
+ */
+
+/* Language toggle in the top bar. */
+.bg-langtoggle {
+  position: relative;
+}
+.bg-langtoggle__trigger {
+  min-width: 2.5rem;
+  padding: 0.35rem 0.6rem;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--bg-text-helper);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--bg-topbar-ink, var(--bg-ink));
+  background: transparent;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-radius: var(--bg-radius-sm);
+}
+.bg-langtoggle__trigger:hover {
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+.bg-langtoggle__trigger:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+.bg-langtoggle__menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.4rem);
+  z-index: 40;
+  min-width: 11rem;
+  padding: 0.3rem;
+  background: var(--bg-surface);
+  color: var(--bg-ink);
+  border: 1px solid var(--bg-line);
+  border-radius: var(--bg-radius-md);
+  box-shadow: var(--bg-shadow-overlay, 0 12px 32px rgb(0 0 0 / 0.18));
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.bg-langtoggle__item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  font-size: var(--bg-text-label);
+  background: transparent;
+  color: inherit;
+  border: 0;
+  border-radius: var(--bg-radius-sm);
+}
+.bg-langtoggle__item:hover {
+  background: var(--bg-surface-alt);
+}
+.bg-langtoggle__item.is-active {
+  background: var(--bg-accent-soft, var(--bg-surface-alt));
+  font-weight: 600;
+}
+.bg-langtoggle__code {
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+  min-width: 1.6rem;
+}
+
+/* Document-type switcher above the template list (shell/TemplateStudioScreen). */
+.bg-ws-doc-kinds {
+  margin: var(--bg-space-3, 12px) 0;
+}
+
+/* The dev-only tier switcher (shell/DevTierSwitch). Absent from a production
+   build, but the rules are cheap and keeping them beside the component is what
+   stops the next surface from rendering it as a text column. */
+.bg-dev-tier {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.bg-dev-tier__head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.bg-dev-tier__head p {
+  margin: 4px 0 0;
+  color: var(--bg-ink-soft);
+  font-size: var(--bg-text-helper);
+  max-width: 60ch;
+}
+.bg-dev-tier__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.bg-dev-tier__error {
+  color: var(--bg-danger);
+  font-size: var(--bg-text-helper);
+  margin: 0;
+}
