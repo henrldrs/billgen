@@ -41,7 +41,7 @@ wish, and the queue is not for wishes.
               is virtualised into the package container and **removed with the
               package on uninstall** — seven years of legally-binding invoices
               with it. This tree has been bitten by that virtualisation once
-              already: `core/pdf/renderer.py:27` moved the browser cache into
+              already: `core/pdf/renderer.py:152` moved the browser cache into
               the project tree for the same reason. MSIX also has no installer
               UI — it installs silently, with no wizard — so the location
               cannot be asked for at install time and has to be a first-run
