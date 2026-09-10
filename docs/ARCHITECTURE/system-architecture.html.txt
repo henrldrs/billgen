@@ -203,8 +203,8 @@ FE-02 · SaaS web (V02)
 FE-03 · Windows desktop (V01)
     State: partial
     Evidence / what is missing: Tauri shell compiles; own SQLite under Documents\BillGen;
-    auto-login, no signup. Mounts 17 library components. No IA, no sync, no signed
-    installer.
+    auto-login, no signup. Renders the same shell and the same IA-generated routes as the
+    web app (T-19). No IA, no sync, no signed installer.
 
 FE-04 · Mobile (V0)
     State: gap
@@ -1712,7 +1712,7 @@ What is still open here. GET /clients/{id}/stats is the only endpoint left on th
 Repo Map
 --------
 
-What every directory is for, and the record of what was removed on 2026-08-26. 647 tracked files.
+What every directory is for, and the record of what was removed on 2026-08-26. 648 tracked files.
 
 A repository that cannot be read cheaply is a repository that gets misread. This section names the purpose of every top-level directory, so nothing in the tree is unexplained, and records what left.
 
@@ -1752,14 +1752,14 @@ henrioutai-ui/ · 89
     What breaks without it: Every frontend loses its component vocabulary. @billgen/ui
     re-exports this; it holds nothing of its own.
 
-frontend-react/ · 111
+frontend-react/ · 117
     What it is: Holds src/scaffold/ia.ts — the source of truth for nav, routes, status and
     the 149 gaps in §14. Also the scaffold kit that renders unwired areas as deliberately
     ugly.
     What breaks without it: No frontend knows what screens exist. This is the
     highest-leverage file in the repository.
 
-frontend-saas/ · 21
+frontend-saas/ · 16
     What it is: L3, the active surface. React 19 + Vite + react-router. Thin — it composes
     henrioutai-ui against ia.ts.
     What breaks without it: The web product. Thin by design: the weight lives in the two
@@ -1768,8 +1768,8 @@ frontend-saas/ · 21
 frontend-electron/ · 37
     What it is: L4, the Tauri desktop shell. Own local SQLite under Documents\BillGen,
     auto-login, no sync. Despite the name it is Tauri, not Electron.
-    What breaks without it: The desktop product. Currently mounts 17 components and consumes
-    no IA.
+    What breaks without it: The desktop product. Renders the shared ProductShell through a
+    35-line adapter and consumes the IA with routableNodes("desktop") (T-19).
 
 infra/ · desktop/ · scripts/ · 13
     What it is: Compose and deployment config; the desktop packaging target; two generators
@@ -2520,15 +2520,15 @@ repositories/                 4
 desktop/                      4
 docs/                         22
 ARCHITECTURE/                 10
-frontend-electron/            4
+frontend-electron/            5
 public/                       3
-src/                          6
+src/                          5
 src-tauri/                    24
 frontend-react/               4
-src/                          107
+src/                          113
 frontend-saas/                5
 public/                       3
-src/                          13
+src/                          8
 henrioutai-ui/                4
 src/                          85
 docker/                       3
@@ -2539,7 +2539,7 @@ core/                         30
 db/                           4
 desktop/                      4
 files at the repository root  15
-Total tracked                 647
+Total tracked                 648
 
 Reading the layers
 
