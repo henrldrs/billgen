@@ -4,6 +4,7 @@ from .company import Company
 from .credit_note import CreditNote, CreditNoteLine
 from .currency import Currency
 from .discount import Discount, DiscountType
+from .document import Document, DocumentKind
 from .invoice import Invoice, InvoiceLine, InvoiceStatus
 from .organization import Organization, PlanTier
 from .payment import Payment, PaymentMethod
@@ -39,6 +40,8 @@ __all__ = [
     "Currency",
     "Discount",
     "DiscountType",
+    "Document",
+    "DocumentKind",
     "Invoice",
     "InvoiceLine",
     "InvoiceStatus",

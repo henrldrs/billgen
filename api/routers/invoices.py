@@ -1,14 +1,16 @@
 from collections.abc import Callable
 from uuid import UUID
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, Response
 
+from core.documents import DocumentArchive
 from core.models import Currency, Discount, Invoice, InvoiceLine, InvoiceStatus, VATRate
 from core.repository import UnitOfWork
-from core.services import InvoiceService, PdfService, PeppolService
+from core.services import DocumentService, InvoiceService, PdfService, PeppolService
 
 from ..authz import Permission, require_permission
-from ..deps import current_user_id, get_uow_factory
+from ..deps import current_user_id, get_document_archive, get_uow_factory
 from ..entitlements import Meter, pdf_branded, require_peppol_quota, require_quota
 from ..schemas.invoices import (
     DiscountIn,
@@ -23,6 +25,7 @@ from ..schemas.invoices import (
 )
 
 router = APIRouter(prefix="/invoices", tags=["invoices"])
+_log = structlog.get_logger("api.invoices")
 
 
 def _parse_currency(value: str | None) -> Currency | None:
@@ -115,6 +118,8 @@ def issue_invoice(
     body: IssueRequest | None = None,
     user_id: UUID = Depends(current_user_id),
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+    archive: DocumentArchive = Depends(get_document_archive),
+    branded: bool = Depends(pdf_branded),
     _perm: None = Depends(require_permission(Permission.INVOICE_ISSUE)),
 ):
     """Issue a draft: consume the gapless number, freeze totals, set ISSUED."""
@@ -125,6 +130,19 @@ def issue_invoice(
         due_date=body.due_date,
         actor_user_id=user_id,
     )
+    #  After the commit, and outside it. The number is burned and the invoice is
+    #  legally issued; a PDF engine that is missing, slow or out of disk may not
+    #  undo that. Anything that goes wrong here is logged and repaired by
+    #  POST /documents/rebuild — the record is in the database either way (T-27).
+    try:
+        DocumentService(uow_factory, archive, branded=branded).archive_invoice(
+            invoice.id, actor_user_id=user_id
+        )
+    except Exception as exc:  # noqa: BLE001
+        _log.warning(
+            "invoice.archive_failed", invoice=str(invoice.id), reference=invoice.reference,
+            error=str(exc),
+        )
     return _to_response(invoice)
 
 

@@ -64,6 +64,10 @@ def test_clean_production_config_boots_without_warnings():
     settings = make_settings(
         environment="production",
         database_url="postgresql+psycopg://billgen:billgen@db:5432/billgen",
+        #  A hosted start with nowhere to put issued documents is a warning,
+        #  not a clean config: the seven-year retention duty would rest on the
+        #  database alone (T-27).
+        document_root="/srv/billgen/documents",
     )
     assert validate_for_boot(settings) == []
 

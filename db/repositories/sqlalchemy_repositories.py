@@ -20,6 +20,8 @@ from core.models import (
     Client,
     Company,
     CreditNote,
+    Document,
+    DocumentKind,
     Invoice,
     InvoiceStatus,
     Organization,
@@ -37,6 +39,7 @@ from core.repository import (
     ClientRepository,
     CompanyRepository,
     CreditNoteRepository,
+    DocumentRepository,
     ExpenseRepository,
     InvoiceRepository,
     OrganizationRepository,
@@ -55,6 +58,7 @@ from db.models import (
     ClientRow,
     CompanyRow,
     CreditNoteRow,
+    DocumentRow,
     DocumentTemplateRow,
     ExpenseRow,
     InvoiceRow,
@@ -983,3 +987,57 @@ class SqlAlchemyTemplateRepository(TemplateRepository):
             .values(is_default=False)
         )
         self._s.flush()
+
+
+class SqlAlchemyDocumentRepository(DocumentRepository):
+    def __init__(self, session: Session) -> None:
+        self._s = session
+
+    def _org_filter(self):
+        return DocumentRow.organization_id == current_organization_id()
+
+    def _get_row(self, document_id: UUID) -> DocumentRow | None:
+        return self._s.execute(
+            select(DocumentRow).where(DocumentRow.id == document_id, self._org_filter())
+        ).scalar_one_or_none()
+
+    def add(self, document: Document) -> Document:
+        guard_tenant(document.organization_id)
+        self._s.add(DocumentRow(**row_kwargs(document)))
+        self._s.flush()
+        return document
+
+    def update(self, document: Document) -> Document:
+        guard_tenant(document.organization_id)
+        row = self._get_row(document.id)
+        if row is None:
+            raise KeyError(document.id)
+        for column in ("kind", "path", "sha256", "byte_size", "target_type", "target_id"):
+            value = getattr(document, column)
+            setattr(row, column, value.value if isinstance(value, DocumentKind) else value)
+        self._s.flush()
+        return to_domain(Document, row)
+
+    def get(self, document_id: UUID) -> Document | None:
+        row = self._get_row(document_id)
+        return to_domain(Document, row) if row else None
+
+    def list(self, kind: DocumentKind | None = None) -> list[Document]:
+        stmt = (
+            select(DocumentRow)
+            .where(self._org_filter())
+            .order_by(DocumentRow.created_at.desc(), DocumentRow.path)
+        )
+        if kind is not None:
+            stmt = stmt.where(DocumentRow.kind == kind.value)
+        return [to_domain(Document, row) for row in self._s.execute(stmt).scalars()]
+
+    def for_target(self, target_type: str, target_id: UUID) -> Document | None:
+        row = self._s.execute(
+            select(DocumentRow).where(
+                self._org_filter(),
+                DocumentRow.target_type == target_type,
+                DocumentRow.target_id == target_id,
+            )
+        ).scalars().first()
+        return to_domain(Document, row) if row else None

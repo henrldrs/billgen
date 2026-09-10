@@ -3,11 +3,18 @@ from uuid import UUID
 
 from fastapi import HTTPException, Request
 
+from core.documents import DocumentArchive
 from core.repository import UnitOfWork
 
 
 def get_uow_factory(request: Request) -> Callable[[], UnitOfWork]:
     return request.app.state.uow_factory
+
+
+def get_document_archive(request: Request) -> DocumentArchive:
+    """Where issued documents are written. A NullDocumentArchive when no
+    DOCUMENT_ROOT is configured, so callers never branch on None."""
+    return request.app.state.document_archive
 
 
 def get_auth_service(request: Request):  # noqa: ANN201 — avoids circular import

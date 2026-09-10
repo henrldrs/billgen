@@ -7,6 +7,7 @@ from .audit_log_repo import AuditLogRepository
 from .client_repo import ClientRepository
 from .company_repo import CompanyRepository
 from .credit_note_repo import CreditNoteRepository
+from .document_repo import DocumentRepository
 from .expense_repo import ExpenseRepository
 from .invoice_repo import InvoiceRepository
 from .organization_repo import OrganizationRepository
@@ -32,6 +33,7 @@ class UnitOfWork(ABC):
     credit_notes: CreditNoteRepository
     payments: PaymentRepository
     expenses: ExpenseRepository
+    documents: DocumentRepository
     templates: TemplateRepository
     sequences: SequenceRepository
     audit_log: AuditLogRepository

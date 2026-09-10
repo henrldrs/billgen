@@ -35,6 +35,13 @@ class Settings(BaseSettings):
     #  attacker guessing meets it almost at once. Only failures count.
     auth_failures_per_minute: int = 10
 
+    #  Where issued documents are written (T-27). Empty disables archiving
+    #  entirely — every endpoint keeps working and nothing is put on disk,
+    #  which is what a test run and a bare `uvicorn` want. The desktop sets it
+    #  to the resolved data directory; a hosted deployment must set it too, or
+    #  the seven-year retention duty rests on the database alone.
+    document_root: str = ""
+
     # Desktop build: enables POST /auth/desktop-bootstrap (single local user).
     # MUST stay false for hosted SaaS — it mints an account with no credentials.
     desktop_mode: bool = False
@@ -83,6 +90,10 @@ def validate_for_boot(settings: Settings) -> list[str]:
             warnings.append(f"CORS allows dev origins in production: {', '.join(dev_origins)}")
         if settings.database_url.startswith("sqlite"):
             warnings.append("SQLite on a production start — hosted SaaS should run Postgres.")
+        if not settings.document_root.strip():
+            warnings.append(
+                "DOCUMENT_ROOT is unset — issued invoices are not archived to disk (T-27)."
+            )
     elif settings.jwt_secret == _DEV_JWT_SECRET:
         warnings.append("Running with the dev jwt_secret default — fine locally, never hosted.")
 

@@ -86,6 +86,14 @@ VAT.
   the invoice, computed once by `invoice_totals()`, legally binding at issue.
 - **Audit log.** Append-only `AuditLogRow`; every mutation writes one in the
   same transaction. Read it through `GET /activity`.
+- **The document archive is written, never read (T-27).** Issuing writes
+  `<DOCUMENT_ROOT>/invoices/<year>/<reference>.pdf` and registers path, hash
+  and size in `documents`. Nothing reads a file back to answer anything —
+  there is deliberately no download endpoint on `/documents` — so tidying the
+  folder loses a copy and changes no record. Archiving happens *after* issue's
+  commit and can never fail it; `POST /documents/rebuild` is the repair.
+  `DOCUMENT_ROOT` unset means archiving is off, which is what the test suite
+  and a bare `uvicorn` run with.
 
 ---
 

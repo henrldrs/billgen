@@ -14,6 +14,11 @@ matter:
 - Sequence counters travel verbatim (never recomputed from the data: a voided
   invoice legitimately leaves the counter ahead of what the rows suggest).
 - Users and credentials are deliberately NOT part of the backup.
+- Since T-27 the payload carries the *document register* — path, hash and size
+  of every file written outside the database — but not the files themselves.
+  A restore therefore knows exactly which documents should exist and reports
+  the ones that do not, rather than failing on a folder it was never given.
+  Carrying the bytes is T-28's job, where they travel encrypted.
 """
 
 from __future__ import annotations
@@ -26,12 +31,14 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ValidationError
 
+from ..documents import DocumentArchive
 from ..models import (
     AuditAction,
     AuditLogEntry,
     Client,
     Company,
     CreditNote,
+    Document,
     Invoice,
     Payment,
     Product,
@@ -43,10 +50,11 @@ from . import _audit
 from .errors import BusinessRuleError
 
 BACKUP_FORMAT = "billgen-backup"
-# 2 adds "quotes". A v1 file restores unchanged — it simply has none — so both
-# are accepted; only the newest is written.
-SCHEMA_VERSION = 2
-SUPPORTED_SCHEMA_VERSIONS = (1, 2)
+# 2 adds "quotes"; 3 adds "documents". An older file restores unchanged — it
+# simply has none of the newer collections — so all three are accepted; only
+# the newest is written.
+SCHEMA_VERSION = 3
+SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3)
 
 # The audit log is exported in full; this is only a sanity ceiling.
 _AUDIT_EXPORT_LIMIT = 1_000_000
@@ -86,8 +94,13 @@ class RestoreReport(BaseModel):
     quotes: int = 0
     credit_notes: int = 0
     payments: int = 0
+    documents: int = 0
     sequences: int = 0
     audit_entries: int = 0
+    #  Registered files whose bytes are not where the register says they are.
+    #  A restore reports them and completes: the invoice data is in the rows,
+    #  and a missing PDF is a lost copy, not a lost record.
+    missing_documents: list[str] = []
 
 
 # What restore replays, in order: the aggregate's key in the payload, its model,
@@ -102,12 +115,20 @@ _RESTORE_ORDER: tuple[tuple[str, type, str], ...] = (
     ("quotes", Quote, "quotes"),
     ("credit_notes", CreditNote, "credit_notes"),
     ("payments", Payment, "payments"),
+    ("documents", Document, "documents"),
 )
 
 
 class BackupService:
-    def __init__(self, uow_factory: Callable[[], UnitOfWork]) -> None:
+    def __init__(
+        self,
+        uow_factory: Callable[[], UnitOfWork],
+        archive: DocumentArchive | None = None,
+    ) -> None:
         self._uow_factory = uow_factory
+        #  Only ever asked whether a file exists. Restore needs to answer
+        #  "is this copy here?"; nothing here reads one.
+        self._archive = archive
 
     def export(self, actor_user_id: UUID | None = None) -> dict[str, Any]:
         org_id = current_organization_id()
@@ -124,6 +145,7 @@ class BackupService:
                 for invoice in invoices
                 for payment in uow.payments.list_for_invoice(invoice.id)
             ]
+            documents = uow.documents.list()
             # list() returns newest-first; store chronologically so restore
             # appends in original order.
             audit_entries = list(reversed(uow.audit_log.list(limit=_AUDIT_EXPORT_LIMIT)))
@@ -148,6 +170,7 @@ class BackupService:
                 "quotes": [q.model_dump(mode="json") for q in quotes],
                 "credit_notes": [c.model_dump(mode="json") for c in credit_notes],
                 "payments": [p.model_dump(mode="json") for p in payments],
+                "documents": [d.model_dump(mode="json") for d in documents],
                 "audit_log": [e.model_dump(mode="json") for e in audit_entries],
                 "sequences": sequences,
             }
@@ -160,6 +183,7 @@ class BackupService:
                     "companies": len(companies),
                     "invoices": len(invoices),
                     "credit_notes": len(credit_notes),
+                    "documents": len(documents),
                 },
                 actor_user_id=actor_user_id,
             )
@@ -192,6 +216,11 @@ class BackupService:
                 for model in self._models(payload, key, model_cls, org_id):
                     repository.add(model)
                     setattr(report, key, getattr(report, key) + 1)
+
+            if self._archive is not None:
+                for document in uow.documents.list():
+                    if not self._archive.exists(document.path):
+                        report.missing_documents.append(document.path)
 
             for raw in self._list(payload, "sequences"):
                 try:

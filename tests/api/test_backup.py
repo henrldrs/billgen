@@ -54,7 +54,7 @@ async def test_export_shape_and_counts(client):
     _, payload = await build_source_org(client)
 
     assert payload["format"] == "billgen-backup"
-    assert payload["schema_version"] == 2
+    assert payload["schema_version"] == 3
     assert payload["organization"]["name"] == "Source Org"
     assert len(payload["companies"]) == 1
     assert len(payload["clients"]) == 1
@@ -87,6 +87,10 @@ async def test_restore_roundtrip_preserves_data_and_continues_sequence(client):
         "quotes": len(payload["quotes"]),
         "credit_notes": 1 if payload["credit_notes"] else 0,
         "payments": 1,
+        #  No DOCUMENT_ROOT on this app, so nothing was ever archived. The
+        #  register travelling full is tests/api/test_documents.py.
+        "documents": 0,
+        "missing_documents": [],
         "sequences": report["sequences"],  # count depends on bucket scopes
         "audit_entries": len(payload["audit_log"]),
     }

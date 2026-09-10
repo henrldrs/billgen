@@ -107,6 +107,10 @@ def configure_environment() -> str:
     database_url = paths.database_url()
     os.environ["DATABASE_URL"] = database_url
     os.environ["DESKTOP_MODE"] = "true"
+    #  Issued invoices land in <data dir>/invoices/<year>/ — inside the folder
+    #  T-25 moved out of the package container, so an uninstall leaves both the
+    #  database and the documents behind (T-27).
+    os.environ["DOCUMENT_ROOT"] = str(paths.app_data_dir())
     os.environ.setdefault("JWT_SECRET", load_or_create_secret())
     # Desktop webview loads from tauri://localhost (and http://localhost in dev).
     os.environ.setdefault(

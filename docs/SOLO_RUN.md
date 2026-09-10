@@ -90,6 +90,7 @@ which it cannot know.
 | 15 | T-20 · the sidecar brings its own Python | `IN PROGRESS` | `a16d389`. 61 MB embeddable runtime, built from `uv.lock`; boots and answers with no Python on PATH; `check_sidecar_runtime.py` 19/19. The VM and `tauri build` are Henri's to run. |
 | 16 | T-21 · PDFs through the installed Edge | `DONE` | Ships in *feat: PDFs print through the installed Edge*. Edge's own command line, on Henri's instruction, rather than the ticket's `channel="msedge"`: the desktop needs neither Playwright's 150 MB download nor its 110 MB package. `test_real_pdf_bytes` green with Playwright's browsers hidden; the two launchers agree on every glyph's coordinates; the rebuilt runtime renders with no Playwright in it. |
 | 17 | T-22 · Emilia's license file | `DONE` | Ships in *feat: the packaged build refuses to start unlicensed*. The two halves that were zero: `bootstrap` never called `check_license`, and the signed `hardware_id` was never compared to anything. Rehearsed end to end against a scratch key pair — strict mode refuses with no licence and refuses one signed for another machine, naming both fingerprints, and starts with the right one. **The signing key is Henri's to generate** (`scripts/license_tool.py keygen`); until he does, no packaged build starts, which is the correct state for a repo that has never held one. [docs/LICENSING.md](LICENSING.md) is the reissue path. |
+| 18 | T-27 · the documents leave the database | `DONE` | Ships in *feat: an issued invoice leaves a file behind*. Issuing writes `<DOCUMENT_ROOT>/invoices/<year>/<ref>.pdf` and registers path, hash and size; the folder is written and never read back, so deleting a file changes no endpoint's answer. Backup schema 3 carries the register, and a restore names what is missing instead of failing. 16 new tests. |
 
 **This ledger's own list is closed.** Items 6–8 were the three the handover
 note sanctioned explicitly: *"None of these invents a screen; each connects a
@@ -102,11 +103,11 @@ happened to it.
 
 | | |
 |---|---|
-| Python | **604 collected, exit 0** — 19 of them new in T-22; `tests/desktop/` is 40 | 
+| Python | **620 collected, exit 0** — 16 of them new in T-27; `tests/desktop/` is 40 | 
 | Frontend | **193 passed** (`npm run test`, 30 files), typecheck clean across all four workspaces |
 | `ruff check` | clean. CI runs `ruff check .` only — the tree is *not* `ruff format` clean and was not before, so do not reformat it as a side errand |
-| Architecture doc | **in sync** as of `12ce164` — both `sync-architecture --check` and `architecture_to_text.py --check` green |
-| Migrations | head is `d1c4f8a26b70` (supply kind). A dev database from before 2026-09-09 needs `alembic upgrade head`, and a desktop install migrates itself on boot |
+| Architecture doc | **in sync** — both `sync-architecture --check` and `architecture_to_text.py --check` green at 102 endpoints across 25 routers |
+| Migrations | head is `e2f7c9b41a55` (the document register). A dev database from before 2026-09-09 needs `alembic upgrade head`, and a desktop install migrates itself on boot |
 | ROADMAP_IA | regenerated 2026-09-04 from `ia.ts`: 115 areas, 34 wired, 30% |
 | Unpushed | everything on `main` after `origin/main` — count it with the first command in the resume protocol rather than trusting a number here, which is stale the moment the next commit lands. Three trees became one on 2026-09-09: the worktree and its branch were removed, the remote-only docs commit `fde1edc` was folded in as `a5b3948`, and `main` fast-forwarded to the former `audit-engine-and-scaffolds` head |
 

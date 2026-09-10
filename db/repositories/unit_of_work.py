@@ -9,6 +9,7 @@ from .sqlalchemy_repositories import (
     SqlAlchemyClientRepository,
     SqlAlchemyCompanyRepository,
     SqlAlchemyCreditNoteRepository,
+    SqlAlchemyDocumentRepository,
     SqlAlchemyExpenseRepository,
     SqlAlchemyInvoiceRepository,
     SqlAlchemyOrganizationRepository,
@@ -39,6 +40,7 @@ class SqlAlchemyUnitOfWork(UnitOfWork):
         self.credit_notes = SqlAlchemyCreditNoteRepository(s)
         self.payments = SqlAlchemyPaymentRepository(s)
         self.expenses = SqlAlchemyExpenseRepository(s)
+        self.documents = SqlAlchemyDocumentRepository(s)
         self.templates = SqlAlchemyTemplateRepository(s)
         self.sequences = SqlAlchemySequenceRepository(s)
         self.audit_log = SqlAlchemyAuditLogRepository(s)

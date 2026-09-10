@@ -112,40 +112,17 @@ wish, and the queue is not for wishes.
 ### T-23 · Backup on close, restore rehearsed on her machine
     branch    Desktop               status  open
     needs     T-20
-    why       Her data lives only in `%APPDATA%\BillGen`. ADR-0003's export
+    why       Her data lives only in the data directory T-25 resolves
+              (`Documents\BillGen` unless she chose otherwise). ADR-0003's export
               exists as an endpoint and a panel; nothing runs it unasked. No
               job runner is needed on the desktop — the sidecar has a
               shutdown.
     do        On sidecar shutdown, write the backup export to
-              `%APPDATA%\BillGen\backups\<date>.zip`, keep the last 30.
+              `<data dir>\backups\<date>.zip`, keep the last 30.
               During the first Teams call, restore one into a scratch
               database and compare — T-06 performed where the data is.
     done when A dated note in `docs/` says a restore was performed on her
               machine, from which file, and what was compared.
-
-### T-27 · The documents leave the database
-    branch    Desktop / Backend     status  open
-    needs     T-25
-    why       Nothing is written to disk except the SQLite database — PDFs
-              render on demand and are never kept. Henri 2026-09-09: the data
-              folder should hold the invoices, and the backup should carry the
-              documents, the contracts and the policies. Under a seven-year
-              retention duty, a document that exists only while the app runs is
-              a thin guarantee.
-    do        On issue, write the rendered PDF to
-              `<data dir>/invoices/<year>/<reference>.pdf`. **The database
-              stays authoritative and the folder is written, never read back**
-              — otherwise a user tidying a folder silently edits the legal
-              record, and that is the one failure this must not have. A
-              `Document` row (kind: invoice | contract | policy | other; path;
-              sha256; created_at) registers each file so `BackupService.export`
-              can carry it. One-shot re-render for anything issued before this
-              lands.
-    done when Issuing an invoice leaves a PDF under `invoices/<year>/`;
-              deleting that file changes no endpoint's answer; the export
-              carries the document rows and their hashes; a restore into an
-              empty database reports which files are missing instead of
-              failing.
 
 ### T-28 · A backup that can be carried
     branch    Desktop               status  open
@@ -165,8 +142,9 @@ wish, and the queue is not for wishes.
               export rather than after.
     done when An encrypted export restores into an empty database with the
               right passphrase; a wrong passphrase fails with a distinct error
-              and no partial write; the plain export is byte-identical to
-              today's. The rehearsed restore itself is T-23's evidence, not a
+              and no partial write; the plain export is byte-identical to the
+              one T-27 left — schema 3, `documents` carried as a register and
+              the bytes not carried at all. The rehearsed restore itself is T-23's evidence, not a
               second note.
 
 ### T-29 · The guided first run — and where the data lives, said inside it
@@ -571,6 +549,59 @@ wish, and the queue is not for wishes.
 ---
 
 ## Done
+
+### T-27 · The documents leave the database  ·  *feat: an issued invoice leaves a file behind*
+    The rule the whole ticket turns on is the one that is easiest to erode
+    later, so it is stated in three places and asserted in one: **the folder is
+    written and never read back**. `api/routers/documents.py` therefore has no
+    download endpoint. An invoice is served by rendering it from the database,
+    which means a person who tidies, renames or deletes inside the archive
+    loses a copy and changes nothing legal —
+    `test_deleting_the_file_changes_no_endpoint_answer` is that sentence as an
+    assertion. The moment any endpoint answers from a file, somebody with a
+    file manager is editing a VAT record.
+
+    Three seams, one each in `core/`, `db/` and `api/`. `core/documents/` is
+    the archive port — `write` and `exists`, no `read` — with a filesystem
+    implementation that stages beside the target and `os.replace`s it, so a
+    crash leaves the previous file or none, never half a PDF that hashes to
+    something the register does not know. `core/models/document.py` is the row:
+    kind, path, sha256, byte_size, and what it is *of*. `DocumentService` ties
+    them together and holds the two rules that are not obvious from either.
+
+    **Archiving never fails an issue.** The gapless number is burned inside
+    `InvoiceService.issue`'s transaction; by the time anything renders, the
+    invoice is legally issued and no missing browser may undo that. The issue
+    route catches everything, logs `invoice.archive_failed`, and returns the
+    invoice — `test_a_broken_pdf_engine_does_not_fail_an_issue`.
+
+    **A document is rendered once.** An invoice that already has a *row* is
+    never re-rendered, so a template edited next year cannot quietly restyle a
+    document issued this one. `POST /documents/rebuild` — the one-shot for a
+    history that predates this, and the repair for a deleted file — re-renders
+    only what has no file at all, and counts a copy whose bytes came out
+    different as `rehashed` rather than hiding it.
+
+    The backup carries the register at schema 3, not the bytes; the bytes are
+    T-28's, encrypted. A restore into an empty database lists the paths it
+    cannot find in `missing_documents` and **completes**: the records are back,
+    some copies are not, and failing on a folder it was never handed would be
+    the wrong end of that trade.
+
+    Where the folder is comes from outside `core/`: `DOCUMENT_ROOT`, which the
+    desktop sets to `paths.app_data_dir()` so the documents live inside the
+    directory T-25 moved out of the package container. **Unset is a working
+    configuration** — archiving off, every endpoint unchanged, nothing on disk
+    — which is what the test suite and a bare `uvicorn` get, and what a
+    production start now warns about.
+
+    Evidence: `tests/api/test_documents.py` (8) and
+    `tests/core/documents/test_archive.py` (8); 620 collected, exit 0; migration
+    `e2f7c9b41a55`; `ruff check` clean; the architecture document regenerated to
+    102 endpoints across 25 routers. `create_app`'s 26 `include_router` lines
+    became `_ROUTERS`, a tuple, because adding the 26th put the function over
+    ruff's statement ceiling — the mount *order* is what matters and a tuple
+    keeps it visible.
 
 ### T-22 · Emilia's license file  ·  *feat: the packaged build refuses to start unlicensed*
     Two halves of this were zero where the ticket assumed one line, and both

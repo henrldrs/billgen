@@ -42,6 +42,7 @@ class Permission(str, Enum):
     TEMPLATE_WRITE = "template.write"
     IMPORT_RUN = "import.run"
     BACKUP_EXPORT = "backup.export"
+    DOCUMENT_REBUILD = "document.rebuild"
     BACKUP_RESTORE = "backup.restore"
 
 
@@ -76,6 +77,10 @@ _ADMIN: frozenset[Permission] = _MEMBER | {
     Permission.TEMPLATE_WRITE,
     Permission.IMPORT_RUN,
     Permission.BACKUP_EXPORT,
+    #  Re-renders every issued invoice that has no file. It touches no fiscal
+    #  data — the rows are already there — but it is a bulk act over the whole
+    #  organization's history, which is the line _ADMIN draws.
+    Permission.DOCUMENT_REBUILD,
 }
 
 ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {

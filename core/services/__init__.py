@@ -11,6 +11,7 @@ from .client_service import ClientService
 from .company_service import CompanyService
 from .company_validation import CompanyValidation, validate_company_identifiers
 from .credit_note_service import CreditNoteService
+from .document_service import ArchiveReport, DocumentService
 from .errors import (
     BusinessRuleError,
     FieldError,
@@ -50,7 +51,9 @@ __all__ = [
     "CompanyValidation",
     "ComplianceFinding",
     "ComplianceSeverity",
+    "ArchiveReport",
     "CreditNoteService",
+    "DocumentService",
     "ExpenseService",
     "FieldError",
     "HitKind",

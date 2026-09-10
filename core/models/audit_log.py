@@ -17,6 +17,8 @@ class AuditAction(str, Enum):
     EXPORT_PDF = "export_pdf"
     EXPORT_PEPPOL = "export_peppol"
     EXPORT_BACKUP = "export_backup"
+    #  A rendered document was written to the archive folder (T-27).
+    ARCHIVE_DOCUMENT = "archive_document"
     RESTORE = "restore"
     DELETE = "delete"
     LOGIN = "login"

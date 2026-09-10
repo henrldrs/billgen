@@ -2,6 +2,7 @@ from .audit_log_repo import AuditLogRepository
 from .client_repo import ClientRepository
 from .company_repo import CompanyRepository
 from .credit_note_repo import CreditNoteRepository
+from .document_repo import DocumentRepository
 from .expense_repo import ExpenseRepository
 from .invoice_repo import InvoiceRepository
 from .organization_repo import OrganizationRepository
@@ -27,6 +28,7 @@ __all__ = [
     "ClientRepository",
     "CompanyRepository",
     "CreditNoteRepository",
+    "DocumentRepository",
     "ExpenseRepository",
     "InvoiceRepository",
     "OrganizationRepository",

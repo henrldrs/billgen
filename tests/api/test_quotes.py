@@ -341,7 +341,7 @@ async def test_quotes_travel_in_the_backup(client):
     payload = (await client.get("/backup/export", headers=headers)).json()
 
     assert [q["reference"] for q in payload["quotes"]] == [quote["reference"]]
-    assert payload["schema_version"] == 2
+    assert payload["schema_version"] == 3
 
 
 async def test_a_viewer_cannot_write_a_quote(client):

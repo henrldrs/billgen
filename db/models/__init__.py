@@ -4,6 +4,7 @@ from .client import ClientRow
 from .company import CompanyRow
 from .credential import RefreshTokenRow, UserCredentialRow
 from .credit_note import CreditNoteLineRow, CreditNoteRow
+from .document import DocumentRow
 from .expense import ExpenseRow
 from .invoice import InvoiceLineRow, InvoiceRow
 from .organization import OrganizationRow
@@ -22,6 +23,7 @@ __all__ = [
     "CompanyRow",
     "CreditNoteLineRow",
     "CreditNoteRow",
+    "DocumentRow",
     "DocumentTemplateRow",
     "ExpenseRow",
     "InvoiceLineRow",

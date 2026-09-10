@@ -85,6 +85,13 @@ organization.**
   and actions are what the fiscal trail needs.
 - `schema_version` gates forward compatibility: bump it when models change
   shape and write a migration shim per version if old backups must stay
-  restorable.
+  restorable. It is **3** today: 2 added `quotes`, 3 added `documents` — the
+  register of files written outside the database (T-27). Older files restore
+  unchanged; they simply carry none of the newer collections.
+- The document register travels; the documents do not. A restore reports the
+  registered paths whose bytes are not in the archive
+  (`RestoreReport.missing_documents`) and completes, because the invoice is in
+  the rows and a missing PDF is a lost copy rather than a lost record. Carrying
+  the bytes is T-28, where the archive travels encrypted.
 - The settings page of both shells gains a Backup section: download the JSON,
   restore from file behind a confirmation.

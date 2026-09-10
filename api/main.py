@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from sqlalchemy.engine import Engine
 
+from core.documents import FilesystemDocumentArchive, NullDocumentArchive
 from core.pdf import PdfEngineUnavailableError
 from core.services import (
     BusinessRuleError,
@@ -35,6 +36,7 @@ from .routers import (
     companies,
     credit_notes,
     desktop,
+    documents,
     entitlements,
     expenses,
     health,
@@ -161,6 +163,41 @@ def _register_exception_handlers(app: FastAPI) -> None:
         )
 
 
+#  Mount order, and it is the mount order that matters: FastAPI matches
+#  paths in the order they were included, so a router with a wildcard
+#  segment must not come before a sibling with a literal one. Kept as a
+#  tuple rather than 26 near-identical statements — adding a surface is
+#  one line, and forgetting to include it is visible.
+_ROUTERS = (
+    health.router,
+    auth.router,
+    desktop.router,
+    desktop.dev_router,
+    users.router,
+    organizations.router,
+    companies.router,
+    clients.router,
+    products.router,
+    imports.router,
+    invoices.router,
+    quotes.router,
+    credit_notes.router,
+    payments.router,
+    reference.router,
+    entitlements.router,
+    reports.router,
+    search.router,
+    activity.router,
+    alerts.router,
+    expenses.router,
+    tva.router,
+    templates.router,
+    backup.router,
+    documents.router,
+    trust.router,
+)
+
+
 def create_app(settings: Settings | None = None, engine: Engine | None = None) -> FastAPI:
     settings = settings or get_settings()
     configure_logging()
@@ -187,6 +224,13 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
     app.state.settings = settings
     app.state.session_factory = session_factory
     app.state.uow_factory = lambda: SqlAlchemyUnitOfWork(session_factory)
+    #  T-27. An unset DOCUMENT_ROOT is a working configuration, not an error:
+    #  archiving is off and every endpoint behaves as it did before.
+    app.state.document_archive = (
+        FilesystemDocumentArchive(settings.document_root.strip())
+        if settings.document_root.strip()
+        else NullDocumentArchive()
+    )
     app.state.auth_service = AuthService(session_factory, codec)
     app.state.codec = codec
 
@@ -219,31 +263,8 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
 
     _register_exception_handlers(app)
 
-    app.include_router(health.router)
-    app.include_router(auth.router)
-    app.include_router(desktop.router)
-    app.include_router(desktop.dev_router)
-    app.include_router(users.router)
-    app.include_router(organizations.router)
-    app.include_router(companies.router)
-    app.include_router(clients.router)
-    app.include_router(products.router)
-    app.include_router(imports.router)
-    app.include_router(invoices.router)
-    app.include_router(quotes.router)
-    app.include_router(credit_notes.router)
-    app.include_router(payments.router)
-    app.include_router(reference.router)
-    app.include_router(entitlements.router)
-    app.include_router(reports.router)
-    app.include_router(search.router)
-    app.include_router(activity.router)
-    app.include_router(alerts.router)
-    app.include_router(expenses.router)
-    app.include_router(tva.router)
-    app.include_router(templates.router)
-    app.include_router(backup.router)
-    app.include_router(trust.router)
+    for included in _ROUTERS:
+        app.include_router(included)
     return app
 
 

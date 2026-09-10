@@ -1627,8 +1627,8 @@ export interface paths {
          * Export Backup
          * @description The whole organization as a restorable JSON document (ADR-0003):
          *     companies, clients, products, invoices, credit notes, payments, the audit
-         *     log, and the gapless sequence counters. Writes one export_backup audit
-         *     entry; users/credentials are never included.
+         *     log, the document register, and the gapless sequence counters. Writes one
+         *     export_backup audit entry; users/credentials are never included.
          */
         get: operations["export_backup_backup_export_get"];
         put?: never;
@@ -1653,8 +1653,58 @@ export interface paths {
          * @description Disaster recovery: restore a backup into the current organization.
          *     Refuses (409) unless the organization has no companies yet — merging into
          *     live data would break the gapless-numbering guarantee.
+         *
+         *     The document register travels with the backup; the files do not (T-28
+         *     carries those). A restore therefore completes and reports the paths whose
+         *     bytes are not in the archive, rather than failing on a folder it was never
+         *     handed.
          */
         post: operations["restore_backup_backup_restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Documents
+         * @description Every registered document, newest first, plus the resolved archive root.
+         */
+        get: operations["list_documents_documents_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/documents/rebuild": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rebuild Documents
+         * @description Give every issued invoice a file: the one-shot for a history that
+         *     predates T-27, and the repair for a file someone deleted.
+         *
+         *     Re-rendering runs today's template over an old invoice, so bytes can differ
+         *     from the hash first recorded. That is counted as `rehashed` — the register
+         *     stays honest about which copies are no longer the originals.
+         */
+        post: operations["rebuild_documents_documents_rebuild_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2499,6 +2549,38 @@ export interface components {
                 [key: string]: string;
             };
         };
+        /** DocumentListResponse */
+        DocumentListResponse: {
+            /** Root */
+            root?: string | null;
+            /** Documents */
+            documents: components["schemas"]["DocumentResponse"][];
+        };
+        /** DocumentResponse */
+        DocumentResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Path */
+            path: string;
+            /** Sha256 */
+            sha256: string;
+            /** Byte Size */
+            byte_size: number;
+            /** Target Type */
+            target_type?: string | null;
+            /** Target Id */
+            target_id?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
         /**
          * EntitlementsResponse
          * @description Everything the UI needs to render itself correctly for this plan.
@@ -3238,7 +3320,7 @@ export interface components {
          *     touches domain code. CORE must never branch on a tier.
          * @enum {string}
          */
-        PlanTier: "free" | "starter" | "business" | "business_pro";
+        PlanTier: "free" | "starter" | "business" | "business_pro" | "partner";
         /**
          * PlansResponse
          * @description The whole commercial matrix, so a pricing or upgrade screen renders from
@@ -3547,6 +3629,19 @@ export interface components {
             /** Converted Invoice Id */
             converted_invoice_id: string | null;
         };
+        /** RebuildReportResponse */
+        RebuildReportResponse: {
+            /** Written */
+            written: number;
+            /** Skipped */
+            skipped: number;
+            /** Failed */
+            failed: number;
+            /** Rehashed */
+            rehashed: number;
+            /** Errors */
+            errors: string[];
+        };
         /**
          * RecoveryTreatment
          * @description §5. `REVIEW_REQUIRED` is not a fifth colour — it is the absence of a
@@ -3575,10 +3670,17 @@ export interface components {
             credit_notes: number;
             /** Payments */
             payments: number;
+            /** Documents */
+            documents: number;
             /** Sequences */
             sequences: number;
             /** Audit Entries */
             audit_entries: number;
+            /**
+             * Missing Documents
+             * @default []
+             */
+            missing_documents?: string[];
         };
         /** RevenueByMonthResponse */
         RevenueByMonthResponse: {
@@ -7209,6 +7311,58 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_documents_documents_get: {
+        parameters: {
+            query?: {
+                /** @description invoice | contract | policy | other */
+                kind?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rebuild_documents_documents_rebuild_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RebuildReportResponse"];
                 };
             };
         };
