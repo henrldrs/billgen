@@ -800,6 +800,8 @@ Each of these exists in the backend and is not part of the first release surface
 
 Confirmed 2026-09-09, and held. Asked whether credit notes or payments should return for the licensed beta build, Henri kept the scope as fixed. The consequence to be aware of rather than discover: an issued invoice cannot lawfully be deleted, so a beta tester’s mistake is corrected by a credit note — and the surface offers none. It is a support burden and not a legal dead end, because the sidecar carries the whole API and the credit-note endpoints are present, merely unexposed. A correction is one call Henri makes; it is not something she can do alone.
 
+Enforced in code as of 2026-09-10. This section used to be a description that the router did not read, and the desktop shell offered all 124 IA nodes — 49 of them scaffold pages. MVP_SURFACE in frontend-react/src/scaffold/ia.ts is the list, a packaged build passes exposure="mvp", and five guards in ia.test.ts keep the two from drifting. Two entries are worth knowing: credit notes and every report are wired and excluded, per the confirmation above; and the invoice and client record screens are partial and included, because the only thing they lack is POST /invoices/{id}/send — email delivery, which is out of scope anyway. Excluding them for that cost every row in both lists its destination, which is what a purely technical filter did for one commit.
+
 Added for the desktop beta, and not billing surface: a data-custody layer — the document mirror on disk, the encrypted carryable backup, and the in-app explanation of where the data lives (T-27, T-28, T-29). None of it issues or changes a document, so the exclusion list above stands unmodified.
 
 One reading to confirm. The scope as given was “template customization, management of clients, services/products and clients” — clients appear twice. This section reads that as three record types plus invoice issue as the thing they serve, on the grounds that an invoicing MVP without invoices is not a product. If the intent was different, this is the section to correct first.
@@ -1712,7 +1714,7 @@ What is still open here. GET /clients/{id}/stats is the only endpoint left on th
 Repo Map
 --------
 
-What every directory is for, and the record of what was removed on 2026-08-26. 648 tracked files.
+What every directory is for, and the record of what was removed on 2026-08-26. 652 tracked files.
 
 A repository that cannot be read cheaply is a repository that gets misread. This section names the purpose of every top-level directory, so nothing in the tree is unexplained, and records what left.
 
@@ -1752,7 +1754,7 @@ henrioutai-ui/ · 89
     What breaks without it: Every frontend loses its component vocabulary. @billgen/ui
     re-exports this; it holds nothing of its own.
 
-frontend-react/ · 117
+frontend-react/ · 118
     What it is: Holds src/scaffold/ia.ts — the source of truth for nav, routes, status and
     the 149 gaps in §14. Also the scaffold kit that renders unwired areas as deliberately
     ugly.
@@ -2517,7 +2519,7 @@ db/                           4
 migrations/                   12
 models/                       17
 repositories/                 4
-desktop/                      4
+desktop/                      5
 docs/                         22
 ARCHITECTURE/                 10
 frontend-electron/            5
@@ -2525,21 +2527,21 @@ public/                       3
 src/                          5
 src-tauri/                    24
 frontend-react/               4
-src/                          113
+src/                          114
 frontend-saas/                5
 public/                       3
 src/                          8
 henrioutai-ui/                4
 src/                          85
 docker/                       3
-scripts/                      5
+scripts/                      7
 tests/                        1
 api/                          28
 core/                         30
 db/                           4
 desktop/                      4
 files at the repository root  15
-Total tracked                 648
+Total tracked                 652
 
 Reading the layers
 

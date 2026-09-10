@@ -68,6 +68,7 @@ export * from "@henrioutai/ui";
 // which parts of the product actually have a server behind them.
 export {
   IA,
+  MVP_SURFACE,
   coverage,
   findByPath,
   flattenIa,

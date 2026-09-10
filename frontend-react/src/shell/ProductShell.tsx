@@ -34,6 +34,7 @@ import {
   DashboardIcon,
   iaFor,
   isNavDestination,
+  routableNodes,
   LoadingScreen,
   OrgSwitcher,
   PlusIcon,
@@ -116,13 +117,38 @@ export interface ShellContext {
  *  guessed at — see the flatMap below. */
 const HIT_DESTINATION: Record<
   string,
-  { href: (id: string) => string; section: string; record: boolean }
+  { iaPath: string; href: (id: string) => string; section: string; record: boolean }
 > = {
-  invoice: { href: (id) => `/app/sales/invoices/id/${id}`, section: "Invoices", record: true },
-  client: { href: (id) => `/app/customers/clients/${id}`, section: "Clients", record: true },
-  quote: { href: () => "/app/sales/quotes", section: "Quotes", record: false },
-  credit_note: { href: () => "/app/sales/credit-notes", section: "Credit notes", record: false },
-  product: { href: () => "/app/catalog/products", section: "Products", record: false },
+  invoice: {
+    iaPath: "sales/invoices/id/:invoiceId",
+    href: (id) => `/app/sales/invoices/id/${id}`,
+    section: "Invoices",
+    record: true,
+  },
+  client: {
+    iaPath: "customers/clients/:clientId",
+    href: (id) => `/app/customers/clients/${id}`,
+    section: "Clients",
+    record: true,
+  },
+  quote: {
+    iaPath: "sales/quotes",
+    href: () => "/app/sales/quotes",
+    section: "Quotes",
+    record: false,
+  },
+  credit_note: {
+    iaPath: "sales/credit-notes",
+    href: () => "/app/sales/credit-notes",
+    section: "Credit notes",
+    record: false,
+  },
+  product: {
+    iaPath: "catalog/products",
+    href: () => "/app/catalog/products",
+    section: "Products",
+    record: false,
+  },
 };
 
 /** Palette-safe status marker (see the label comment in `commands`). */
@@ -226,6 +252,11 @@ export function ProductShell({ surface, exposure = "all", account }: PlatformAda
   // must never appear in the web nav — the browser cannot render them — and
   // must appear in the desktop one. One call, two answers.
   const ia: IaSection[] = iaFor(surface, exposure);
+  //  What this build actually mounted. Used to keep the palette from offering
+  //  a record whose screen is not part of this surface.
+  const routablePaths = new Set(
+    routableNodes(surface, exposure).map((node) => node.path),
+  );
   //  Nothing to warn about when everything offered works.
   const marker = (status: BackendStatus) =>
     exposure === "all" ? <ScaffoldNavDot status={status} /> : null;
@@ -287,7 +318,13 @@ export function ProductShell({ surface, exposure = "all", account }: PlatformAda
       // A kind this shell does not know where to send is not shown. Guessing a
       // route would navigate somewhere wrong; showing an inert row would be
       // worse than the "nothing matches" this whole change exists to remove.
-      if (!destination) return [];
+      //
+      // The same argument covers a kind this *build* does not mount: the
+      // server still finds a credit note on a surface that offers no credit
+      // notes, and offering to open one would navigate into nothing. The
+      // routable set is the same one the router was built from, so the two
+      // cannot drift.
+      if (!destination || !routablePaths.has(destination.iaPath)) return [];
 
       return [
         {

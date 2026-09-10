@@ -15,15 +15,21 @@ import { MemoryRouter, Navigate, Route, Routes } from "react-router-dom";
 import { DesktopShell } from "./DesktopShell";
 import { createApi } from "./lib/api";
 
-/** A packaged build offers only what a server fully answers; a dev build shows
- *  the whole IA so the state of the product stays legible while working on it.
+/** A packaged build offers the first release surface; a dev build shows the
+ *  whole IA so the state of the product stays legible while working on it.
  *
- *  `VITE_BILLGEN_EXPOSURE=wired` forces the shipped behaviour under `vite dev`,
- *  which is the only way to actually look at what a beta tester will see. */
+ *  `"mvp"` rather than `"wired"`: wired asks whether a server answers a screen,
+ *  §MVP asks whether the screen is part of the first release, and they
+ *  disagree in both directions — credit notes and the reports are wired and
+ *  out of scope; the invoice and client record screens are `partial` (email
+ *  delivery is missing) and indispensable. `MVP_SURFACE` in `scaffold/ia.ts`
+ *  is the list.
+ *
+ *  `VITE_BILLGEN_EXPOSURE` forces a value under `vite dev`, which is the only
+ *  way to look at what a beta tester will actually see. */
 const EXPOSURE: Exposure =
-  import.meta.env.VITE_BILLGEN_EXPOSURE === "wired" || !import.meta.env.DEV
-    ? "wired"
-    : "all";
+  (import.meta.env.VITE_BILLGEN_EXPOSURE as Exposure | undefined) ??
+  (import.meta.env.DEV ? "all" : "mvp");
 
 type BootState =
   | { status: "connecting" }

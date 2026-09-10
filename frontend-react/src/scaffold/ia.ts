@@ -1468,11 +1468,73 @@ export function onSurface(node: IaNode, surface: Surface): boolean {
  * works fine (Clients, whose sibling Client groups has no backend) reads as
  * "this product is half-finished".
  */
-export type Exposure = "all" | "wired";
+export type Exposure = "all" | "wired" | "mvp";
 
-/** Is this leaf offered under this exposure? */
+/**
+ * The first release surface, as a list of destinations.
+ *
+ * `"wired"` asks a technical question — does a server fully answer this — and
+ * §MVP asks a product one. They disagree, so the product answer is written
+ * down rather than derived. §MVP (fixed 2026-09-02) is invoice issue supported
+ * by exactly three managed record types; everything the backend can already do
+ * stays in the codebase and out of this list.
+ *
+ * Two consequences worth stating, because both are deliberate:
+ *
+ *   · **Credit notes and every report are wired and absent.** §MVP excludes
+ *     them and Henri held that on 2026-09-10. A correction to an issued
+ *     invoice therefore goes through him, not through her.
+ *   · **The two record screens are `partial` and present.** Invoice detail and
+ *     Client 360 are marked partial because `POST /invoices/{id}/send` does not
+ *     exist — email delivery, which is out of scope anyway. Dropping them for
+ *     that cost every row in the invoice and client lists its destination,
+ *     which is what `"wired"` alone did.
+ *
+ * A path here that the IA does not have, or that has no backend at all, is a
+ * silent narrowing of the product. Both are guarded in `ia.test.ts`.
+ */
+export const MVP_SURFACE: readonly string[] = [
+  //  Invoice issue — the thing the three record types serve.
+  "sales/invoices",
+  "sales/invoices/draft",
+  "sales/invoices/issued",
+  "sales/invoices/paid",
+  "sales/invoices/partially_paid",
+  "sales/invoices/overdue",
+  "sales/invoices/voided",
+  "sales/invoices/id/:invoiceId",
+  //  Who is billed.
+  "customers/clients",
+  "customers/clients/:clientId",
+  //  What is billed. One record type: a service and a product share a table.
+  "catalog/products",
+  //  The document the client actually receives.
+  "catalog/templates",
+  //  The company every invoice's mandatory mentions are drawn from. Not a
+  //  feature so much as the data without which no invoice is lawful.
+  "company/profile",
+  "company/legal",
+  "company/vat",
+  "company/numbering",
+  //  Her plan and her allowances — the 402 has to be explicable.
+  "billing/plan",
+  "billing/usage",
+  //  Her data, and the controls for reading the interface at all.
+  "settings/backup",
+  "settings/appearance",
+];
+
+/** Is this leaf offered under this exposure?
+ *
+ *  A node with no path is a sub-feature of a screen rather than a door — the
+ *  dashboard's six wired panels are all pathless — so the MVP list governs
+ *  destinations only and pathless features ride with their parent.
+ */
 export function isExposed(node: IaNode, exposure: Exposure): boolean {
-  return exposure === "all" || node.status === "wired";
+  if (exposure === "all") return true;
+  if (exposure === "wired") return node.status === "wired";
+  if (node.path === undefined) return node.status === "wired";
+  return MVP_SURFACE.includes(node.path);
 }
 
 /** Sections visible to one frontend, children filtered to match.

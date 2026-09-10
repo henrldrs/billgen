@@ -7,6 +7,7 @@ import { expect, test } from "vitest";
 
 import {
   IA,
+  MVP_SURFACE,
   coverage,
   flattenIa,
   iaFor,
@@ -235,4 +236,65 @@ test("the template studio survives a wired build", () => {
   const templates = catalog?.children.filter(isNavDestination) ?? [];
 
   expect(templates.map((child) => child.path)).toContain("catalog/templates");
+});
+
+// ------------------------------------------------- the MVP surface (T-19/§MVP)
+
+test("every path in MVP_SURFACE is a path the IA has", () => {
+  //  A typo here is a silent narrowing: the screen simply never mounts, and a
+  //  missing door looks like a deliberate scope decision.
+  const known = new Set(
+    flattenIa()
+      .map((node) => node.path)
+      .filter((path): path is string => path !== undefined),
+  );
+
+  expect(MVP_SURFACE.length).toBeGreaterThan(10);
+  expect(MVP_SURFACE.filter((path) => !known.has(path))).toEqual([]);
+});
+
+test("nothing in MVP_SURFACE is a screen with no backend at all", () => {
+  //  `partial` is allowed and used on purpose — the two record screens are
+  //  partial only because email delivery does not exist. `none` is not: that
+  //  would put a scaffold page in front of a paying customer, which is the
+  //  whole thing the exposure rule prevents.
+  const byPath = new Map(flattenIa().map((node) => [node.path, node]));
+  const unbacked = MVP_SURFACE.filter((path) => byPath.get(path)?.status === "none");
+
+  expect(unbacked).toEqual([]);
+});
+
+test("the record screens are reachable on the MVP surface", () => {
+  //  The regression this pins: both are `partial`, so `"wired"` alone dropped
+  //  them, and every row in the invoice and client lists lost its destination.
+  const routable = new Set(routableNodes("desktop", "mvp").map((node) => node.path));
+
+  expect(routable.has("sales/invoices/id/:invoiceId")).toBe(true);
+  expect(routable.has("customers/clients/:clientId")).toBe(true);
+});
+
+test("the MVP surface holds §MVP's line on what is out", () => {
+  const routable = new Set(routableNodes("desktop", "mvp").map((node) => node.path));
+
+  //  Wired, and excluded by §MVP as confirmed on 2026-09-10.
+  expect(routable.has("sales/credit-notes")).toBe(false);
+  expect(routable.has("reports/revenue")).toBe(false);
+  //  And the three record types plus issue are all present, or it is not an
+  //  invoicing product.
+  for (const path of [
+    "sales/invoices",
+    "customers/clients",
+    "catalog/products",
+    "catalog/templates",
+  ]) {
+    expect(routable.has(path)).toBe(true);
+  }
+});
+
+test("the MVP surface still has a landing page", () => {
+  //  The dashboard's six wired panels are pathless, so the list governs
+  //  destinations and they ride with the section. Without that rule the
+  //  section dies and the app opens on nothing.
+  const routable = new Set(routableNodes("desktop", "mvp").map((node) => node.path));
+  expect(routable.has("")).toBe(true);
 });

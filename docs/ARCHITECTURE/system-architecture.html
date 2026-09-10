@@ -588,7 +588,7 @@ footer{
     <p class="rail__group">Deep dive</p>
     <a href="#dataflow">Data Architecture</a>
     <a href="#debt">Backend Debt Ledger <span class="n">159</span></a>
-    <a href="#repo">Repo Map <span class="n"><span data-fact="tracked_files">648</span></span></a>
+    <a href="#repo">Repo Map <span class="n"><span data-fact="tracked_files">652</span></span></a>
     <a href="#entitlements">Entitlement Layer <span class="n">B4</span></a>
     <a href="#decisions">Decisions of Record <span class="n">4</span></a>
     <a href="#defects">Defects of Record <span class="n">4</span></a>
@@ -596,7 +596,7 @@ footer{
     <a href="#audit">Audit System <span class="n">13</span></a>
     <a href="#ownership">Work Distribution</a>
     <a href="#journey">Customer Journey</a>
-    <a href="#structure">Code Structure <span class="n"><span data-fact="tracked_files">648</span></span></a>
+    <a href="#structure">Code Structure <span class="n"><span data-fact="tracked_files">652</span></span></a>
 
     <p class="rail__group">Assurance</p>
     <a href="#assurance">Review Agents <span class="n">4</span></a>
@@ -1652,6 +1652,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
 
   <div class="note">
     <p><strong>Confirmed 2026-09-09, and held.</strong> Asked whether credit notes or payments should return for the licensed beta build, Henri kept the scope as fixed. The consequence to be aware of rather than discover: an issued invoice cannot lawfully be deleted, so a beta tester&#8217;s mistake is corrected by a credit note &#8212; and the surface offers none. It is a support burden and not a legal dead end, because the sidecar carries the whole API and the credit-note endpoints are present, merely unexposed. A correction is one call Henri makes; it is not something she can do alone.</p>
+    <p><strong>Enforced in code as of 2026-09-10.</strong> This section used to be a description that the router did not read, and the desktop shell offered all 124 IA nodes — 49 of them scaffold pages. <code>MVP_SURFACE</code> in <code>frontend-react/src/scaffold/ia.ts</code> is the list, a packaged build passes <code>exposure="mvp"</code>, and five guards in <code>ia.test.ts</code> keep the two from drifting. Two entries are worth knowing: credit notes and every report are <em>wired and excluded</em>, per the confirmation above; and the invoice and client record screens are <em>partial and included</em>, because the only thing they lack is <code>POST /invoices/{id}/send</code> — email delivery, which is out of scope anyway. Excluding them for that cost every row in both lists its destination, which is what a purely technical filter did for one commit.</p>
     <p><strong>Added for the desktop beta, and not billing surface:</strong> a data-custody layer &#8212; the document mirror on disk, the encrypted carryable backup, and the in-app explanation of where the data lives (T-27, T-28, T-29). None of it issues or changes a document, so the exclusion list above stands unmodified.</p>
   </div>
 
@@ -2389,7 +2390,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
   <div class="sechead">
     <span class="sechead__id">§15</span>
     <h2>Repo Map</h2>
-    <p class="sechead__sub">What every directory is for, and the record of what was removed on 2026-08-26. <span data-fact="tracked_files">648</span> tracked files.</p>
+    <p class="sechead__sub">What every directory is for, and the record of what was removed on 2026-08-26. <span data-fact="tracked_files">652</span> tracked files.</p>
   </div>
 
   <p class="lede">A repository that cannot be read cheaply is a repository that gets misread. This section names the purpose of every top-level directory, so nothing in the tree is unexplained, and records what left.</p>
@@ -2406,7 +2407,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
         <tr><td><code>db/</code></td><td class="num"><span data-fact="files_db">37</span></td><td class="ev">SQLAlchemy models and the Alembic migration history. The concrete implementation behind <code>core/repository/</code>'s abstract ports.</td><td class="ev">Nothing persists. The domain would run entirely in memory.</td></tr>
         <tr><td><code>tests/</code></td><td class="num"><span data-fact="files_tests">67</span></td><td class="ev">557 backend tests. Includes the palette guard test and the icon-grammar guard test, both build-failing.</td><td class="ev">The brand decisions at <code>4e39460</code> and <code>81d2c66</code> become suggestions rather than rules.</td></tr>
         <tr><td><code>henrioutai-ui/</code></td><td class="num"><span data-fact="files_henrioutai_ui">89</span></td><td class="ev"><strong>The design system, and the only place components are edited.</strong> 63 components (<code>ls src/components/*.tsx</code>, minus tests), <code>tokens.css</code>, three vendored font files. Its own package, MIT, public-ready.</td><td class="ev">Every frontend loses its component vocabulary. <code>@billgen/ui</code> re-exports this; it holds nothing of its own.</td></tr>
-        <tr><td><code>frontend-react/</code></td><td class="num"><span data-fact="files_frontend_react">117</span></td><td class="ev"><strong>Holds <code>src/scaffold/ia.ts</code> — the source of truth</strong> for nav, routes, status and the 149 gaps in §14. Also the scaffold kit that renders unwired areas as deliberately ugly.</td><td class="ev">No frontend knows what screens exist. This is the highest-leverage file in the repository.</td></tr>
+        <tr><td><code>frontend-react/</code></td><td class="num"><span data-fact="files_frontend_react">118</span></td><td class="ev"><strong>Holds <code>src/scaffold/ia.ts</code> — the source of truth</strong> for nav, routes, status and the 149 gaps in §14. Also the scaffold kit that renders unwired areas as deliberately ugly.</td><td class="ev">No frontend knows what screens exist. This is the highest-leverage file in the repository.</td></tr>
         <tr><td><code>frontend-saas/</code></td><td class="num"><span data-fact="files_frontend_saas">16</span></td><td class="ev">L3, the active surface. React 19 + Vite + react-router. Thin — it composes <code>henrioutai-ui</code> against <code>ia.ts</code>.</td><td class="ev">The web product. Thin by design: the weight lives in the two directories above.</td></tr>
         <tr><td><code>frontend-electron/</code></td><td class="num"><span data-fact="files_frontend_electron">37</span></td><td class="ev">L4, the Tauri desktop shell. Own local SQLite under <code>Documents\BillGen</code>, auto-login, no sync. Despite the name it is Tauri, not Electron.</td><td class="ev">The desktop product. Renders the shared <code>ProductShell</code> through a 35-line adapter and consumes the IA with <code>routableNodes("desktop")</code> (T-19).</td></tr>
         <tr><td><code>infra/</code> · <code>desktop/</code> · <code>scripts/</code></td><td class="num">13</td><td class="ev">Compose and deployment config; the desktop packaging target; two generators — <code>generate_brand_assets.py</code> (writes <code>assets/brand/</code>) and <code>generate_peppol_samples.py</code>.</td><td class="ev">Deployment and asset regeneration become manual.</td></tr>
@@ -3051,7 +3052,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
 <!-- GENERATED:structure -->
   <p class="lede">Generated from the tree by <code>billgen-audit</code> — the directory counts are <code>git ls-files</code>, and the arrows below are import edges counted from the AST. Regenerate with <code>python -m billgen_audit sync-architecture</code>.</p>
   <div class="layerdiagram">
-    <div class="layerdiagram__row" data-layer="frontend"><span class="layerdiagram__name"><code>Frontends</code></span><span class="layerdiagram__blurb">L3 · L4 — what a person sees</span><span class="layerdiagram__n">259</span></div>
+    <div class="layerdiagram__row" data-layer="frontend"><span class="layerdiagram__name"><code>Frontends</code></span><span class="layerdiagram__blurb">L3 · L4 — what a person sees</span><span class="layerdiagram__n">260</span></div>
     <div class="layerdiagram__arrow" aria-hidden="true">↓</div>
     <div class="layerdiagram__row" data-layer="api"><span class="layerdiagram__name"><code>api/</code></span><span class="layerdiagram__blurb">L2 — HTTP boundary, authorization, entitlements</span><span class="layerdiagram__n">72</span></div>
     <div class="layerdiagram__arrow" aria-hidden="true">↓</div>
@@ -3102,7 +3103,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;migrations/</code></td><td class="num">12</td></tr>
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;models/</code></td><td class="num">17</td></tr>
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;repositories/</code></td><td class="num">4</td></tr>
-      <tr><td><code>desktop/</code></td><td class="num">4</td></tr>
+      <tr><td><code>desktop/</code></td><td class="num">5</td></tr>
       <tr><td><code>docs/</code></td><td class="num">22</td></tr>
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;ARCHITECTURE/</code></td><td class="num">10</td></tr>
       <tr><td><code>frontend-electron/</code></td><td class="num">5</td></tr>
@@ -3110,21 +3111,21 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;src/</code></td><td class="num">5</td></tr>
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;src-tauri/</code></td><td class="num">24</td></tr>
       <tr><td><code>frontend-react/</code></td><td class="num">4</td></tr>
-      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;src/</code></td><td class="num">113</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;src/</code></td><td class="num">114</td></tr>
       <tr><td><code>frontend-saas/</code></td><td class="num">5</td></tr>
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;public/</code></td><td class="num">3</td></tr>
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;src/</code></td><td class="num">8</td></tr>
       <tr><td><code>henrioutai-ui/</code></td><td class="num">4</td></tr>
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;src/</code></td><td class="num">85</td></tr>
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;docker/</code></td><td class="num">3</td></tr>
-      <tr><td><code>scripts/</code></td><td class="num">5</td></tr>
+      <tr><td><code>scripts/</code></td><td class="num">7</td></tr>
       <tr><td><code>tests/</code></td><td class="num">1</td></tr>
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;api/</code></td><td class="num">28</td></tr>
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;core/</code></td><td class="num">30</td></tr>
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;db/</code></td><td class="num">4</td></tr>
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;desktop/</code></td><td class="num">4</td></tr>
       <tr><td><em>files at the repository root</em></td><td class="num">15</td></tr>
-      <tr><td><strong>Total tracked</strong></td><td class="num"><strong>648</strong></td></tr>
+      <tr><td><strong>Total tracked</strong></td><td class="num"><strong>652</strong></td></tr>
     </tbody></table></div>
 <!-- /GENERATED:structure -->
 

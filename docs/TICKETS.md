@@ -661,6 +661,14 @@ wish, and the queue is not for wishes.
     and no "Log out". On 5183 the same shell carries "Log out" and no desktop
     section. Every request 200, preflight included.
 
+    **Two follow-ups, both Henri's on first sight of the shell** (`f105a36`,
+    and the MVP surface after it). Giving the desktop the whole IA meant a
+    handed-over build offered 124 nodes of which 29 are wired, with an amber
+    "partially wired" dot over a Clients screen that works. A packaged build
+    now offers `MVP_SURFACE` — §MVP's list, enforced rather than described —
+    and the interface language stopped following the company's *document*
+    language, which would have opened Emilia's app in Dutch.
+
     `TopNavPopups.test.tsx` untouched and green, as the ticket required.
     `scaffold/routes.test.ts` had to follow the moved sources, and grew: the
     shadowing guard now runs for **both** apps, because the desktop
