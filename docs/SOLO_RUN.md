@@ -88,6 +88,7 @@ which it cannot know.
 | 13 | T-19 · one shell | `DONE` | `a8fc530`, `5cdcc54`. The desktop's 284-line second shell is a 35-line adapter over the shared `ProductShell`, and the Tauri build now reaches the template studio and every report screen it never had. Browser-verified on both surfaces. |
 | 14 | T-19 follow-up · the beta surface and the language | `DONE` | `f105a36`. A handed-over build offers only `wired` nodes — 29, not 124 — and the interface language stopped following the company's *document* language. Both were Henri's catch on the first look at the shell. Narrowed again to `MVP_SURFACE` on his instruction: §MVP's list is enforced now, not described. |
 | 15 | T-20 · the sidecar brings its own Python | `IN PROGRESS` | `a16d389`. 61 MB embeddable runtime, built from `uv.lock`; boots and answers with no Python on PATH; `check_sidecar_runtime.py` 19/19. The VM and `tauri build` are Henri's to run. |
+| 16 | T-21 · PDFs through the installed Edge | `DONE` | Ships in *feat: PDFs print through the installed Edge*. Edge's own command line, on Henri's instruction, rather than the ticket's `channel="msedge"`: the desktop needs neither Playwright's 150 MB download nor its 110 MB package. `test_real_pdf_bytes` green with Playwright's browsers hidden; the two launchers agree on every glyph's coordinates; the rebuilt runtime renders with no Playwright in it. |
 
 **This ledger's own list is closed.** Items 6–8 were the three the handover
 note sanctioned explicitly: *"None of these invents a screen; each connects a
@@ -100,7 +101,7 @@ happened to it.
 
 | | |
 |---|---|
-| Python | **571 collected, exit 0** | 
+| Python | **584 collected, exit 0** — 13 of them `tests/core/pdf/`, new in T-21 | 
 | Frontend | **193 passed** (`npm run test`, 30 files), typecheck clean across all four workspaces |
 | `ruff check` | clean. CI runs `ruff check .` only — the tree is *not* `ruff format` clean and was not before, so do not reformat it as a side errand |
 | Architecture doc | **in sync** as of `12ce164` — both `sync-architecture --check` and `architecture_to_text.py --check` green |

@@ -11,7 +11,7 @@ greenfield.
 
 | Path | Layer | Responsibility |
 |---|---|---|
-| `core/` | 1 — Business | Pure Python. Models, services, rules, repository ports, PDF (headless Chromium via Playwright), e-invoicing (Peppol BIS 3.0 / UBL 2.1 / EN 16931). No FastAPI, no ORM, no React imports. |
+| `core/` | 1 — Business | Pure Python. Models, services, rules, repository ports, PDF (headless Chromium — the installed Edge on Windows, Playwright's build in the container), e-invoicing (Peppol BIS 3.0 / UBL 2.1 / EN 16931). No FastAPI, no ORM, no React imports. |
 | `db/` | Persistence | SQLAlchemy 2.x + Alembic. Implements `core/repository` abstract ports. Same code runs on SQLite (desktop) or Postgres (SaaS). |
 | `api/` | 2 — API | FastAPI. HTTP surface, JWT auth, tenant scoping, request/response validation. Delegates every decision to `core/`. |
 | `henrioutai-ui/` | 3 — Design system | `@henrioutai/ui`: tokens, components, icons, fonts. Business-free and public-ready. |

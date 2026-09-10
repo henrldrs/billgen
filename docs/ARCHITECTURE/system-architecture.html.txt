@@ -1714,7 +1714,7 @@ What is still open here. GET /clients/{id}/stats is the only endpoint left on th
 Repo Map
 --------
 
-What every directory is for, and the record of what was removed on 2026-08-26. 652 tracked files.
+What every directory is for, and the record of what was removed on 2026-08-26. 655 tracked files.
 
 A repository that cannot be read cheaply is a repository that gets misread. This section names the purpose of every top-level directory, so nothing in the tree is unexplained, and records what left.
 
@@ -1741,7 +1741,7 @@ db/ · 37
     implementation behind core/repository/'s abstract ports.
     What breaks without it: Nothing persists. The domain would run entirely in memory.
 
-tests/ · 67
+tests/ · 69
     What it is: 557 backend tests. Includes the palette guard test and the icon-grammar
     guard test, both build-failing.
     What breaks without it: The brand decisions at 4e39460 and 81d2c66 become suggestions
@@ -1754,7 +1754,7 @@ henrioutai-ui/ · 89
     What breaks without it: Every frontend loses its component vocabulary. @billgen/ui
     re-exports this; it holds nothing of its own.
 
-frontend-react/ · 118
+frontend-react/ · 119
     What it is: Holds src/scaffold/ia.ts — the source of truth for nav, routes, status and
     the 149 gaps in §14. Also the scaffold kit that renders unwired areas as deliberately
     ugly.
@@ -2527,7 +2527,7 @@ public/                       3
 src/                          5
 src-tauri/                    24
 frontend-react/               4
-src/                          114
+src/                          115
 frontend-saas/                5
 public/                       3
 src/                          8
@@ -2537,11 +2537,11 @@ docker/                       3
 scripts/                      7
 tests/                        1
 api/                          28
-core/                         30
+core/                         32
 db/                           4
 desktop/                      4
 files at the repository root  15
-Total tracked                 652
+Total tracked                 655
 
 Reading the layers
 
@@ -2891,9 +2891,10 @@ SQLAlchemy 2.x · Alembic · Persistence
     blast radius is db/ only
     Risk: medium
 
-Playwright / Chromium · The PDF engine — the only one, since T-24
-    Lifecycle exposure: Browser pinning; ~1 GB in the image; version drift changes
-    rendering, and no golden-file test pins the output
+Chromium — the installed Edge, or Playwright's build · The PDF engine — the only one, since T-24. On Windows the desktop prints through the Edge already installed, from its own command line, with no Playwright in the runtime (T-21); the image ships Playwright's Chromium
+    Lifecycle exposure: Browser pinning in the image (~1 GB); on the desktop, whatever Edge
+    Windows Update left — so version drift changes rendering from two sides, and no
+    golden-file test pins the output
     Risk: medium
 
 (no XML library) · UBL / Peppol XML
@@ -3128,7 +3129,9 @@ DOC-05 · One engine renders every document
     appearances for the same legally-binding document. ADR-0004 required a golden-file test
     proving they agreed before the fallback was relied on; the test was never written and
     the fallback never installed, so T-24 deleted it rather than the alternative. A per-org
-    template surface is exactly why one engine is the cheaper answer.
+    template surface is exactly why one engine is the cheaper answer. T-21 kept it one: the
+    desktop prints through the installed Edge, which is Chromium, and each template's @page
+    rule — guarded by a test — is the single source of page geometry for both launchers.
 
 Where it sits commercially
 

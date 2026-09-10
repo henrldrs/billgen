@@ -109,19 +109,6 @@ wish, and the queue is not for wishes.
               re-enables the user site directory. That is why there is a
               checker rather than a smoke test.
 
-### T-21 · PDFs through the installed Edge
-    branch    Backend / Desktop     status  open
-    needs     —
-    why       `core/pdf/renderer.py` launches Playwright's own Chromium, a
-              ~150 MB download on first run that a desktop user cannot be
-              asked for. Every Windows 11 machine has Edge, and Playwright
-              drives it with `channel="msedge"`.
-    do        One more attempt in `_chromium_pdf`, tried first on Windows:
-              `p.chromium.launch(channel="msedge", args=[...])`. Keep the
-              bundled-Chromium path for the container.
-    done when `test_real_pdf_bytes` passes on a machine with Edge and no
-              Playwright browser downloaded.
-
 ### T-22 · Emilia's license file
     branch    Desktop / Henri       status  open
     needs     T-20
@@ -270,8 +257,10 @@ wish, and the queue is not for wishes.
               build carries third-party licences it names nowhere.
     do        Bundle the embeddable Python as a Tauri resource. Exclude
               `psycopg[binary]` — the desktop is SQLite-only and never imports
-              it — and Playwright's browsers, since T-21 drives the installed
-              Edge. Trim the stdlib (tkinter, test, idlelib, turtle, ensurepip,
+              it — and Playwright, package and browsers both: since T-21 the
+              desktop prints through the installed Edge's own command line and
+              imports nothing (`build_sidecar_runtime.py` already leaves both
+              out). Trim the stdlib (tkinter, test, idlelib, turtle, ensurepip,
               pydoc_data). `python -OO -m compileall`, ship `.pyc` without
               `.py`: safe **here** because `api.d.ts` is generated at build
               time from an unstripped tree, so §11c's docstring exception does
@@ -614,6 +603,48 @@ wish, and the queue is not for wishes.
 ---
 
 ## Done
+
+### T-21 · PDFs through the installed Edge  ·  *feat: PDFs print through the installed Edge*
+    `core/pdf/renderer.py` launched Playwright's own Chromium: a ~150 MB
+    download on first use, behind a 110 MB Python package the sidecar runtime
+    had already stopped shipping (T-20). The ticket's `do` said
+    `p.chromium.launch(channel="msedge")`, which drops the download and keeps
+    the package. Henri chose the other half, 2026-09-10: Edge prints a page to
+    PDF **from its own command line**, so the desktop needs neither.
+
+    `_edge_pdf` writes the document to a temporary directory and runs
+    `msedge --headless --print-to-pdf=… --no-pdf-header-footer` on a profile of
+    its own — without `--user-data-dir` the command is handed to whatever Edge
+    the user already has open, which prints nothing and returns at once, and
+    two renders at a time would do the same to each other. Found through the
+    registry's App Path, then the usual install locations; `BILLGEN_PDF_BROWSER`
+    names one explicitly, and a path that does not exist means "no browser",
+    never "some other browser". Playwright stays as the container's path;
+    `html_to_pdf` tries Edge first and the 503 names every failed attempt.
+
+    **Still one engine** (DOC-05): Edge *is* Chromium. Printed from the same
+    HTML, the two launchers put every glyph at the same coordinates to the
+    tenth of a point and the same fills at the same rects — checked with
+    pdfplumber on this machine, not assumed. What makes that hold is that
+    neither launcher is told the paper: the command line has no switch for it,
+    and Playwright now prefers the CSS page size, so each template's `@page`
+    rule is the single source of size and margins. A guard test asserts every
+    template has one.
+
+    `done when` met: `test_real_pdf_bytes` passes with
+    `PLAYWRIGHT_BROWSERS_PATH` pointed at an empty directory; the same run
+    with Edge hidden as well fails cleanly, naming Playwright's missing
+    executable — so it was Edge that rendered. `tests/core/pdf/` pins the
+    lookup, the command line, the fallback order and the error text in
+    twelve tests that launch nothing; a thirteenth prints through the real
+    Edge where there is one. `check_sidecar_runtime.py` now asserts the
+    runtime **renders** with no Playwright in it, and does.
+
+    Left where it was: the Edge on a desktop is whatever Windows Update left
+    there, so the golden-file test DOC-05 still lacks now guards against
+    version drift from two sides rather than one. Nothing is loaded from disk
+    on either path — the templates embed their one asset as a data: URI — so
+    the command line carries no `--allow-file-access-from-files`.
 
 ### T-19 · One shell — the desktop is the SaaS shell plus an adapter  ·  `a8fc530`, `5cdcc54`
     `frontend-electron/src/DesktopShell.tsx` was a second shell: a tab state

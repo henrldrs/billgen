@@ -150,22 +150,26 @@ def main() -> int:
             )
         )
 
-    #  The PDF engine is expected to be unavailable, and the API turns that
-    #  into a 503 rather than a crash. Asserting the *clean* failure is the
-    #  point: T-21 decides what renders a PDF on the desktop.
+    #  PDFs come from the installed Edge, printed from its own command line,
+    #  with no Playwright in the runtime (T-21). On a machine with Edge the
+    #  runtime must render; on one without, the API must still get a clean
+    #  PdfEngineUnavailableError to turn into a 503 rather than a crash.
     pdf = run_in_runtime(
         "from core.pdf import html_to_pdf, PdfEngineUnavailableError\n"
+        "from core.pdf.renderer import _edge_executable\n"
+        "edge = 'EDGE' if _edge_executable() else 'NO-EDGE'\n"
         "try:\n"
-        "    html_to_pdf('<html><body>x</body></html>')\n"
-        "    print('RENDERED')\n"
-        "except PdfEngineUnavailableError as exc:\n"
-        "    print('UNAVAILABLE')\n"
+        "    pdf = html_to_pdf('<html><body>x</body></html>')\n"
+        "    print(edge, 'RENDERED' if pdf.startswith(b'%PDF') else 'NOT-A-PDF')\n"
+        "except PdfEngineUnavailableError:\n"
+        "    print(edge, 'UNAVAILABLE')\n"
     )
+    outcome = pdf.stdout.strip()
     results.append(
         check(
-            "the PDF engine fails cleanly rather than crashing (T-21)",
-            pdf.stdout.strip() == "UNAVAILABLE",
-            pdf.stdout.strip() or pdf.stderr,
+            "PDFs render through the installed Edge, or fail cleanly without one (T-21)",
+            outcome in {"EDGE RENDERED", "NO-EDGE UNAVAILABLE"},
+            outcome or pdf.stderr,
         )
     )
 

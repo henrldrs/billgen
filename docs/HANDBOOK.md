@@ -95,7 +95,9 @@ VAT.
   routes are sync `def` handlers, so Starlette runs them in its threadpool, off
   the event-loop thread, where that is fine. Never call `html_to_pdf()` from an
   `async def`. (It is why the API PDF test asserts `status in (200, 503)`
-  rather than probing the engine on the loop thread.)
+  rather than probing the engine on the loop thread.) The Edge path (T-21) is
+  a plain subprocess with no loop to trip over, but it blocks for a couple of
+  seconds, so the routes stay sync either way.
 - **A hook added to a component with early returns goes at the top.** Placing
   one below an `if (isLoading) return` renders more hooks than the previous
   render and crashes on first load — with a green test suite, because the tests
@@ -136,9 +138,11 @@ VAT.
 
 - **Python 3.14.4**, system install. Tests run on it directly; `.venv/` exists
   only to hold `ruff`, and `uv` is not on PATH — invoke it as `python -m uv`.
-  The PDF engine needs a browser: after `pip install playwright`, run
-  `python -m playwright install chromium` once (~150 MB). Without it `/pdf`
-  returns a clean 503 and everything else works.
+  The PDF engine needs a browser. On Windows it is the Edge already installed,
+  found through the registry — nothing to set up (T-21). Elsewhere: after
+  `pip install playwright`, run `python -m playwright install chromium` once
+  (~150 MB). With neither, `/pdf` returns a clean 503 and everything else
+  works.
 - **Node 24 / npm 11**, four workspaces: `henrioutai-ui`, `frontend-react`,
   `frontend-saas`, `frontend-electron`.
 - **Rust 1.96 (MSVC)** at `%USERPROFILE%\.cargo\bin`, **not on the default
