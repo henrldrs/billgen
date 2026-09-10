@@ -6,6 +6,7 @@ import {
   LanguageProvider,
   LoadingScreen,
   buildAppRoutes,
+  type Exposure,
 } from "@billgen/ui";
 import type { LoginResponse } from "@billgen/ui";
 import { useEffect, useState } from "react";
@@ -13,6 +14,16 @@ import { MemoryRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { DesktopShell } from "./DesktopShell";
 import { createApi } from "./lib/api";
+
+/** A packaged build offers only what a server fully answers; a dev build shows
+ *  the whole IA so the state of the product stays legible while working on it.
+ *
+ *  `VITE_BILLGEN_EXPOSURE=wired` forces the shipped behaviour under `vite dev`,
+ *  which is the only way to actually look at what a beta tester will see. */
+const EXPOSURE: Exposure =
+  import.meta.env.VITE_BILLGEN_EXPOSURE === "wired" || !import.meta.env.DEV
+    ? "wired"
+    : "all";
 
 type BootState =
   | { status: "connecting" }
@@ -82,12 +93,13 @@ export function App() {
               path="/app"
               element={
                 <DesktopShell
+                  exposure={EXPOSURE}
                   displayName={boot.session.display_name}
                   email={boot.session.email}
                 />
               }
             >
-              {buildAppRoutes("desktop")}
+              {buildAppRoutes("desktop", EXPOSURE)}
               {/* An action, not a destination, so it owns no IA node — exactly
                   as in the web app. */}
               <Route path="sales/invoices/new" element={<InvoiceBuilderRoute />} />

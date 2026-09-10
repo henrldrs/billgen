@@ -11,6 +11,7 @@ import {
   flattenIa,
   iaFor,
   iaTrail,
+  isNavDestination,
   missingEndpoints,
   navNodes,
   routableNodes,
@@ -176,4 +177,62 @@ test("no nav destination has a route parameter in its path", () => {
     .filter((node) => node.path?.includes(":"))
     .map((node) => node.key);
   expect(parameterised).toEqual([]);
+});
+
+// ------------------------------------------------------- exposure (2026-09-10)
+
+test("a wired build offers no screen without a backend behind it", () => {
+  //  The regression this exists for: T-19 gave the desktop the whole IA, so a
+  //  beta tester's build grew 49 scaffold pages overnight. Sections keep their
+  //  own landing page — that is navigation and needs no server — but nothing
+  //  else may be `partial` or `none`.
+  for (const surface of ["saas", "desktop"] as const) {
+    const sectionPaths = new Set(
+      iaFor(surface, "wired").map((section) => section.path),
+    );
+    const offered = routableNodes(surface, "wired").filter(
+      (node) => !sectionPaths.has(node.path),
+    );
+
+    expect(offered.length).toBeGreaterThan(0); // or this passes by finding nothing
+    expect(offered.filter((node) => node.status !== "wired")).toEqual([]);
+  }
+});
+
+test("a wired build keeps a section whose own status is worse than its children", () => {
+  //  `customers` is `partial` because Client groups has no backend. Filtering
+  //  sections by their own status would drop a fully wired Clients screen with
+  //  it — and Clients is the second thing anyone opens.
+  const sections = iaFor("desktop", "wired");
+  const customers = sections.find((section) => section.key === "customers");
+
+  expect(customers).toBeDefined();
+  expect(customers?.status).toBe("partial");
+  expect(customers?.children.map((child) => child.key)).toContain("customers.clients");
+});
+
+test("a wired build offers no empty section", () => {
+  //  A section whose every child is unbuilt is a door onto a list of nothing.
+  for (const section of iaFor("desktop", "wired")) {
+    expect(section.children.length).toBeGreaterThan(0);
+  }
+});
+
+test("exposure never changes the ledger", () => {
+  //  coverage() and the architecture report must keep seeing the whole tree
+  //  whatever a build offers (ROADMAP_IA §11b, constraint 2).
+  const full = coverage();
+  routableNodes("desktop", "wired");
+  iaFor("saas", "wired");
+  expect(coverage()).toEqual(full);
+  expect(flattenIa().length).toBeGreaterThan(routableNodes("desktop", "wired").length);
+});
+
+test("the template studio survives a wired build", () => {
+  //  It is the beta partner's whole gift (T-32), and it is `wired`, so an
+  //  exposure rule that hid it would be wrong in the one case that matters.
+  const catalog = iaFor("desktop", "wired").find((s) => s.key === "catalog");
+  const templates = catalog?.children.filter(isNavDestination) ?? [];
+
+  expect(templates.map((child) => child.path)).toContain("catalog/templates");
 });

@@ -55,6 +55,7 @@ import {
   useActivity,
   useCompanies,
   type IaNode,
+  type Exposure,
   type Lang,
   type Surface,
 } from "../internal";
@@ -75,6 +76,8 @@ interface ScreenProps {
   /** The active company's default currency. Report endpoints return bare
    *  decimals, so the screen has to be told what they are denominated in. */
   currency: string;
+  /** Whether this build shows placeholders at all — see `ShellContext`. */
+  exposure: Exposure;
 }
 
 type Screen = (props: ScreenProps) => ReactNode;
@@ -93,7 +96,7 @@ type Screen = (props: ScreenProps) => ReactNode;
  *     worse than no rail; now the section owns it, not the screen.
  */
 function IaScreen({ node }: { node: IaNode }) {
-  const { companyId, lang, currency } = useOutletContext<ShellContext>();
+  const { companyId, lang, currency, exposure } = useOutletContext<ShellContext>();
   const Built = BUILT[node.path as string];
   const sketch = SKETCHES[node.path as string];
 
@@ -108,7 +111,13 @@ function IaScreen({ node }: { node: IaNode }) {
   }
 
   const body = Built ? (
-    <Built node={node} companyId={companyId} lang={lang} currency={currency} />
+    <Built
+      node={node}
+      companyId={companyId}
+      lang={lang}
+      currency={currency}
+      exposure={exposure}
+    />
   ) : (
     <ScaffoldPage node={node}>{sketch?.()}</ScaffoldPage>
   );
@@ -182,8 +191,8 @@ function SettingsFrame({ node, children }: { node: IaNode; children: ReactNode }
  *  precisely because the web router is the one that must never over-mount, and
  *  the desktop shell passes "desktop" to pick up the areas that need Tauri and
  *  a local filesystem. Same list the nav and the palette are built from. */
-export function buildAppRoutes(surface: Surface = "saas") {
-  return routableNodes(surface)
+export function buildAppRoutes(surface: Surface = "saas", exposure: Exposure = "all") {
+  return routableNodes(surface, exposure)
     .filter((node) => node.path !== undefined)
     .map((node) =>
       node.path === "" ? (
@@ -232,9 +241,14 @@ function SectionIndex({ node }: ScreenProps) {
   );
 }
 
-/** Dashboard: real KPIs and revenue, real recent activity, scaffolded alerts. */
-function DashboardScreen({ companyId, lang, currency }: ScreenProps) {
-  const alerts = findNode("dashboard.alerts");
+/** Dashboard: real KPIs and revenue, real recent activity, and — only where
+ *  placeholders are wanted — a scaffold for the alerts panel.
+ *
+ *  The alerts block is embedded here rather than owned by an IA route, so
+ *  pruning the tree does not reach it: it has to read the exposure itself.
+ *  That is the whole reason `exposure` is in `ShellContext`. */
+function DashboardScreen({ companyId, lang, currency, exposure }: ScreenProps) {
+  const alerts = exposure === "all" ? findNode("dashboard.alerts") : undefined;
   return (
     <>
       <PageHeader title={t(lang, "dashboard.title")} />

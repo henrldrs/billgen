@@ -18,9 +18,13 @@
  *  shell does, and does the same way in both places.
  */
 
-import { ProductShell } from "@billgen/ui";
+import { ProductShell, type Exposure } from "@billgen/ui";
 
 export interface DesktopShellProps {
+  /** How much of the product this build offers — see App.tsx. Packaged builds
+   *  pass "wired": a beta tester is not auditing the roadmap, and a page that
+   *  does nothing is a bug report she has to write. */
+  exposure: Exposure;
   /** The local user, from `POST /auth/desktop-bootstrap` at startup. Passed in
    *  rather than re-fetched: `App` already has it, and asking twice for a
    *  single-user session that cannot change is a request for nothing. */
@@ -28,8 +32,12 @@ export interface DesktopShellProps {
   email?: string;
 }
 
-export function DesktopShell({ displayName, email }: DesktopShellProps) {
+export function DesktopShell({ exposure, displayName, email }: DesktopShellProps) {
   return (
-    <ProductShell surface="desktop" account={{ name: displayName, email }} />
+    <ProductShell
+      surface="desktop"
+      exposure={exposure}
+      account={{ name: displayName, email }}
+    />
   );
 }

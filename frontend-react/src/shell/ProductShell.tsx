@@ -16,9 +16,11 @@
  *  reachable through those sections, the account menu or the ⌘K palette. The
  *  "+" CreateBillButton remains the one and only creation entry.
  *
- *  Links pointing at areas without a complete backend carry a ScaffoldNavDot —
- *  a small square marker, amber for partial and red for unwired — so the state
- *  of the product is legible from the nav bar itself. */
+ *  Under `exposure="all"` links pointing at areas without a complete backend
+ *  carry a ScaffoldNavDot — a small square marker, amber for partial and red
+ *  for unwired — so the state of the product is legible from the nav bar
+ *  itself. Under `exposure="wired"` there is nothing to mark: everything
+ *  offered works, and the marker would only cast doubt on it. */
 
 import { useTheme } from "../lib/theme";
 
@@ -51,6 +53,7 @@ import {
   type CompanyResponse,
   type IaSection,
   type SearchHitResponse,
+  type Exposure,
   type Lang,
   type Surface,
   type MenuEntry,
@@ -71,6 +74,12 @@ export interface PlatformAdapter {
    *  and the desktop should see them. `iaFor` and `routableNodes` both take
    *  this, so the nav, the palette and the router agree by construction. */
   surface: Surface;
+  /** How much of the product this build offers. `"all"` shows the whole IA,
+   *  scaffold pages included, which is what development wants. `"wired"` shows
+   *  only what a server fully answers, which is what anybody who was handed a
+   *  build wants — see `Exposure` in `scaffold/ia.ts` for why that is not the
+   *  same question as which surface this is. */
+  exposure?: Exposure;
   /** The signed-in human, when there is one. The desktop is a single local
    *  session with nowhere to log out *to*, so it supplies a name and no
    *  `onLogout`, and the menu simply has no such entry. The menu itself stays:
@@ -85,6 +94,10 @@ export interface PlatformAdapter {
 export interface ShellContext {
   companyId: string;
   lang: Lang;
+  /** Passed down because a screen can embed a scaffold of its own — the
+   *  dashboard's alerts block does — and the IA prune cannot see inside a
+   *  component. A screen that shows a placeholder has to ask. */
+  exposure: Exposure;
   /** The active company's default currency. The report endpoints return bare
    *  decimals, so every screen that renders money needs to be told this. */
   currency: string;
@@ -126,8 +139,8 @@ function initialsOf(name: string | undefined, email: string | undefined): string
   return source.slice(0, 2).toUpperCase();
 }
 
-export function ProductShell({ surface, account }: PlatformAdapter) {
-  const { lang, setCompanyDefault } = useLang();
+export function ProductShell({ surface, exposure = "all", account }: PlatformAdapter) {
+  const { lang } = useLang();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { data: companies, isLoading } = useCompanies();
@@ -174,16 +187,6 @@ export function ProductShell({ surface, account }: PlatformAdapter) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  //  Above the early returns, not beside `company`. React counts hooks per
-  //  render, and this one sat after `if (isLoading) return …` — so the first
-  //  render ran 28 hooks and the second ran 29, which is the "rendered more
-  //  hooks than during the previous render" crash rather than a subtle bug.
-  const activeCompanyLanguage = companies?.find((c) => c.id === selectedId)
-    ?.default_language;
-  useEffect(() => {
-    setCompanyDefault(activeCompanyLanguage);
-  }, [activeCompanyLanguage, setCompanyDefault]);
-
   if (isLoading) return <LoadingScreen />;
 
   // First run: no company yet -> onboarding. useCreateCompany invalidates the
@@ -204,10 +207,10 @@ export function ProductShell({ surface, account }: PlatformAdapter) {
 
   const company: CompanyResponse =
     companies.find((c) => c.id === selectedId) ?? companies[0];
-  //  The language is no longer decided here. `LanguageProvider` reconciles the
-  //  person's own choice, this company's document language and the browser —
-  //  see its docstring for why the first two are different questions. The shell
-  //  only reports the company's document language up as the fallback.
+  //  The language is not decided here and no longer reported up either:
+  //  `LanguageProvider` reconciles the person's own choice with the operating
+  //  system's language, and the company's *document* language stopped being
+  //  part of that chain on 2026-09-10 — see its docstring.
 
   // Icons are stand-ins until Henri draws the real set; the mapping lives here
   // rather than in ia.ts so the IA stays free of presentation concerns.
@@ -222,7 +225,10 @@ export function ProductShell({ surface, account }: PlatformAdapter) {
   // Surface-scoped: desktop-only areas (offline sync, printing, auto-update)
   // must never appear in the web nav — the browser cannot render them — and
   // must appear in the desktop one. One call, two answers.
-  const ia: IaSection[] = iaFor(surface);
+  const ia: IaSection[] = iaFor(surface, exposure);
+  //  Nothing to warn about when everything offered works.
+  const marker = (status: BackendStatus) =>
+    exposure === "all" ? <ScaffoldNavDot status={status} /> : null;
   const primary: IaSection[] = ia.filter((section) => section.primary);
   const toHref = (path: string | undefined) => `/app${path ? `/${path}` : ""}`;
 
@@ -235,7 +241,7 @@ export function ProductShell({ surface, account }: PlatformAdapter) {
     const label = (
       <>
         {section.key === "dashboard" ? t(lang, "dashboard.title") : section.label}
-        <ScaffoldNavDot status={section.status} />
+        {marker(section.status)}
       </>
     );
     const active = section.path === "" ? pathname === "/app" : pathname.startsWith(to);
@@ -268,7 +274,7 @@ export function ProductShell({ surface, account }: PlatformAdapter) {
           label: child.label,
           // The same marker the nav uses, so an unfinished destination is
           // legible before you click it rather than after.
-          hint: <ScaffoldNavDot status={child.status} />,
+          hint: marker(child.status),
           onSelect: () => navigate(toHref(child.path)),
         })),
       ],
@@ -335,7 +341,7 @@ export function ProductShell({ surface, account }: PlatformAdapter) {
           // CommandPalette interpolates label into its substring filter, so this
           // stays a plain string — the status rides along as searchable text
           // ("partial", "no backend") rather than as a marker node.
-          label: `${node.label}${STATUS_SUFFIX[node.status]}`,
+          label: `${node.label}${exposure === "all" ? STATUS_SUFFIX[node.status] : ""}`,
           icon: sectionIcon[section.key],
           section: section === node ? "Go to" : section.label,
           keywords: `${section.label} ${node.label} ${node.path ?? ""} ${node.status}`,
@@ -421,6 +427,7 @@ export function ProductShell({ surface, account }: PlatformAdapter) {
           {
             companyId: company.id,
             lang,
+            exposure,
             currency: company.default_currency,
           } satisfies ShellContext
         }

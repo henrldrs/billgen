@@ -15,10 +15,21 @@
  *  ## Where the answer comes from, in order
  *
  *  1. what this person chose, if they ever chose (`users.language`);
- *  2. the company default, because a Belgian company's staff usually do read
- *     the language it invoices in;
- *  3. the browser, if it asks for one of the four;
- *  4. French — BillGen is Belgian and French is the model's own default.
+ *  2. the browser, which is the operating system's language and therefore the
+ *     best available guess at what the operator reads;
+ *  3. English.
+ *
+ *  **The company's document language is deliberately not in that list, as of
+ *  2026-09-10.** It used to sit at step 2, justified as "a Belgian company's
+ *  staff usually do read the language it invoices in" — which contradicted the
+ *  distinction this very docstring opens with, and broke on the first real
+ *  case: a Portuguese operator invoicing Dutch customers got an app in Dutch,
+ *  because that is what her customers read. The document language decides what
+ *  goes on the invoice and nothing else.
+ *
+ *  English rather than French as the last resort for the same reason. French
+ *  is right for a Belgian and wrong for everyone else, and a person who cannot
+ *  read the interface cannot find the control that changes it.
  *
  *  A choice is written to `localStorage` immediately so the next paint is
  *  already in the right language, and to the server so it follows the person to
@@ -47,14 +58,6 @@ interface LanguageValue {
    *  The settings screen uses it to say "following your company" rather than
    *  showing a preference nobody expressed. */
   explicit: boolean;
-  /** Registers the active company's document language as the fallback.
-   *
-   *  The provider sits above the router, where no company is known yet — the
-   *  shell learns which company is active only after its query resolves, and it
-   *  changes when the company switcher is used. Rather than splitting the shell
-   *  in half to move the provider under it, the shell reports the value up.
-   */
-  setCompanyDefault: (lang: string | undefined) => void;
 }
 
 const LanguageContext = createContext<LanguageValue | null>(null);
@@ -90,11 +93,6 @@ export interface LanguageProviderProps {
 
 export function LanguageProvider({ children, userLanguage, onPersist }: LanguageProviderProps) {
   const [chosen, setChosen] = useState<Lang | null>(() => readStored());
-  const [companyLanguage, setCompanyLanguage] = useState<string | undefined>(undefined);
-
-  const setCompanyDefault = useCallback((next: string | undefined) => {
-    setCompanyLanguage((current) => (current === next ? current : next));
-  }, []);
 
   //  The server's answer wins over the cached one on load: someone who changed
   //  their language on another machine should see that change here, and the
@@ -113,11 +111,7 @@ export function LanguageProvider({ children, userLanguage, onPersist }: Language
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userLanguage]);
 
-  const lang: Lang =
-    chosen ??
-    (companyLanguage && isLang(companyLanguage) ? companyLanguage : null) ??
-    fromBrowser() ??
-    "fr";
+  const lang: Lang = chosen ?? fromBrowser() ?? "en";
 
   const setLang = useCallback(
     (next: Lang) => {
@@ -139,8 +133,8 @@ export function LanguageProvider({ children, userLanguage, onPersist }: Language
   }, [lang]);
 
   const value = useMemo(
-    () => ({ lang, setLang, explicit: chosen !== null, setCompanyDefault }),
-    [lang, setLang, chosen, setCompanyDefault],
+    () => ({ lang, setLang, explicit: chosen !== null }),
+    [lang, setLang, chosen],
   );
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
@@ -148,17 +142,16 @@ export function LanguageProvider({ children, userLanguage, onPersist }: Language
 
 /** The current interface language.
  *
- *  Falls back to French outside a provider rather than throwing: a component
+ *  Falls back to English outside a provider rather than throwing: a component
  *  rendered in a test or a preview harness should still render text, and a
  *  crash is a poor way to report a missing provider in a translation helper.
  */
 export function useLang(): LanguageValue {
   return (
     useContext(LanguageContext) ?? {
-      lang: "fr" as Lang,
+      lang: "en" as Lang,
       setLang: () => {},
       explicit: false,
-      setCompanyDefault: () => {},
     }
   );
 }

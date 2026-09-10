@@ -1456,12 +1456,66 @@ export function onSurface(node: IaNode, surface: Surface): boolean {
   return nodeSurface === "both" || surface === "both" || nodeSurface === surface;
 }
 
-/** Sections visible to one frontend, children filtered to match. */
-export function iaFor(surface: Surface): IaSection[] {
-  return IA.filter((section) => onSurface(section, surface)).map((section) => ({
-    ...section,
-    children: section.children.filter((child) => onSurface(child, surface)),
-  }));
+/**
+ * How much of the product a build offers.
+ *
+ * `"all"` is the development answer and the reason the scaffold kit exists: an
+ * unbuilt area renders as a deliberately ugly placeholder so the state of the
+ * product is legible from the nav bar. `"wired"` is what ships to somebody who
+ * paid — or to a beta partner, which is the same promise with no invoice. She
+ * is not auditing the roadmap; a page that does nothing is a bug report she
+ * has to write, and a section marked "partially wired" over a screen that
+ * works fine (Clients, whose sibling Client groups has no backend) reads as
+ * "this product is half-finished".
+ */
+export type Exposure = "all" | "wired";
+
+/** Is this leaf offered under this exposure? */
+export function isExposed(node: IaNode, exposure: Exposure): boolean {
+  return exposure === "all" || node.status === "wired";
+}
+
+/** Sections visible to one frontend, children filtered to match.
+ *
+ * The tree is pruned **once**, here, so the nav, the ⌘K palette, the router
+ * and each section's own landing page all read the same list. Filtering at the
+ * nav layer instead is how a shell ends up offering a link to a route it did
+ * not mount, or a section index advertising children that are unreachable.
+ *
+ * A section survives if any of its children does, even when the section's own
+ * status is `partial`: `customers` is partial because Client groups has no
+ * backend, and dropping it would take a fully wired Clients screen with it.
+ * Its landing page needs no server of its own — it is navigation.
+ */
+export function iaFor(surface: Surface, exposure: Exposure = "all"): IaSection[] {
+  return IA.filter((section) => onSurface(section, surface))
+    .map((section) => ({
+      ...section,
+      children: prune(section.children, surface, exposure),
+    }))
+    .filter((section) => exposure === "all" || section.children.length > 0);
+}
+
+/** Prunes a level and everything under it. Recursive on purpose: the tree is
+ *  three deep in places (`sales` → `invoices` → `viewed`), and a one-level
+ *  filter left the grandchildren behind — which is how a wired build kept
+ *  offering "Viewed by customer", a page whose own note says it needs a
+ *  customer portal that does not exist. Caught by the guard below it, not by
+ *  reading the code. */
+function prune(nodes: IaNode[], surface: Surface, exposure: Exposure): IaNode[] {
+  return nodes.flatMap((node) => {
+    if (!onSurface(node, surface)) return [];
+    const branch = (node.children ?? []).length > 0;
+    if (!branch) return isExposed(node, exposure) ? [node] : [];
+
+    const children = prune(node.children ?? [], surface, exposure);
+    //  A branch lives on its descendants, never on its own status: a grouping
+    //  node's landing page is navigation and needs no server. `customers` is
+    //  `partial` only because Client groups is unbuilt, and judging it by that
+    //  would drop a fully wired Clients screen.
+    if (exposure !== "all" && children.length === 0) return [];
+    return [{ ...node, children }];
+  });
 }
 
 /**
@@ -1470,9 +1524,16 @@ export function iaFor(surface: Surface): IaSection[] {
  * Defaults to "saas" rather than "both" deliberately: the web router is the
  * caller that must never over-mount, so the safe value is the restrictive one.
  * Pass "desktop" from the Tauri shell, or "both" for reporting.
+ *
+ * `coverage()`, `missingEndpoints()` and the architecture report never pass an
+ * exposure: the ledger has to stay complete whatever any build offers
+ * (ROADMAP_IA §11b, constraint 2).
  */
-export function routableNodes(surface: Surface = "saas"): IaNode[] {
-  return flattenIa(iaFor(surface)).filter((node) => node.path !== undefined);
+export function routableNodes(
+  surface: Surface = "saas",
+  exposure: Exposure = "all",
+): IaNode[] {
+  return flattenIa(iaFor(surface, exposure)).filter((node) => node.path !== undefined);
 }
 
 /**
