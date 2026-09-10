@@ -30,12 +30,23 @@ os.chdir(REPO)
 
 HOST = "127.0.0.1"
 PORT = 8010
-SAAS_ORIGIN = "http://localhost:5183"
 DB = "sqlite:///./var/billgen.desktopdev.db"
+
+#  Two browser clients, both legitimate: the SaaS frontend in desktop mode
+#  (`npm --workspace @billgen/saas run dev:desktop`, 5183) and the desktop app
+#  itself outside Tauri (`npm --workspace @billgen/desktop run dev:sidecar`,
+#  1421 — which is how the shared shell gets looked at on the surface that
+#  actually ships it).
+ORIGINS = [
+    "http://localhost:5183",
+    "http://127.0.0.1:5183",
+    "http://localhost:1421",
+    "http://127.0.0.1:1421",
+]
 
 os.environ.setdefault("DESKTOP_MODE", "true")
 os.environ.setdefault("DATABASE_URL", DB)
-os.environ.setdefault("CORS_ORIGINS", f"{SAAS_ORIGIN},http://127.0.0.1:5183")
+os.environ.setdefault("CORS_ORIGINS", ",".join(ORIGINS))
 os.environ.setdefault("ENVIRONMENT", "dev")
 
 from alembic import command  # noqa: E402

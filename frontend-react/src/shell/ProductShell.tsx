@@ -1,6 +1,15 @@
-/** Authenticated shell: TopNav carries the primary nav (the sidebar is gone),
- *  company switcher, account menu, Ctrl/⌘K command palette, first-run
+/** The shell, for both surfaces. TopNav carries the primary nav (the sidebar
+ *  is gone), company switcher, account menu, Ctrl/⌘K command palette, first-run
  *  onboarding. Panels receive the selected companyId via router outlet context.
+ *
+ *  **There is one of these on purpose (T-19).** `frontend-electron` used to
+ *  carry a second implementation — a tab state machine over eleven panels, no
+ *  router, no IA — and it lagged this file the moment either changed. What
+ *  actually differs between a browser tab and a Tauri window turned out to be
+ *  two things, and they are the whole `PlatformAdapter`: which IA surface to
+ *  render, and whether there is a session to sign out of. Everything else —
+ *  the router, the language provider, the palette, the theme — is the same
+ *  code reached through the same hooks.
  *
  *  Nav is generated from the information architecture (scaffold/ia.ts): the
  *  sections flagged `primary` become the top-level links, everything else is
@@ -43,13 +52,35 @@ import {
   type IaSection,
   type SearchHitResponse,
   type Lang,
+  type Surface,
   type MenuEntry,
   type TopNavLink,
-} from "@billgen/ui";
+} from "../internal";
 import { useEffect, useState, type ReactNode } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
-import { useSession } from "../auth/session";
+/** What a surface has to tell the shell, and nothing more.
+ *
+ *  Deliberately *not* here: the token store, the base URL and theme
+ *  persistence. Those are bootstrap concerns — `lib/api.ts` and `main.tsx` own
+ *  them, on both surfaces, and threading them through the shell would have
+ *  made the shell the place platform differences accumulate again. */
+export interface PlatformAdapter {
+  /** Which IA to render. The web nav must never offer the desktop-only areas
+   *  (offline sync, printing, auto-update) — a browser cannot render them —
+   *  and the desktop should see them. `iaFor` and `routableNodes` both take
+   *  this, so the nav, the palette and the router agree by construction. */
+  surface: Surface;
+  /** The signed-in human, when there is one. The desktop is a single local
+   *  session with nowhere to log out *to*, so it supplies a name and no
+   *  `onLogout`, and the menu simply has no such entry. The menu itself stays:
+   *  it is how the secondary sections are reached on either surface. */
+  account?: {
+    name?: string;
+    email?: string;
+    onLogout?: () => void;
+  };
+}
 
 export interface ShellContext {
   companyId: string;
@@ -95,8 +126,7 @@ function initialsOf(name: string | undefined, email: string | undefined): string
   return source.slice(0, 2).toUpperCase();
 }
 
-export function AppShell() {
-  const { user, logout } = useSession();
+export function ProductShell({ surface, account }: PlatformAdapter) {
   const { lang, setCompanyDefault } = useLang();
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -190,9 +220,10 @@ export function AppShell() {
   };
 
   // Surface-scoped: desktop-only areas (offline sync, printing, auto-update)
-  // must never appear in the web nav — the browser cannot render them.
-  const saasIa: IaSection[] = iaFor("saas");
-  const primary: IaSection[] = saasIa.filter((section) => section.primary);
+  // must never appear in the web nav — the browser cannot render them — and
+  // must appear in the desktop one. One call, two answers.
+  const ia: IaSection[] = iaFor(surface);
+  const primary: IaSection[] = ia.filter((section) => section.primary);
   const toHref = (path: string | undefined) => `/app${path ? `/${path}` : ""}`;
 
   // Top bar carries the primary sections; each one opens a popup listing its
@@ -291,7 +322,7 @@ export function AppShell() {
         navigate("/app/sales/invoices/new");
       },
     },
-    ...saasIa.flatMap((section) =>
+    ...ia.flatMap((section) =>
       [section, ...(section.children ?? [])]
         // Deliberately NOT isNavDestination: a node curated out of the nav is
         // exactly what the palette is for — it is the escape hatch that makes
@@ -317,7 +348,7 @@ export function AppShell() {
   ];
 
   // Sections that are not in the primary bar hang off the account menu.
-  const secondary = saasIa.filter((section) => !section.primary);
+  const secondary = ia.filter((section) => !section.primary);
 
   const accountItems: MenuEntry[] = [
     ...secondary.map((section) => ({
@@ -326,15 +357,20 @@ export function AppShell() {
       icon: section.key === "company" ? <CompanyIcon /> : undefined,
       onSelect: () => navigate(toHref(section.path)),
     })),
-    { type: "separator" as const, key: "sep" },
-    {
-      key: "logout",
-      label: "Log out",
-      danger: true,
-      onSelect: () => {
-        void logout().then(() => navigate("/login"));
-      },
-    },
+    // No separator and no entry where there is nothing to log out to: the
+    // desktop's session is the machine's, and offering to end it would offer
+    // a screen that surface does not have.
+    ...(account?.onLogout
+      ? [
+          { type: "separator" as const, key: "sep" },
+          {
+            key: "logout",
+            label: "Log out",
+            danger: true,
+            onSelect: account.onLogout,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -350,9 +386,9 @@ export function AppShell() {
           onSearchClick={() => setPaletteOpen(true)}
           accountSlot={
             <AccountMenu
-              name={user?.displayName ?? "Account"}
-              email={user?.email}
-              initials={initialsOf(user?.displayName, user?.email)}
+              name={account?.name ?? "Account"}
+              email={account?.email}
+              initials={initialsOf(account?.name, account?.email)}
               items={accountItems}
             />
           }

@@ -44,6 +44,17 @@
       "port": 5183
     },
     {
+      "name": "desktop-app",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev:sidecar",
+        "--workspace",
+        "@billgen/desktop"
+      ],
+      "port": 1421
+    },
+    {
       "name": "billgen-site",
       "runtimeExecutable": "npm",
       "runtimeArgs": [

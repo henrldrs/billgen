@@ -56,14 +56,15 @@ import {
   useCompanies,
   type IaNode,
   type Lang,
-} from "@billgen/ui";
+  type Surface,
+} from "../internal";
 import type { ReactNode } from "react";
 import { Navigate, Route, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { DevTierSwitch } from "./DevTierSwitch";
 import { TemplateStudioScreen } from "./TemplateStudioScreen";
 
 import { useTheme } from "../lib/theme";
-import type { ShellContext } from "./AppShell";
+import type { ShellContext } from "./ProductShell";
 
 // ---------------------------------------------------------------- screen glue
 
@@ -175,8 +176,14 @@ function SettingsFrame({ node, children }: { node: IaNode; children: ReactNode }
   );
 }
 
-export function buildAppRoutes() {
-  return routableNodes()
+/** Every IA node that owns a route on this surface, as <Route> elements.
+ *
+ *  The surface argument is not decoration: `routableNodes` defaults to "saas"
+ *  precisely because the web router is the one that must never over-mount, and
+ *  the desktop shell passes "desktop" to pick up the areas that need Tauri and
+ *  a local filesystem. Same list the nav and the palette are built from. */
+export function buildAppRoutes(surface: Surface = "saas") {
+  return routableNodes(surface)
     .filter((node) => node.path !== undefined)
     .map((node) =>
       node.path === "" ? (

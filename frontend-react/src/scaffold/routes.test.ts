@@ -1,6 +1,6 @@
 /** Route-shadowing guard.
  *
- *  frontend-saas mounts routes from two places: buildAppRoutes() emits one for
+ *  Both surfaces mount routes from two places: buildAppRoutes() emits one for
  *  every IA node that owns a path, and App.tsx declares a few by hand for the
  *  things that are actions rather than destinations. Both render inside the
  *  same <Routes>, and when two routes claim the same path the FIRST declared
@@ -13,8 +13,13 @@
  *  scaffold page is what an unbuilt screen is *supposed* to look like, nothing
  *  about it looked wrong. Two screens were dead for as long as they existed.
  *
- *  A screen claims its node through the BUILT map in pages/routes.tsx. This
+ *  A screen claims its node through the BUILT map in shell/routes.tsx. This
  *  test enforces that, by reading the real source rather than trusting review.
+ *
+ *  Checked for **both** apps since T-19. `frontend-electron` mounts the same
+ *  generated routes with `buildAppRoutes("desktop")` and hand-declares the
+ *  invoice builder exactly as the web app does, so it can shadow a path the
+ *  same way — and it is the surface nobody is watching.
  */
 
 import { readFileSync } from "node:fs";
@@ -25,35 +30,49 @@ import { expect, test } from "vitest";
 import { flattenIa, routableNodes } from "./ia";
 
 const REPO = resolve(__dirname, "../../..");
-const APP = readFileSync(join(REPO, "frontend-saas/src/App.tsx"), "utf8");
-const ROUTES = readFileSync(join(REPO, "frontend-saas/src/pages/routes.tsx"), "utf8");
-const SHELL = readFileSync(join(REPO, "frontend-saas/src/pages/AppShell.tsx"), "utf8");
+const read = (path: string) => readFileSync(join(REPO, path), "utf8");
 
-/** Every `path="..."` on a <Route> hand-declared in App.tsx. */
-function handDeclaredPaths(): string[] {
-  return [...APP.matchAll(/<Route\s+path="([^"]*)"/g)].map((match) => match[1]);
+const ROUTES = read("frontend-react/src/shell/routes.tsx");
+const SHELL = read("frontend-react/src/shell/ProductShell.tsx");
+
+/** One entry per app that mounts the shared routes. */
+const APPS = [
+  { name: "frontend-saas", surface: "saas", source: read("frontend-saas/src/App.tsx") },
+  {
+    name: "frontend-electron",
+    surface: "desktop",
+    source: read("frontend-electron/src/App.tsx"),
+  },
+] as const;
+
+/** Every `path="..."` on a <Route> hand-declared in an app's own tree. */
+function handDeclaredPaths(source: string): string[] {
+  return [...source.matchAll(/<Route\s+path="([^"]*)"/g)].map((match) => match[1]);
 }
 
-test("the sources are actually being read", () => {
-  // Guards against a rename making both assertions below pass vacuously.
-  expect(APP).toContain("buildAppRoutes()");
+test.each(APPS)("$name's sources are actually being read", ({ source }) => {
+  // Guards against a rename making the assertions below pass vacuously.
+  expect(source).toContain("buildAppRoutes(");
   expect(ROUTES).toContain("const BUILT");
-  expect(handDeclaredPaths().length).toBeGreaterThan(0);
+  expect(handDeclaredPaths(source).length).toBeGreaterThan(0);
 });
 
-test("no hand-declared route shadows a path the IA already owns", () => {
-  const iaPaths = new Set(
-    routableNodes("saas")
-      .map((node) => node.path)
-      .filter((path): path is string => path !== undefined),
-  );
+test.each(APPS)(
+  "no hand-declared route in $name shadows a path the IA already owns",
+  ({ surface, source }) => {
+    const iaPaths = new Set(
+      routableNodes(surface)
+        .map((node) => node.path)
+        .filter((path): path is string => path !== undefined),
+    );
 
-  // Redirects for pre-IA URLs are fine — they point AT the IA, and none of them
-  // can collide because an IA path is never also a legacy path.
-  const collisions = handDeclaredPaths().filter((path) => iaPaths.has(path));
+    // Redirects for pre-IA URLs are fine — they point AT the IA, and none of
+    // them can collide because an IA path is never also a legacy path.
+    const collisions = handDeclaredPaths(source).filter((path) => iaPaths.has(path));
 
-  expect(collisions).toEqual([]);
-});
+    expect(collisions).toEqual([]);
+  },
+);
 
 test("every screen in BUILT claims a real IA path", () => {
   // A typo'd key is silent in the other direction: the screen simply never

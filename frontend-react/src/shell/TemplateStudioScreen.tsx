@@ -36,7 +36,7 @@ import {
   useTemplates,
   useUpdateTemplate,
   type TemplateUpdateRequest,
-} from "@billgen/ui";
+} from "../internal";
 import {
   DOC_KINDS,
   TemplateWorkspace,
@@ -46,7 +46,7 @@ import {
   type DocKind,
   type InvoiceTemplate,
   type PreviewCompany,
-} from "@billgen/ui/src/workspace";
+} from "../workspace";
 
 export interface TemplateStudioScreenProps {
   companyId?: string;

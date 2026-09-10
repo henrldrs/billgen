@@ -66,23 +66,6 @@ wish, and the queue is not for wishes.
               the install-and-uninstall assertion, which cannot be made
               until T-30 produces a package to install.
 
-### T-19 · One shell — the desktop is the SaaS shell plus an adapter
-    branch    Frontend              status  open
-    needs     —
-    why       Henri 2026-09-09: Emilia's build is the SaaS frontend wrapped
-              for the desktop. Today `frontend-electron/src/DesktopShell.tsx`
-              is a second implementation of
-              `frontend-saas/src/pages/AppShell.tsx` (690 diff lines) and
-              already lags it — SOLO_RUN item 9 is the first instance. Two
-              shells means every fix is done twice or forgotten once.
-    do        Step 1, one line: `variant="floating"` + `ThemeSwitcher` on
-              DesktopShell. Step 2: move AppShell into `@billgen/ui` taking a
-              `PlatformAdapter` { tokenStore, resolveBaseUrl, persistTheme,
-              navigate, surface }; DesktopShell becomes the adapter. Move
-              `lib/theme.ts` into the package — it is identical in both shells.
-    done when `DesktopShell.tsx` ≤ 80 lines, both shells render from one
-              AppShell, and `TopNavPopups.test.tsx` passes unchanged.
-
 ### T-20 · A sidecar that runs without Python on the machine
     branch    Desktop               status  open
     needs     —
@@ -601,6 +584,59 @@ wish, and the queue is not for wishes.
 ---
 
 ## Done
+
+### T-19 · One shell — the desktop is the SaaS shell plus an adapter  ·  `a8fc530`, `PENDING2`
+    `frontend-electron/src/DesktopShell.tsx` was a second shell: a tab state
+    machine over eleven panels, no router, no IA, 284 lines. It lagged the web
+    shell the moment either changed — SOLO_RUN item 9 was the standing instance
+    — and it silently lacked the template studio, Client 360, invoice detail
+    and every report screen the web app had. For a build that is meant to *be*
+    the SaaS frontend wrapped for the desktop, that was the whole gap.
+
+    **Step 1** (`a8fc530`) closed the standing divergence: `variant="floating"`
+    and the ThemeSwitcher, two props.
+
+    **Step 2** moved the shell into `@billgen/ui` — `shell/ProductShell.tsx`,
+    `shell/routes.tsx`, the template studio and the dev tier switch with it,
+    plus `lib/theme.ts`, which was byte-identical in both shells apart from a
+    comment. `frontend-saas` and `frontend-electron` now differ by a router and
+    an adapter, and `DesktopShell.tsx` is **35 lines**, all of them the adapter.
+
+    **What the adapter turned out to be**, against the five fields the ticket
+    guessed at: `{ surface, account? }`. `tokenStore`, `resolveBaseUrl` and
+    `persistTheme` are bootstrap concerns that `lib/api.ts` and `main.tsx`
+    already own on both surfaces — threading them through the shell would have
+    made the shell the place platform differences re-accumulate. `navigate` is
+    not a difference either: the desktop got a `MemoryRouter` (no address bar
+    to reflect, no server to ask for a deep path on reload) and then
+    `useNavigate` is the same call in both places.
+
+    So the two real differences are: which IA surface to render, and whether
+    there is a session to end. The desktop passes `surface="desktop"` — which
+    finally makes true the comment `ia.ts` has carried since 2026-08-25, that
+    "frontend-electron consumes them via routableNodes('desktop')" — and an
+    account with no `onLogout`, so the menu simply has no such entry.
+
+    Named `ProductShell`, not `AppShell`: the design system already exports an
+    `AppShell` layout primitive that every surface imports `as Shell`, and two
+    different AppShells out of one barrel is how a consumer gets the wrong one.
+
+    **Verified in a browser on both surfaces**, which is the only way this kind
+    of change is verified. `frontend-electron` under plain Vite against the
+    desktop-mode API (`npm --workspace @billgen/desktop run dev:sidecar`, port
+    1421, new — `lib/api.ts` already had the no-Tauri fallback this needs):
+    floating bar with the language and theme controls, IA nav, **Catalog →
+    Invoice templates renders the template studio**, "+" renders the builder
+    with the real client list, and the account menu carries "Desktop (Windows)"
+    and no "Log out". On 5183 the same shell carries "Log out" and no desktop
+    section. Every request 200, preflight included.
+
+    `TopNavPopups.test.tsx` untouched and green, as the ticket required.
+    `scaffold/routes.test.ts` had to follow the moved sources, and grew: the
+    shadowing guard now runs for **both** apps, because the desktop
+    hand-declares the invoice builder beside the generated routes exactly as
+    the web app does and can shadow a path the same way — on the surface nobody
+    is watching.
 
 ### T-32 · The partner tier — granted, never bought  ·  `1ebb784`
     Beta testers need the template studio, which is gated on

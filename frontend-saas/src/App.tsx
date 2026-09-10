@@ -1,16 +1,18 @@
-import { BillGenProvider, LanguageProvider, LoadingScreen } from "@billgen/ui";
+import {
+  BillGenProvider,
+  InvoiceBuilderRoute,
+  LanguageProvider,
+  LoadingScreen,
+  ProductShell,
+  buildAppRoutes,
+} from "@billgen/ui";
 import type { ReactNode } from "react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 
 import { SessionProvider, useSession } from "./auth/session";
 import { api } from "./lib/api";
-import { AppShell } from "./pages/AppShell";
 import { LoginPage } from "./pages/LoginPage";
 import { PreviewRoute } from "./pages/PreviewRoute";
-import {
-  InvoiceBuilderRoute,
-  buildAppRoutes,
-} from "./pages/routes";
 import { SignupPage } from "./pages/SignupPage";
 
 /** Wraps the app in the interface language, and persists a change.
@@ -33,6 +35,27 @@ function WithLanguage({ children }: { children: ReactNode }) {
     >
       {children}
     </LanguageProvider>
+  );
+}
+
+/** The web's PlatformAdapter: the SaaS IA, and a real session to end.
+ *
+ *  A component rather than an object literal because both halves are hooks —
+ *  the session and the navigate that follows a logout. */
+function WebShell() {
+  const { user, logout } = useSession();
+  const navigate = useNavigate();
+  return (
+    <ProductShell
+      surface="saas"
+      account={{
+        name: user?.displayName,
+        email: user?.email,
+        onLogout: () => {
+          void logout().then(() => navigate("/login"));
+        },
+      }}
+    />
   );
 }
 
@@ -62,11 +85,11 @@ export function App() {
               path="/app"
               element={
                 <RequireAuth>
-                  <AppShell />
+                  <WebShell />
                 </RequireAuth>
               }
             >
-              {/* Every IA node with a path, generated — see pages/routes.tsx. */}
+              {/* Every IA node with a path, generated — @billgen/ui shell/routes. */}
               {buildAppRoutes()}
 
               {/* The invoice builder is an action, not a destination, so it owns

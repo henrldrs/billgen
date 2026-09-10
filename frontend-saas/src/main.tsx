@@ -2,7 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { App } from "./App";
-import { applyTheme, storedTheme } from "./lib/theme";
+import { applyTheme, storedTheme } from "@billgen/ui";
 import "./styles.css";
 
 // Apply the persisted theme before first paint so login/signup don't flash light.

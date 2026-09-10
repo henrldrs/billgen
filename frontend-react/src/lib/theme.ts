@@ -1,8 +1,11 @@
-/** Dark mode = one token remap: data-bg-theme="dark" on <html>. The shell owns
- *  persistence (localStorage) and the attribute — same pattern as the SaaS app;
- *  per-shell on purpose, like the token store. */
+/** Dark mode = one token remap: data-bg-theme="dark" on <html>. The app owns
+ *  persistence (localStorage) and the attribute; the token layer does the rest.
+ *
+ *  Lives in the package because both shells had it, byte-identical apart from a
+ *  comment (T-19). The storage key is shared and that is harmless: the two
+ *  surfaces are different origins, so neither can read the other's value. */
 
-import type { ThemeValue } from "@billgen/ui";
+import type { ThemeValue } from "@henrioutai/ui";
 import { useEffect, useState } from "react";
 
 const STORAGE_KEY = "billgen-theme";
@@ -30,7 +33,7 @@ export function useTheme(): [ThemeValue, (theme: ThemeValue) => void] {
     try {
       localStorage.setItem(STORAGE_KEY, theme);
     } catch {
-      /* storage unavailable — theme just won't persist */
+      /* private mode — theme just won't persist */
     }
   }, [theme]);
   return [theme, setTheme];

@@ -21,7 +21,7 @@
 
 import { useState } from "react";
 import { Badge, Button, Card } from "@henrioutai/ui";
-import { useApi, useEntitlements } from "@billgen/ui";
+import { useApi, useEntitlements } from "../internal";
 import { useQueryClient } from "@tanstack/react-query";
 
 const TIERS = [

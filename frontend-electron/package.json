@@ -7,14 +7,16 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "dev:sidecar": "vite --mode sidecardev --port 1421 --strictPort"
   },
   "dependencies": {
     "@billgen/ui": "*",
     "@tanstack/react-query": "^5.62.0",
     "@tauri-apps/api": "^2.1.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^7.1.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.0",
