@@ -180,6 +180,7 @@ export function DesktopShell() {
       width="wide"
       nav={
         <TopNav
+          variant="floating"
           title={company.name}
           links={links}
           onNavigateHome={() => setTab("dashboard")}
@@ -199,6 +200,10 @@ export function DesktopShell() {
               setTab("settings");
             }}
           />
+          {/* In the bar, not only in Preferences: a person on a dark screen at
+              night should not have to open a menu to fix it. It stays in
+              Preferences too — this is the shortcut, not the home. */}
+          <ThemeSwitcher theme={theme} onChange={setTheme} size="sm" />
         </TopNav>
       }
     >
