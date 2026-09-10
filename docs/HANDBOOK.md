@@ -94,6 +94,14 @@ VAT.
   commit and can never fail it; `POST /documents/rebuild` is the repair.
   `DOCUMENT_ROOT` unset means archiving is off, which is what the test suite
   and a bare `uvicorn` run with.
+- **The desktop backs itself up at boot, not at close (T-23).** The Tauri shell
+  `child.kill()`s the sidecar on exit — `TerminateProcess` on Windows, so no
+  handler, `finally` or lifespan shutdown ever runs. `desktop/backups.py`
+  therefore writes `<data dir>/backups/<date>.zip` **on start** when today has
+  none, and again on a clean exit when the process is allowed to reach one.
+  Thirty are kept, and only files matching `YYYY-MM-DD.zip` are ever deleted.
+  Whether a restore has actually been performed lives in
+  [RESTORE_LOG.md](RESTORE_LOG.md), not in this file.
 
 ---
 

@@ -19,6 +19,7 @@ depends on remembering a conversation, which is the point of both.
 | How the system is shaped, and why | `docs/ARCHITECTURE/system-architecture.html` (read the `.txt`), `ADR-0001`…`ADR-0006` |
 | How a desktop copy is licensed, and reissued | `docs/LICENSING.md` |
 | Production readiness, layer by layer | `docs/MINIMAL_STACK.md` |
+| Whether a restore has ever actually been performed | `docs/RESTORE_LOG.md` |
 | The launch's business half | `docs/BETA_LAUNCH_PLAN.md` |
 | Colours, type, tokens | `docs/BRAND_TOKENS.md` |
 | Every screen and how wired it is | `frontend-react/src/scaffold/ia.ts` → `docs/ROADMAP_IA.md` |

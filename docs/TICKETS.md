@@ -116,13 +116,45 @@ wish, and the queue is not for wishes.
               (`Documents\BillGen` unless she chose otherwise). ADR-0003's export
               exists as an endpoint and a panel; nothing runs it unasked. No
               job runner is needed on the desktop — the sidecar has a
-              shutdown.
+              shutdown. **That last sentence turned out to be wrong; see
+              `done when`.**
     do        On sidecar shutdown, write the backup export to
-              `<data dir>\backups\<date>.zip`, keep the last 30.
+              `<data dir>\backups\<date>.zip`, keep the last 30. (Built on
+              start *and* on a clean exit — the reason is in `done when`.)
               During the first Teams call, restore one into a scratch
               database and compare — T-06 performed where the data is.
     done when A dated note in `docs/` says a restore was performed on her
               machine, from which file, and what was compared.
+              **Built short of that note, and not where the ticket said.**
+              `desktop/backups.py` writes `<data dir>/backups/<date>.zip` — a
+              zip of ADR-0003 JSON, one member per organization plus a manifest
+              naming which member restores — and keeps the newest thirty,
+              deleting only files it wrote itself.
+
+              The ticket's premise is the part that did not survive contact.
+              *"The sidecar has a shutdown"* is false in the build that
+              matters: `src-tauri/src/main.rs` handles `ExitRequested` with
+              `child.kill()`, which on Windows is `TerminateProcess` — no
+              signal, no handler, no lifespan shutdown. A backup written only
+              on close would have run on this workstation, passed review, and
+              never once run on Emilia's machine. So it runs at both ends:
+              **on start** if today has no archive yet (the run that always
+              happens, capturing the state the last session left), and **on a
+              clean exit**, overwriting today's with the newer state. A hard
+              kill loses nothing the next start does not pick up.
+
+              12 tests: `tests/desktop/test_backups.py` for the archive and the
+              rotation, and `tests/api/test_desktop_backup_rehearsal.py`, which
+              takes a zip the sidecar wrote and restores a member of it through
+              `POST /backup/restore` — right reference, right total, and the
+              series continuing rather than reissuing a number.
+
+              What is left is exactly the note: a restore **on her machine**,
+              from a file that travelled, into an install that had lost its
+              data. [RESTORE_LOG.md](RESTORE_LOG.md) is where it goes, with the
+              format and the in-repo rehearsal already in it. A restore that
+              has only ever run against a database the test made is a belief
+              with good manners.
 
 ### T-28 · A backup that can be carried
     branch    Desktop               status  open

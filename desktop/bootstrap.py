@@ -21,7 +21,7 @@ from pathlib import Path
 from alembic import command
 from alembic.config import Config
 
-from . import licensing, paths
+from . import backups, licensing, paths
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -119,6 +119,24 @@ def configure_environment() -> str:
     return database_url
 
 
+def safe_backup(database_url: str, *, overwrite: bool = False) -> Path | None:
+    """Write the dated backup, and never let it stop the app.
+
+    A backup that refuses to run is a bad day; an invoicing program that will
+    not start because a backup failed is a worse one, and the failure it is
+    most likely to hit — a full disk, a folder someone made read-only — is
+    exactly the kind that would keep it from ever starting again.
+    """
+    try:
+        written = backups.write_backup(database_url, overwrite=overwrite)
+    except Exception as exc:  # noqa: BLE001
+        print(f"BILLGEN_BACKUP error={exc}", file=sys.stderr, flush=True)
+        return None
+    if written is not None:
+        print(f"BILLGEN_BACKUP ok file={written}", flush=True)
+    return written
+
+
 def run(port: int | None = None) -> None:  # pragma: no cover - process entrypoint
     database_url = configure_environment()
 
@@ -137,6 +155,12 @@ def run(port: int | None = None) -> None:  # pragma: no cover - process entrypoi
 
     prepare_database(database_url)
 
+    #  Before the port, so the last session's data is on disk before this one
+    #  can touch it — and because this is the run that always happens. See
+    #  desktop/backups.py: the shell kills the sidecar rather than stopping it,
+    #  so "on close" alone would never have run on a customer's machine.
+    safe_backup(database_url)
+
     chosen = port or find_free_port()
     # marker line for the shell, flushed before the server blocks the process
     print(f"BILLGEN_SIDECAR port={chosen}", flush=True)
@@ -144,6 +168,12 @@ def run(port: int | None = None) -> None:  # pragma: no cover - process entrypoi
     import uvicorn  # noqa: PLC0415 — deferred: import after env is configured
 
     uvicorn.run("api.main:app", host="127.0.0.1", port=chosen, log_level="info")
+
+    #  Reached only when the process is allowed to exit: Ctrl-C, a dev run, and
+    #  any future graceful stop from the shell. It upgrades today's archive
+    #  from "as of this morning" to "as of now"; a hard kill loses nothing the
+    #  next start does not pick up.
+    safe_backup(database_url, overwrite=True)
 
 
 def main() -> None:  # pragma: no cover
