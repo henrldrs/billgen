@@ -173,6 +173,39 @@ def main() -> int:
         )
     )
 
+    #  T-22. The runtime carries the public key, and knows it is a packaged
+    #  build — those two together are what make the license requirement real.
+    #  A build missing either starts unlicensed and nothing else notices.
+    key = APP / "desktop" / "license_key.pub"
+    results.append(
+        check(
+            "the license public key ships (T-22)",
+            key.is_file(),
+            ""
+            if key.is_file()
+            else (
+                "no desktop/license_key.pub in the runtime — this build cannot\n"
+                "verify a license and will refuse to start. Create the key pair\n"
+                "once: python scripts/license_tool.py keygen "
+                r"--private-key ..\billgen-license-key.pem"
+            ),
+        )
+    )
+
+    policy = run_in_runtime(
+        "from desktop import bootstrap, licensing\n"
+        "print(bootstrap.is_packaged(), bootstrap.license_is_required(),"
+        " licensing.public_key() is not None)\n"
+    )
+    verdict = policy.stdout.strip()
+    results.append(
+        check(
+            "the packaged build requires a license (T-22)",
+            verdict == "True True True",
+            verdict or policy.stderr,
+        )
+    )
+
     failed = results.count(False)
     print(f"\n{len(results) - failed}/{len(results)} checks passed")
     if failed:

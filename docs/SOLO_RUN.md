@@ -89,6 +89,7 @@ which it cannot know.
 | 14 | T-19 follow-up · the beta surface and the language | `DONE` | `f105a36`. A handed-over build offers only `wired` nodes — 29, not 124 — and the interface language stopped following the company's *document* language. Both were Henri's catch on the first look at the shell. Narrowed again to `MVP_SURFACE` on his instruction: §MVP's list is enforced now, not described. |
 | 15 | T-20 · the sidecar brings its own Python | `IN PROGRESS` | `a16d389`. 61 MB embeddable runtime, built from `uv.lock`; boots and answers with no Python on PATH; `check_sidecar_runtime.py` 19/19. The VM and `tauri build` are Henri's to run. |
 | 16 | T-21 · PDFs through the installed Edge | `DONE` | Ships in *feat: PDFs print through the installed Edge*. Edge's own command line, on Henri's instruction, rather than the ticket's `channel="msedge"`: the desktop needs neither Playwright's 150 MB download nor its 110 MB package. `test_real_pdf_bytes` green with Playwright's browsers hidden; the two launchers agree on every glyph's coordinates; the rebuilt runtime renders with no Playwright in it. |
+| 17 | T-22 · Emilia's license file | `DONE` | Ships in *feat: the packaged build refuses to start unlicensed*. The two halves that were zero: `bootstrap` never called `check_license`, and the signed `hardware_id` was never compared to anything. Rehearsed end to end against a scratch key pair — strict mode refuses with no licence and refuses one signed for another machine, naming both fingerprints, and starts with the right one. **The signing key is Henri's to generate** (`scripts/license_tool.py keygen`); until he does, no packaged build starts, which is the correct state for a repo that has never held one. [docs/LICENSING.md](LICENSING.md) is the reissue path. |
 
 **This ledger's own list is closed.** Items 6–8 were the three the handover
 note sanctioned explicitly: *"None of these invents a screen; each connects a
@@ -101,7 +102,7 @@ happened to it.
 
 | | |
 |---|---|
-| Python | **584 collected, exit 0** — 13 of them `tests/core/pdf/`, new in T-21 | 
+| Python | **604 collected, exit 0** — 19 of them new in T-22; `tests/desktop/` is 40 | 
 | Frontend | **193 passed** (`npm run test`, 30 files), typecheck clean across all four workspaces |
 | `ruff check` | clean. CI runs `ruff check .` only — the tree is *not* `ruff format` clean and was not before, so do not reformat it as a side errand |
 | Architecture doc | **in sync** as of `12ce164` — both `sync-architecture --check` and `architecture_to_text.py --check` green |

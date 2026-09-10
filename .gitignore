@@ -51,6 +51,8 @@ logs/
 *.pem
 *.key
 *.billgenlic
+# desktop/license_key.pub is deliberately NOT ignored: the public half ships in
+# every build and has to be committed. The private half is a *.pem, above.
 backups/
 
 # Local-only working notes (LLM council sessions)

@@ -158,6 +158,13 @@ VAT.
   the checker before trusting a desktop build: a runtime that borrows the
   host's packages passes every other test and fails only on the customer's
   machine.
+- **The desktop is licensed.** A signed file she has, verified offline — no
+  server, no activation call. A checkout runs under grace and starts without
+  one; a packaged build refuses to start without a valid one, and refuses one
+  signed for another machine. `BILLGEN_REQUIRE_LICENSE=1` rehearses the strict
+  policy from a checkout. Issuing, the machine fingerprint, and what to do when
+  a laptop dies: [LICENSING.md](LICENSING.md). The signing key is Henri's and
+  lives outside the tree.
 - **Databases.** `var/billgen.dev.db` is the SQLite dev database, with smoke
   data (`henri@example.com` / `beta-password-1`). The desktop app uses a
   separate one under `%USERPROFILE%\Documents\BillGen` — deliberately not

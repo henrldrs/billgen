@@ -109,38 +109,6 @@ wish, and the queue is not for wishes.
               re-enables the user site directory. That is why there is a
               checker rather than a smoke test.
 
-### T-22 · Emilia's license file
-    branch    Desktop / Henri       status  open
-    needs     T-20
-    why       `desktop/licensing.py` verifies an Ed25519-signed license file
-              offline (email, plan, expiry, optional hardware id). An absent
-              license is still allowed (beta grace). Nothing is hosted, and
-              nothing needs to be.
-
-              Two halves of this are currently zero, where the ticket assumed
-              one line. **`desktop/bootstrap.py` never calls `check_license`**
-              — the module is a tested library nothing invokes. And
-              `hardware_id` round-trips through the signature
-              (`licensing.py:44`, `:87`) without ever being compared to the
-              machine running it. Henri 2026-09-09: the beta copy is bound to
-              its OS install.
-    do        Generate a key pair once — the private key stays with Henri and
-              never enters the repo. `sign_license({...})` for her, expiry at
-              the end of the beta. Add `machine_fingerprint()`: on Windows,
-              `MachineGuid` from `HKLM\SOFTWARE\Microsoft\Cryptography` —
-              stable across reboots and hardware swaps, changes on an OS
-              reinstall, which is the binding asked for. Not the MAC (docking
-              stations and VPN adapters move it) and not an IP address.
-              `check_license` compares it when the payload carries one. Call it
-              from `bootstrap.py` with `require_license` on in the packaged
-              build; embed the public key. Write down the reissue path — a
-              dead laptop must not be a dead business.
-    done when The packaged app refuses to start without the file and starts
-              with it; a license signed for another machine is refused on this
-              one and the error names why; `bootstrap` fails closed, not open,
-              when the public key is missing; `test_tampered_payload_rejected`
-              already covers the signature.
-
 ### T-23 · Backup on close, restore rehearsed on her machine
     branch    Desktop               status  open
     needs     T-20
@@ -603,6 +571,59 @@ wish, and the queue is not for wishes.
 ---
 
 ## Done
+
+### T-22 · Emilia's license file  ·  *feat: the packaged build refuses to start unlicensed*
+    Two halves of this were zero where the ticket assumed one line, and both
+    are the same mistake: `desktop/licensing.py` was a **tested library nothing
+    called**. `bootstrap.py` never invoked `check_license`, and `hardware_id`
+    round-tripped through the signature without ever being compared to the
+    machine running it. A licence check no caller reaches is a comment.
+
+    `machine_fingerprint()` reads Windows' `MachineGuid` from
+    `HKLM\SOFTWARE\Microsoft\Cryptography` — 64-bit view explicitly, because a
+    32-bit interpreter is redirected to Wow6432Node and would read a *different*
+    GUID, verifying under one build and not the other for a reason nothing in
+    the error would name. It is SHA-256'd to 128 bits before it goes anywhere:
+    the value ends up in a file that travels by email, and comparing two
+    fingerprints is all the app ever needs. Grouped in fives when shown, so it
+    can be read down a phone line. Not the MAC address — docking stations and
+    VPN adapters move it — and not an IP.
+
+    `bootstrap.enforce_license()` runs **before the migrations and before the
+    port**: an unlicensed start should not touch her database. The strict policy
+    comes from `is_packaged()` — the interpreter running from inside the runtime
+    the installer carries, asserted by both `runtime/MANIFEST.json` and
+    `sys.executable` — with `BILLGEN_REQUIRE_LICENSE` forcing it either way, to
+    rehearse the packaged behaviour from a checkout and to start a rescue build.
+    A refusal prints `BILLGEN_LICENSE error=…` on stderr and exits 2, because
+    the Tauri side otherwise reports only "sidecar did not report a port".
+
+    **It fails closed on its own build.** A packaged build with no
+    `desktop/license_key.pub` cannot verify anything, so it refuses rather than
+    letting the requirement become decorative; `check_sidecar_runtime.py` now
+    asserts a real runtime ships the key and answers `True` to both halves of
+    the policy, so a build that quietly lost it fails the checker instead of
+    Emilia's laptop. A licence bound to a machine whose fingerprint cannot be
+    read is refused for the same reason.
+
+    `scripts/license_tool.py` is Henri's — `keygen` (which refuses a path inside
+    the repository), `fingerprint`, `sign`, `inspect`. **The private key was not
+    generated here**: it is his to create and back up, and until he runs
+    `keygen` no packaged build will start, which is the correct state for a repo
+    that has never held a signing key. [LICENSING.md](LICENSING.md) is the
+    operational half — issuing, the three dead-laptop cases, and the portable
+    licence (`--machine` omitted, short expiry) that keeps a stuck customer
+    working without ever sending her the private key or a check-removed build.
+
+    `done when` met, rehearsed end to end against a scratch key pair outside the
+    tree: `python -m desktop.bootstrap` with `BILLGEN_REQUIRE_LICENSE=1` refuses
+    with no licence and refuses one signed for another machine, naming both
+    fingerprints, and starts with the right one. `tests/desktop/` is 40 tests —
+    the machine comparison, the portable case, both fail-closed paths, the
+    fingerprint's stability and opacity, and the policy switch.
+    `test_tampered_payload_rejected` already covered the signature; a new
+    sibling covers the obvious forgery this ticket invited, editing
+    `hardware_id` to the machine in front of you.
 
 ### T-21 · PDFs through the installed Edge  ·  *feat: PDFs print through the installed Edge*
     `core/pdf/renderer.py` launched Playwright's own Chromium: a ~150 MB

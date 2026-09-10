@@ -17,6 +17,7 @@ depends on remembering a conversation, which is the point of both.
 | How to run it, how a request flows, what has already bitten | `docs/HANDBOOK.md` |
 | Environment variables | `.env.example` — the reference, not a second document |
 | How the system is shaped, and why | `docs/ARCHITECTURE/system-architecture.html` (read the `.txt`), `ADR-0001`…`ADR-0006` |
+| How a desktop copy is licensed, and reissued | `docs/LICENSING.md` |
 | Production readiness, layer by layer | `docs/MINIMAL_STACK.md` |
 | The launch's business half | `docs/BETA_LAUNCH_PLAN.md` |
 | Colours, type, tokens | `docs/BRAND_TOKENS.md` |
