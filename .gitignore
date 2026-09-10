@@ -55,3 +55,8 @@ backups/
 
 # Local-only working notes (LLM council sessions)
 docs/council/
+
+# The desktop sidecar runtime: an embeddable CPython plus wheels, assembled by
+# scripts/build_sidecar_runtime.py. Roughly 60 MB and reproducible, so it is
+# built rather than committed (T-20).
+frontend-electron/src-tauri/runtime/

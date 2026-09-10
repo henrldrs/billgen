@@ -5,7 +5,7 @@ description = "BillGen — clean-slate 3-layer SaaS rebuild"
 requires-python = ">=3.11"
 
 [tool.uv.workspace]
-members = ["core", "db", "api"]
+members = ["core", "db", "api", "desktop"]
 
 [tool.ruff]
 line-length = 100

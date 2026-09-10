@@ -67,7 +67,7 @@ wish, and the queue is not for wishes.
               until T-30 produces a package to install.
 
 ### T-20 · A sidecar that runs without Python on the machine
-    branch    Desktop               status  open
+    branch    Desktop               status  in-progress
     needs     —
     why       `src-tauri/src/main.rs` spawns `python -m desktop.bootstrap`
               (`BILLGEN_PYTHON` override). Emilia's laptop has no Python.
@@ -78,6 +78,36 @@ wish, and the queue is not for wishes.
     done when `tauri build` produces an NSIS installer that starts the API on
               a clean Windows VM with no Python installed, and `/healthz`
               answers.
+              **Built and proven short of the VM, `PENDING`:**
+              `scripts/build_sidecar_runtime.py` assembles a 61 MB runtime —
+              the 12 MB embeddable CPython, the locked wheels, and copies of
+              core/db/api/desktop — and `main.rs` prefers it over anything on
+              PATH (`BILLGEN_PYTHON` still overrides). `cargo check` passes.
+              The sidecar boots on it, migrates a fresh database through every
+              revision and answers `/healthz`, `/auth/desktop-bootstrap` and
+              the record endpoints on a `PATH` holding only `C:\Windows` and
+              `C:\Windows\system32`. `scripts/check_sidecar_runtime.py` is
+              19/19.
+
+              What is left is exactly the VM: `tauri build` has never run here,
+              so the NSIS installer, the resource layout it produces and the
+              first launch on a machine that never had a developer on it are
+              unobserved. That is Henri's box to press, and T-30 is where the
+              packaging decisions land.
+
+              **Two things the build found, neither of them the ticket's
+              subject.** `cryptography` was imported by `desktop/licensing.py`
+              and declared nowhere — it worked on every machine that happened
+              to have it, and the first runtime built from the lockfile had no
+              licence verification in it at all, which T-22 would have
+              discovered inside a packaged build. `desktop/` is a workspace
+              member with its own `pyproject.toml` now, so the lockfile and
+              CI's audit both cover it. And the first runtime *passed* every
+              smoke test while quietly importing this laptop's FastAPI and
+              rendering PDFs through a Playwright that was never bundled,
+              because enabling `import site` in the embeddable `._pth`
+              re-enables the user site directory. That is why there is a
+              checker rather than a smoke test.
 
 ### T-21 · PDFs through the installed Edge
     branch    Backend / Desktop     status  open

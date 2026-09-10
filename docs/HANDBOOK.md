@@ -145,6 +145,15 @@ VAT.
   PATH**. `billgen.bat` prepends it; in a shell,
   `export PATH="$USERPROFILE/.cargo/bin:$PATH"`. VS Build Tools 2026, Windows
   SDK 10.0.26100 and WebView2 are already installed.
+- **The desktop sidecar's own runtime.** A packaged build carries an
+  embeddable CPython so Emilia's laptop needs no Python:
+  `python scripts/build_sidecar_runtime.py` assembles it into
+  `frontend-electron/src-tauri/runtime/` (gitignored, ~61 MB, built from
+  `uv.lock` so it cannot drift from what the suite ran against), and
+  `python scripts/check_sidecar_runtime.py` proves it is self-contained. Run
+  the checker before trusting a desktop build: a runtime that borrows the
+  host's packages passes every other test and fails only on the customer's
+  machine.
 - **Databases.** `var/billgen.dev.db` is the SQLite dev database, with smoke
   data (`henri@example.com` / `beta-password-1`). The desktop app uses a
   separate one under `%USERPROFILE%\Documents\BillGen` — deliberately not
