@@ -78,7 +78,7 @@ wish, and the queue is not for wishes.
     done when `tauri build` produces an NSIS installer that starts the API on
               a clean Windows VM with no Python installed, and `/healthz`
               answers.
-              **Built and proven short of the VM, `PENDING`:**
+              **Built and proven short of the VM, `a16d389`:**
               `scripts/build_sidecar_runtime.py` assembles a 61 MB runtime —
               the 12 MB embeddable CPython, the locked wheels, and copies of
               core/db/api/desktop — and `main.rs` prefers it over anything on
