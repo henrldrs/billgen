@@ -585,7 +585,7 @@ wish, and the queue is not for wishes.
 
 ## Done
 
-### T-19 · One shell — the desktop is the SaaS shell plus an adapter  ·  `a8fc530`, `PENDING2`
+### T-19 · One shell — the desktop is the SaaS shell plus an adapter  ·  `a8fc530`, `5cdcc54`
     `frontend-electron/src/DesktopShell.tsx` was a second shell: a tab state
     machine over eleven panels, no router, no IA, 284 lines. It lagged the web
     shell the moment either changed — SOLO_RUN item 9 was the standing instance

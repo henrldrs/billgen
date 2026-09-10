@@ -85,6 +85,7 @@ which it cannot know.
 | 10 | T-25 · the data directory leaves the package container | `IN PROGRESS` | `6c6a1a2`. `desktop/paths.py` resolves in four steps and moves a legacy install once; six tests. The other half — install a package, uninstall it, find the database still there — cannot be asserted until T-30 builds one. |
 | 11 | T-26 · goods or services | `DONE` | `8fb7064`. Article 39bis was unreachable: every intra-EU B2B sale came back reverse-charged because nothing said what kind of supply it was. Owed: the accountant confirms the mapping (BETA_LAUNCH_PLAN §W1, question 5). |
 | 12 | T-32 · the partner tier | `DONE` | `1ebb784`. Beta testers get Business capability with one company, granted rather than sold, and kept off `TIER_ORDER` so no paying customer is ever told to upgrade to a plan with no price. |
+| 13 | T-19 · one shell | `DONE` | `a8fc530`, `5cdcc54`. The desktop's 284-line second shell is a 35-line adapter over the shared `ProductShell`, and the Tauri build now reaches the template studio and every report screen it never had. Browser-verified on both surfaces. |
 
 **This ledger's own list is closed.** Items 6–8 were the three the handover
 note sanctioned explicitly: *"None of these invents a screen; each connects a
@@ -98,7 +99,7 @@ happened to it.
 | | |
 |---|---|
 | Python | **571 collected, exit 0** | 
-| Frontend | **175 passed** (`npm run test`, 29 files), typecheck clean across all four workspaces |
+| Frontend | **177 passed** (`npm run test`, 29 files), typecheck clean across all four workspaces |
 | `ruff check` | clean. CI runs `ruff check .` only — the tree is *not* `ruff format` clean and was not before, so do not reformat it as a side errand |
 | Architecture doc | **in sync** as of `12ce164` — both `sync-architecture --check` and `architecture_to_text.py --check` green |
 | Migrations | head is `d1c4f8a26b70` (supply kind). A dev database from before 2026-09-09 needs `alembic upgrade head`, and a desktop install migrates itself on boot |
