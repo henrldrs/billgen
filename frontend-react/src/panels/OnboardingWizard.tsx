@@ -38,6 +38,8 @@ import {
   useCreateClient,
   useCreateProduct,
   useOnboardingStatus,
+  useRenameOrganization,
+  useUpdateMe,
 } from "../hooks/queries";
 import { LANGS, t, type Lang } from "../lib/translations";
 import { useLang } from "../providers/LanguageProvider";
@@ -45,7 +47,7 @@ import { useTheme } from "../lib/theme";
 import type { OnboardingStatusResponse } from "../types";
 import { CompanyForm } from "./CompanyForm";
 
-const STEP_KEYS = ["language", "company", "legal", "seed", "done"] as const;
+const STEP_KEYS = ["language", "profile", "company", "legal", "seed", "done"] as const;
 type StepKey = (typeof STEP_KEYS)[number];
 
 export interface OnboardingWizardProps {
@@ -92,6 +94,7 @@ export function OnboardingWizard({
 
       <Card>
         {step === "language" ? <LanguageStep lang={lang} /> : null}
+        {step === "profile" ? <ProfileStep lang={lang} status={status.data} /> : null}
         {step === "company" ? <CompanyStep lang={lang} status={status.data} /> : null}
         {step === "legal" ? <LegalStep lang={lang} status={status.data} /> : null}
         {step === "seed" ? <SeedStep lang={lang} status={status.data} /> : null}
@@ -141,7 +144,58 @@ function LanguageStep({ lang }: { lang: Lang }) {
   );
 }
 
-// ------------------------------------------------------------- 2 · company
+// ------------------------------------------------------------- 2 · profile
+
+/** Who is accepting, and for what. Both names land on the contract PDF the
+ *  legal step writes, and the desktop bootstrap starts them as placeholders —
+ *  "Local user" for "My Business" — so the server refuses to finish the first
+ *  run until a person has typed over both.
+ *
+ *  The e-mail is deliberately absent. On a desktop install it is the key the
+ *  bootstrap finds its singleton user by; changing it would produce a second
+ *  user and a second organization on the next launch. */
+function ProfileStep({ lang, status }: { lang: Lang; status: OnboardingStatusResponse }) {
+  const updateMe = useUpdateMe();
+  const rename = useRenameOrganization();
+  const [name, setName] = useState(status.display_name ?? "");
+  const [orgName, setOrgName] = useState(status.organization_name ?? "");
+
+  return (
+    <form
+      className="bg-stack"
+      onSubmit={(event) => {
+        event.preventDefault();
+        updateMe.mutate({ display_name: name.trim() });
+        rename.mutate(orgName.trim());
+      }}
+    >
+      <p className="bg-muted">{t(lang, "onboarding.profile.hint")}</p>
+      <Field label={t(lang, "onboarding.profile.yourName")} required>
+        <TextInput value={name} onChange={(e) => setName(e.target.value)} required />
+      </Field>
+      <Field
+        label={t(lang, "onboarding.profile.orgName")}
+        hint={t(lang, "onboarding.profile.orgHint")}
+        required
+      >
+        <TextInput value={orgName} onChange={(e) => setOrgName(e.target.value)} required />
+      </Field>
+      <div className="bg-actions">
+        <Button
+          type="submit"
+          variant="secondary"
+          disabled={updateMe.isPending || rename.isPending || !name.trim() || !orgName.trim()}
+        >
+          {t(lang, "common.save")}
+        </Button>
+        {status.profile_complete ? <Badge tone="success">{t(lang, "common.saved")}</Badge> : null}
+      </div>
+      <p className="bg-muted">{t(lang, "onboarding.profile.localAccount")}</p>
+    </form>
+  );
+}
+
+// ------------------------------------------------------------- 3 · company
 
 function CompanyStep({ lang, status }: { lang: Lang; status: OnboardingStatusResponse }) {
   const navigate = useNavigate();
@@ -179,7 +233,7 @@ function CompanyStep({ lang, status }: { lang: Lang; status: OnboardingStatusRes
   );
 }
 
-// --------------------------------------------------------------- 3 · legal
+// --------------------------------------------------------------- 4 · legal
 
 function LegalStep({ lang, status }: { lang: Lang; status: OnboardingStatusResponse }) {
   const accept = useAcceptLegalText();
@@ -214,7 +268,7 @@ function LegalStep({ lang, status }: { lang: Lang; status: OnboardingStatusRespo
   );
 }
 
-// ---------------------------------------------------------------- 4 · seed
+// ---------------------------------------------------------------- 5 · seed
 
 function SeedStep({ lang, status }: { lang: Lang; status: OnboardingStatusResponse }) {
   const createClient = useCreateClient();
@@ -317,7 +371,7 @@ function SeedStep({ lang, status }: { lang: Lang; status: OnboardingStatusRespon
   );
 }
 
-// ---------------------------------------------------------------- 5 · done
+// ---------------------------------------------------------------- 6 · done
 
 function DoneStep({
   lang,
@@ -383,6 +437,7 @@ function DoneStep({
 function blockerLabel(lang: Lang, blocker: string): string {
   const [head, ...rest] = blocker.split(":");
   const detail = rest.join(":").trim();
+  if (head === "profile") return t(lang, "onboarding.blocker.profile");
   if (head === "no company") return t(lang, "onboarding.blocker.noCompany");
   if (head === "company") return `${t(lang, "onboarding.blocker.company")}: ${detail}`;
   if (head === "accept") return `${t(lang, "onboarding.blocker.accept")} ${detail}`;

@@ -398,6 +398,34 @@ export function useCompanyValidation(companyId: string | undefined) {
   });
 }
 
+// ---- the person, and what they call their business (T-29) -----------------------
+
+/** Both halves of the first run's profile step. They are separate calls
+ *  because they are separate records — and the e-mail is deliberately not
+ *  among them: the desktop bootstrap finds its singleton user by that address,
+ *  so changing it would mint a second user and a second organization on the
+ *  next launch. */
+export function useUpdateMe() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { display_name?: string; language?: string }) => api.updateMe(body),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["onboarding"] }),
+  });
+}
+
+export function useRenameOrganization() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (name: string) => api.renameOrganization(name),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["onboarding"] });
+      void queryClient.invalidateQueries({ queryKey: ["organization"] });
+    },
+  });
+}
+
 // ---- privacy — a client is a data subject (T-35) ---------------------------------
 
 export function useExportClientData() {

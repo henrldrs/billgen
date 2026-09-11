@@ -40,6 +40,14 @@ from .errors import BusinessRuleError, NotFoundError
 
 CONTRACT_TARGET = "legal_document"
 
+#  What `api/security/auth_service.py`'s desktop bootstrap writes when it mints
+#  the local singleton: nobody typed these, and a contract accepted by "Local
+#  user" for "My Business" is evidence of nothing. Defined here, in the lower
+#  layer, and imported by the writer — one definition, no drift, and
+#  `test_onboarding.py` asserts the bootstrap still writes exactly these.
+PLACEHOLDER_USER_NAME = "Local user"
+PLACEHOLDER_ORGANIZATION_NAME = "My Business"
+
 
 @dataclass
 class RequiredText:
@@ -52,6 +60,12 @@ class RequiredText:
 @dataclass
 class OnboardingStatus:
     completed_at: datetime | None
+    #  Who the person is and what they call their business. Placeholders until
+    #  the first run asks, and a legal text accepted under a placeholder names
+    #  nobody — which is why this blocks completion.
+    display_name: str | None
+    organization_name: str | None
+    profile_complete: bool
     company_id: UUID | None
     company_valid: bool
     company_problems: list[str]
@@ -67,11 +81,18 @@ class OnboardingStatus:
 
     @property
     def can_complete(self) -> bool:
-        return self.company_id is not None and self.company_valid and not self.texts_outstanding
+        return (
+            self.profile_complete
+            and self.company_id is not None
+            and self.company_valid
+            and not self.texts_outstanding
+        )
 
     #  For the audit entry and the API: what blocks completion, by name.
     def blockers(self) -> list[str]:
         out: list[str] = []
+        if not self.profile_complete:
+            out.append("profile")
         if self.company_id is None:
             out.append("no company")
         elif not self.company_valid:
@@ -111,6 +132,7 @@ class OnboardingService:
         org_id = current_organization_id()
         with self._uow_factory() as uow:
             organization = uow.organizations.get(org_id)
+            user = uow.users.get(user_id)
             companies = uow.companies.list()
             company = companies[0] if companies else None
             verdict = validate_company_identifiers(company) if company else None
@@ -130,8 +152,18 @@ class OnboardingService:
             for doc in legal.acceptance_required()
             if doc.is_publishable
         ]
+        display_name = (user.display_name or "").strip() if user else ""
+        organization_name = (organization.name or "").strip() if organization else ""
         return OnboardingStatus(
             completed_at=organization.onboarding_completed_at if organization else None,
+            display_name=display_name or None,
+            organization_name=organization_name or None,
+            profile_complete=(
+                bool(display_name)
+                and display_name != PLACEHOLDER_USER_NAME
+                and bool(organization_name)
+                and organization_name != PLACEHOLDER_ORGANIZATION_NAME
+            ),
             company_id=company.id if company else None,
             company_valid=bool(verdict and verdict.valid),
             company_problems=(

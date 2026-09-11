@@ -1434,6 +1434,15 @@ const MESSAGES = {
   "onboarding.blocker.company": { en: "company identifiers", fr: "identifiants de l'entreprise", nl: "ondernemingsgegevens", es: "identificadores de la empresa" },
   "onboarding.blocker.accept": { en: "acceptance of", fr: "acceptation de", nl: "aanvaarding van", es: "aceptación de" },
 
+  // ---- the first run's profile step (T-29) -------------------------------------
+  "onboarding.step.profile": { en: "Who you are", fr: "Qui vous êtes", nl: "Wie u bent", es: "Quién es usted" },
+  "onboarding.profile.hint": { en: "Your name and what you call your business. Both appear on anything you accept here, so neither can stay as the placeholder this install started with.", fr: "Votre nom et le nom que vous donnez à votre activité. Les deux figurent sur tout ce que vous acceptez ici, donc aucun ne peut rester le nom par défaut de cette installation.", nl: "Uw naam en hoe u uw zaak noemt. Beide verschijnen op alles wat u hier aanvaardt, dus geen van beide mag de standaardnaam van deze installatie blijven.", es: "Su nombre y cómo llama a su actividad. Ambos aparecen en todo lo que acepte aquí, así que ninguno puede quedarse con el nombre por defecto de esta instalación." },
+  "onboarding.profile.yourName": { en: "Your name", fr: "Votre nom", nl: "Uw naam", es: "Su nombre" },
+  "onboarding.profile.orgName": { en: "Your business", fr: "Votre activité", nl: "Uw zaak", es: "Su actividad" },
+  "onboarding.profile.orgHint": { en: "A short name for you and this app. The legal name that goes on the invoices is the next step.", fr: "Un nom court, pour vous et pour cette application. Le nom légal qui figure sur les factures, c'est l'étape suivante.", nl: "Een korte naam, voor u en voor deze toepassing. De wettelijke naam op de facturen is de volgende stap.", es: "Un nombre corto, para usted y para esta aplicación. El nombre legal que va en las facturas es el paso siguiente." },
+  "onboarding.profile.localAccount": { en: "This copy signs in on this computer without a password, so there is no e-mail address to confirm.", fr: "Cette copie s'ouvre sur cet ordinateur sans mot de passe ; il n'y a donc pas d'adresse e-mail à confirmer.", nl: "Deze kopie meldt zich op deze computer aan zonder wachtwoord; er is dus geen e-mailadres te bevestigen.", es: "Esta copia se abre en este equipo sin contraseña, así que no hay dirección de correo que confirmar." },
+  "onboarding.blocker.profile": { en: "your name and your business name", fr: "votre nom et le nom de votre activité", nl: "uw naam en de naam van uw zaak", es: "su nombre y el nombre de su actividad" },
+
   // ---- privacy — a client is a data subject (T-35) -----------------------------
   //  Dutch drafted without a native read; Henri reads FR and NL before this ships.
   "privacy.title": { en: "Privacy", fr: "Confidentialité", nl: "Privacy", es: "Privacidad" },

@@ -272,7 +272,17 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Rename Current Org
+         * @description Rename the organization — what the first run asks for, and what a legal
+         *     text is accepted *for*.
+         *
+         *     Guarded by `company.write` rather than a permission of its own: this is the
+         *     same act as editing the legal entity — reshaping the organization's own
+         *     record rather than its trade — and one field does not justify a second
+         *     entry in the matrix.
+         */
+        patch: operations["rename_current_org_orgs_current_patch"];
         trace?: never;
     };
     "/orgs/current/members": {
@@ -3488,6 +3498,12 @@ export interface components {
         OnboardingStatusResponse: {
             /** Completed At */
             completed_at: string | null;
+            /** Display Name */
+            display_name: string | null;
+            /** Organization Name */
+            organization_name: string | null;
+            /** Profile Complete */
+            profile_complete: boolean;
             /** Company Id */
             company_id: string | null;
             /** Company Valid */
@@ -3522,6 +3538,15 @@ export interface components {
             country_code: string;
             /** Plan Tier */
             plan_tier: string;
+        };
+        /**
+         * OrganizationUpdateRequest
+         * @description The tenant's own label. Not the legal entity — that is a Company, and
+         *     its name carries the mandatory mentions.
+         */
+        OrganizationUpdateRequest: {
+            /** Name */
+            name: string;
         };
         /** PassphraseNoticeResponse */
         PassphraseNoticeResponse: {
@@ -5210,6 +5235,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OrganizationResponse"];
+                };
+            };
+        };
+    };
+    rename_current_org_orgs_current_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrganizationUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrganizationResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

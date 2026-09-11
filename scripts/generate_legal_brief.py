@@ -269,6 +269,58 @@ Avant le lancement payant, un petit nombre d'utilisateurs pilotes est prévu,
 éventuellement à titre gratuit. Cela nécessite-t-il une convention propre, ou
 les conditions générales assorties d'un DPA suffisent-elles ?
 
+**Précision du 11/09/2026 — le bêta se fait en version bureau.** La décision
+du 09/09/2026 (BETA_LAUNCH_PLAN) est que la testeuse reçoit une application
+installée sur son portable, et non une instance hébergée. Ses données — et
+celles de ses propres clients — ne quittent jamais sa machine : base SQLite
+locale, PDF locaux, sauvegardes locales, aucun envoi d'e-mail, aucun Peppol.
+Nous ne recevons que son nom, son adresse e-mail et une empreinte machine, aux
+seules fins de la licence.
+
+Notre lecture est donc qu'**aucun DPA n'est requis pour ce bêta** : elle est
+responsable du traitement, et nous sommes fournisseur d'un logiciel, comme
+l'éditeur de n'importe quel outil de bureau. La convention de bêta remplacerait
+le DPA. Est-ce exact ? Et si oui, que doit impérativement contenir cette
+convention, en particulier :
+
+- le statut bêta et l'absence de garantie de conformité fiscale — ce qu'elle
+  doit vérifier elle-même ;
+- le canal d'assistance : le jour où elle nous transmet une sauvegarde pour un
+  diagnostic, nous traitons bien les données de ses clients. Quelle clause
+  couvre ce cas ponctuel, sans faire basculer tout le contrat en DPA ?
+- la limitation de responsabilité, la propriété des données et leur
+  restitution à la sortie.
+
+### Q7 · Reprise d'une série de factures d'un système vers un autre
+
+Une utilisatrice migre depuis notre ancien outil vers la nouvelle application
+(TICKETS T-34). Son historique de factures doit être repris, et la numérotation
+doit **continuer** la série existante plutôt que recommencer à 1 — sans quoi
+deux factures du même assujetti porteraient le même numéro dans la même année.
+
+Questions : la reprise d'une série émise par un autre système est-elle
+admissible telle quelle ? Que faut-il conserver pour que la piste d'audit
+fiable reste intacte (l'export d'origine, les documents d'origine, les deux) ?
+Et si l'historique n'était **pas** repris, pendant combien de temps doit-elle
+conserver l'ancien système ou son export pour satisfaire à la conservation de
+sept ans ?
+
+*(Cette question relève d'abord du comptable ; elle figure ici parce que la
+réponse détermine ce que le logiciel doit écrire.)*
+
+### Q8 · Preuve de l'acceptation, quand la seule copie est chez le client
+
+L'application écrit le texte accepté en PDF dans le dossier de données de
+l'utilisatrice, et enregistre l'acceptation (personne, version, date) dans sa
+base — chez elle. **Nous n'en gardons aucune copie** : c'est cohérent avec une
+application de bureau, mais cela signifie que nous ne pouvons pas prouver
+qu'elle a accepté quoi que ce soit.
+
+Un simple échange d'e-mails contresigné suffit-il pour un bêta B2B, ou faut-il
+un dispositif de signature au sens d'eIDAS ? Notre lecture est qu'une signature
+électronique simple est admissible (art. 25.1) et proportionnée ici, le
+problème n'étant pas la forme de la signature mais la garde de la preuve.
+
 ---
 
 ## Ce que nous ne demandons pas

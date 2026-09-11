@@ -27,6 +27,9 @@ router = APIRouter(prefix="/onboarding", tags=["onboarding"])
 def _status(status) -> OnboardingStatusResponse:  # noqa: ANN001
     return OnboardingStatusResponse(
         completed_at=status.completed_at,
+        display_name=status.display_name,
+        organization_name=status.organization_name,
+        profile_complete=status.profile_complete,
         company_id=status.company_id,
         company_valid=status.company_valid,
         company_problems=status.company_problems,

@@ -100,6 +100,7 @@ which it cannot know.
 | 25 | T-29 · the guided first run, backend half | `IN PROGRESS` | Ships in *feat: the first run has a ledger*. `GET /onboarding` derives the state; acceptances are per user per version and written as `contract` Documents into her data folder; `POST /onboarding/complete` refuses while the company fails validation or a required text is unaccepted. The legal registry is entirely undrafted, so the acceptance step gates on nothing until Henri supplies texts — the mechanism is real, the texts are his. Wizard, first-run gate and Settings → Data & privacy are next. 7 tests. |
 | 26 | T-29 · the guided first run, the wizard | `IN PROGRESS` | Ships in *feat: the guided first run*. Five steps on the Stepper, state re-read from `GET /onboarding` after every act, `FirstRunGate` in both shells, migration `a7c41e9d5f02` stamps organizations that already had a company. Left: toggles, logo, Data & privacy, data-directory choice — and Henri's texts, without which the legal step gates on nothing. 5 tests; 201 frontend. |
 | 27 | T-35 · the GDPR panel gets its server | `DONE` | Ships in *feat: a client is a data subject*. Export, erasure that stops where the invoice starts (name, VAT, address, contact person stay; email, phone, notes go; the invoice JSON, the re-rendered PDF and the archived file asserted byte-identical), and consent records kept append-only. The last scaffold on Client 360 is gone. 5 tests; 202 frontend. |
+| 28 | T-29 · the first run asks who is accepting | `IN PROGRESS` | Ships in *feat: the first run asks who is accepting*. The desktop bootstrap mints "Local user" for "My Business", so an accepted contract named nobody. A profile step asks for both and the server refuses to finish while either is a placeholder; the e-mail is left alone because it is the bootstrap's lookup key. Compliance check the same day filed T-36 and T-37 and added two conditions to T-34. |
 
 **This ledger's own list is closed.** Items 6–8 were the three the handover
 note sanctioned explicitly: *"None of these invents a screen; each connects a
@@ -112,8 +113,8 @@ happened to it.
 
 | | |
 |---|---|
-| Python | **678 collected, exit 0** — 16 new in T-27, 12 in T-23, 24 in T-28, 5 in T-30, 3 for the Edge hand-off found under T-21, 2 in T-33, 7 in T-29, 5 in T-35; `tests/desktop/` is 56 | 
-| Frontend | **202 passed** (`npm run test`, 32 files), typecheck clean across all four workspaces |
+| Python | **681 collected, exit 0** — 16 new in T-27, 12 in T-23, 24 in T-28, 5 in T-30, 3 for the Edge hand-off found under T-21, 2 in T-33, 7 in T-29, 5 in T-35, 3 for the first run's profile step; `tests/desktop/` is 56 | 
+| Frontend | **203 passed** (`npm run test`, 32 files), typecheck clean across all four workspaces |
 | `ruff check` | clean. CI runs `ruff check .` only — the tree is *not* `ruff format` clean and was not before, so do not reformat it as a side errand |
 | Architecture doc | **in sync** — both `sync-architecture --check` and `architecture_to_text.py --check` green at 102 endpoints across 25 routers |
 | Migrations | head is `b8d2f6a1c930` (consent records). The packaged build reads them as bytecode — `sourceless` is set in the *packaged* `alembic.ini` only, never the repository's (T-30). A dev database from before 2026-09-09 needs `alembic upgrade head`, and a desktop install migrates itself on boot |

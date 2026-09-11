@@ -16,6 +16,10 @@ class OnboardingStatusResponse(BaseModel):
     is a step counter the browser could get out of sync with."""
 
     completed_at: datetime | None
+    #  Who accepted, and for what. Placeholders until the first run asks.
+    display_name: str | None
+    organization_name: str | None
+    profile_complete: bool
     company_id: UUID | None
     company_valid: bool
     #  Field names from `validate_company_identifiers`, so the wizard can point

@@ -450,6 +450,46 @@
             }
           }
         }
+      },
+      "patch": {
+        "tags": [
+          "organizations"
+        ],
+        "summary": "Rename Current Org",
+        "description": "Rename the organization — what the first run asks for, and what a legal\ntext is accepted *for*.\n\nGuarded by `company.write` rather than a permission of its own: this is the\nsame act as editing the legal entity — reshaping the organization's own\nrecord rather than its trade — and one field does not justify a second\nentry in the matrix.",
+        "operationId": "rename_current_org_orgs_current_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/orgs/current/members": {
@@ -9321,6 +9361,32 @@
             ],
             "title": "Completed At"
           },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "organization_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization Name"
+          },
+          "profile_complete": {
+            "type": "boolean",
+            "title": "Profile Complete"
+          },
           "company_id": {
             "anyOf": [
               {
@@ -9389,6 +9455,9 @@
         "type": "object",
         "required": [
           "completed_at",
+          "display_name",
+          "organization_name",
+          "profile_complete",
           "company_id",
           "company_valid",
           "company_problems",
@@ -9431,6 +9500,22 @@
           "plan_tier"
         ],
         "title": "OrganizationResponse"
+      },
+      "OrganizationUpdateRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "OrganizationUpdateRequest",
+        "description": "The tenant's own label. Not the legal entity — that is a Company, and\nits name carries the mandatory mentions."
       },
       "PassphraseNoticeResponse": {
         "properties": {

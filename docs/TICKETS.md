@@ -33,128 +33,120 @@ wish, and the queue is not for wishes.
 
 ## Open — in priority order
 
-### T-34 · Mother's upgrade — her invoices come with her
-    branch    Backend / Desktop     status  open
-    needs     **one real export from her old app** — FinanceFlow BillGen's
-              JSON backup, the whole `{app, keys}` blob. Henri produces it in
-              minutes; nothing in this repository can stand in for it.
-    why       Henri 2026-09-11: she is on the old BillGen and should be on
-              this desktop build. The old app's export carries her invoices
-              under `billgen-invoices-<companyId>`, and
-              `core/imports/legacy_backup.py` **counts them and imports none**
-              ("not imported in v1" — `invoices_detected`). An upgrade today
-              brings her companies, clients and services and drops every
-              invoice she has ever issued, under a seven-year retention duty
-              — and, worse, the new install would start her numbering from 1
-              on a series that already exists.
-    do        Extend `ImportService` to carry invoices as **already-issued
-              history**, the way `BackupService.restore` inserts them: status
-              ISSUED, the legacy reference verbatim, `sequence_global`
-              assigned in legacy order, dates and totals as recorded, lines
-              as recorded (or one line per invoice if the old app kept only
-              totals — that is a fact her export decides). Then set the
-              company's `invoice` counter past the last legacy number so the
-              next invoice she issues continues the series. Nothing is
-              re-rendered and no number is minted; these documents were
-              issued by another program and this one is their archive.
-
-              The field mapping cannot be written before her file is in
-              hand: the only legacy invoice in this tree is a three-field
-              stub the tests invented. Do not guess it. `preview` must report
-              per invoice what mapped and what did not, so the first run
-              against her file is a report, not a write.
-    done when Her real export, previewed then committed into an empty
-              organization on the desktop build, yields the same number of
-              invoices the old app shows, each with its original reference
-              and total; the next invoice she issues takes the number after
-              her last one; and a test holds an anonymised copy of her
-              export's *shape* so the mapping cannot silently rot.
-
-### T-34 · Mother's upgrade — her invoices come with her
-    branch    Backend / Desktop     status  open
-    needs     **one real export from her old app** — FinanceFlow BillGen's
-              JSON backup, the whole `{app, keys}` blob. Henri produces it in
-              minutes; nothing in this repository can stand in for it.
-    why       Henri 2026-09-11: she is on the old BillGen and should be on
-              this desktop build. The old app's export carries her invoices
-              under `billgen-invoices-<companyId>`, and
-              `core/imports/legacy_backup.py` **counts them and imports none**
-              ("not imported in v1" — `invoices_detected`). An upgrade today
-              brings her companies, clients and services and drops every
-              invoice she has ever issued, under a seven-year retention duty
-              — and, worse, the new install would start her numbering from 1
-              on a series that already exists.
-    do        Extend `ImportService` to carry invoices as **already-issued
-              history**, the way `BackupService.restore` inserts them: status
-              ISSUED, the legacy reference verbatim, `sequence_global`
-              assigned in legacy order, dates and totals as recorded, lines
-              as recorded (or one line per invoice if the old app kept only
-              totals — that is a fact her export decides). Then set the
-              company's `invoice` counter past the last legacy number so the
-              next invoice she issues continues the series. Nothing is
-              re-rendered and no number is minted; these documents were
-              issued by another program and this one is their archive.
-
-              The field mapping cannot be written before her file is in
-              hand: the only legacy invoice in this tree is a three-field
-              stub the tests invented. Do not guess it. `preview` must report
-              per invoice what mapped and what did not, so the first run
-              against her file is a report, not a write.
-    done when Her real export, previewed then committed into an empty
-              organization on the desktop build, yields the same number of
-              invoices the old app shows, each with its original reference
-              and total; the next invoice she issues takes the number after
-              her last one; and a test holds an anonymised copy of her
-              export's *shape* so the mapping cannot silently rot.
-
-### T-35 · The GDPR panel on Client 360 gets its server
-    branch    Backend               status  open
+### T-36 · The register describes a product we are not shipping
+    branch    Compliance            status  open
     needs     —
-    why       Henri 2026-09-11, looking at Client 360 on the desktop build:
-              "is this finished for you?" The panel is drawn — Export data,
-              Erase personal data — and its ledger names what is missing:
-              per-client export, erasure, consent records. `core/trust`
-              already serves the legal texts, the consent *categories* and the
-              privacy register; nothing stores an acceptance and nothing
-              answers the two buttons. Until it does, the block is hidden on
-              the beta surface (see T-19 follow-up), which is honest and is
-              not the same as done: a client is a data subject, and a
-              controller who cannot export or erase on request is out of
-              Article 15/17 the day someone asks.
-    do        `POST /clients/{id}/privacy/export` — every record that names
-              the person (client row, contact fields, notes, invoices as
-              *references and totals*, payments), as JSON, audited.
-              `POST /clients/{id}/privacy/erase` — blanks the personal fields
-              on the client record and keeps every invoice byte-for-byte:
-              Belgian law retains invoices seven years, so "delete this
-              client" can never mean "delete these invoices", and the
-              response says so in the wording `core/trust` already holds.
-              Consent records: a `consent_decisions` table (user, category,
-              granted, version of the text, recorded_at, source) behind
-              `POST /consent` and `GET /consent`, using the `ConsentDecision`
-              shape `core/trust/consent.py` already defines and never stores.
-              Then the panel: enable the two buttons on the beta surface and
-              drop the scaffold block.
-    done when Export returns the client's data and the invoices it names;
-              erasure leaves the client's invoices unchanged (asserted
-              byte-for-byte on `GET /invoices/{id}` and on the T-27 file) and
-              the audit log records both; a consent decision recorded is read
-              back with the text version it was given for; and Client 360
-              renders the panel with no scaffold banner under `exposure="mvp"`.
+    why       Found by the compliance check on 2026-09-11. Two of our own
+              artifacts disagree, and the wrong one is the one counsel reads.
 
-    **2026-09-11, Henri's screenshot.** Three scaffold banners on Client 360 on
-    a handed-over build: `MVP_SURFACE` gates screens, and a scaffold *block*
-    inside a wired screen was reached by no list. Two fixes, both in
-    `frontend-react`. The "Totals" block was a stale scaffold — `GET
-    /clients/{id}/stats` had existed since 2026-08-28 and the block still
-    named it as missing — so it prints the server's figures now (four of the
-    five drawn; average days to pay waits on a label in every language, and
-    this repo does not write Dutch copy). And `ScaffoldBlock` reads the
-    build's exposure through a provider the routes set, and under `"mvp"`
-    renders nothing: not disabled, not greyed, absent — a customer is not owed
-    a ledger of what her software lacks. `Scaffold.test.tsx` holds the rule,
-    `Client360Panel.test.tsx` the figures. Tags & groups therefore no longer
-    ship; the GDPR panel's server is T-35.
+              `core/trust/personal_data.py:44` states as fact: *"it is their
+              clients', which is exactly why BillGen is a processor and needs
+              a DPA"*. [BETA_LAUNCH_PLAN.md](BETA_LAUNCH_PLAN.md) reversed that
+              on 2026-09-09 for the shape that actually ships: *"A desktop
+              build keeps that data on her laptop… The DPA drops out of the
+              beta."* The register generates [LEGAL_BRIEF.md](LEGAL_BRIEF.md),
+              so counsel is currently being told to draft a DPA for a
+              deployment that does not need one.
+
+              Second gap in the same file: the **licensing dataset is missing
+              from the register entirely** — e-mail, plan and a hardware
+              fingerprint (`desktop/licensing.py`), held by us, for a named
+              person. On a desktop install it is the *only* dataset that
+              reaches us, and it is the one not written down. Article 30 asks
+              for exactly that.
+    do        Rewrite the processor sentence to say which shape it describes:
+              hosted — processor, DPA required; desktop — the customer is the
+              controller and we are a software supplier, DPA out of scope
+              except for support (see Q6's note in the brief). Add a
+              `licensing` DataSet: fields (e-mail, plan, hardware
+              fingerprint), subject (the customer), basis CONTRACT, retention
+              (life of the licence), erasure ERASE, source
+              `desktop/licensing.py`. Regenerate the brief.
+    done when `GET /trust/privacy/register` lists a `licensing` dataset;
+              `LEGAL_BRIEF.md` no longer asserts processor status without
+              naming the deployment; a test asserts the register names every
+              dataset that reaches us, licensing included.
+
+### T-37 · The first run asks before it tells
+    branch    Frontend              status  open
+    needs     T-29
+    why       Found by the compliance check on 2026-09-11. The wizard's order
+              is language → profile → company → **terms** → seed. Article 13
+              wants the information given *at or before* collection, and the
+              company step collects a sole trader's KBO number, VAT number and
+              IBAN — personal data, for an *eenmanszaak* (brief Q2) — one step
+              before the texts are shown.
+
+              **It does not bite on the desktop**, which is why this is a
+              ticket and not a fix: nothing she types reaches us, so there is
+              no collection by us to inform her about. It bites the day the
+              same wizard runs on the hosted SaaS, where it does.
+    do        Move `legal` ahead of `company` in `STEP_KEYS` — identify
+              yourself, accept the texts, then set up. One line, plus the step
+              counts in `OnboardingWizard.test.tsx`.
+
+              **The product call is Henri's, not the compliance one:** asking
+              someone to accept terms before they have seen anything is a real
+              cost in a first run, and the alternative — a short notice on the
+              company step linking to the texts — satisfies Article 13 without
+              moving the gate.
+    done when The texts are shown or linked no later than the step that first
+              collects an identifier, asserted in the wizard test.
+
+### T-34 · Mother's upgrade — her invoices come with her
+    branch    Backend / Desktop     status  open
+    needs     **one real export from her old app** — FinanceFlow BillGen's
+              JSON backup, the whole `{app, keys}` blob. Henri produces it in
+              minutes; nothing in this repository can stand in for it.
+    why       Henri 2026-09-11: she is on the old BillGen and should be on
+              this desktop build. The old app's export carries her invoices
+              under `billgen-invoices-<companyId>`, and
+              `core/imports/legacy_backup.py` **counts them and imports none**
+              ("not imported in v1" — `invoices_detected`). An upgrade today
+              brings her companies, clients and services and drops every
+              invoice she has ever issued, under a seven-year retention duty
+              — and, worse, the new install would start her numbering from 1
+              on a series that already exists.
+    do        Extend `ImportService` to carry invoices as **already-issued
+              history**, the way `BackupService.restore` inserts them: status
+              ISSUED, the legacy reference verbatim, `sequence_global`
+              assigned in legacy order, dates and totals as recorded, lines
+              as recorded (or one line per invoice if the old app kept only
+              totals — that is a fact her export decides). Then set the
+              company's `invoice` counter past the last legacy number so the
+              next invoice she issues continues the series. Nothing is
+              re-rendered and no number is minted; these documents were
+              issued by another program and this one is their archive.
+
+              The field mapping cannot be written before her file is in
+              hand: the only legacy invoice in this tree is a three-field
+              stub the tests invented. Do not guess it. `preview` must report
+              per invoice what mapped and what did not, so the first run
+              against her file is a report, not a write.
+    done when Her real export, previewed then committed into an empty
+              organization on the desktop build, yields the same number of
+              invoices the old app shows, each with its original reference
+              and total; the next invoice she issues takes the number after
+              her last one; and a test holds an anonymised copy of her
+              export's *shape* so the mapping cannot silently rot.
+
+              **Two conditions the compliance check added (2026-09-11).**
+
+              *Before the file moves:* one e-mail from her asking for the
+              migration and saying the file holds her clients' details. She is
+              the controller; that sentence is the instruction, and it is the
+              whole basis needed. Work from a copy **outside** the repository
+              — `docs/legacy/` is ignored as of `2b67dac`, because a git
+              history outlives a deletion and this tree has a remote — and
+              delete it when this closes.
+
+              *Before she switches:* invoice count, last reference, totals and
+              the next number issued all match the old app. **Nothing is
+              decommissioned until all four do** — and if the history is not
+              imported, she must keep the old export readable for the balance
+              of the seven years, because the retention duty is hers and a
+              migration does not discharge it. Brief Q7 is the accountant's
+              half of this.
 
 ### T-25 · The data directory leaves the package container
     branch    Desktop               status  open
@@ -370,13 +362,33 @@ wish, and the queue is not for wishes.
               the beta surface and `nav: false` — reached by not having
               finished it.
 
+              **Profile registration, 2026-09-11** (*feat: the first run asks
+              who is accepting*). Henri: the first run is the app's own
+              configuration pass, not only his setup — it registers the
+              profile. He was right, and the gap had teeth:
+              `POST /auth/desktop-bootstrap` mints the local singleton as
+              **"Local user" for "My Business"**, so a contract accepted
+              through the wizard would have been signed by nobody, for
+              nothing. A profile step now asks for both, and the server
+              refuses to finish while either is still the placeholder.
+
+              The e-mail is deliberately **not** asked for: it is the key
+              `desktop_bootstrap` finds its singleton user by, and changing it
+              would mint a second user and a second organization on the next
+              launch — `test_renaming_the_organization_survives_the_next_bootstrap`
+              is that trap, held open. The placeholder strings live in
+              `core/services/onboarding_service.py` and the bootstrap imports
+              them, so the refusal cannot drift from what the bootstrap
+              writes; a test asserts the two still agree.
+
               Left, each named in the wizard's docstring: the feature
               toggles of the spec's step 3 (no `organization.modules`
               model), logo upload (B2), the sample-invoice extraction (no AI
               surface), Settings → Data & privacy, and the data-directory
-              choice, which needs a restart story with the Tauri shell. And
-              the texts: until `core/trust/legal.py` carries a drafted,
-              versioned body, the legal step gates on nothing.
+              choice, which needs a restart story with the Tauri shell. The
+              step order is T-37. And the texts: until `core/trust/legal.py`
+              carries a drafted, versioned body, the legal step gates on
+              nothing.
 
 ### T-30 · The shipped package — slimmed, legal, and not MSIX
     branch    Desktop               status  open

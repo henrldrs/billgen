@@ -322,6 +322,11 @@ export class ApiClient {
     return this.request("GET", "/users/me");
   }
 
+  /** Rename the organization — the name a legal text is accepted *for*. */
+  renameOrganization(name: string): Promise<OrganizationResponse> {
+    return this.request("PATCH", "/orgs/current", { name });
+  }
+
   currentOrganization(): Promise<OrganizationResponse> {
     return this.request("GET", "/orgs/current");
   }

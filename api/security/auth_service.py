@@ -11,6 +11,10 @@ from uuid import UUID, uuid4
 from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
+from core.services.onboarding_service import (
+    PLACEHOLDER_ORGANIZATION_NAME,
+    PLACEHOLDER_USER_NAME,
+)
 from db.models import (
     AuditLogRow,
     OrganizationRow,
@@ -26,6 +30,11 @@ from .password import hash_password, verify_password, waste_time
 
 MIN_PASSWORD_LENGTH = 8
 DESKTOP_EMAIL = "desktop@localhost.billgen"
+#  Deliberately placeholders, and deliberately named in core: the guided first
+#  run refuses to finish while either is still in place (T-29), because a
+#  contract accepted by "Local user" proves nothing. The e-mail is NOT one of
+#  them — it is this method's lookup key, and changing it would mint a second
+#  user and a second organization on the next launch.
 
 
 @dataclass(frozen=True)
@@ -326,8 +335,10 @@ class AuthService:
             ).scalar_one_or_none()
 
             if user is None:
-                org = OrganizationRow(id=uuid4(), name="My Business")
-                user = UserRow(id=uuid4(), email=DESKTOP_EMAIL, display_name="Local user")
+                org = OrganizationRow(id=uuid4(), name=PLACEHOLDER_ORGANIZATION_NAME)
+                user = UserRow(
+                    id=uuid4(), email=DESKTOP_EMAIL, display_name=PLACEHOLDER_USER_NAME
+                )
                 session.add_all([org, user])
                 session.flush()
                 session.add_all(

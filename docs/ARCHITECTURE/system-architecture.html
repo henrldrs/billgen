@@ -572,7 +572,7 @@ footer{
     <a href="#layermap">The Layer Map</a>
     <a href="#frontends">Multi-Frontend Architecture</a>
     <a href="#components">Component &amp; Library Comparison</a>
-    <a href="#backend">Backend Architecture <span class="n"><span data-fact="endpoint_count">112</span></span></a>
+    <a href="#backend">Backend Architecture <span class="n"><span data-fact="endpoint_count">113</span></span></a>
     <a href="#compliance">Compliance Architecture</a>
 
     <p class="rail__group">Execution</p>
@@ -588,7 +588,7 @@ footer{
     <p class="rail__group">Deep dive</p>
     <a href="#dataflow">Data Architecture</a>
     <a href="#debt">Backend Debt Ledger <span class="n">159</span></a>
-    <a href="#repo">Repo Map <span class="n"><span data-fact="tracked_files">696</span></span></a>
+    <a href="#repo">Repo Map <span class="n"><span data-fact="tracked_files">704</span></span></a>
     <a href="#entitlements">Entitlement Layer <span class="n">B4</span></a>
     <a href="#decisions">Decisions of Record <span class="n">4</span></a>
     <a href="#defects">Defects of Record <span class="n">4</span></a>
@@ -596,7 +596,7 @@ footer{
     <a href="#audit">Audit System <span class="n">13</span></a>
     <a href="#ownership">Work Distribution</a>
     <a href="#journey">Customer Journey</a>
-    <a href="#structure">Code Structure <span class="n"><span data-fact="tracked_files">696</span></span></a>
+    <a href="#structure">Code Structure <span class="n"><span data-fact="tracked_files">704</span></span></a>
 
     <p class="rail__group">Assurance</p>
     <a href="#assurance">Review Agents <span class="n">4</span></a>
@@ -624,7 +624,7 @@ footer{
     <em>scaffolded and deliberately left unwired</em> (<a href="#scaffolds">§18</a>), and a parallel
     audit engine was built from the specification in <code>docs/</code>
     (<a href="#audit">§19</a>). Backend tests 392 → <strong>423</strong>; the surface is now
-    <span data-fact="endpoint_count">112</span> endpoints across
+    <span data-fact="endpoint_count">113</span> endpoints across
     <span data-fact="router_count">27</span> routers.</p>
     <p><strong>And this document stopped being hand-maintained where it kept going wrong.</strong> The
     audit engine found eight endpoints documented here that no longer existed and fifty that were never
@@ -1459,7 +1459,7 @@ footer{
 └── utils/                 money · dates · jsonsafe
 
 api/                       Layer 2 — FastAPI
-├── routers/               <span data-fact="router_count">27</span> routers, <span data-fact="endpoint_count">112</span> endpoints
+├── routers/               <span data-fact="router_count">27</span> routers, <span data-fact="endpoint_count">113</span> endpoints
 ├── entitlements/          matrix(tiers) · service(resolve, quota_guard) · usage · deps · errors
 │                          the ONLY place a tier maps to a capability — core/ may not import it
 ├── security/              auth_service · jwt
@@ -1511,7 +1511,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
         <tr><td><code>imports</code></td><td class="num">2</td><td class="ev"><code>POST /imports/legacy/commit</code> · <code>POST /imports/legacy/preview</code></td></tr>
         <tr><td><code>invoices</code></td><td class="num">12</td><td class="ev"><code>GET /invoices</code> · <code>POST /invoices</code> · <code>POST /invoices/preview</code> · <code>DELETE /invoices/{invoice_id}</code> · <code>GET /invoices/{invoice_id}</code> · <code>GET /invoices/{invoice_id}/compliance</code> · <code>POST /invoices/{invoice_id}/duplicate</code> · <code>GET /invoices/{invoice_id}/html</code> · <code>POST /invoices/{invoice_id}/issue</code> · <code>GET /invoices/{invoice_id}/pdf</code> · <code>GET /invoices/{invoice_id}/peppol.xml</code> · <code>POST /invoices/{invoice_id}/void</code></td></tr>
         <tr><td><code>onboarding</code></td><td class="num">3</td><td class="ev"><code>GET /onboarding</code> · <code>POST /onboarding/acceptances</code> · <code>POST /onboarding/complete</code></td></tr>
-        <tr><td><code>organizations</code></td><td class="num">3</td><td class="ev"><code>GET /orgs/current</code> · <code>GET /orgs/current/members</code> · <code>PATCH /orgs/current/members/{user_id}</code></td></tr>
+        <tr><td><code>organizations</code></td><td class="num">4</td><td class="ev"><code>GET /orgs/current</code> · <code>PATCH /orgs/current</code> · <code>GET /orgs/current/members</code> · <code>PATCH /orgs/current/members/{user_id}</code></td></tr>
         <tr><td><code>payments</code></td><td class="num">2</td><td class="ev"><code>GET /payments</code> · <code>POST /payments</code></td></tr>
         <tr><td><code>privacy</code></td><td class="num">4</td><td class="ev"><code>POST /clients/{client_id}/privacy/erase</code> · <code>POST /clients/{client_id}/privacy/export</code> · <code>GET /consent</code> · <code>POST /consent</code></td></tr>
         <tr><td><code>products</code></td><td class="num">4</td><td class="ev"><code>GET /products</code> · <code>POST /products</code> · <code>GET /products/{product_id}</code> · <code>PATCH /products/{product_id}</code></td></tr>
@@ -2393,7 +2393,7 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
   <div class="sechead">
     <span class="sechead__id">§15</span>
     <h2>Repo Map</h2>
-    <p class="sechead__sub">What every directory is for, and the record of what was removed on 2026-08-26. <span data-fact="tracked_files">696</span> tracked files.</p>
+    <p class="sechead__sub">What every directory is for, and the record of what was removed on 2026-08-26. <span data-fact="tracked_files">704</span> tracked files.</p>
   </div>
 
   <p class="lede">A repository that cannot be read cheaply is a repository that gets misread. This section names the purpose of every top-level directory, so nothing in the tree is unexplained, and records what left.</p>
@@ -2405,10 +2405,10 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
     <table>
       <thead><tr><th>Path</th><th class="num">Files</th><th>What it is</th><th>What breaks without it</th></tr></thead>
       <tbody>
-        <tr><td><code>core/</code></td><td class="num"><span data-fact="files_core">112</span></td><td class="ev"><strong>Layer 1 — the product's actual logic.</strong> Money arithmetic, Belgian VAT, gapless invoice numbering, legal mentions, Peppol XML, PDF rendering, the legacy importer. Imports no web framework and no ORM.</td><td class="ev">Everything. This is the finished half of the product and the reason §01 reads 20% rather than 0%.</td></tr>
-        <tr><td><code>api/</code></td><td class="num"><span data-fact="files_api">76</span></td><td class="ev"><strong>Layer 2 — the HTTP boundary.</strong> <span data-fact="router_count">27</span> routers, <span data-fact="endpoint_count">112</span> endpoints, JWT auth, middleware — and <code>api/entitlements/</code>, the commercial matrix. Translates JSON into domain calls and back, and decides whether the caller's plan permits the call.</td><td class="ev">No frontend can reach the domain. <code>core/</code> would still pass its tests.</td></tr>
-        <tr><td><code>db/</code></td><td class="num"><span data-fact="files_db">42</span></td><td class="ev">SQLAlchemy models and the Alembic migration history. The concrete implementation behind <code>core/repository/</code>'s abstract ports.</td><td class="ev">Nothing persists. The domain would run entirely in memory.</td></tr>
-        <tr><td><code>tests/</code></td><td class="num"><span data-fact="files_tests">80</span></td><td class="ev">557 backend tests. Includes the palette guard test and the icon-grammar guard test, both build-failing.</td><td class="ev">The brand decisions at <code>4e39460</code> and <code>81d2c66</code> become suggestions rather than rules.</td></tr>
+        <tr><td><code>core/</code></td><td class="num"><span data-fact="files_core">115</span></td><td class="ev"><strong>Layer 1 — the product's actual logic.</strong> Money arithmetic, Belgian VAT, gapless invoice numbering, legal mentions, Peppol XML, PDF rendering, the legacy importer. Imports no web framework and no ORM.</td><td class="ev">Everything. This is the finished half of the product and the reason §01 reads 20% rather than 0%.</td></tr>
+        <tr><td><code>api/</code></td><td class="num"><span data-fact="files_api">78</span></td><td class="ev"><strong>Layer 2 — the HTTP boundary.</strong> <span data-fact="router_count">27</span> routers, <span data-fact="endpoint_count">113</span> endpoints, JWT auth, middleware — and <code>api/entitlements/</code>, the commercial matrix. Translates JSON into domain calls and back, and decides whether the caller's plan permits the call.</td><td class="ev">No frontend can reach the domain. <code>core/</code> would still pass its tests.</td></tr>
+        <tr><td><code>db/</code></td><td class="num"><span data-fact="files_db">44</span></td><td class="ev">SQLAlchemy models and the Alembic migration history. The concrete implementation behind <code>core/repository/</code>'s abstract ports.</td><td class="ev">Nothing persists. The domain would run entirely in memory.</td></tr>
+        <tr><td><code>tests/</code></td><td class="num"><span data-fact="files_tests">81</span></td><td class="ev">557 backend tests. Includes the palette guard test and the icon-grammar guard test, both build-failing.</td><td class="ev">The brand decisions at <code>4e39460</code> and <code>81d2c66</code> become suggestions rather than rules.</td></tr>
         <tr><td><code>henrioutai-ui/</code></td><td class="num"><span data-fact="files_henrioutai_ui">89</span></td><td class="ev"><strong>The design system, and the only place components are edited.</strong> 63 components (<code>ls src/components/*.tsx</code>, minus tests), <code>tokens.css</code>, three vendored font files. Its own package, MIT, public-ready.</td><td class="ev">Every frontend loses its component vocabulary. <code>@billgen/ui</code> re-exports this; it holds nothing of its own.</td></tr>
         <tr><td><code>frontend-react/</code></td><td class="num"><span data-fact="files_frontend_react">123</span></td><td class="ev"><strong>Holds <code>src/scaffold/ia.ts</code> — the source of truth</strong> for nav, routes, status and the 149 gaps in §14. Also the scaffold kit that renders unwired areas as deliberately ugly.</td><td class="ev">No frontend knows what screens exist. This is the highest-leverage file in the repository.</td></tr>
         <tr><td><code>frontend-saas/</code></td><td class="num"><span data-fact="files_frontend_saas">16</span></td><td class="ev">L3, the active surface. React 19 + Vite + react-router. Thin — it composes <code>henrioutai-ui</code> against <code>ia.ts</code>.</td><td class="ev">The web product. Thin by design: the weight lives in the two directories above.</td></tr>
@@ -3057,15 +3057,15 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
   <div class="layerdiagram">
     <div class="layerdiagram__row" data-layer="frontend"><span class="layerdiagram__name"><code>Frontends</code></span><span class="layerdiagram__blurb">L3 · L4 — what a person sees</span><span class="layerdiagram__n">265</span></div>
     <div class="layerdiagram__arrow" aria-hidden="true">↓</div>
-    <div class="layerdiagram__row" data-layer="api"><span class="layerdiagram__name"><code>api/</code></span><span class="layerdiagram__blurb">L2 — HTTP boundary, authorization, entitlements</span><span class="layerdiagram__n">76</span></div>
+    <div class="layerdiagram__row" data-layer="api"><span class="layerdiagram__name"><code>api/</code></span><span class="layerdiagram__blurb">L2 — HTTP boundary, authorization, entitlements</span><span class="layerdiagram__n">78</span></div>
     <div class="layerdiagram__arrow" aria-hidden="true">↓</div>
-    <div class="layerdiagram__row" data-layer="db"><span class="layerdiagram__name"><code>db/</code></span><span class="layerdiagram__blurb">persistence — SQLAlchemy rows and migrations</span><span class="layerdiagram__n">42</span></div>
+    <div class="layerdiagram__row" data-layer="db"><span class="layerdiagram__name"><code>db/</code></span><span class="layerdiagram__blurb">persistence — SQLAlchemy rows and migrations</span><span class="layerdiagram__n">44</span></div>
     <div class="layerdiagram__arrow" aria-hidden="true">↓</div>
-    <div class="layerdiagram__row" data-layer="core"><span class="layerdiagram__name"><code>core/</code></span><span class="layerdiagram__blurb">L1 — domain logic, no framework imports</span><span class="layerdiagram__n">112</span></div>
+    <div class="layerdiagram__row" data-layer="core"><span class="layerdiagram__name"><code>core/</code></span><span class="layerdiagram__blurb">L1 — domain logic, no framework imports</span><span class="layerdiagram__n">115</span></div>
   </div>
   <div class="tw"><table>
     <thead><tr><th>Import edge</th><th class="num">Count</th><th>Allowed by ADR-0001</th></tr></thead><tbody>
-      <tr><td><code>api/</code> &rarr; <code>core/</code></td><td class="num">97</td><td><span class="chip c-done">yes</span></td></tr>
+      <tr><td><code>api/</code> &rarr; <code>core/</code></td><td class="num">98</td><td><span class="chip c-done">yes</span></td></tr>
       <tr><td><code>api/</code> &rarr; <code>db/</code></td><td class="num">7</td><td><span class="chip c-done">yes</span></td></tr>
       <tr><td><code>db/</code> &rarr; <code>core/</code></td><td class="num">9</td><td><span class="chip c-done">yes</span></td></tr>
       <tr><td><code>core/</code> &rarr; <code>api/</code></td><td class="num">0</td><td><span class="chip c-done">held</span></td></tr>
@@ -3082,8 +3082,8 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;authz/</code></td><td class="num">4</td></tr>
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;entitlements/</code></td><td class="num">6</td></tr>
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;middleware/</code></td><td class="num">3</td></tr>
-      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;routers/</code></td><td class="num">27</td></tr>
-      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;schemas/</code></td><td class="num">25</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;routers/</code></td><td class="num">28</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;schemas/</code></td><td class="num">26</td></tr>
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;security/</code></td><td class="num">5</td></tr>
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;brand/</code></td><td class="num">1</td></tr>
       <tr><td><code>billgen-audit/</code></td><td class="num">4</td></tr>
@@ -3096,17 +3096,17 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;documents/</code></td><td class="num">2</td></tr>
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;einvoicing/</code></td><td class="num">3</td></tr>
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;imports/</code></td><td class="num">4</td></tr>
-      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;models/</code></td><td class="num">18</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;models/</code></td><td class="num">19</td></tr>
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;pdf/</code></td><td class="num">10</td></tr>
-      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;repository/</code></td><td class="num">17</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;repository/</code></td><td class="num">18</td></tr>
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;rules/</code></td><td class="num">8</td></tr>
-      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;services/</code></td><td class="num">27</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;services/</code></td><td class="num">28</td></tr>
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;trust/</code></td><td class="num">6</td></tr>
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;tva/</code></td><td class="num">7</td></tr>
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;utils/</code></td><td class="num">4</td></tr>
       <tr><td><code>db/</code></td><td class="num">4</td></tr>
-      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;migrations/</code></td><td class="num">15</td></tr>
-      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;models/</code></td><td class="num">19</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;migrations/</code></td><td class="num">16</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;models/</code></td><td class="num">20</td></tr>
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;repositories/</code></td><td class="num">4</td></tr>
       <tr><td><code>desktop/</code></td><td class="num">7</td></tr>
       <tr><td><code>docs/</code></td><td class="num">24</td></tr>
@@ -3125,12 +3125,12 @@ db/                        SQLAlchemy 2.x + Alembic; SQLite (desktop) | Postgres
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;docker/</code></td><td class="num">3</td></tr>
       <tr><td><code>scripts/</code></td><td class="num">8</td></tr>
       <tr><td><code>tests/</code></td><td class="num">1</td></tr>
-      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;api/</code></td><td class="num">33</td></tr>
+      <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;api/</code></td><td class="num">34</td></tr>
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;core/</code></td><td class="num">36</td></tr>
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;db/</code></td><td class="num">4</td></tr>
       <tr><td><code>&nbsp;&nbsp;&nbsp;&nbsp;desktop/</code></td><td class="num">6</td></tr>
       <tr><td><em>files at the repository root</em></td><td class="num">15</td></tr>
-      <tr><td><strong>Total tracked</strong></td><td class="num"><strong>696</strong></td></tr>
+      <tr><td><strong>Total tracked</strong></td><td class="num"><strong>704</strong></td></tr>
     </tbody></table></div>
 <!-- /GENERATED:structure -->
 

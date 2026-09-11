@@ -143,3 +143,75 @@ async def test_switching_back_down_takes_the_feature_away(desktop_client):
     entitlements = (await desktop_client.get("/entitlements", headers=headers)).json()
     assert entitlements["tier"] == "free"
     assert entitlements["features"]["pdf_templates_premium"] is False
+
+
+# ── the first run's profile step (T-29) ─────────────────────────────────────
+
+
+async def test_the_bootstrap_still_writes_the_placeholders_core_checks_for(desktop_client):
+    """The drift guard. `OnboardingService` refuses to finish the first run
+    while the identity is still the bootstrap's placeholder, and it compares
+    against constants defined in core. If this method ever writes something
+    else, that refusal silently stops working and a contract gets accepted by
+    nobody — so the two are asserted equal here rather than assumed."""
+    from core.services.onboarding_service import (  # noqa: PLC0415
+        PLACEHOLDER_ORGANIZATION_NAME,
+        PLACEHOLDER_USER_NAME,
+    )
+
+    body = (await desktop_client.post("/auth/desktop-bootstrap")).json()
+    headers = {"Authorization": f"Bearer {body['tokens']['access_token']}"}
+
+    assert body["display_name"] == PLACEHOLDER_USER_NAME
+    org = (await desktop_client.get("/orgs/current", headers=headers)).json()
+    assert org["name"] == PLACEHOLDER_ORGANIZATION_NAME
+
+
+async def test_a_desktop_first_run_cannot_finish_under_the_placeholder_identity(desktop_client):
+    body = (await desktop_client.post("/auth/desktop-bootstrap")).json()
+    headers = {"Authorization": f"Bearer {body['tokens']['access_token']}"}
+
+    status = (await desktop_client.get("/onboarding", headers=headers)).json()
+    assert status["profile_complete"] is False
+    assert "profile" in status["blockers"]
+    assert status["can_complete"] is False
+
+    #  Naming the person is not enough on its own — the text is accepted *for*
+    #  an organization, and "My Business" names none.
+    named = await desktop_client.patch(
+        "/users/me", json={"display_name": "Emilia Rossi"}, headers=headers
+    )
+    assert named.status_code == 200, named.text
+    assert (await desktop_client.get("/onboarding", headers=headers)).json()[
+        "profile_complete"
+    ] is False
+
+    renamed = await desktop_client.patch(
+        "/orgs/current", json={"name": "Rossi Consulting"}, headers=headers
+    )
+    assert renamed.status_code == 200, renamed.text
+
+    status = (await desktop_client.get("/onboarding", headers=headers)).json()
+    assert status["profile_complete"] is True
+    assert status["display_name"] == "Emilia Rossi"
+    assert status["organization_name"] == "Rossi Consulting"
+    assert "profile" not in status["blockers"]
+
+
+async def test_renaming_the_organization_survives_the_next_bootstrap(desktop_client):
+    """The trap this design avoids: the bootstrap finds its singleton by
+    e-mail, so the first run changes the *names* and never the address. A
+    second launch must return the same user and the same organization, not a
+    fresh pair beside them."""
+    first = (await desktop_client.post("/auth/desktop-bootstrap")).json()
+    headers = {"Authorization": f"Bearer {first['tokens']['access_token']}"}
+    await desktop_client.patch("/users/me", json={"display_name": "Emilia Rossi"}, headers=headers)
+    await desktop_client.patch(
+        "/orgs/current", json={"name": "Rossi Consulting"}, headers=headers
+    )
+
+    second = (await desktop_client.post("/auth/desktop-bootstrap")).json()
+
+    assert second["user_id"] == first["user_id"]
+    assert second["organization_id"] == first["organization_id"]
+    assert second["display_name"] == "Emilia Rossi"

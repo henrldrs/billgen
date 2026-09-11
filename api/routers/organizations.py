@@ -5,12 +5,12 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from core.models import AuditAction
 from core.repository import UnitOfWork
-from core.services import _audit
+from core.services import OrganizationService, _audit
 from core.tenancy import current_organization_id
 
 from ..authz import Permission, require_permission
 from ..deps import current_user_id, get_uow_factory
-from ..schemas.organizations import OrganizationResponse
+from ..schemas.organizations import OrganizationResponse, OrganizationUpdateRequest
 from ..schemas.users import MemberResponse, MemberRoleUpdateRequest
 
 router = APIRouter(prefix="/orgs", tags=["organizations"])
@@ -30,6 +30,24 @@ def current_org(
         country_code=org.country_code,
         plan_tier=org.plan_tier.value,
     )
+
+
+@router.patch("/current", response_model=OrganizationResponse)
+def rename_current_org(
+    body: OrganizationUpdateRequest,
+    user_id: UUID = Depends(current_user_id),
+    uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
+    _perm: None = Depends(require_permission(Permission.COMPANY_WRITE)),
+):
+    """Rename the organization — what the first run asks for, and what a legal
+    text is accepted *for*.
+
+    Guarded by `company.write` rather than a permission of its own: this is the
+    same act as editing the legal entity — reshaping the organization's own
+    record rather than its trade — and one field does not justify a second
+    entry in the matrix."""
+    renamed = OrganizationService(uow_factory).rename(body.name, actor_user_id=user_id)
+    return OrganizationResponse.model_validate(renamed.model_dump())
 
 
 @router.get("/current/members", response_model=list[MemberResponse])
