@@ -6,6 +6,8 @@ and the last one prints through the real Edge when there is one."""
 import re
 import subprocess
 import sys
+import threading
+import time
 from pathlib import Path
 from urllib.parse import urlparse
 from urllib.request import url2pathname
@@ -81,10 +83,10 @@ def _fake_browser(writes: bytes | None):
 
 
 def test_edge_gets_the_document_and_its_pdf_comes_back(monkeypatch):
-    run, seen = _fake_browser(b"%PDF-1.7 fake")
+    run, seen = _fake_browser(b"%PDF-1.7 fake\n%%EOF\n")
     monkeypatch.setattr(subprocess, "run", run)
 
-    assert renderer._edge_pdf(HTML, Path("msedge.exe")) == b"%PDF-1.7 fake"
+    assert renderer._edge_pdf(HTML, Path("msedge.exe")) == b"%PDF-1.7 fake\n%%EOF\n"
     assert seen["html"] == HTML
     # The working directory, profile included, leaves with the render.
     assert not seen["source"].exists()
@@ -93,8 +95,50 @@ def test_edge_gets_the_document_and_its_pdf_comes_back(monkeypatch):
 def test_a_browser_that_writes_nothing_fails_the_render(monkeypatch):
     run, _seen = _fake_browser(None)
     monkeypatch.setattr(subprocess, "run", run)
-    with pytest.raises(RuntimeError, match="wrote no PDF"):
+    #  The real wait is 30 s, sized for a background Edge that is busy. Here
+    #  nothing will ever write, so the test only needs the wait to be *bounded*.
+    monkeypatch.setattr(renderer, "_EDGE_HANDOFF_WAIT_S", 0.3)
+    with pytest.raises(RuntimeError, match="wrote no PDF within 0.3s"):
         renderer._edge_pdf(HTML, Path("msedge.exe"))
+
+
+def test_a_browser_that_hands_off_and_writes_later_still_renders(monkeypatch):
+    """What Edge actually does on Windows 11 with startup boost on: the launcher
+    returns in a tenth of a second having handed the job to the background
+    instance, and the PDF lands about a second later, written by a process
+    the renderer never started. Measured 2026-09-11 on Edge 152.0.4191.66 —
+    and the render failed with "wrote no PDF" until it learned to wait."""
+
+    def run(argv, **kwargs):
+        output = Path(
+            next(a for a in argv if a.startswith("--print-to-pdf=")).removeprefix(
+                "--print-to-pdf="
+            )
+        )
+
+        def later():
+            #  Two steps, so the size is seen moving before it settles: the
+            #  renderer must not read a PDF that is still being written.
+            output.write_bytes(b"%PDF-1.7 half, no trailer yet")
+            time.sleep(0.25)
+            output.write_bytes(b"%PDF-1.7 whole, from the background instance\n%%EOF\n")
+
+        threading.Timer(0.3, later).start()
+        return subprocess.CompletedProcess(argv, 0, b"", b"")
+
+    monkeypatch.setattr(subprocess, "run", run)
+    assert renderer._edge_pdf(HTML, Path("msedge.exe")) == (
+        b"%PDF-1.7 whole, from the background instance\n%%EOF\n"
+    )
+
+
+def test_a_complete_pdf_without_a_trailer_is_still_returned_at_the_deadline(monkeypatch):
+    """The trailer is a reason to keep waiting, never a reason to refuse: a
+    writer that omits it costs the wait, not the document."""
+    run, _seen = _fake_browser(b"%PDF-1.7 odd but complete")
+    monkeypatch.setattr(subprocess, "run", run)
+    monkeypatch.setattr(renderer, "_EDGE_HANDOFF_WAIT_S", 0.3)
+    assert renderer._edge_pdf(HTML, Path("msedge.exe")) == b"%PDF-1.7 odd but complete"
 
 
 def test_a_browser_that_exits_badly_reports_its_last_line(monkeypatch):
@@ -186,3 +230,31 @@ def test_edge_prints_real_bytes():
     `_edge_pdf` imports nothing and downloads nothing."""
     pdf = renderer._edge_pdf(HTML, renderer._edge_executable())
     assert pdf.startswith(b"%PDF")
+
+
+@pytest.mark.skipif(
+    sys.platform != "win32" or renderer._edge_executable() is None,
+    reason="needs the real Edge, and its Windows startup-boost behaviour",
+)
+def test_edge_prints_real_bytes_with_a_background_instance_running():
+    """The reproduction, not a simulation: start the windowless background Edge
+    that startup boost keeps alive on a Windows 11 machine, then render.
+
+    If a background instance already exists the spawn hands off and exits at
+    once, the condition under test is present anyway, and nothing is killed
+    on teardown — the instance was never ours."""
+    edge = renderer._edge_executable()
+    background = subprocess.Popen(
+        [str(edge), "--no-startup-window"],
+        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+    )
+    try:
+        time.sleep(3)
+        pdf = renderer._edge_pdf(HTML, edge)
+        assert pdf.startswith(b"%PDF")
+    finally:
+        #  Still running means the process *is* the background browser we
+        #  started. Exited means it handed off to one that was already there.
+        if background.poll() is None:
+            background.kill()
+            background.wait(timeout=10)

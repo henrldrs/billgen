@@ -2,6 +2,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -44,6 +45,22 @@ _BROWSER_OVERRIDE = "BILLGEN_PDF_BROWSER"
 # A render is one process launch on a fresh profile, so this is mostly Edge's
 # own start-up; the probe on the development laptop takes about three seconds.
 _EDGE_TIMEOUT_S = 60
+
+# How long to keep waiting for the PDF *after* the launcher has returned.
+#
+# When an Edge is already running in the background — and on Windows 11 one
+# usually is: "startup boost" keeps a windowless `msedge.exe --no-startup-window`
+# alive from logon — a headless launch does not render. It hands the print job
+# to that instance and exits in a tenth of a second, and the PDF lands about a
+# second later, written by a process this code never started. A private
+# `--user-data-dir` does not prevent the hand-off (measured 2026-09-11, Edge
+# 152.0.4191.66: every variant tried, startup boost disabled included, handed
+# off the same way); it only stops the job being dropped. So the launcher's
+# return says nothing, and the file is what is waited for. Without a
+# background instance the launcher blocks until the file exists and this wait
+# costs one poll.
+_EDGE_HANDOFF_WAIT_S = 30
+_EDGE_POLL_S = 0.1
 
 
 def _edge_candidates() -> Iterator[Path]:
@@ -90,10 +107,10 @@ def _edge_command(executable: Path, source: Path, output: Path, profile: Path) -
         "--no-default-browser-check",
         "--disable-extensions",
         "--disable-sync",
-        # A profile of its own, per render. Without one Edge hands the command
-        # to any instance already running on the user's profile — which prints
-        # nothing and returns at once — and two renders at a time would do the
-        # same to each other.
+        # A profile of its own, per render. Without one, a job handed to the
+        # instance already running on the user's profile prints nothing, and
+        # two renders at a time would do the same to each other. It does NOT
+        # stop the hand-off itself — see _EDGE_HANDOFF_WAIT_S for what does.
         f"--user-data-dir={profile}",
         # Chromium 109 (2023) and later; before that the switch was
         # --print-to-pdf-no-header.
@@ -134,12 +151,49 @@ def _edge_pdf(html: str, executable: Path) -> bytes:
             detail = stderr[-1] if stderr else "no output"
             raise RuntimeError(f"exit status {exc.returncode}: {detail}") from exc
 
-        if not output.is_file():
-            raise RuntimeError("exited cleanly and wrote no PDF")
-        pdf = output.read_bytes()
+        pdf = _wait_for_pdf(output, _EDGE_HANDOFF_WAIT_S)
+        if pdf is None:
+            raise RuntimeError(
+                f"exited cleanly and wrote no PDF within {_EDGE_HANDOFF_WAIT_S:g}s — "
+                "an Edge already running in the background took the print job "
+                "and did not finish it"
+            )
         if not pdf.startswith(b"%PDF"):
             raise RuntimeError("wrote a file that is not a PDF")
         return pdf
+
+
+def _wait_for_pdf(output: Path, wait_s: float) -> bytes | None:
+    """The PDF once it is whole, or None when `wait_s` passes with no file.
+
+    The writer is a process this code did not start and cannot join, so
+    "whole" has to be read off the file: non-empty, the same size on two
+    consecutive polls, and ending in the `%%EOF` trailer the PDF format puts
+    last. Size alone is not enough — a writer that pauses mid-file looks
+    stable for a poll or two. At the deadline a non-empty file is returned
+    as it is rather than refused: the trailer is a reason to keep waiting,
+    not a reason to throw a PDF away.
+    """
+    deadline = time.monotonic() + wait_s
+    last_size = -1
+    while True:
+        size = output.stat().st_size if output.is_file() else 0
+        if size > 0 and size == last_size and _ends_like_a_pdf(output):
+            return output.read_bytes()
+        last_size = size
+        if time.monotonic() >= deadline:
+            return output.read_bytes() if size > 0 else None
+        time.sleep(_EDGE_POLL_S)
+
+
+def _ends_like_a_pdf(output: Path) -> bool:
+    try:
+        with output.open("rb") as handle:
+            handle.seek(0, os.SEEK_END)
+            handle.seek(max(handle.tell() - 16, 0))
+            return handle.read().rstrip().endswith(b"%%EOF")
+    except OSError:
+        return False
 
 
 # ── Playwright's Chromium, for the container ───────────────────────────────
