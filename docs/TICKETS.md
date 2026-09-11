@@ -315,10 +315,31 @@ wish, and the queue is not for wishes.
               second stamp. Migration `f3a9d2c7b815`; 7 tests in
               `tests/api/test_onboarding.py`, one of which drafts a text
               into the registry for its own duration, because none is.
-              Left: the wizard itself (five steps from the spec), the
-              first-run gate in both shells, Settings → Data & privacy, and
-              the data-directory choice — which needs a restart story with
-              the Tauri shell and is its own small ticket when it comes.
+              **Wizard and gate done, later the same day** (*feat: the
+              guided first run*). `OnboardingWizard` at `onboarding/wizard`
+              on the design system's Stepper: language & look (the app's own
+              switchers), the company (the existing `CompanyForm`, then the
+              server's verdict field by field), the published legal texts
+              to accept — data-driven, and honest that today the list is
+              empty — a first client and service (optional, counted by the
+              server), and the finish, which is the server's `complete` and
+              on refusal names each blocker. `FirstRunGate` in both shells
+              sends an organization with no `completed_at` to the wizard and
+              fails open on error; migration `a7c41e9d5f02` stamps every
+              organization that already owned a company, so no dev database
+              or earlier install is sent to a wizard for a setup it has done.
+              Copy in four languages; the Dutch is drafted, not native-read.
+              5 wizard tests, 201 frontend tests, `onboarding/wizard` is on
+              the beta surface and `nav: false` — reached by not having
+              finished it.
+
+              Left, each named in the wizard's docstring: the feature
+              toggles of the spec's step 3 (no `organization.modules`
+              model), logo upload (B2), the sample-invoice extraction (no AI
+              surface), Settings → Data & privacy, and the data-directory
+              choice, which needs a restart story with the Tauri shell. And
+              the texts: until `core/trust/legal.py` carries a drafted,
+              versioned body, the legal step gates on nothing.
 
 ### T-30 · The shipped package — slimmed, legal, and not MSIX
     branch    Desktop               status  open

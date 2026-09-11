@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type {
+  AcceptRequest,
   ClientCreateRequest,
   ClientUpdateRequest,
   CompanyCreateRequest,
@@ -32,7 +33,11 @@ export function useCreateCompany() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body: CompanyCreateRequest) => api.createCompany(body),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["companies"] }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["companies"] });
+      //  The first run watches for a company (T-29).
+      void queryClient.invalidateQueries({ queryKey: ["onboarding"] });
+    },
   });
 }
 
@@ -61,7 +66,10 @@ export function useCreateClient() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body: ClientCreateRequest) => api.createClient(body),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["clients"] }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["clients"] });
+      void queryClient.invalidateQueries({ queryKey: ["onboarding"] });
+    },
   });
 }
 
@@ -101,7 +109,10 @@ export function useCreateProduct() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body: ProductCreateRequest) => api.createProduct(body),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["products"] }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["products"] });
+      void queryClient.invalidateQueries({ queryKey: ["onboarding"] });
+    },
   });
 }
 
@@ -384,6 +395,35 @@ export function useCompanyValidation(companyId: string | undefined) {
     queryKey: ["company-validation", companyId],
     queryFn: () => api.validateCompany(companyId as string),
     enabled: Boolean(companyId),
+  });
+}
+
+// ---- onboarding — the guided first run (T-29) ----------------------------------
+
+/** Derived on every call; `completed_at` is what the first-run gate reads. */
+export function useOnboardingStatus() {
+  const api = useApi();
+  return useQuery({ queryKey: ["onboarding"], queryFn: () => api.onboardingStatus() });
+}
+
+export function useAcceptLegalText() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: AcceptRequest) => api.acceptLegalText(body),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["onboarding"] });
+      void queryClient.invalidateQueries({ queryKey: ["documents"] });
+    },
+  });
+}
+
+export function useCompleteOnboarding() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.completeOnboarding(),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["onboarding"] }),
   });
 }
 

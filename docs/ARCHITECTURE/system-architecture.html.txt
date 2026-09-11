@@ -1722,7 +1722,7 @@ What is still open here. GET /clients/{id}/stats is the only endpoint left on th
 Repo Map
 --------
 
-What every directory is for, and the record of what was removed on 2026-08-26. 683 tracked files.
+What every directory is for, and the record of what was removed on 2026-08-26. 692 tracked files.
 
 A repository that cannot be read cheaply is a repository that gets misread. This section names the purpose of every top-level directory, so nothing in the tree is unexplained, and records what left.
 
@@ -1730,26 +1730,26 @@ What every directory is for
 
 Ordered as the request flows through them — §13's bands, as files.
 
-core/ · 108
+core/ · 112
     What it is: Layer 1 — the product's actual logic. Money arithmetic, Belgian VAT, gapless
     invoice numbering, legal mentions, Peppol XML, PDF rendering, the legacy importer.
     Imports no web framework and no ORM.
     What breaks without it: Everything. This is the finished half of the product and the
     reason §01 reads 20% rather than 0%.
 
-api/ · 74
+api/ · 76
     What it is: Layer 2 — the HTTP boundary. 26 routers, 108 endpoints, JWT auth, middleware
     — and api/entitlements/, the commercial matrix. Translates JSON into domain calls and
     back, and decides whether the caller's plan permits the call.
     What breaks without it: No frontend can reach the domain. core/ would still pass its
     tests.
 
-db/ · 39
+db/ · 41
     What it is: SQLAlchemy models and the Alembic migration history. The concrete
     implementation behind core/repository/'s abstract ports.
     What breaks without it: Nothing persists. The domain would run entirely in memory.
 
-tests/ · 79
+tests/ · 80
     What it is: 557 backend tests. Includes the palette guard test and the icon-grammar
     guard test, both build-failing.
     What breaks without it: The brand decisions at 4e39460 and 81d2c66 become suggestions
@@ -2503,8 +2503,8 @@ api/                          6
 authz/                        4
 entitlements/                 6
 middleware/                   3
-routers/                      26
-schemas/                      24
+routers/                      27
+schemas/                      25
 security/                     5
 brand/                        1
 billgen-audit/                4
@@ -2517,17 +2517,17 @@ backup/                       3
 documents/                    2
 einvoicing/                   3
 imports/                      4
-models/                       17
-pdf/                          9
-repository/                   16
+models/                       18
+pdf/                          10
+repository/                   17
 rules/                        8
-services/                     26
+services/                     27
 trust/                        6
 tva/                          7
 utils/                        4
 db/                           4
-migrations/                   13
-models/                       18
+migrations/                   14
+models/                       19
 repositories/                 4
 desktop/                      7
 docs/                         24
@@ -2546,12 +2546,12 @@ src/                          85
 docker/                       3
 scripts/                      8
 tests/                        1
-api/                          32
+api/                          33
 core/                         36
 db/                           4
 desktop/                      6
 files at the repository root  15
-Total tracked                 683
+Total tracked                 692
 
 Reading the layers
 

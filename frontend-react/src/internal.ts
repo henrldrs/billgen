@@ -110,6 +110,8 @@ export { BackupPanel } from "./panels/BackupPanel";
 export { Client360Panel, type Client360PanelProps } from "./panels/Client360Panel";
 export { ClientsPanel } from "./panels/ClientsPanel";
 export { CompanyForm } from "./panels/CompanyForm";
+export { OnboardingWizard, type OnboardingWizardProps } from "./panels/OnboardingWizard";
+export { FirstRunGate, type FirstRunGateProps } from "./shell/FirstRunGate";
 export {
   CompanySettingsPanel,
   type CompanySection,

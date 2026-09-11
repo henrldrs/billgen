@@ -1366,15 +1366,18 @@ export const IA: IaSection[] = [
         key: "onboarding.wizard",
         label: "Setup wizard",
         path: "onboarding/wizard",
-        status: "partial",
+        nav: false,
+        status: "wired",
         layer: "L3",
-        endpoints: ["POST /companies", "POST /clients", "POST /invoices"],
-        missing: [
-          "onboarding progress persisted per org",
-          "resume-where-you-left-off",
-          "branding / template steps (no endpoints)",
+        endpoints: [
+          "GET /onboarding",
+          "POST /onboarding/acceptances",
+          "POST /onboarding/complete",
+          "POST /companies",
+          "POST /clients",
+          "POST /products",
         ],
-        note: "The nine intended steps (activity, company, VAT, bank, numbering, branding, template, first client, first invoice) reduce to one un-resumable CompanyForm today. Steps 6 and 7 have no backend at all.",
+        note: "The guided first run (T-29, 2026-09-11): language & look, the company (gated on GET /companies/{id}/validation's rules), the published legal texts to accept, a first client and service, the first invoice. State is the server's — GET /onboarding is derived on every call and POST /onboarding/complete refuses while a blocker stands — so it resumes wherever it was left. Shown by FirstRunGate until completed_at is set. Not in the nav: it is reached by not having finished it. Left out of this cut and named: feature toggles (no organization.modules model), logo upload (B2), sample-invoice extraction (no AI surface).",
       },
     ],
   },
@@ -1522,6 +1525,8 @@ export const MVP_SURFACE: readonly string[] = [
   //  Her data, and the controls for reading the interface at all.
   "settings/backup",
   "settings/appearance",
+  //  The first run. Reached by not having finished it, not from the nav.
+  "onboarding/wizard",
 ];
 
 /** Is this leaf offered under this exposure?

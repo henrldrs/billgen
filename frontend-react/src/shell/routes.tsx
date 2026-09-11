@@ -11,6 +11,7 @@
  */
 
 import { ScaffoldExposureProvider } from "../scaffold/Scaffold";
+import { OnboardingWizard } from "../panels/OnboardingWizard";
 import {
   ActivityPanel,
   BackupPanel,
@@ -627,6 +628,8 @@ const BUILT: Record<string, Screen> = {
   "settings/appearance": AppearanceScreen,
   "settings/import": ({ lang }) => <ImportPanel lang={lang} />,
   "settings/backup": ({ lang }) => <BackupPanel lang={lang} />,
+  //  The first run (T-29). Reads the language itself; state is the server's.
+  "onboarding/wizard": () => <OnboardingWizard />,
   "activity/audit": ({ lang }) => <ActivityPanel lang={lang} />,
 };
 

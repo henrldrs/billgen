@@ -2,11 +2,12 @@ import {
   ApiClient,
   BillGenProvider,
   ErrorState,
+  type Exposure,
+  FirstRunGate,
   InvoiceBuilderRoute,
   LanguageProvider,
   LoadingScreen,
   buildAppRoutes,
-  type Exposure,
 } from "@billgen/ui";
 import type { LoginResponse } from "@billgen/ui";
 import { useEffect, useState } from "react";
@@ -98,11 +99,13 @@ export function App() {
             <Route
               path="/app"
               element={
-                <DesktopShell
-                  exposure={EXPOSURE}
-                  displayName={boot.session.display_name}
-                  email={boot.session.email}
-                />
+                <FirstRunGate>
+                  <DesktopShell
+                    exposure={EXPOSURE}
+                    displayName={boot.session.display_name}
+                    email={boot.session.email}
+                  />
+                </FirstRunGate>
               }
             >
               {buildAppRoutes("desktop", EXPOSURE)}

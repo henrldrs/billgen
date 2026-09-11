@@ -1397,6 +1397,43 @@ const MESSAGES = {
   "level.csv": { en: "CSV", fr: "CSV", nl: "CSV", es: "CSV" },
   "level.structured": { en: "Structured", fr: "Structuré", nl: "Gestructureerd", es: "Estructurado" },
 
+  // ---- onboarding — the guided first run (T-29) -------------------------------
+  //  Dutch drafted without a native read (SOLO_RUN § Boundaries); Henri reads
+  //  FR and NL before this ships. Kept short on purpose: a wizard is not the
+  //  place to explain the product, it is the place to get her to an invoice.
+  "onboarding.title": { en: "Welcome to BillGen", fr: "Bienvenue dans BillGen", nl: "Welkom bij BillGen", es: "Bienvenido a BillGen" },
+  "onboarding.subtitle": { en: "Five short steps, then your first invoice. You can leave and come back — nothing here is lost.", fr: "Cinq étapes courtes, puis votre première facture. Vous pouvez quitter et revenir — rien n'est perdu.", nl: "Vijf korte stappen, dan uw eerste factuur. U kunt weggaan en terugkomen — niets gaat verloren.", es: "Cinco pasos cortos y luego su primera factura. Puede salir y volver — nada se pierde." },
+  "onboarding.step.language": { en: "Language & look", fr: "Langue et apparence", nl: "Taal en uiterlijk", es: "Idioma y aspecto" },
+  "onboarding.step.company": { en: "Your company", fr: "Votre entreprise", nl: "Uw onderneming", es: "Su empresa" },
+  "onboarding.step.legal": { en: "Terms", fr: "Conditions", nl: "Voorwaarden", es: "Condiciones" },
+  "onboarding.step.seed": { en: "First client & service", fr: "Premier client et service", nl: "Eerste klant en dienst", es: "Primer cliente y servicio" },
+  "onboarding.step.done": { en: "First invoice", fr: "Première facture", nl: "Eerste factuur", es: "Primera factura" },
+  "onboarding.theme": { en: "Theme", fr: "Thème", nl: "Thema", es: "Tema" },
+  "onboarding.language.hint": { en: "This sets the interface. Each company chooses the language of its documents separately.", fr: "Ceci règle l'interface. Chaque entreprise choisit séparément la langue de ses documents.", nl: "Dit bepaalt de interface. Elke onderneming kiest apart de taal van haar documenten.", es: "Esto configura la interfaz. Cada empresa elige por separado el idioma de sus documentos." },
+  "onboarding.locale.hint": { en: "Currency EUR · dates DD/MM/YYYY · Belgian structured communication (+++123/4567/89012+++).", fr: "Devise EUR · dates JJ/MM/AAAA · communication structurée belge (+++123/4567/89012+++).", nl: "Munt EUR · datums DD/MM/JJJJ · Belgische gestructureerde mededeling (+++123/4567/89012+++).", es: "Moneda EUR · fechas DD/MM/AAAA · comunicación estructurada belga (+++123/4567/89012+++)." },
+  "onboarding.company.hint": { en: "Every invoice's mandatory mentions come from here. The enterprise number, VAT number and IBAN are checked as you type.", fr: "Les mentions obligatoires de chaque facture viennent d'ici. Numéro d'entreprise, TVA et IBAN sont vérifiés à la saisie.", nl: "De verplichte vermeldingen van elke factuur komen hiervandaan. Ondernemingsnummer, btw-nummer en IBAN worden bij het typen gecontroleerd.", es: "Las menciones obligatorias de cada factura salen de aquí. El número de empresa, el NIF-IVA y el IBAN se comprueban al escribir." },
+  "onboarding.company.valid": { en: "Identifiers check out.", fr: "Identifiants valides.", nl: "Identificatiegegevens in orde.", es: "Identificadores correctos." },
+  "onboarding.company.invalid": { en: "Fix these before the first invoice:", fr: "À corriger avant la première facture :", nl: "Te verbeteren vóór de eerste factuur:", es: "Corrija esto antes de la primera factura:" },
+  "onboarding.company.edit": { en: "Edit company", fr: "Modifier l'entreprise", nl: "Onderneming bewerken", es: "Editar empresa" },
+  "onboarding.legal.hint": { en: "Read each text, then accept it. A copy of what you accepted is kept with your data.", fr: "Lisez chaque texte, puis acceptez-le. Une copie de ce que vous avez accepté est conservée avec vos données.", nl: "Lees elke tekst en aanvaard hem. Een kopie van wat u aanvaardde wordt bij uw gegevens bewaard.", es: "Lea cada texto y acéptelo. Se guarda una copia de lo aceptado junto con sus datos." },
+  "onboarding.legal.none": { en: "No text requires your acceptance yet.", fr: "Aucun texte ne requiert votre acceptation pour l'instant.", nl: "Nog geen tekst vereist uw aanvaarding.", es: "Ningún texto requiere aún su aceptación." },
+  "onboarding.legal.accept": { en: "I have read and accept", fr: "J'ai lu et j'accepte", nl: "Ik heb gelezen en aanvaard", es: "He leído y acepto" },
+  "onboarding.legal.accepted": { en: "Accepted", fr: "Accepté", nl: "Aanvaard", es: "Aceptado" },
+  "onboarding.seed.hint": { en: "Optional. One client and one service are enough for a first invoice; everything else can follow.", fr: "Facultatif. Un client et un service suffisent pour une première facture ; le reste peut suivre.", nl: "Optioneel. Eén klant en één dienst volstaan voor een eerste factuur; de rest kan later.", es: "Opcional. Un cliente y un servicio bastan para una primera factura; el resto puede venir después." },
+  "onboarding.seed.client": { en: "First client", fr: "Premier client", nl: "Eerste klant", es: "Primer cliente" },
+  "onboarding.seed.service": { en: "First service or product", fr: "Premier service ou produit", nl: "Eerste dienst of product", es: "Primer servicio o producto" },
+  "onboarding.seed.added": { en: "Added", fr: "Ajouté", nl: "Toegevoegd", es: "Añadido" },
+  "onboarding.data.hint": { en: "Your invoices, documents and backups are kept in this folder on this computer:", fr: "Vos factures, documents et sauvegardes sont conservés dans ce dossier sur cet ordinateur :", nl: "Uw facturen, documenten en back-ups worden in deze map op deze computer bewaard:", es: "Sus facturas, documentos y copias de seguridad se guardan en esta carpeta de este equipo:" },
+  "onboarding.done.hint": { en: "Setup is complete. The number on your first invoice is assigned the moment you issue it, never before.", fr: "La configuration est terminée. Le numéro de votre première facture est attribué au moment où vous l'émettez, jamais avant.", nl: "De configuratie is klaar. Het nummer van uw eerste factuur wordt toegekend op het moment dat u ze uitgeeft, nooit eerder.", es: "La configuración está completa. El número de su primera factura se asigna en el momento de emitirla, nunca antes." },
+  "onboarding.done.blocked": { en: "Not finished yet:", fr: "Pas encore terminé :", nl: "Nog niet klaar:", es: "Aún no terminado:" },
+  "onboarding.done.finish": { en: "Finish setup", fr: "Terminer la configuration", nl: "Configuratie afronden", es: "Finalizar configuración" },
+  "onboarding.done.firstInvoice": { en: "Create my first invoice", fr: "Créer ma première facture", nl: "Mijn eerste factuur maken", es: "Crear mi primera factura" },
+  "onboarding.next": { en: "Next", fr: "Suivant", nl: "Volgende", es: "Siguiente" },
+  "onboarding.back": { en: "Back", fr: "Retour", nl: "Terug", es: "Atrás" },
+  "onboarding.blocker.noCompany": { en: "a company", fr: "une entreprise", nl: "een onderneming", es: "una empresa" },
+  "onboarding.blocker.company": { en: "company identifiers", fr: "identifiants de l'entreprise", nl: "ondernemingsgegevens", es: "identificadores de la empresa" },
+  "onboarding.blocker.accept": { en: "acceptance of", fr: "acceptation de", nl: "aanvaarding van", es: "aceptación de" },
+
 } as const;
 
 export type MessageKey = keyof typeof MESSAGES;

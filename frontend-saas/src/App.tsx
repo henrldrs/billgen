@@ -1,5 +1,6 @@
 import {
   BillGenProvider,
+  FirstRunGate,
   InvoiceBuilderRoute,
   LanguageProvider,
   LoadingScreen,
@@ -46,6 +47,7 @@ function WebShell() {
   const { user, logout } = useSession();
   const navigate = useNavigate();
   return (
+    <FirstRunGate>
     <ProductShell
       surface="saas"
       account={{
@@ -56,6 +58,7 @@ function WebShell() {
         },
       }}
     />
+    </FirstRunGate>
   );
 }
 

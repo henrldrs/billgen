@@ -14,7 +14,10 @@ import type {
   ActivityEntryResponse,
   ClientCreateRequest,
   ClientResponse,
+  AcceptanceResponse,
+  AcceptRequest,
   ClientStatsResponse,
+  OnboardingStatusResponse,
   ClientUpdateRequest,
   CompanyCreateRequest,
   CompanyResponse,
@@ -373,6 +376,22 @@ export class ApiClient {
   clientStats(clientId: string, today?: string): Promise<ClientStatsResponse> {
     const query = today ? `?today=${today}` : "";
     return this.request("GET", `/clients/${clientId}/stats${query}`);
+  }
+
+  /** The guided first run's ledger (T-29): derived on every call. */
+  onboardingStatus(): Promise<OnboardingStatusResponse> {
+    return this.request("GET", "/onboarding");
+  }
+
+  /** Accept the current version of a published legal text — the caller's own
+   *  act, so no role can be refused it. */
+  acceptLegalText(body: AcceptRequest): Promise<AcceptanceResponse> {
+    return this.request("POST", "/onboarding/acceptances", body);
+  }
+
+  /** Stamp the first run as done. 409 names every blocker. */
+  completeOnboarding(): Promise<OnboardingStatusResponse> {
+    return this.request("POST", "/onboarding/complete");
   }
 
   /** The commercial history — invoices, credit notes and payments, newest
