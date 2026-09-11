@@ -1,0 +1,184 @@
+# Build the Windows installer on a clean machine, prove it runs there, and —
+# only when Henri pushes a version tag — publish it to the public download repo.
+#
+# **The runner is the clean Windows VM.** T-20 and T-30 have both been "built
+# and proven short of the VM" since 2026-09-09: `tauri build` had never run,
+# and the first launch on a machine that never had a developer on it was
+# unobserved. `windows-latest` is that machine — no Python, no Playwright
+# browsers, nothing this project put there — so the `verify` step below is the
+# assertion those tickets are waiting on, and it runs on every dispatch,
+# whether or not anything is published.
+#
+# **Nothing is published without a tag.** `workflow_dispatch` builds and
+# verifies and stops; a `v*` tag publishes. Pushing that tag is Henri's act, so
+# the standing "never publish unasked" boundary is kept by the trigger itself
+# rather than by anyone remembering it.
+#
+# **The source stays private.** This workflow lives in the private repo and
+# pushes one binary, its checksum and its third-party notices into the public
+# one. That needs a token the default GITHUB_TOKEN cannot be — see
+# docs/DISTRIBUTION.md for the two settings this depends on.
+
+name: Release (Windows installer)
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish to the public repo (normally only a tag does this)"
+        type: boolean
+        default: false
+  push:
+    tags: ["v*"]
+
+# The installer is one artifact per ref; a second run of the same tag replaces
+# it rather than racing it.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # The public repo users download from. Its Releases are the only thing this
+  # workflow writes; its source is a README and nothing else.
+  DOWNLOAD_REPO: henrldrs/billgen-desktop
+  UV_VERSION: "0.11.29"
+
+jobs:
+  installer:
+    name: Build, verify on a clean Windows machine, publish
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Must be the minor version scripts/build_sidecar_runtime.py targets.
+      # The wheels pip installs come from THIS interpreter and are tagged for
+      # it; a mismatch assembles cleanly and fails at the customer's first
+      # import. The script refuses rather than letting that ship.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache the embeddable CPython
+        uses: actions/cache@v4
+        with:
+          path: var/cache
+          key: embeddable-python-${{ hashFiles('scripts/build_sidecar_runtime.py') }}
+
+      - name: Cache cargo and the Rust build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            frontend-electron/src-tauri/target
+          key: cargo-${{ runner.os }}-${{ hashFiles('frontend-electron/src-tauri/Cargo.lock') }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+
+      - name: Install workspaces
+        run: npm ci
+
+      # The licence key ships in every build (T-22). Without it the packaged
+      # app cannot verify a licence and refuses to start — which is correct,
+      # and is not something to discover after publishing an installer.
+      - name: Refuse to build without the licence public key
+        shell: bash
+        run: |
+          test -f desktop/license_key.pub \
+            || { echo "::error::desktop/license_key.pub is missing — this build could not verify a licence and would refuse to start"; exit 1; }
+
+      # ~62 MB: the embeddable CPython, the locked wheels, and the application
+      # as bytecode. Playwright and psycopg are excluded on purpose (T-30).
+      - name: Assemble the sidecar runtime
+        run: python scripts/build_sidecar_runtime.py --clean
+
+      # THE assertion T-20 and T-30 are open on. A clean Windows machine, the
+      # runtime this build just made, and nothing of the developer's.
+      - name: Verify the runtime is self-contained
+        run: python scripts/check_sidecar_runtime.py
+
+      - name: Build the installer
+        run: npm run -w frontend-electron tauri build
+
+      - name: Collect the artifacts
+        id: collect
+        shell: bash
+        run: |
+          set -euo pipefail
+          bundle=frontend-electron/src-tauri/target/release/bundle/nsis
+          installer=$(ls "$bundle"/*.exe | head -1)
+          test -n "$installer" || { echo "::error::tauri build produced no NSIS installer"; exit 1; }
+
+          mkdir -p release
+          cp "$installer" release/
+          cp frontend-electron/src-tauri/runtime/THIRD-PARTY-NOTICES.txt release/
+
+          name=$(basename "$installer")
+          ( cd release && sha256sum "$name" > "$name.sha256" )
+          size=$(( $(stat -c%s "$installer") / 1000000 ))
+
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "size=$size" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Installer"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| File | \`$name\` |"
+            echo "| Size | ${size} MB |"
+            echo "| SHA-256 | \`$(cut -d' ' -f1 < "release/$name.sha256")\` |"
+            echo ""
+            echo "Built and verified on \`windows-latest\` — a machine with no Python and no Playwright browsers."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Always kept, tag or not: a dispatch run exists to produce this and the
+      # verification above, which is what closes T-20 and T-30.
+      - name: Keep the installer as a build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: billgen-installer
+          path: release/
+          retention-days: 30
+
+      - name: Publish to the public download repo
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.publish
+        uses: softprops/action-gh-release@v2
+        with:
+          repository: ${{ env.DOWNLOAD_REPO }}
+          token: ${{ secrets.RELEASE_TOKEN }}
+          tag_name: ${{ github.ref_name }}
+          name: BillGen ${{ github.ref_name }}
+          # A draft, on purpose. The last look before something is downloadable
+          # by anyone is a person's, and publishing is one click from here.
+          draft: true
+          files: |
+            release/${{ steps.collect.outputs.name }}
+            release/${{ steps.collect.outputs.name }}.sha256
+            release/THIRD-PARTY-NOTICES.txt
+          body: |
+            Windows installer, ${{ steps.collect.outputs.size }} MB.
+
+            **BillGen needs a licence file to start.** The installer runs on any
+            Windows machine; the application refuses to open without a licence
+            issued for that specific computer. Ask for one before installing —
+            see the README in this repository.
+
+            Verify your download against `${{ steps.collect.outputs.name }}.sha256`
+            before running it.
+
+            `THIRD-PARTY-NOTICES.txt` lists every third-party package inside
+            this build and the licence each is redistributed under.

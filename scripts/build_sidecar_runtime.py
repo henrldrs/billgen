@@ -584,6 +584,22 @@ def main() -> None:
         log("removing the previous runtime")
         shutil.rmtree(RUNTIME)
 
+    #  The wheels come from *this* interpreter's pip with `--target`, and they
+    #  are tagged for its version. Installing cp313 wheels into a 3.14
+    #  embeddable runtime produces a build that assembles cleanly, passes a
+    #  casual look, and fails at the first `import` on the customer's machine.
+    #  Refuse early and say which is which — on a CI runner the version is
+    #  whatever the setup step happened to pin.
+    running = f"{sys.version_info.major}.{sys.version_info.minor}"
+    wanted = ".".join(PYTHON_VERSION.split(".")[:2])
+    if running != wanted:
+        raise SystemExit(
+            f"this interpreter is {running}, the runtime is built for {wanted}. "
+            f"The wheels pip installs here are tagged for {running} and would not "
+            f"import inside a {wanted} runtime. Run it on {wanted}, or change "
+            "PYTHON_VERSION deliberately."
+        )
+
     print(f"building the sidecar runtime in {RUNTIME.relative_to(REPO)}")
     archive = download_embeddable()
     unpack_interpreter(archive, RUNTIME / "python")

@@ -33,6 +33,35 @@ wish, and the queue is not for wishes.
 
 ## Open — in priority order
 
+### T-38 · The installer is unsigned, and Windows says so
+    branch    DevOps / Henri        status  open
+    needs     BETA_LAUNCH_PLAN W1 (the registered entity)
+    why       `.github/workflows/release.yml` produces an NSIS installer with
+              no Authenticode signature, so SmartScreen greets every download
+              with *"Windows protected your PC"* and an unverified publisher.
+              For a **compliance product** that is the worst possible first
+              impression: the one thing it sells is that it can be trusted with
+              a fiscal record, and the first screen says the opposite.
+
+              `distribution/README.md` tells the truth about the warning rather
+              than pretending — which is the right thing to do and is not a
+              fix. A person who has to be talked past a security warning has
+              already been taught to click through security warnings.
+    do        An OV or EV code-signing certificate in the registered company's
+              name — EV clears SmartScreen reputation immediately, OV earns it
+              over downloads. The certificate lives on a token or in a cloud
+              signing service; GitHub Actions signs with it in the release
+              workflow (`tauri.conf.json` has a `windows.signCommand` hook, or
+              sign the NSIS output directly before the publish step).
+
+              **The private key must never be a repository secret in plain
+              form.** Azure Trusted Signing or a similar HSM-backed service is
+              the shape to prefer: the workflow asks it to sign, and the key
+              never exists where a workflow can print it.
+    done when A freshly downloaded installer shows a named publisher instead of
+              "Unknown", and `Get-AuthenticodeSignature` reports `Valid` on a
+              machine that has never seen BillGen.
+
 ### T-36 · The register describes a product we are not shipping
     branch    Compliance            status  open
     needs     —

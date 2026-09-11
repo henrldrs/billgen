@@ -20,6 +20,7 @@ depends on remembering a conversation, which is the point of both.
 | How a desktop copy is licensed, and reissued | `docs/LICENSING.md` |
 | Production readiness, layer by layer | `docs/MINIMAL_STACK.md` |
 | Whether a restore has ever actually been performed | `docs/RESTORE_LOG.md` |
+| How the installer reaches a person | `docs/DISTRIBUTION.md` — two repos, and why |
 | The launch's business half | `docs/BETA_LAUNCH_PLAN.md` |
 | Colours, type, tokens | `docs/BRAND_TOKENS.md` |
 | Every screen and how wired it is | `frontend-react/src/scaffold/ia.ts` → `docs/ROADMAP_IA.md` |
