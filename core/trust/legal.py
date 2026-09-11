@@ -52,6 +52,10 @@ class LegalDocument(BaseModel):
     requires_acceptance: bool = False
     drafted: bool = False
     version: str | None = None
+    #  The text a person is shown and accepts, as Markdown. None until
+    #  drafted — and `is_publishable` demands it, because a version with
+    #  no text is a checkbox with nothing behind it.
+    body: str | None = None
     effective_date: date | None = None
     #  What stays blocked while this is undrafted. Prose, because the reader is
     #  deciding what to commission from a lawyer first.
@@ -60,7 +64,7 @@ class LegalDocument(BaseModel):
 
     @property
     def is_publishable(self) -> bool:
-        return self.drafted and self.version is not None
+        return self.drafted and self.version is not None and bool(self.body)
 
 
 #  Ordered by what unblocks the most revenue first, not alphabetically. The DPA

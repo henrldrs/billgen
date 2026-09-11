@@ -19,6 +19,9 @@ class AuditAction(str, Enum):
     EXPORT_BACKUP = "export_backup"
     #  A rendered document was written to the archive folder (T-27).
     ARCHIVE_DOCUMENT = "archive_document"
+    #  T-29: a versioned legal text accepted, and the first run finished.
+    ACCEPT_LEGAL = "accept_legal"
+    ONBOARDING_COMPLETE = "onboarding_complete"
     RESTORE = "restore"
     DELETE = "delete"
     LOGIN = "login"

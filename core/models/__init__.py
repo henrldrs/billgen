@@ -6,6 +6,7 @@ from .currency import Currency
 from .discount import Discount, DiscountType
 from .document import Document, DocumentKind
 from .invoice import Invoice, InvoiceLine, InvoiceStatus
+from .legal_acceptance import LegalAcceptance
 from .organization import Organization, PlanTier
 from .payment import Payment, PaymentMethod
 from .product import BillingType, Product, ProductStatus
@@ -45,6 +46,7 @@ __all__ = [
     "Invoice",
     "InvoiceLine",
     "InvoiceStatus",
+    "LegalAcceptance",
     "OrgMembership",
     "Organization",
     "Payment",

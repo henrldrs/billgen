@@ -42,6 +42,7 @@ from .routers import (
     health,
     imports,
     invoices,
+    onboarding,
     organizations,
     payments,
     products,
@@ -194,6 +195,7 @@ _ROUTERS = (
     templates.router,
     backup.router,
     documents.router,
+    onboarding.router,
     trust.router,
 )
 

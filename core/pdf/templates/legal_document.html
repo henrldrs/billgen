@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="utf-8">
+  <title>{{ title }} — v{{ version }}</title>
+  <style>
+    @page { size: A4; margin: 22mm 20mm; }
+    body { font-family: "Segoe UI", Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: #111; }
+    h1 { font-size: 18pt; margin: 0 0 4mm; }
+    .meta { color: #555; font-size: 9.5pt; margin-bottom: 8mm; }
+    h2 { font-size: 13pt; margin: 7mm 0 2mm; }
+    p { margin: 0 0 3mm; white-space: pre-wrap; }
+    .acceptance { margin-top: 12mm; padding-top: 4mm; border-top: 1px solid #999; font-size: 9.5pt; color: #333; }
+  </style>
+</head>
+<body>
+  <h1>{{ title }}</h1>
+  <p class="meta">{{ product }} · version {{ version }}{% if effective_date %} · effective {{ effective_date }}{% endif %}</p>
+
+  {% for block in blocks %}
+    {% if block.kind == "heading" %}<h2>{{ block.text }}</h2>{% else %}<p>{{ block.text }}</p>{% endif %}
+  {% endfor %}
+
+  <div class="acceptance">
+    Accepted by {{ accepted_by }} for {{ organization }} on {{ accepted_at }}.
+    This copy was written to the data folder at the moment of acceptance; the
+    database record of that acceptance is the one that counts.
+  </div>
+</body>
+</html>

@@ -97,6 +97,7 @@ which it cannot know.
 | 22 | T-33 · two tenants, one document path | `DONE` | Ships in *fix: each organization gets its own document folder on a host*. Measured collision — two organizations, one file — closed by `DOCUMENT_LAYOUT=per-organization` scoping the archive to the bound tenant; the desktop sets `flat`. Registered paths carry no segment, so backups move between layouts. 2 tests. |
 | 23 | T-34 · Mother's upgrade | `BLOCKED` | Queued at the top on Henri's priority (2026-09-11). The old app's export carries her invoices and the importer counts them and imports none. **Needs one real export from her FinanceFlow BillGen** before the mapping can be written — the only legacy invoice in the tree is a three-field stub. |
 | 24 | Client 360 on the beta surface | `DONE` | Ships in *fix: scaffold blocks stay off a handed-over build, and the totals are the server's*. Henri's screenshot showed three scaffold banners on a shipped screen. Totals wired to the `GET /clients/{id}/stats` that already existed; `ScaffoldBlock` renders nothing under `exposure="mvp"`. GDPR's server is T-35; tags no longer ship. 196 frontend tests. |
+| 25 | T-29 · the guided first run, backend half | `IN PROGRESS` | Ships in *feat: the first run has a ledger*. `GET /onboarding` derives the state; acceptances are per user per version and written as `contract` Documents into her data folder; `POST /onboarding/complete` refuses while the company fails validation or a required text is unaccepted. The legal registry is entirely undrafted, so the acceptance step gates on nothing until Henri supplies texts — the mechanism is real, the texts are his. Wizard, first-run gate and Settings → Data & privacy are next. 7 tests. |
 
 **This ledger's own list is closed.** Items 6–8 were the three the handover
 note sanctioned explicitly: *"None of these invents a screen; each connects a
@@ -109,11 +110,11 @@ happened to it.
 
 | | |
 |---|---|
-| Python | **666 collected, exit 0** — 16 new in T-27, 12 in T-23, 24 in T-28, 5 in T-30, 3 for the Edge hand-off found under T-21, 2 in T-33; `tests/desktop/` is 56 | 
+| Python | **673 collected, exit 0** — 16 new in T-27, 12 in T-23, 24 in T-28, 5 in T-30, 3 for the Edge hand-off found under T-21, 2 in T-33, 7 in T-29; `tests/desktop/` is 56 | 
 | Frontend | **196 passed** (`npm run test`, 31 files), typecheck clean across all four workspaces |
 | `ruff check` | clean. CI runs `ruff check .` only — the tree is *not* `ruff format` clean and was not before, so do not reformat it as a side errand |
 | Architecture doc | **in sync** — both `sync-architecture --check` and `architecture_to_text.py --check` green at 102 endpoints across 25 routers |
-| Migrations | head is `e2f7c9b41a55` (the document register). The packaged build reads them as bytecode — `sourceless` is set in the *packaged* `alembic.ini` only, never the repository's (T-30). A dev database from before 2026-09-09 needs `alembic upgrade head`, and a desktop install migrates itself on boot |
+| Migrations | head is `f3a9d2c7b815` (onboarding stamp + legal acceptances). The packaged build reads them as bytecode — `sourceless` is set in the *packaged* `alembic.ini` only, never the repository's (T-30). A dev database from before 2026-09-09 needs `alembic upgrade head`, and a desktop install migrates itself on boot |
 | ROADMAP_IA | regenerated 2026-09-04 from `ia.ts`: 115 areas, 34 wired, 30% |
 | Unpushed | everything on `main` after `origin/main` — count it with the first command in the resume protocol rather than trusting a number here, which is stale the moment the next commit lands. Three trees became one on 2026-09-09: the worktree and its branch were removed, the remote-only docs commit `fde1edc` was folded in as `a5b3948`, and `main` fast-forwarded to the former `audit-engine-and-scaffolds` head |
 
@@ -145,9 +146,10 @@ he has to undo.
 
 - **`git push`.** It publishes work he has not read and runs CI. One command,
   his to run.
-- **New screens.** The alerts panel and the quotes section are backend-complete
-  and still may not be built: UI comes from Henri's drawings, and there are none
-  for either.
+- ~~**New screens.**~~ Lifted 2026-09-11 — Henri: "ignore the no screens
+  without drawing, that command was for something else; use the standard
+  structure for UI to build the new things." Screens come from his `.txt`
+  specs and the design system. What stays out is scope (§MVP), not drawings.
 - **Wiring the TVA and Template Studio scaffolds.** Explicitly on hold pending a
   pass over the builder *with* him. A session that helpfully mounts them has
   done the wrong thing.

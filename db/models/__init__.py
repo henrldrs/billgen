@@ -7,6 +7,7 @@ from .credit_note import CreditNoteLineRow, CreditNoteRow
 from .document import DocumentRow
 from .expense import ExpenseRow
 from .invoice import InvoiceLineRow, InvoiceRow
+from .legal_acceptance import LegalAcceptanceRow
 from .organization import OrganizationRow
 from .payment import PaymentRow
 from .product import ProductRow
@@ -28,6 +29,7 @@ __all__ = [
     "ExpenseRow",
     "InvoiceLineRow",
     "InvoiceRow",
+    "LegalAcceptanceRow",
     "OrgMembershipRow",
     "OrganizationRow",
     "PaymentRow",

@@ -54,8 +54,11 @@ side errand — CI only runs `ruff check`.
 
 - **Never `git push`.** Commits pile up on `main` for him to read; publishing
   them is one command, and it is his.
-- **No new screens.** UI comes from Henri's drawings. The alerts panel and the
-  quotes section are backend-complete and still may not be built.
+- ~~No new screens without a drawing.~~ **Lifted by Henri on 2026-09-11**
+  ("that command was for something else"). New screens are built from his
+  `.txt` specs and the standard structure: `@henrioutai/ui`, `tokens.css`,
+  a node in `ia.ts`, a panel in `frontend-react/src/panels/`. The alerts panel
+  and the quotes section are still out of §MVP — scope, not a drawing.
 - **The TVA and Template Studio scaffolds stay unwired**, pending a pass over
   the builder with him.
 - **Nothing that needs a third party** — email, Peppol transport, checkout,

@@ -28,6 +28,7 @@ from .invoice_compliance import (
     check_invoice_compliance,
 )
 from .invoice_service import InvoiceService
+from .onboarding_service import OnboardingService, OnboardingStatus
 from .organization_service import OrganizationService
 from .payment_service import PaymentService
 from .pdf_service import PdfService
@@ -63,6 +64,8 @@ __all__ = [
     "InvoiceService",
     "KpiSummary",
     "NotFoundError",
+    "OnboardingService",
+    "OnboardingStatus",
     "OrganizationService",
     "PaymentService",
     "PdfService",

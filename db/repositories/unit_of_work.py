@@ -12,6 +12,7 @@ from .sqlalchemy_repositories import (
     SqlAlchemyDocumentRepository,
     SqlAlchemyExpenseRepository,
     SqlAlchemyInvoiceRepository,
+    SqlAlchemyLegalAcceptanceRepository,
     SqlAlchemyOrganizationRepository,
     SqlAlchemyPaymentRepository,
     SqlAlchemyProductRepository,
@@ -41,6 +42,7 @@ class SqlAlchemyUnitOfWork(UnitOfWork):
         self.payments = SqlAlchemyPaymentRepository(s)
         self.expenses = SqlAlchemyExpenseRepository(s)
         self.documents = SqlAlchemyDocumentRepository(s)
+        self.legal_acceptances = SqlAlchemyLegalAcceptanceRepository(s)
         self.templates = SqlAlchemyTemplateRepository(s)
         self.sequences = SqlAlchemySequenceRepository(s)
         self.audit_log = SqlAlchemyAuditLogRepository(s)

@@ -339,6 +339,14 @@ _UNGUARDED_BY_DESIGN = {
     ("PATCH", "/users/me"),
     ("POST", "/users/me/password"),
     ("DELETE", "/users/me/sessions/{jti}"),
+    #   /onboarding/acceptances — accepting a legal text is the caller's own
+    #                        act on the caller's own identity, from the token.
+    #                        Every role, viewer included, must be able to
+    #                        accept the terms it is shown; a permission every
+    #                        role holds is not a permission. Completing the
+    #                        first run reshapes the organization and does
+    #                        declare one (company.write).
+    ("POST", "/onboarding/acceptances"),
 }
 
 

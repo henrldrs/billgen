@@ -24,6 +24,7 @@ from core.models import (
     DocumentKind,
     Invoice,
     InvoiceStatus,
+    LegalAcceptance,
     Organization,
     OrgMembership,
     Payment,
@@ -42,6 +43,7 @@ from core.repository import (
     DocumentRepository,
     ExpenseRepository,
     InvoiceRepository,
+    LegalAcceptanceRepository,
     OrganizationRepository,
     PaymentRepository,
     ProductRepository,
@@ -62,6 +64,7 @@ from db.models import (
     DocumentTemplateRow,
     ExpenseRow,
     InvoiceRow,
+    LegalAcceptanceRow,
     OrganizationRow,
     OrgMembershipRow,
     PaymentRow,
@@ -117,6 +120,20 @@ class SqlAlchemyOrganizationRepository(OrganizationRepository):
     def get(self, organization_id: UUID) -> Organization | None:
         row = self._s.get(OrganizationRow, organization_id)
         return to_domain(Organization, row) if row else None
+
+    def update(self, organization: Organization) -> Organization:
+        row = self._s.get(OrganizationRow, organization.id)
+        if row is None:
+            raise KeyError(organization.id)
+        for column in _ORGANIZATION_UPDATABLE:
+            setattr(row, column, getattr(organization, column))
+        self._s.flush()
+        return to_domain(Organization, row)
+
+
+#  What the organization may change about itself. `plan_tier` and the Stripe id
+#  are absent on purpose: they belong to the subscription path.
+_ORGANIZATION_UPDATABLE = ("name", "country_code", "onboarding_completed_at", "updated_at")
 
 
 #  Columns a user may change about themselves. `email` is absent on purpose —
@@ -1041,3 +1058,25 @@ class SqlAlchemyDocumentRepository(DocumentRepository):
             )
         ).scalars().first()
         return to_domain(Document, row) if row else None
+
+
+class SqlAlchemyLegalAcceptanceRepository(LegalAcceptanceRepository):
+    def __init__(self, session: Session) -> None:
+        self._s = session
+
+    def add(self, acceptance: LegalAcceptance) -> LegalAcceptance:
+        guard_tenant(acceptance.organization_id)
+        self._s.add(LegalAcceptanceRow(**row_kwargs(acceptance)))
+        self._s.flush()
+        return acceptance
+
+    def list_for_user(self, user_id: UUID) -> list[LegalAcceptance]:
+        rows = self._s.execute(
+            select(LegalAcceptanceRow)
+            .where(
+                LegalAcceptanceRow.organization_id == current_organization_id(),
+                LegalAcceptanceRow.user_id == user_id,
+            )
+            .order_by(LegalAcceptanceRow.created_at.desc())
+        ).scalars()
+        return [to_domain(LegalAcceptance, row) for row in rows]

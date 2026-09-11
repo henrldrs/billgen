@@ -1798,6 +1798,73 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/onboarding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Onboarding Status
+         * @description Derived, every call. `completed_at` is the one fact the shell needs to
+         *     decide whether to show the wizard; the rest is what the wizard shows.
+         */
+        get: operations["onboarding_status_onboarding_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/onboarding/acceptances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept Legal Text
+         * @description Accept the current version of a published legal text.
+         *
+         *     No permission is declared, on purpose: the identity acted on is the
+         *     caller's own, from the token, and every role — a viewer included — must be
+         *     able to accept the terms she is shown. The text she accepted is written to
+         *     the data folder as a `contract` Document, so it is in her backup.
+         */
+        post: operations["accept_legal_text_onboarding_acceptances_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/onboarding/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Complete Onboarding
+         * @description Stamp the first run as done. 409 while the company fails validation or
+         *     a required text is unaccepted — the response names each blocker.
+         */
+        post: operations["complete_onboarding_onboarding_complete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/trust/legal/documents": {
         parameters: {
             query?: never;
@@ -1935,6 +2002,37 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AcceptRequest */
+        AcceptRequest: {
+            /** Key */
+            key: string;
+            /**
+             * Source
+             * @default onboarding
+             */
+            source?: string;
+        };
+        /** AcceptanceResponse */
+        AcceptanceResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Document Key */
+            document_key: string;
+            /** Version */
+            version: string;
+            /** Source */
+            source: string;
+            /** Document Id */
+            document_id: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
         /** ActivityEntryResponse */
         ActivityEntryResponse: {
             /**
@@ -3270,6 +3368,35 @@ export interface components {
             /** Total */
             total: string;
         };
+        /**
+         * OnboardingStatusResponse
+         * @description What the first run has and lacks. Derived on every call — nothing here
+         *     is a step counter the browser could get out of sync with.
+         */
+        OnboardingStatusResponse: {
+            /** Completed At */
+            completed_at: string | null;
+            /** Company Id */
+            company_id: string | null;
+            /** Company Valid */
+            company_valid: boolean;
+            /** Company Problems */
+            company_problems: string[];
+            /** Required Texts */
+            required_texts: components["schemas"]["RequiredTextResponse"][];
+            /** Clients */
+            clients: number;
+            /** Products */
+            products: number;
+            /** Data Directory */
+            data_directory: string | null;
+            /** Documents Enabled */
+            documents_enabled: boolean;
+            /** Can Complete */
+            can_complete: boolean;
+            /** Blockers */
+            blockers: string[];
+        };
         /** OrganizationResponse */
         OrganizationResponse: {
             /**
@@ -3761,6 +3888,17 @@ export interface components {
         RefreshRequest: {
             /** Refresh Token */
             refresh_token: string;
+        };
+        /** RequiredTextResponse */
+        RequiredTextResponse: {
+            /** Key */
+            key: string;
+            /** Title */
+            title: string;
+            /** Version */
+            version: string;
+            /** Accepted */
+            accepted: boolean;
         };
         /** RestoreReportResponse */
         RestoreReportResponse: {
@@ -7565,6 +7703,79 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RebuildReportResponse"];
+                };
+            };
+        };
+    };
+    onboarding_status_onboarding_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingStatusResponse"];
+                };
+            };
+        };
+    };
+    accept_legal_text_onboarding_acceptances_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcceptanceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    complete_onboarding_onboarding_complete_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingStatusResponse"];
                 };
             };
         };

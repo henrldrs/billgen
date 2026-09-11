@@ -4810,6 +4810,92 @@
         }
       }
     },
+    "/onboarding": {
+      "get": {
+        "tags": [
+          "onboarding"
+        ],
+        "summary": "Onboarding Status",
+        "description": "Derived, every call. `completed_at` is the one fact the shell needs to\ndecide whether to show the wizard; the rest is what the wizard shows.",
+        "operationId": "onboarding_status_onboarding_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/onboarding/acceptances": {
+      "post": {
+        "tags": [
+          "onboarding"
+        ],
+        "summary": "Accept Legal Text",
+        "description": "Accept the current version of a published legal text.\n\nNo permission is declared, on purpose: the identity acted on is the\ncaller's own, from the token, and every role — a viewer included — must be\nable to accept the terms she is shown. The text she accepted is written to\nthe data folder as a `contract` Document, so it is in her backup.",
+        "operationId": "accept_legal_text_onboarding_acceptances_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptanceResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/onboarding/complete": {
+      "post": {
+        "tags": [
+          "onboarding"
+        ],
+        "summary": "Complete Onboarding",
+        "description": "Stamp the first run as done. 409 while the company fails validation or\na required text is unaccepted — the response names each blocker.",
+        "operationId": "complete_onboarding_onboarding_complete_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/trust/legal/documents": {
       "get": {
         "tags": [
@@ -4977,6 +5063,75 @@
   },
   "components": {
     "schemas": {
+      "AcceptRequest": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Key"
+          },
+          "source": {
+            "type": "string",
+            "pattern": "^(onboarding|settings)$",
+            "title": "Source",
+            "default": "onboarding"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key"
+        ],
+        "title": "AcceptRequest"
+      },
+      "AcceptanceResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "document_key": {
+            "type": "string",
+            "title": "Document Key"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "document_key",
+          "version",
+          "source",
+          "document_id",
+          "created_at"
+        ],
+        "title": "AcceptanceResponse"
+      },
       "ActivityEntryResponse": {
         "properties": {
           "id": {
@@ -8908,6 +9063,102 @@
         ],
         "title": "MethodBucketResponse"
       },
+      "OnboardingStatusResponse": {
+        "properties": {
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "company_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Id"
+          },
+          "company_valid": {
+            "type": "boolean",
+            "title": "Company Valid"
+          },
+          "company_problems": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Company Problems"
+          },
+          "required_texts": {
+            "items": {
+              "$ref": "#/components/schemas/RequiredTextResponse"
+            },
+            "type": "array",
+            "title": "Required Texts"
+          },
+          "clients": {
+            "type": "integer",
+            "title": "Clients"
+          },
+          "products": {
+            "type": "integer",
+            "title": "Products"
+          },
+          "data_directory": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Directory"
+          },
+          "documents_enabled": {
+            "type": "boolean",
+            "title": "Documents Enabled"
+          },
+          "can_complete": {
+            "type": "boolean",
+            "title": "Can Complete"
+          },
+          "blockers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Blockers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "completed_at",
+          "company_id",
+          "company_valid",
+          "company_problems",
+          "required_texts",
+          "clients",
+          "products",
+          "data_directory",
+          "documents_enabled",
+          "can_complete",
+          "blockers"
+        ],
+        "title": "OnboardingStatusResponse",
+        "description": "What the first run has and lacks. Derived on every call — nothing here\nis a step counter the browser could get out of sync with."
+      },
       "OrganizationResponse": {
         "properties": {
           "id": {
@@ -10285,6 +10536,34 @@
           "refresh_token"
         ],
         "title": "RefreshRequest"
+      },
+      "RequiredTextResponse": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "accepted": {
+            "type": "boolean",
+            "title": "Accepted"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "title",
+          "version",
+          "accepted"
+        ],
+        "title": "RequiredTextResponse"
       },
       "RestoreReportResponse": {
         "properties": {

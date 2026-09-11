@@ -5,6 +5,7 @@ from .credit_note_repo import CreditNoteRepository
 from .document_repo import DocumentRepository
 from .expense_repo import ExpenseRepository
 from .invoice_repo import InvoiceRepository
+from .legal_acceptance_repo import LegalAcceptanceRepository
 from .organization_repo import OrganizationRepository
 from .payment_repo import PaymentRepository
 from .product_repo import ProductRepository
@@ -31,6 +32,7 @@ __all__ = [
     "DocumentRepository",
     "ExpenseRepository",
     "InvoiceRepository",
+    "LegalAcceptanceRepository",
     "OrganizationRepository",
     "PaymentRepository",
     "ProductRepository",

@@ -247,8 +247,16 @@ wish, and the queue is not for wishes.
               with good manners.
 
 ### T-29 · The guided first run — and where the data lives, said inside it
-    branch    Frontend              status  blocked
-    needs     T-25, T-27, T-28 — and a drawing from Henri
+    branch    Frontend / Backend    status  in-progress
+    needs     T-27, T-28 (done). **The drawing is no longer needed** — Henri
+              lifted that rule on 2026-09-11; the wizard is built from
+              `docs/onboarding feature .txt` on the standard structure. What
+              it still needs from him: **the legal texts.** `core/trust/
+              legal.py` is a registry with every document undrafted and no
+              bodies; a partnership contract is not registered at all.
+              The acceptance step is data-driven and gates on nothing until
+              a text is drafted (versioned, with a body), so the mechanism
+              ships now and the texts drop in when they exist.
     why       A beta tester holding her own clients' personal data on her own
               laptop is a controller with obligations, and the app is the only
               place she will ever read about them. Today nothing in the UI says
@@ -290,8 +298,27 @@ wish, and the queue is not for wishes.
               `app_data_dir()` actually resolved, asserted by a test rather
               than hard-coded; the first run shows once and not again; and
               every legal sentence on screen is generated from `core/trust/`
-              rather than typed into a component. Blocked until the layout is
-              drawn — new screens are Henri's (SOLO_RUN § Boundaries).
+              rather than typed into a component.
+              **Backend half done, 2026-09-11** (*feat: the first run has a
+              ledger*). `GET /onboarding` derives the state on every call —
+              no step counter a browser can lose: completed_at, the company
+              and whether it passes the same `validate_company_identifiers`
+              the validation endpoint uses (problems named by field), the
+              required texts and which are accepted, client and product
+              counts, and the **resolved** data directory. `POST /onboarding/
+              acceptances` records a per-user, per-version acceptance and
+              writes the text as accepted into `<data dir>/contracts/` as a
+              `contract` Document — so it is in the backup. `POST
+              /onboarding/complete` stamps the organization and refuses,
+              naming every blocker, while the company fails validation or a
+              required text is unaccepted; a second completion is not a
+              second stamp. Migration `f3a9d2c7b815`; 7 tests in
+              `tests/api/test_onboarding.py`, one of which drafts a text
+              into the registry for its own duration, because none is.
+              Left: the wizard itself (five steps from the spec), the
+              first-run gate in both shells, Settings → Data & privacy, and
+              the data-directory choice — which needs a restart story with
+              the Tauri shell and is its own small ticket when it comes.
 
 ### T-30 · The shipped package — slimmed, legal, and not MSIX
     branch    Desktop               status  open

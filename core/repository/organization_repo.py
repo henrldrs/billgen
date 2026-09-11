@@ -13,3 +13,8 @@ class OrganizationRepository(ABC):
 
     @abstractmethod
     def get(self, organization_id: UUID) -> Organization | None: ...
+
+    @abstractmethod
+    def update(self, organization: Organization) -> Organization:
+        """Name, country and the onboarding stamp. Never the plan tier — that is
+        the subscription's to change, through its own service."""

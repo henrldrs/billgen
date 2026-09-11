@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 
 from pydantic import Field
@@ -30,3 +31,7 @@ class Organization(IdentifiedModel):
     country_code: str = Field(default="BE", min_length=2, max_length=2)
     plan_tier: PlanTier = PlanTier.FREE
     stripe_customer_id: str | None = None
+    #  When the guided first run was completed (T-29). None until it was;
+    #  a column rather than a browser flag, so a reinstall or a second
+    #  machine cannot show the wizard twice or skip it once.
+    onboarding_completed_at: datetime | None = None
