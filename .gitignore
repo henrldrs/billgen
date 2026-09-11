@@ -55,6 +55,15 @@ logs/
 # every build and has to be committed. The private half is a *.pem, above.
 backups/
 
+# Real customer data brought in for a migration (T-34). A FinanceFlow BillGen
+# export is every client that person has ever invoiced — names, addresses, VAT
+# numbers — and a git repository is the one place it must never land: history
+# outlives a deletion, and this tree has a remote. Work from a copy OUTSIDE the
+# repository and point the importer at it with a path.
+docs/legacy/
+*.billgen-export.json
+legacy-export*.json
+
 # Local-only working notes (LLM council sessions)
 docs/council/
 
