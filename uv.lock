@@ -205,6 +205,7 @@ name = "billgen-core"
 version = "0.0.1"
 source = { editable = "core" }
 dependencies = [
+    { name = "cryptography" },
     { name = "jinja2" },
     { name = "playwright" },
     { name = "pydantic" },
@@ -212,6 +213,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "cryptography", specifier = ">=42" },
     { name = "jinja2", specifier = ">=3.1" },
     { name = "playwright", specifier = ">=1.49" },
     { name = "pydantic", specifier = ">=2.7" },

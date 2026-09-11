@@ -156,29 +156,6 @@ wish, and the queue is not for wishes.
               has only ever run against a database the test made is a belief
               with good manners.
 
-### T-28 · A backup that can be carried
-    branch    Desktop               status  open
-    needs     T-23, T-27
-    why       `BackupService.export` already produces readable JSON — which is
-              what Henri wants for everyday access, and exactly what must not
-              travel on a USB stick unprotected: it is every client's name,
-              address and VAT number in one file. A beta tester needs one
-              artifact she can move off the machine without becoming a breach.
-    do        `GET /backup/export?encrypt=true` wraps the same JSON plus the
-              T-27 documents in an archive encrypted with a passphrase —
-              AES-256-GCM, scrypt KDF, salt and parameters in a plaintext
-              header. `cryptography` is already a dependency. The plain export
-              does not change. Restore accepts both and asks for a passphrase
-              only when the header says so. **The passphrase is never stored
-              and cannot be recovered**, and the UI says so before the first
-              export rather than after.
-    done when An encrypted export restores into an empty database with the
-              right passphrase; a wrong passphrase fails with a distinct error
-              and no partial write; the plain export is byte-identical to the
-              one T-27 left — schema 3, `documents` carried as a register and
-              the bytes not carried at all. The rehearsed restore itself is T-23's evidence, not a
-              second note.
-
 ### T-29 · The guided first run — and where the data lives, said inside it
     branch    Frontend              status  blocked
     needs     T-25, T-27, T-28 — and a drawing from Henri
@@ -252,6 +229,44 @@ wish, and the queue is not for wishes.
               package in `uv.lock`; the app starts on a clean Windows VM with
               no Python and no Playwright browsers; and a fresh checkout still
               has every comment it has today.
+
+### T-33 · Two tenants, one document path
+    branch    Backend / DevOps      status  open
+    needs     —  (must land before T-05 hosting, not before the desktop ships)
+    why       T-27 writes `invoices/<year>/<reference>.pdf` with **nothing in
+              the path that says which organization it belongs to**. The
+              database is fine — `documents` is unique on
+              `(organization_id, path)` — so two tenants may legitimately
+              register the same path, and then the second issue's
+              `os.replace` overwrites the first tenant's PDF. One customer's
+              invoice, silently replaced by another customer's.
+
+              Measured, not reasoned: two fresh organizations, each with a
+              company named the way `tests/api/conftest.py` names them, both
+              issued `ACME-BC07012026`, and one file was left on disk. Found
+              on 2026-09-11 while writing T-28.
+
+              **It cannot bite today**, which is why this is a ticket and not
+              a hotfix: nothing is hosted, `DOCUMENT_ROOT` is empty unless
+              something sets it, and the desktop that does set it holds
+              exactly one organization. It bites the first hour of multi-tenant
+              hosting with archiving on.
+    do        The fix is a deployment shape, not a path rewrite, because the
+              obvious path rewrite makes the shipping product worse: Henri
+              asked for a data folder that *holds the invoices*, and burying
+              them under a UUID directory in her Documents is not that.
+
+              So: the hosted app builds a **per-organization archive** rooted
+              at `<DOCUMENT_ROOT>/<org-id>`, resolved per request beside the
+              tenant binding that already exists (`api/middleware`,
+              `core/tenancy.py`); the desktop keeps one root and one
+              organization and sees no change. Decide it alongside blob
+              storage (B2) — object storage is the hosted answer to this
+              folder, and prefixing a key is the same decision.
+    done when Two organizations issuing the same reference under one
+              `DOCUMENT_ROOT` leave **two** files, both readable, and a test
+              asserts it; a desktop install still writes
+              `<data dir>/invoices/<year>/<reference>.pdf` with no id segment.
 
 ### T-31 · Sign in with Google, then Microsoft
     branch    Backend / Frontend    status  open
@@ -581,6 +596,72 @@ wish, and the queue is not for wishes.
 ---
 
 ## Done
+
+### T-28 · A backup that can be carried  ·  *feat: one file she can take off the laptop*
+    `BackupService.export` already produced readable JSON, which is what Henri
+    wants for everyday access and exactly what must not travel on a USB stick:
+    it is every client's name, address and VAT number in one file. The plain
+    export is untouched — the portable archive **wraps** it rather than
+    replacing it, so a person who cannot run a restore can unzip the file, take
+    `backup.json` out and hand it to the endpoint that already existed.
+
+    `core/backup/sealed.py` is the format: an eight-byte magic, a plaintext
+    JSON header, then AES-256-GCM over a zip. Three choices in it are load
+    bearing and each is a test.
+
+    **The header is readable on purpose.** A restore has to know it needs a
+    passphrase before asking for one, and a person holding this file in three
+    years has to be able to see what it is without the program that wrote it.
+    Readable is not the same as authoritative: the header is the AAD, so
+    editing the salt or dropping scrypt's cost to 2 produces a decryption
+    failure rather than a cheaper file to attack.
+
+    **The cost parameters travel in the file**, not in this module. Raising
+    them later applies to new archives and orphans none of the old ones —
+    asserted by sealing under deliberately cheap parameters and opening it.
+
+    **A wrong passphrase and an altered file are one error.** AES-GCM cannot
+    tell them apart, and a message that guessed would be a message that is
+    sometimes wrong about whether a backup is intact.
+
+    The documents travel too, which is what makes this the archive and the
+    plain export only a register. Packing is the **one** legitimate read of the
+    T-27 folder, and it is safe for the reason T-27 recorded hashes at all:
+    every file is checked against the sha256 the register captured at issue,
+    and bytes that no longer match are named in the manifest rather than
+    carried under the original's name. On restore the bytes are written back
+    driven by the restored register, never by the archive, so a file under a
+    name the database has never heard of is not dropped into anyone's folder.
+
+    **Two deviations, both deliberate.** The ticket said
+    `GET /backup/export?encrypt=true`; a passphrase in a query string ends up
+    in browser history, proxy logs and referrers, and this one opens every
+    client record the organization has — so it is a POST with the passphrase
+    in the body, and the archive comes back as the response. Restore likewise
+    takes the file as the request body with the passphrase in a header
+    (`POST /backup/restore/file`), sniffs the first eight bytes, and asks for a
+    passphrase only when the archive says it needs one. The JSON
+    `POST /backup/restore` is unchanged.
+
+    The ticket's last line — "the UI says so before the first export rather
+    than after" — is a screen, and screens are Henri's. What landed instead is
+    the half that does not depend on one: `acknowledge_unrecoverable` must be
+    true or the API refuses to produce the archive, and
+    `GET /backup/passphrase-notice` serves the one wording every screen and
+    every error should use. A promise a screen makes is a promise someone can
+    edit; this is the API refusing to write a file nobody can open until the
+    caller says they know that.
+
+    Evidence: `tests/core/backup/test_sealed.py` (14) and
+    `tests/api/test_backup_portable.py` (10) — right passphrase restores with
+    the documents; wrong passphrase is a distinct 409 **and leaves the
+    organization empty**, because decryption happens before anything touches
+    the database; the plain export's rows are identical to the archive's
+    member. 656 collected exit 0, `ruff check` clean.
+
+    Found on the way and not fixed here: **T-33**, two tenants colliding on one
+    document path. Measured, not reasoned — two organizations issued the same
+    reference and one file was left on disk.
 
 ### T-27 · The documents leave the database  ·  *feat: an issued invoice leaves a file behind*
     The rule the whole ticket turns on is the one that is easiest to erode

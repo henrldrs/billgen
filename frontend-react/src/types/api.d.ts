@@ -1629,10 +1629,70 @@ export interface paths {
          *     companies, clients, products, invoices, credit notes, payments, the audit
          *     log, the document register, and the gapless sequence counters. Writes one
          *     export_backup audit entry; users/credentials are never included.
+         *
+         *     Readable on purpose, and therefore **not** a file to carry: it is every
+         *     client's name, address and VAT number in the clear. POST /backup/export/
+         *     encrypted is the one that leaves the machine.
          */
         get: operations["export_backup_backup_export_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/backup/passphrase-notice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Passphrase Notice
+         * @description What a person must be told **before** choosing a passphrase, not after.
+         *
+         *     One wording, generated from `core/backup/sealed.py`, so the settings panel,
+         *     the first-run wizard and every error message say the same sentence and
+         *     there is one place to correct it.
+         */
+        get: operations["passphrase_notice_backup_passphrase_notice_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/backup/export/encrypted": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Export Backup Encrypted
+         * @description One file that can leave the machine: the same JSON as GET /export plus
+         *     the document PDFs, zipped and sealed with AES-256-GCM.
+         *
+         *     **A POST, and the passphrase is in the body.** T-28 wrote this as
+         *     `GET /backup/export?encrypt=true`; a passphrase in a query string ends up
+         *     in browser history, proxy logs and referrers, and this one opens every
+         *     client record the organization has. That is the deviation and this is the
+         *     reason for it.
+         *
+         *     `acknowledge_unrecoverable` must be true. The API refuses to produce an
+         *     archive nobody can open unless the caller has said, in the request, that
+         *     they know it — which is what makes "the UI says so before the first
+         *     export" enforceable instead of hoped for.
+         */
+        post: operations["export_backup_encrypted_backup_export_encrypted_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1654,12 +1714,39 @@ export interface paths {
          *     Refuses (409) unless the organization has no companies yet — merging into
          *     live data would break the gapless-numbering guarantee.
          *
-         *     The document register travels with the backup; the files do not (T-28
-         *     carries those). A restore therefore completes and reports the paths whose
-         *     bytes are not in the archive, rather than failing on a folder it was never
-         *     handed.
+         *     This one takes the plain JSON export. A sealed or zipped archive goes to
+         *     POST /backup/restore/file, which carries the documents too.
          */
         post: operations["restore_backup_backup_restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/backup/restore/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restore Backup File
+         * @description Restore from a file: sealed, zipped, or the plain JSON export.
+         *
+         *     The body is the archive itself, and the passphrase — when one is needed —
+         *     travels in a header for the same reason it is not in a query string. Which
+         *     kind of file this is comes from its own first eight bytes, so a passphrase
+         *     is asked for only when the archive says it needs one.
+         *
+         *     Documents carried by the archive are written back into the T-27 folder,
+         *     driven by the restored register: a file the archive holds under a name the
+         *     database does not know is not written.
+         */
+        post: operations["restore_backup_file_backup_restore_file_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2581,6 +2668,20 @@ export interface components {
              */
             created_at: string;
         };
+        /** EncryptedExportRequest */
+        EncryptedExportRequest: {
+            /**
+             * Passphrase
+             * @description Never stored, never recoverable. The floor is not a password policy — it is where the encryption's cost stops mattering because the whole keyspace can be walked.
+             */
+            passphrase: string;
+            /**
+             * Acknowledge Unrecoverable
+             * @description Must be true. The API refuses to produce an archive nobody can open unless the caller has said they know that — which is what turns 'the UI warns first' into something a test can assert.
+             * @default false
+             */
+            acknowledge_unrecoverable?: boolean;
+        };
         /**
          * EntitlementsResponse
          * @description Everything the UI needs to render itself correctly for this plan.
@@ -3183,6 +3284,13 @@ export interface components {
             /** Plan Tier */
             plan_tier: string;
         };
+        /** PassphraseNoticeResponse */
+        PassphraseNoticeResponse: {
+            /** Notice */
+            notice: string;
+            /** Minimum Length */
+            minimum_length: number;
+        };
         /** PasswordChangeRequest */
         PasswordChangeRequest: {
             /** Current Password */
@@ -3677,10 +3785,20 @@ export interface components {
             /** Audit Entries */
             audit_entries: number;
             /**
+             * Documents Restored
+             * @default 0
+             */
+            documents_restored?: number;
+            /**
              * Missing Documents
              * @default []
              */
             missing_documents?: string[];
+            /**
+             * Altered Documents
+             * @default []
+             */
+            altered_documents?: string[];
         };
         /** RevenueByMonthResponse */
         RevenueByMonthResponse: {
@@ -7280,6 +7398,59 @@ export interface operations {
             };
         };
     };
+    passphrase_notice_backup_passphrase_notice_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PassphraseNoticeResponse"];
+                };
+            };
+        };
+    };
+    export_backup_encrypted_backup_export_encrypted_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EncryptedExportRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     restore_backup_backup_restore_post: {
         parameters: {
             query?: never;
@@ -7294,6 +7465,37 @@ export interface operations {
                 };
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RestoreReportResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restore_backup_file_backup_restore_file_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Backup-Passphrase"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {

@@ -102,6 +102,14 @@ VAT.
   Thirty are kept, and only files matching `YYYY-MM-DD.zip` are ever deleted.
   Whether a restore has actually been performed lives in
   [RESTORE_LOG.md](RESTORE_LOG.md), not in this file.
+- **Two backups, two jobs (T-23, T-28).** The daily zip stays on the machine
+  and carries JSON only — the PDFs are already in the same data folder, a
+  metre away. The *portable* archive is the one that leaves:
+  `POST /backup/export/encrypted` seals the JSON **and** the documents under a
+  passphrase. Do not swap one for the other: an unencrypted archive of every
+  client's name, address and VAT number is a breach the moment it is on a
+  stick, and a daily backup that stops to ask for a passphrase is a daily
+  backup that stops happening.
 
 ---
 

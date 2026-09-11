@@ -88,10 +88,26 @@ organization.**
   restorable. It is **3** today: 2 added `quotes`, 3 added `documents` — the
   register of files written outside the database (T-27). Older files restore
   unchanged; they simply carry none of the newer collections.
-- The document register travels; the documents do not. A restore reports the
-  registered paths whose bytes are not in the archive
+- The document register travels in the JSON; the documents do not. A restore
+  reports the registered paths whose bytes are not in the archive
   (`RestoreReport.missing_documents`) and completes, because the invoice is in
-  the rows and a missing PDF is a lost copy rather than a lost record. Carrying
-  the bytes is T-28, where the archive travels encrypted.
+  the rows and a missing PDF is a lost copy rather than a lost record.
+- **The portable archive carries the bytes, and is encrypted** (T-28).
+  `POST /backup/export/encrypted` zips this same JSON as `backup.json` together
+  with `documents/<path>`, then seals the zip with AES-256-GCM under a
+  scrypt-derived key (`core/backup/sealed.py`). The plaintext header names the
+  KDF parameters, the salt and the nonce, and is bound as AAD so editing it
+  breaks the tag rather than weakening the file. The plain export is unchanged
+  and the archive wraps it, so `backup.json` unzipped by hand still restores
+  through `POST /backup/restore`.
+- **The passphrase is never stored and cannot be recovered.** No hint, no
+  escrow, no reset — the property that makes the file safe to carry is the same
+  one that makes a forgotten passphrase the end of that archive. The API
+  refuses to produce one until the caller sets `acknowledge_unrecoverable`, and
+  `GET /backup/passphrase-notice` is the single wording every screen uses.
+- `POST /backup/restore/file` takes a file rather than a JSON body — sealed,
+  zipped or plain — and reads the first eight bytes to decide whether it needs
+  a passphrase. Decryption happens before anything touches the database, so a
+  wrong passphrase can never leave a half-restored organization.
 - The settings page of both shells gains a Backup section: download the JSON,
   restore from file behind a confirmation.

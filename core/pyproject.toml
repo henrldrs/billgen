@@ -11,6 +11,12 @@ dependencies = [
   # already installed prints instead and this is never imported (T-21) — the
   # desktop runtime leaves it out (scripts/build_sidecar_runtime.py).
   "playwright>=1.49",
+  # AES-256-GCM and scrypt for the portable backup (core/backup/sealed.py).
+  # Declared HERE, not only in billgen-desktop, because core imports it: the
+  # same undeclared-but-installed dependency produced a packaged runtime with
+  # no licence verification in it (T-20), and the fix is to declare it where
+  # the import is.
+  "cryptography>=42",
 ]
 
 [build-system]

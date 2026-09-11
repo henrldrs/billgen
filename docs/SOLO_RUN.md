@@ -92,6 +92,7 @@ which it cannot know.
 | 17 | T-22 · Emilia's license file | `DONE` | Ships in *feat: the packaged build refuses to start unlicensed*. The two halves that were zero: `bootstrap` never called `check_license`, and the signed `hardware_id` was never compared to anything. Rehearsed end to end against a scratch key pair — strict mode refuses with no licence and refuses one signed for another machine, naming both fingerprints, and starts with the right one. **The signing key is Henri's to generate** (`scripts/license_tool.py keygen`); until he does, no packaged build starts, which is the correct state for a repo that has never held one. [docs/LICENSING.md](LICENSING.md) is the reissue path. |
 | 18 | T-27 · the documents leave the database | `DONE` | Ships in *feat: an issued invoice leaves a file behind*. Issuing writes `<DOCUMENT_ROOT>/invoices/<year>/<ref>.pdf` and registers path, hash and size; the folder is written and never read back, so deleting a file changes no endpoint's answer. Backup schema 3 carries the register, and a restore names what is missing instead of failing. 16 new tests. |
 | 19 | T-23 · backup on close | `IN PROGRESS` | Ships in *feat: the sidecar backs the database up without being asked*. `desktop/backups.py` writes `<data dir>/backups/<date>.zip` and keeps thirty. Not on close alone: the shell `child.kill()`s the sidecar, so a close-only backup would never have run on her machine — it runs on start (always) and on a clean exit (overwriting today's). 12 tests, including a real restore of a sidecar-written archive through the API. The remaining half is the note in [RESTORE_LOG.md](RESTORE_LOG.md), which needs her laptop. |
+| 20 | T-28 · a backup that can be carried | `DONE` | Ships in *feat: one file she can take off the laptop*. `core/backup/sealed.py`: AES-256-GCM over a zip of the same ADR-0003 JSON plus the T-27 document bytes, scrypt-derived, with a readable header bound as AAD so editing it breaks the tag. Wrong passphrase is a distinct 409 that leaves the organization empty — decryption runs before anything touches the database. Two deliberate deviations (POST, not a passphrase in a URL) and the UI half left to T-29, replaced by an API that refuses to write an unrecoverable file until the caller acknowledges it. 24 tests. |
 
 **This ledger's own list is closed.** Items 6–8 were the three the handover
 note sanctioned explicitly: *"None of these invents a screen; each connects a
@@ -104,7 +105,7 @@ happened to it.
 
 | | |
 |---|---|
-| Python | **632 collected, exit 0** — 16 new in T-27, 12 in T-23; `tests/desktop/` is 51 | 
+| Python | **656 collected, exit 0** — 16 new in T-27, 12 in T-23, 24 in T-28; `tests/desktop/` is 51 | 
 | Frontend | **193 passed** (`npm run test`, 30 files), typecheck clean across all four workspaces |
 | `ruff check` | clean. CI runs `ruff check .` only — the tree is *not* `ruff format` clean and was not before, so do not reformat it as a side errand |
 | Architecture doc | **in sync** — both `sync-architecture --check` and `architecture_to_text.py --check` green at 102 endpoints across 25 routers |

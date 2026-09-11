@@ -18,11 +18,14 @@ matter:
   of every file written outside the database — but not the files themselves.
   A restore therefore knows exactly which documents should exist and reports
   the ones that do not, rather than failing on a folder it was never given.
-  Carrying the bytes is T-28's job, where they travel encrypted.
+  Carrying the bytes is T-28's job, where they travel encrypted —
+  `export_portable` and `restore_portable` below, which wrap this same JSON
+  rather than inventing a second format.
 """
 
 from __future__ import annotations
 
+import json
 import re
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -31,7 +34,8 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ValidationError
 
-from ..documents import DocumentArchive
+from ..backup import container, sealed
+from ..documents import DocumentArchive, sha256_of
 from ..models import (
     AuditAction,
     AuditLogEntry,
@@ -95,12 +99,18 @@ class RestoreReport(BaseModel):
     credit_notes: int = 0
     payments: int = 0
     documents: int = 0
+    #  Files whose bytes travelled in the archive and were written back.
+    documents_restored: int = 0
     sequences: int = 0
     audit_entries: int = 0
     #  Registered files whose bytes are not where the register says they are.
     #  A restore reports them and completes: the invoice data is in the rows,
     #  and a missing PDF is a lost copy, not a lost record.
     missing_documents: list[str] = []
+    #  Files that arrived but did not hash to what the register recorded at
+    #  issue. They are written anyway — a copy of unknown provenance beats no
+    #  copy — and named here, which is the only honest thing to do with them.
+    altered_documents: list[str] = []
 
 
 # What restore replays, in order: the aggregate's key in the payload, its model,
@@ -190,7 +200,12 @@ class BackupService:
             uow.commit()
         return payload
 
-    def restore(self, payload: Any, actor_user_id: UUID | None = None) -> RestoreReport:
+    def restore(
+        self,
+        payload: Any,
+        actor_user_id: UUID | None = None,
+        documents: dict[str, bytes] | None = None,
+    ) -> RestoreReport:
         if not isinstance(payload, dict) or payload.get("format") != BACKUP_FORMAT:
             raise BusinessRuleError("Not a BillGen backup file")
         if payload.get("schema_version") not in SUPPORTED_SCHEMA_VERSIONS:
@@ -218,9 +233,7 @@ class BackupService:
                     setattr(report, key, getattr(report, key) + 1)
 
             if self._archive is not None:
-                for document in uow.documents.list():
-                    if not self._archive.exists(document.path):
-                        report.missing_documents.append(document.path)
+                self._replace_documents(uow, report, documents or {})
 
             for raw in self._list(payload, "sequences"):
                 try:
@@ -246,6 +259,120 @@ class BackupService:
             uow.commit()
 
         return report
+
+    def export_portable(
+        self, passphrase: str, actor_user_id: UUID | None = None
+    ) -> tuple[bytes, container.PackedArchive]:
+        """The whole organization as one file that can leave the machine.
+
+        The same JSON `export()` returns, plus the T-27 document bytes, zipped
+        and then sealed with AES-256-GCM (`core/backup/sealed.py`). The plain
+        export is untouched: this is a wrapper around it, not a second format,
+        so a person who cannot run a restore can unzip the archive and hand
+        `backup.json` to `POST /backup/restore`.
+
+        Every document is checked against the sha256 the register recorded at
+        issue. A file that is gone, or that no longer hashes to what was
+        recorded, is **named in the manifest** rather than quietly left out.
+        """
+        payload = self.export(actor_user_id=actor_user_id)
+
+        documents: list[tuple[str, bytes | None]] = []
+        skipped: list[str] = []
+        if self._archive is not None and self._archive.enabled:
+            with self._uow_factory() as uow:
+                registered = uow.documents.list()
+            for document in registered:
+                body = self._archive.read(document.path)
+                if body is None:
+                    skipped.append(document.path)
+                    continue
+                if sha256_of(body) != document.sha256:
+                    #  Not packed. An archive is a thing a person will trust
+                    #  years from now, and carrying bytes that do not match the
+                    #  register under the same name as the original is how a
+                    #  backup becomes worse than none.
+                    skipped.append(document.path)
+                    continue
+                documents.append((document.path, body))
+
+        packed = container.pack(payload, documents, skipped=skipped)
+        blob = sealed.seal(
+            packed.blob,
+            passphrase,
+            extra={
+                "organization": payload.get("organization", {}).get("name"),
+                "invoices": len(payload.get("invoices", [])),
+                "documents": packed.documents,
+            },
+        )
+        return blob, packed
+
+    def restore_portable(
+        self,
+        blob: bytes,
+        passphrase: str | None = None,
+        actor_user_id: UUID | None = None,
+    ) -> RestoreReport:
+        """Restore from a file, sealed or not.
+
+        The header says which: sealed bytes start with a magic and carry their
+        own parameters, so a passphrase is asked for only when one is needed.
+        Plain JSON and an unsealed zip both restore without one, which keeps
+        every export this product has ever written restorable by one call.
+        """
+        if sealed.is_sealed(blob):
+            if not passphrase:
+                raise BusinessRuleError(
+                    "This archive is encrypted and needs its passphrase. "
+                    + sealed.UNRECOVERABLE_NOTICE
+                )
+            #  Decryption happens before anything touches the database, so a
+            #  wrong passphrase cannot leave a half-restored organization.
+            try:
+                blob = sealed.unseal(blob, passphrase)
+            except sealed.SealedBackupError as exc:
+                raise BusinessRuleError(str(exc)) from exc
+
+        documents: dict[str, bytes] = {}
+        try:
+            unpacked = container.unpack(blob)
+        except container.ContainerError:
+            #  Not a zip: the oldest and simplest thing this accepts is the
+            #  plain JSON export, saved straight out of the browser.
+            try:
+                payload = json.loads(blob)
+            except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+                raise BusinessRuleError(
+                    "Not a BillGen backup: neither an archive nor a JSON export"
+                ) from exc
+        else:
+            payload = unpacked.payload
+            documents = unpacked.documents
+
+        return self.restore(payload, actor_user_id=actor_user_id, documents=documents)
+
+    def _replace_documents(
+        self, uow: UnitOfWork, report: RestoreReport, arriving: dict[str, bytes]
+    ) -> None:
+        """Put back the bytes that travelled, and name what did not.
+
+        Driven by the register, never by the archive: a path the restored
+        database does not list is not written even if the file carried it. An
+        archive is not allowed to drop files into someone's folder under names
+        nothing in the database has ever heard of.
+        """
+        assert self._archive is not None
+        for document in uow.documents.list():
+            body = arriving.get(document.path)
+            if body is None:
+                if not self._archive.exists(document.path):
+                    report.missing_documents.append(document.path)
+                continue
+            if sha256_of(body) != document.sha256:
+                report.altered_documents.append(document.path)
+            self._archive.write(document.path, body)
+            report.documents_restored += 1
 
     @staticmethod
     def _list(payload: dict[str, Any], key: str) -> list[Any]:

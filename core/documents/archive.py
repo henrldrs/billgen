@@ -7,8 +7,12 @@ copy and changes nothing legal. That one-way relationship is the whole design:
 the moment any endpoint reads a file back to decide something, a person with a
 file manager is editing a VAT record.
 
-Two operations are therefore all a caller gets — `write` and `exists`. There is
-deliberately no `read`.
+Two operations are what a caller normally gets — `write` and `exists`. There is
+a third, `read`, with **exactly one legitimate caller**: the portable backup
+(T-28), which has to put the bytes in the archive it hands the user. It is not
+a way to answer a question from a file. Everything it returns is checked
+against the sha256 the register recorded at issue, so a copy someone edited
+comes back named as a mismatch rather than travelling as the original.
 
 The root comes from outside: the desktop passes `app_data_dir()` (T-25), a
 hosted deployment passes `DOCUMENT_ROOT`, and where neither says anything the
@@ -69,6 +73,15 @@ class DocumentArchive(ABC):
     def exists(self, relative_path: str) -> bool: ...
 
     @abstractmethod
+    def read(self, relative_path: str) -> bytes | None:
+        """The bytes, or None when the file is not there.
+
+        For the portable backup and nothing else — see the module docstring.
+        A caller that uses this to *answer* something has broken the rule the
+        whole archive is built on.
+        """
+
+    @abstractmethod
     def location(self, relative_path: str | None = None) -> str | None:
         """A path to show a person — the settings panel's "open folder"."""
 
@@ -83,6 +96,9 @@ class NullDocumentArchive(DocumentArchive):
 
     def exists(self, relative_path: str) -> bool:
         return False
+
+    def read(self, relative_path: str) -> bytes | None:
+        return None
 
     def location(self, relative_path: str | None = None) -> str | None:
         return None
@@ -123,6 +139,12 @@ class FilesystemDocumentArchive(DocumentArchive):
             return self._resolve(relative_path).is_file()
         except ArchiveError:
             return False
+
+    def read(self, relative_path: str) -> bytes | None:
+        try:
+            return self._resolve(relative_path).read_bytes()
+        except (ArchiveError, OSError):
+            return None
 
     def location(self, relative_path: str | None = None) -> str | None:
         if relative_path is None:

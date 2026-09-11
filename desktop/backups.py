@@ -26,9 +26,13 @@ Killed hard, nothing is lost that the next start does not pick up.
 
 The archive is a zip of ADR-0003 JSON — one member per organization, plus a
 manifest naming which member restores through `POST /backup/restore`. It does
-**not** carry the T-27 document files: an unencrypted zip of every client's
-name, address and VAT number is exactly what must not travel on a USB stick,
-and carrying the documents is T-28's job, where the archive is encrypted.
+**not** carry the T-27 document files, for two reasons that point the same way:
+they are already in the same data folder a metre from this zip, and an
+unencrypted archive of every client's name, address and VAT number is exactly
+what must not travel on a USB stick. This backup stays on the machine. The one
+that leaves is T-28's — `POST /backup/export/encrypted`, which carries the
+documents and is sealed under a passphrase. A daily backup that stopped to ask
+for one would be a daily backup that stopped happening.
 """
 
 from __future__ import annotations

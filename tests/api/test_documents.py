@@ -10,15 +10,12 @@ and a PDF engine that is not there when an invoice is issued.
 
 import hashlib
 
-import httpx
 import pytest
 
-from api.config import Settings
-from api.main import create_app
-from conftest import TEST_DATABASE_URL, dispose_test_engine, make_test_engine
 from core.services import pdf_service as pdf_service_module
 
 from .conftest import (
+    FAKE_PDF,
     bearer,
     create_client_record,
     create_company,
@@ -28,31 +25,6 @@ from .conftest import (
 )
 
 pytestmark = pytest.mark.asyncio
-
-FAKE_PDF = b"%PDF-fake-archived"
-
-
-@pytest.fixture()
-def stub_pdf_engine(monkeypatch):
-    """No Edge, no Playwright: the archive is what is under test, not the
-    renderer. `tests/core/pdf/` is where the real engine is exercised."""
-    monkeypatch.setattr(pdf_service_module, "html_to_pdf", lambda html: FAKE_PDF)
-
-
-@pytest.fixture()
-async def archiving_client(tmp_path, stub_pdf_engine):
-    """An app whose DOCUMENT_ROOT is a temp folder. Yields (client, root)."""
-    engine = make_test_engine()
-    settings = Settings(
-        database_url=TEST_DATABASE_URL,
-        jwt_secret="test-secret-0123456789abcdef-0123456789",
-        document_root=str(tmp_path),
-    )
-    app = create_app(settings=settings, engine=engine)
-    transport = httpx.ASGITransport(app=app)
-    async with httpx.AsyncClient(transport=transport, base_url="http://test") as c:
-        yield c, tmp_path
-    dispose_test_engine(engine)
 
 
 async def workspace(client) -> tuple[dict, dict, dict]:

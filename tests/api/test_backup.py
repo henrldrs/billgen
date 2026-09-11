@@ -90,7 +90,9 @@ async def test_restore_roundtrip_preserves_data_and_continues_sequence(client):
         #  No DOCUMENT_ROOT on this app, so nothing was ever archived. The
         #  register travelling full is tests/api/test_documents.py.
         "documents": 0,
+        "documents_restored": 0,
         "missing_documents": [],
+        "altered_documents": [],
         "sequences": report["sequences"],  # count depends on bucket scopes
         "audit_entries": len(payload["audit_log"]),
     }

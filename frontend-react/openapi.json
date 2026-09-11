@@ -4561,7 +4561,7 @@
           "backup"
         ],
         "summary": "Export Backup",
-        "description": "The whole organization as a restorable JSON document (ADR-0003):\ncompanies, clients, products, invoices, credit notes, payments, the audit\nlog, the document register, and the gapless sequence counters. Writes one\nexport_backup audit entry; users/credentials are never included.",
+        "description": "The whole organization as a restorable JSON document (ADR-0003):\ncompanies, clients, products, invoices, credit notes, payments, the audit\nlog, the document register, and the gapless sequence counters. Writes one\nexport_backup audit entry; users/credentials are never included.\n\nReadable on purpose, and therefore **not** a file to carry: it is every\nclient's name, address and VAT number in the clear. POST /backup/export/\nencrypted is the one that leaves the machine.",
         "operationId": "export_backup_backup_export_get",
         "responses": {
           "200": {
@@ -4579,13 +4579,75 @@
         }
       }
     },
+    "/backup/passphrase-notice": {
+      "get": {
+        "tags": [
+          "backup"
+        ],
+        "summary": "Passphrase Notice",
+        "description": "What a person must be told **before** choosing a passphrase, not after.\n\nOne wording, generated from `core/backup/sealed.py`, so the settings panel,\nthe first-run wizard and every error message say the same sentence and\nthere is one place to correct it.",
+        "operationId": "passphrase_notice_backup_passphrase_notice_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PassphraseNoticeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/backup/export/encrypted": {
+      "post": {
+        "tags": [
+          "backup"
+        ],
+        "summary": "Export Backup Encrypted",
+        "description": "One file that can leave the machine: the same JSON as GET /export plus\nthe document PDFs, zipped and sealed with AES-256-GCM.\n\n**A POST, and the passphrase is in the body.** T-28 wrote this as\n`GET /backup/export?encrypt=true`; a passphrase in a query string ends up\nin browser history, proxy logs and referrers, and this one opens every\nclient record the organization has. That is the deviation and this is the\nreason for it.\n\n`acknowledge_unrecoverable` must be true. The API refuses to produce an\narchive nobody can open unless the caller has said, in the request, that\nthey know it — which is what makes \"the UI says so before the first\nexport\" enforceable instead of hoped for.",
+        "operationId": "export_backup_encrypted_backup_export_encrypted_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EncryptedExportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/backup/restore": {
       "post": {
         "tags": [
           "backup"
         ],
         "summary": "Restore Backup",
-        "description": "Disaster recovery: restore a backup into the current organization.\nRefuses (409) unless the organization has no companies yet — merging into\nlive data would break the gapless-numbering guarantee.\n\nThe document register travels with the backup; the files do not (T-28\ncarries those). A restore therefore completes and reports the paths whose\nbytes are not in the archive, rather than failing on a folder it was never\nhanded.",
+        "description": "Disaster recovery: restore a backup into the current organization.\nRefuses (409) unless the organization has no companies yet — merging into\nlive data would break the gapless-numbering guarantee.\n\nThis one takes the plain JSON export. A sealed or zipped archive goes to\nPOST /backup/restore/file, which carries the documents too.",
         "operationId": "restore_backup_backup_restore_post",
         "requestBody": {
           "content": {
@@ -4600,6 +4662,56 @@
           },
           "required": true
         },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RestoreReportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/backup/restore/file": {
+      "post": {
+        "tags": [
+          "backup"
+        ],
+        "summary": "Restore Backup File",
+        "description": "Restore from a file: sealed, zipped, or the plain JSON export.\n\nThe body is the archive itself, and the passphrase — when one is needed —\ntravels in a header for the same reason it is not in a query string. Which\nkind of file this is comes from its own first eight bytes, so a passphrase\nis asked for only when the archive says it needs one.\n\nDocuments carried by the archive are written back into the T-27 folder,\ndriven by the restored register: a file the archive holds under a name the\ndatabase does not know is not written.",
+        "operationId": "restore_backup_file_backup_restore_file_post",
+        "parameters": [
+          {
+            "name": "X-Backup-Passphrase",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Backup-Passphrase"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -7043,6 +7155,27 @@
         ],
         "title": "DocumentResponse"
       },
+      "EncryptedExportRequest": {
+        "properties": {
+          "passphrase": {
+            "type": "string",
+            "minLength": 12,
+            "title": "Passphrase",
+            "description": "Never stored, never recoverable. The floor is not a password policy — it is where the encryption's cost stops mattering because the whole keyspace can be walked."
+          },
+          "acknowledge_unrecoverable": {
+            "type": "boolean",
+            "title": "Acknowledge Unrecoverable",
+            "description": "Must be true. The API refuses to produce an archive nobody can open unless the caller has said they know that — which is what turns 'the UI warns first' into something a test can assert.",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "passphrase"
+        ],
+        "title": "EncryptedExportRequest"
+      },
       "EntitlementsResponse": {
         "properties": {
           "organization_id": {
@@ -8804,6 +8937,24 @@
         ],
         "title": "OrganizationResponse"
       },
+      "PassphraseNoticeResponse": {
+        "properties": {
+          "notice": {
+            "type": "string",
+            "title": "Notice"
+          },
+          "minimum_length": {
+            "type": "integer",
+            "title": "Minimum Length"
+          }
+        },
+        "type": "object",
+        "required": [
+          "notice",
+          "minimum_length"
+        ],
+        "title": "PassphraseNoticeResponse"
+      },
       "PasswordChangeRequest": {
         "properties": {
           "current_password": {
@@ -10177,12 +10328,25 @@
             "type": "integer",
             "title": "Audit Entries"
           },
+          "documents_restored": {
+            "type": "integer",
+            "title": "Documents Restored",
+            "default": 0
+          },
           "missing_documents": {
             "items": {
               "type": "string"
             },
             "type": "array",
             "title": "Missing Documents",
+            "default": []
+          },
+          "altered_documents": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Altered Documents",
             "default": []
           }
         },
