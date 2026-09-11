@@ -85,6 +85,12 @@ class DocumentArchive(ABC):
     def location(self, relative_path: str | None = None) -> str | None:
         """A path to show a person — the settings panel's "open folder"."""
 
+    def scoped(self, segment: str) -> DocumentArchive:
+        """This archive, one directory down. The per-organization root a
+        hosted deployment needs (T-33); a desktop, one organization on one
+        machine, never calls it and keeps the flat layout Henri asked for."""
+        return self
+
 
 class NullDocumentArchive(DocumentArchive):
     """No root configured. Writes nothing and says so, rather than pretending."""
@@ -111,6 +117,11 @@ class FilesystemDocumentArchive(DocumentArchive):
     @property
     def root(self) -> Path:
         return self._root
+
+    def scoped(self, segment: str) -> DocumentArchive:
+        #  Through the same guard as every other path, so an organization id
+        #  that is not one cannot climb out of the root.
+        return FilesystemDocumentArchive(self._resolve(safe_name(segment)))
 
     def _resolve(self, relative_path: str) -> Path:
         candidate = PurePosixPath(relative_path)

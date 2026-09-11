@@ -148,6 +148,9 @@ async def archiving_client(tmp_path, stub_pdf_engine):
         database_url=TEST_DATABASE_URL,
         jwt_secret="test-secret-0123456789abcdef-0123456789",
         document_root=str(tmp_path),
+        #  The desktop layout: one organization, files at the root. The hosted
+        #  per-organization layout has its own test (T-33).
+        document_layout="flat",
     )
     app = create_app(settings=settings, engine=engine)
     transport = httpx.ASGITransport(app=app)

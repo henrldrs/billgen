@@ -41,6 +41,14 @@ class Settings(BaseSettings):
     #  to the resolved data directory; a hosted deployment must set it too, or
     #  the seven-year retention duty rests on the database alone.
     document_root: str = ""
+    #  How DOCUMENT_ROOT is laid out (T-33). "per-organization" puts each
+    #  tenant under its own <org-id>/ so two organizations issuing the same
+    #  reference never write the same file — the default, because it is the
+    #  one that cannot lose a customer's invoice to another customer. "flat"
+    #  is the desktop: one organization, and Documents\BillGen\invoices\ is
+    #  where Henri wants her to find them. Registered paths never include the
+    #  segment, so a backup moves between the two layouts unchanged.
+    document_layout: str = "per-organization"
 
     # Desktop build: enables POST /auth/desktop-bootstrap (single local user).
     # MUST stay false for hosted SaaS — it mints an account with no credentials.

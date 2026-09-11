@@ -111,6 +111,9 @@ def configure_environment() -> str:
     #  T-25 moved out of the package container, so an uninstall leaves both the
     #  database and the documents behind (T-27).
     os.environ["DOCUMENT_ROOT"] = str(paths.app_data_dir())
+    #  Flat, not per-organization: this machine holds one organization, and
+    #  the folder is hers to open (T-33 keeps the hosted layout separate).
+    os.environ["DOCUMENT_LAYOUT"] = "flat"
     os.environ.setdefault("JWT_SECRET", load_or_create_secret())
     # Desktop webview loads from tauri://localhost (and http://localhost in dev).
     os.environ.setdefault(

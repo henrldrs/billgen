@@ -13,8 +13,20 @@ def get_uow_factory(request: Request) -> Callable[[], UnitOfWork]:
 
 def get_document_archive(request: Request) -> DocumentArchive:
     """Where issued documents are written. A NullDocumentArchive when no
-    DOCUMENT_ROOT is configured, so callers never branch on None."""
-    return request.app.state.document_archive
+    DOCUMENT_ROOT is configured, so callers never branch on None.
+
+    Per organization unless the layout is "flat" (T-33): the tenant the
+    middleware bound is the directory, so two organizations issuing the same
+    reference under one DOCUMENT_ROOT leave two files. The desktop is flat —
+    one organization, and the folder is hers to browse.
+    """
+    archive: DocumentArchive = request.app.state.document_archive
+    if request.app.state.settings.document_layout == "flat":
+        return archive
+    org_id = getattr(request.state, "org_id", None)
+    if org_id is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return archive.scoped(str(org_id))
 
 
 def get_auth_service(request: Request):  # noqa: ANN201 — avoids circular import

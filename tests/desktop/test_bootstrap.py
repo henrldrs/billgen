@@ -48,7 +48,7 @@ def test_load_or_create_secret_is_stable(tmp_path, monkeypatch):
 
 def test_configure_environment_sets_desktop_env(tmp_path, monkeypatch):
     monkeypatch.setenv("BILLGEN_DATA_DIR", str(tmp_path / "BillGen"))
-    for key in ("DATABASE_URL", "DESKTOP_MODE", "JWT_SECRET", "DOCUMENT_ROOT"):
+    for key in ("DATABASE_URL", "DESKTOP_MODE", "JWT_SECRET", "DOCUMENT_ROOT", "DOCUMENT_LAYOUT"):
         monkeypatch.delenv(key, raising=False)
 
     url = bootstrap.configure_environment()
@@ -62,6 +62,9 @@ def test_configure_environment_sets_desktop_env(tmp_path, monkeypatch):
     #  The wire between T-25 and T-27: documents land inside the data
     #  directory, so an uninstall leaves the database and the PDFs together.
     assert os.environ["DOCUMENT_ROOT"] == str(tmp_path / "BillGen")
+    #  One organization on this machine, and the folder is hers to browse:
+    #  no <org-id>/ segment in front of invoices/ (T-33).
+    assert os.environ["DOCUMENT_LAYOUT"] == "flat"
 
 
 # --- the license gate (T-22) ------------------------------------------------

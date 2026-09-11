@@ -33,6 +33,43 @@ wish, and the queue is not for wishes.
 
 ## Open — in priority order
 
+### T-34 · Mother's upgrade — her invoices come with her
+    branch    Backend / Desktop     status  open
+    needs     **one real export from her old app** — FinanceFlow BillGen's
+              JSON backup, the whole `{app, keys}` blob. Henri produces it in
+              minutes; nothing in this repository can stand in for it.
+    why       Henri 2026-09-11: she is on the old BillGen and should be on
+              this desktop build. The old app's export carries her invoices
+              under `billgen-invoices-<companyId>`, and
+              `core/imports/legacy_backup.py` **counts them and imports none**
+              ("not imported in v1" — `invoices_detected`). An upgrade today
+              brings her companies, clients and services and drops every
+              invoice she has ever issued, under a seven-year retention duty
+              — and, worse, the new install would start her numbering from 1
+              on a series that already exists.
+    do        Extend `ImportService` to carry invoices as **already-issued
+              history**, the way `BackupService.restore` inserts them: status
+              ISSUED, the legacy reference verbatim, `sequence_global`
+              assigned in legacy order, dates and totals as recorded, lines
+              as recorded (or one line per invoice if the old app kept only
+              totals — that is a fact her export decides). Then set the
+              company's `invoice` counter past the last legacy number so the
+              next invoice she issues continues the series. Nothing is
+              re-rendered and no number is minted; these documents were
+              issued by another program and this one is their archive.
+
+              The field mapping cannot be written before her file is in
+              hand: the only legacy invoice in this tree is a three-field
+              stub the tests invented. Do not guess it. `preview` must report
+              per invoice what mapped and what did not, so the first run
+              against her file is a report, not a write.
+    done when Her real export, previewed then committed into an empty
+              organization on the desktop build, yields the same number of
+              invoices the old app shows, each with its original reference
+              and total; the next invoice she issues takes the number after
+              her last one; and a test holds an anonymised copy of her
+              export's *shape* so the mapping cannot silently rot.
+
 ### T-25 · The data directory leaves the package container
     branch    Desktop               status  open
     needs     —
@@ -325,44 +362,6 @@ wish, and the queue is not for wishes.
               package in `uv.lock`; the app starts on a clean Windows VM with
               no Python and no Playwright browsers; and a fresh checkout still
               has every comment it has today.
-
-### T-33 · Two tenants, one document path
-    branch    Backend / DevOps      status  open
-    needs     —  (must land before T-05 hosting, not before the desktop ships)
-    why       T-27 writes `invoices/<year>/<reference>.pdf` with **nothing in
-              the path that says which organization it belongs to**. The
-              database is fine — `documents` is unique on
-              `(organization_id, path)` — so two tenants may legitimately
-              register the same path, and then the second issue's
-              `os.replace` overwrites the first tenant's PDF. One customer's
-              invoice, silently replaced by another customer's.
-
-              Measured, not reasoned: two fresh organizations, each with a
-              company named the way `tests/api/conftest.py` names them, both
-              issued `ACME-BC07012026`, and one file was left on disk. Found
-              on 2026-09-11 while writing T-28.
-
-              **It cannot bite today**, which is why this is a ticket and not
-              a hotfix: nothing is hosted, `DOCUMENT_ROOT` is empty unless
-              something sets it, and the desktop that does set it holds
-              exactly one organization. It bites the first hour of multi-tenant
-              hosting with archiving on.
-    do        The fix is a deployment shape, not a path rewrite, because the
-              obvious path rewrite makes the shipping product worse: Henri
-              asked for a data folder that *holds the invoices*, and burying
-              them under a UUID directory in her Documents is not that.
-
-              So: the hosted app builds a **per-organization archive** rooted
-              at `<DOCUMENT_ROOT>/<org-id>`, resolved per request beside the
-              tenant binding that already exists (`api/middleware`,
-              `core/tenancy.py`); the desktop keeps one root and one
-              organization and sees no change. Decide it alongside blob
-              storage (B2) — object storage is the hosted answer to this
-              folder, and prefixing a key is the same decision.
-    done when Two organizations issuing the same reference under one
-              `DOCUMENT_ROOT` leave **two** files, both readable, and a test
-              asserts it; a desktop install still writes
-              `<data dir>/invoices/<year>/<reference>.pdf` with no id segment.
 
 ### T-31 · Sign in with Google, then Microsoft
     branch    Backend / Frontend    status  open
@@ -692,6 +691,34 @@ wish, and the queue is not for wishes.
 ---
 
 ## Done
+
+### T-33 · Two tenants, one document path  ·  *fix: each organization gets its own document folder on a host*
+    Measured before it was fixed: two organizations, each with a company
+    named the way the fixtures name them, both issued `ACME-BC07012026`, and
+    one file was left on disk — the second tenant's PDF over the first's. The
+    database was never wrong (`documents` is unique per organization); the
+    folder was.
+
+    The fix is the deployment shape the ticket asked for, not a path rewrite.
+    `DOCUMENT_LAYOUT` is `per-organization` by default: `get_document_archive`
+    — the single dependency all six call sites go through — returns the
+    app's archive **scoped** to the organization the tenant middleware bound,
+    so a host writes `<DOCUMENT_ROOT>/<org-id>/invoices/<year>/<ref>.pdf` and
+    a rebuild in A repairs A's files only. The desktop sets it to `flat`: one
+    organization, and `Documents\BillGen\invoices\` is where Henri wants
+    her to find them. It is its own setting rather than a reading of
+    `desktop_mode`, which also means "mint a credential-less account" and
+    should not grow a third meaning.
+
+    The registered path never carries the segment. What each tenant sees in
+    `GET /documents` is the same relative path a desktop install writes, so a
+    backup taken on a host restores onto a laptop, and the other way, with
+    no translation — asserted.
+
+    Evidence: `tests/api/test_documents_per_organization.py` (2) — the
+    exact collision, two files; and a rebuild that cannot reach the other
+    tenant's folder. `tests/desktop/test_bootstrap.py` asserts the desktop
+    sets `flat`. 666 collected exit 0.
 
 ### T-28 · A backup that can be carried  ·  *feat: one file she can take off the laptop*
     `BackupService.export` already produced readable JSON, which is what Henri

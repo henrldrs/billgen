@@ -93,7 +93,9 @@ VAT.
   folder loses a copy and changes no record. Archiving happens *after* issue's
   commit and can never fail it; `POST /documents/rebuild` is the repair.
   `DOCUMENT_ROOT` unset means archiving is off, which is what the test suite
-  and a bare `uvicorn` run with.
+  and a bare `uvicorn` run with. On a host the folder is `per-organization`
+  (`<DOCUMENT_ROOT>/<org-id>/…`, T-33); the desktop sets `DOCUMENT_LAYOUT=flat`.
+  Registered paths never carry the segment, so backups move between the two.
 - **The desktop backs itself up at boot, not at close (T-23).** The Tauri shell
   `child.kill()`s the sidecar on exit — `TerminateProcess` on Windows, so no
   handler, `finally` or lifespan shutdown ever runs. `desktop/backups.py`
