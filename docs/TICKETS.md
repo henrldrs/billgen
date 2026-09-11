@@ -70,6 +70,55 @@ wish, and the queue is not for wishes.
               her last one; and a test holds an anonymised copy of her
               export's *shape* so the mapping cannot silently rot.
 
+### T-35 · The GDPR panel on Client 360 gets its server
+    branch    Backend               status  open
+    needs     —
+    why       Henri 2026-09-11, looking at Client 360 on the desktop build:
+              "is this finished for you?" The panel is drawn — Export data,
+              Erase personal data — and its ledger names what is missing:
+              per-client export, erasure, consent records. `core/trust`
+              already serves the legal texts, the consent *categories* and the
+              privacy register; nothing stores an acceptance and nothing
+              answers the two buttons. Until it does, the block is hidden on
+              the beta surface (see T-19 follow-up), which is honest and is
+              not the same as done: a client is a data subject, and a
+              controller who cannot export or erase on request is out of
+              Article 15/17 the day someone asks.
+    do        `POST /clients/{id}/privacy/export` — every record that names
+              the person (client row, contact fields, notes, invoices as
+              *references and totals*, payments), as JSON, audited.
+              `POST /clients/{id}/privacy/erase` — blanks the personal fields
+              on the client record and keeps every invoice byte-for-byte:
+              Belgian law retains invoices seven years, so "delete this
+              client" can never mean "delete these invoices", and the
+              response says so in the wording `core/trust` already holds.
+              Consent records: a `consent_decisions` table (user, category,
+              granted, version of the text, recorded_at, source) behind
+              `POST /consent` and `GET /consent`, using the `ConsentDecision`
+              shape `core/trust/consent.py` already defines and never stores.
+              Then the panel: enable the two buttons on the beta surface and
+              drop the scaffold block.
+    done when Export returns the client's data and the invoices it names;
+              erasure leaves the client's invoices unchanged (asserted
+              byte-for-byte on `GET /invoices/{id}` and on the T-27 file) and
+              the audit log records both; a consent decision recorded is read
+              back with the text version it was given for; and Client 360
+              renders the panel with no scaffold banner under `exposure="mvp"`.
+
+    **2026-09-11, Henri's screenshot.** Three scaffold banners on Client 360 on
+    a handed-over build: `MVP_SURFACE` gates screens, and a scaffold *block*
+    inside a wired screen was reached by no list. Two fixes, both in
+    `frontend-react`. The "Totals" block was a stale scaffold — `GET
+    /clients/{id}/stats` had existed since 2026-08-28 and the block still
+    named it as missing — so it prints the server's figures now (four of the
+    five drawn; average days to pay waits on a label in every language, and
+    this repo does not write Dutch copy). And `ScaffoldBlock` reads the
+    build's exposure through a provider the routes set, and under `"mvp"`
+    renders nothing: not disabled, not greyed, absent — a customer is not owed
+    a ledger of what her software lacks. `Scaffold.test.tsx` holds the rule,
+    `Client360Panel.test.tsx` the figures. Tags & groups therefore no longer
+    ship; the GDPR panel's server is T-35.
+
 ### T-25 · The data directory leaves the package container
     branch    Desktop               status  open
     needs     —

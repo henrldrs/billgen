@@ -29,17 +29,27 @@ import {
   DataList,
   EmptyState,
   ErrorState,
+  KpiCard,
   List,
   PageHeader,
   RecordLayout,
+  Skeleton,
   Spinner,
   Table,
-  Tabs,
   type TableColumn,
+  Tabs,
 } from "@henrioutai/ui";
 
-import { useActivity, useClient, useInvoices } from "../hooks/queries";
-import { formatDate, formatMoney } from "../lib/format";
+import {
+  useActivity,
+  useClient,
+  useClientStats,
+  useInvoices,
+} from "../hooks/queries";
+import {
+  formatDate,
+  formatMoney,
+} from "../lib/format";
 import { t, type Lang } from "../lib/translations";
 import { findByPath } from "../scaffold/ia";
 import {
@@ -123,7 +133,7 @@ export function Client360Panel({
         left={<IdentityRail record={record} lang={lang} />}
         right={<ContextRail history={history} lang={lang} clientId={clientId} />}
       >
-        <StatsStrip />
+        <StatsStrip clientId={clientId} lang={lang} />
 
         <Card padded={false}>
           <Tabs
@@ -278,30 +288,53 @@ function IdentityRail({
 
 // ------------------------------------------------------------- centre: invoices
 
-function StatsStrip() {
-  const node = findByPath("customers/clients/:clientId");
-  if (!node) return null;
+function StatsStrip({ clientId, lang }: { clientId: string; lang: Lang }) {
+  //  Four of the five figures the header was drawn for. The fifth, average
+  //  days to pay, is on the wire (`average_days_to_payment`) and waits only for
+  //  a label in every language — this file does not invent Dutch copy.
+  const stats = useClientStats(clientId);
+  if (stats.isLoading) {
+    return (
+      <div className="bg-kpi-grid" aria-busy="true">
+        <Skeleton variant="block" height="5.5rem" />
+        <Skeleton variant="block" height="5.5rem" />
+        <Skeleton variant="block" height="5.5rem" />
+        <Skeleton variant="block" height="5.5rem" />
+      </div>
+    );
+  }
+  if (stats.isError || !stats.data) {
+    return (
+      <div className="bg-client360__tabpanel" role="alert">
+        {t(lang, "common.error")}
+      </div>
+    );
+  }
+  const { currency } = stats.data;
   return (
-    <ScaffoldBlock
-      node={node}
-      title="Totals for this client"
-      // This slice is blocked by exactly one endpoint. The node's other gaps
-      // belong to the tabs and rails that carry them.
-      missing={["GET /clients/{id}/stats"]}
-    >
-      <ScaffoldNote>
-        Total invoiced, paid, outstanding, overdue and average payment days.
-        Deliberately not computed here: the invoice list below is now filtered
-        server-side, so summing it in the browser would work — and would put
-        money arithmetic in a React component, which is the one thing this
-        codebase keeps out of the frontend. {"GET /clients/{id}/stats"} is where
-        these five numbers belong.
-      </ScaffoldNote>
-      <ScaffoldTable
-        columns={["Invoiced", "Paid", "Outstanding", "Overdue", "Avg. days to pay"]}
-        rows={1}
+    <section className="bg-kpi-grid" aria-label={t(lang, "client360.invoices")}>
+      <KpiCard
+        label={t(lang, "dashboard.invoiced")}
+        value={formatMoney(stats.data.invoiced_total, currency, lang)}
+        //  Issued documents only. `invoice_count` includes drafts, and a
+        //  draft is not invoiced — the browser check on Big Corp NV showed
+        //  "5" over a total that only two of them made up.
+        hint={String(stats.data.invoice_count - stats.data.draft_count)}
       />
-    </ScaffoldBlock>
+      <KpiCard
+        label={t(lang, "dashboard.paid")}
+        value={formatMoney(stats.data.paid_total, currency, lang)}
+      />
+      <KpiCard
+        label={t(lang, "dashboard.outstanding")}
+        value={formatMoney(stats.data.outstanding_total, currency, lang)}
+      />
+      <KpiCard
+        label={t(lang, "dashboard.overdue")}
+        value={formatMoney(stats.data.overdue_total, currency, lang)}
+        hint={String(stats.data.overdue_count)}
+      />
+    </section>
   );
 }
 

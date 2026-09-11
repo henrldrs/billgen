@@ -10,6 +10,7 @@
  *  flip the node's `status` in scaffold/ia.ts once the endpoints exist.
  */
 
+import { ScaffoldExposureProvider } from "../scaffold/Scaffold";
 import {
   ActivityPanel,
   BackupPanel,
@@ -191,14 +192,24 @@ function SettingsFrame({ node, children }: { node: IaNode; children: ReactNode }
  *  precisely because the web router is the one that must never over-mount, and
  *  the desktop shell passes "desktop" to pick up the areas that need Tauri and
  *  a local filesystem. Same list the nav and the palette are built from. */
+/** A screen, told which build it is in. Scaffold blocks inside a wired screen
+ *  read this to stay off a handed-over build (see ScaffoldExposureProvider). */
+function screen(node: IaNode, exposure: Exposure) {
+  return (
+    <ScaffoldExposureProvider exposure={exposure}>
+      <IaScreen node={node} />
+    </ScaffoldExposureProvider>
+  );
+}
+
 export function buildAppRoutes(surface: Surface = "saas", exposure: Exposure = "all") {
   return routableNodes(surface, exposure)
     .filter((node) => node.path !== undefined)
     .map((node) =>
       node.path === "" ? (
-        <Route key={node.key} index element={<IaScreen node={node} />} />
+        <Route key={node.key} index element={screen(node, exposure)} />
       ) : (
-        <Route key={node.key} path={node.path} element={<IaScreen node={node} />} />
+        <Route key={node.key} path={node.path} element={screen(node, exposure)} />
       ),
     );
 }

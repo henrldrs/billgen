@@ -9,6 +9,7 @@
  *  page rather than buried in a roadmap nobody opens.
  */
 
+import { createContext, useContext } from "react";
 import type { ReactNode } from "react";
 
 import type { BackendStatus, IaNode } from "./ia";
@@ -107,13 +108,42 @@ export interface ScaffoldBlockProps {
  * missing endpoints — but headed by an h3 rather than an h1, because a page
  * that already has a title does not want four more.
  */
+/** Which parts of the product the running build exposes. A packaged desktop
+ *  build hands over `"mvp"`; a dev build shows `"all"`. Set once by the shell,
+ *  read by every ScaffoldBlock — a scaffold *inside* a wired screen (Client
+ *  360's tags, GDPR, totals) is the case `MVP_SURFACE` cannot reach, because
+ *  that list gates screens, and on 2026-09-11 three of those banners were
+ *  photographed on a handed-over build. */
+export type ScaffoldExposure = "all" | "wired" | "mvp";
+const ScaffoldExposureContext = createContext<ScaffoldExposure>("all");
+
+export function ScaffoldExposureProvider({
+  exposure,
+  children,
+}: {
+  exposure: ScaffoldExposure;
+  children: ReactNode;
+}) {
+  return (
+    <ScaffoldExposureContext.Provider value={exposure}>{children}</ScaffoldExposureContext.Provider>
+  );
+}
+
+export function useScaffoldExposure(): ScaffoldExposure {
+  return useContext(ScaffoldExposureContext);
+}
+
 export function ScaffoldBlock({
   node,
   title,
   missing,
   children,
 }: ScaffoldBlockProps) {
+  const exposure = useScaffoldExposure();
   const gaps = missing ?? node.missing;
+  //  On a handed-over build the block is simply absent. Not disabled, not
+  //  greyed: a customer is not owed a ledger of what her software lacks.
+  if (exposure === "mvp") return null;
   return (
     <section
       className="sk-page sk-block"

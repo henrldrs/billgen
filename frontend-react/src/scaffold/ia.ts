@@ -387,16 +387,16 @@ export const IA: IaSection[] = [
         layer: "L2",
         endpoints: [
           "GET /clients/{id}",
+          "GET /clients/{id}/stats",
           "GET /invoices?client_id",
           "GET /activity?target_id",
         ],
         missing: [
-          "GET /clients/{id}/stats",
           "Document model + CRUD /documents",
           "ClientGroup model + CRUD /client-groups",
           "GET /reports/clients",
         ],
-        note: "Identity, invoice history and the audit trail are real. The totals strip, quotes, documents, tags and risk flags are quarantined into scaffold blocks inside the screen — each maps to a model that does not exist rather than to a screen nobody built. Not a nav destination (§11b): its path carries :clientId, so a menu entry for it navigates to the literal string. It was one until 2026-08-27 — a dead link nobody clicked because the record is reached by clicking a row, which is the point of the rule.",
+        note: "Identity, invoice history, the totals strip (GET /clients/{id}/stats, wired 2026-09-11) and the audit trail are real. Quotes, documents, tags and risk flags are quarantined into scaffold blocks inside the screen — each maps to a model that does not exist rather than to a screen nobody built. Not a nav destination (§11b): its path carries :clientId, so a menu entry for it navigates to the literal string. It was one until 2026-08-27 — a dead link nobody clicked because the record is reached by clicking a row, which is the point of the rule.",
       },
       {
         key: "customers.contacts",

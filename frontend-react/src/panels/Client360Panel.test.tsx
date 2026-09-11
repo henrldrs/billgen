@@ -31,12 +31,32 @@ const CLIENT = {
   notes: null,
 };
 
+const STATS = {
+  client_id: CLIENT_ID,
+  company_id: COMPANY_ID,
+  currency: "EUR",
+  invoice_count: 3,
+  draft_count: 0,
+  invoiced_total: "1512.50",
+  paid_total: "1000.00",
+  outstanding_total: "512.50",
+  credited_total: "0.00",
+  credit_note_count: 0,
+  overdue_count: 1,
+  overdue_total: "512.50",
+  first_invoice_date: "2026-07-04",
+  last_invoice_date: "2026-07-04",
+  average_days_to_payment: 12,
+  skipped_other_currency: 0,
+};
+
 /** The happy path: client found, one invoice, one audit entry. Each handler
  *  asserts the filter actually reached the wire — the whole point of this
  *  screen is that the server does the narrowing, not the browser. */
 function mountHandlers(options: { seenInvoiceQuery?: (value: string | null) => void } = {}) {
   server.use(
     http.get(`${BASE}/clients/${CLIENT_ID}`, () => HttpResponse.json(CLIENT)),
+    http.get(`${BASE}/clients/${CLIENT_ID}/stats`, () => HttpResponse.json(STATS)),
     http.get(`${BASE}/invoices`, ({ request }) => {
       const url = new URL(request.url);
       options.seenInvoiceQuery?.(url.searchParams.get("client_id"));
@@ -109,8 +129,16 @@ test("everything without a backend renders as scaffold, never as data", async ()
     within(risk).getByText("risk signals on GET /reports/clients"),
   ).toBeInTheDocument();
 
-  const totals = screen.getByRole("region", { name: /Totals for this client/ });
-  expect(within(totals).getByText("GET /clients/{id}/stats")).toBeInTheDocument();
+  // The totals are the server's, not a sum of the visible rows: the four
+  // figures come from GET /clients/{id}/stats and print as money.
+  // Awaited: the heading resolves off the client fetch, the strip off its own.
+  expect(await screen.findByText("Invoiced")).toBeInTheDocument();
+  // The same amount is also the one invoice's row total, so look in the strip.
+  const strip = document.querySelector(".bg-kpi-grid");
+  if (!strip) throw new Error("the totals strip did not render");
+  expect(within(strip as HTMLElement).getByText("€1,512.50")).toBeInTheDocument();
+  expect(within(strip as HTMLElement).getByText("Overdue")).toBeInTheDocument();
+  expect(screen.queryByText("GET /clients/{id}/stats")).not.toBeInTheDocument();
 
   const gdpr = screen.getByRole("region", { name: /GDPR/ });
   // Dead controls are disabled, not merely unstyled.

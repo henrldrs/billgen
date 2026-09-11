@@ -96,6 +96,7 @@ which it cannot know.
 | 21 | T-30 · the shipped package | `IN PROGRESS` | Ships in *feat: the installer carries bytecode, notices and no source*. 62.4 MB against a 120 MB budget; 0 `.py` in the build output; 57 packages named with their licences. Three of the ticket's instructions were wrong and are written up in it — the stdlib was already trimmed, comment-stripping is subsumed by shipping no source, and bytecode *costs* 1.2 MB. **MSIX is not a Tauri bundle target**, so `nsis` stays. `check_sidecar_runtime.py` is 25/25 and now migrates a database for real inside the runtime. What is left is Henri pressing `tauri build` and installing it on a clean VM. |
 | 22 | T-33 · two tenants, one document path | `DONE` | Ships in *fix: each organization gets its own document folder on a host*. Measured collision — two organizations, one file — closed by `DOCUMENT_LAYOUT=per-organization` scoping the archive to the bound tenant; the desktop sets `flat`. Registered paths carry no segment, so backups move between layouts. 2 tests. |
 | 23 | T-34 · Mother's upgrade | `BLOCKED` | Queued at the top on Henri's priority (2026-09-11). The old app's export carries her invoices and the importer counts them and imports none. **Needs one real export from her FinanceFlow BillGen** before the mapping can be written — the only legacy invoice in the tree is a three-field stub. |
+| 24 | Client 360 on the beta surface | `DONE` | Ships in *fix: scaffold blocks stay off a handed-over build, and the totals are the server's*. Henri's screenshot showed three scaffold banners on a shipped screen. Totals wired to the `GET /clients/{id}/stats` that already existed; `ScaffoldBlock` renders nothing under `exposure="mvp"`. GDPR's server is T-35; tags no longer ship. 196 frontend tests. |
 
 **This ledger's own list is closed.** Items 6–8 were the three the handover
 note sanctioned explicitly: *"None of these invents a screen; each connects a
@@ -109,7 +110,7 @@ happened to it.
 | | |
 |---|---|
 | Python | **666 collected, exit 0** — 16 new in T-27, 12 in T-23, 24 in T-28, 5 in T-30, 3 for the Edge hand-off found under T-21, 2 in T-33; `tests/desktop/` is 56 | 
-| Frontend | **193 passed** (`npm run test`, 30 files), typecheck clean across all four workspaces |
+| Frontend | **196 passed** (`npm run test`, 31 files), typecheck clean across all four workspaces |
 | `ruff check` | clean. CI runs `ruff check .` only — the tree is *not* `ruff format` clean and was not before, so do not reformat it as a side errand |
 | Architecture doc | **in sync** — both `sync-architecture --check` and `architecture_to_text.py --check` green at 102 endpoints across 25 routers |
 | Migrations | head is `e2f7c9b41a55` (the document register). The packaged build reads them as bytecode — `sourceless` is set in the *packaged* `alembic.ini` only, never the repository's (T-30). A dev database from before 2026-09-09 needs `alembic upgrade head`, and a desktop install migrates itself on boot |
