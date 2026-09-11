@@ -1718,7 +1718,7 @@ What is still open here. GET /clients/{id}/stats is the only endpoint left on th
 Repo Map
 --------
 
-What every directory is for, and the record of what was removed on 2026-08-26. 673 tracked files.
+What every directory is for, and the record of what was removed on 2026-08-26. 679 tracked files.
 
 A repository that cannot be read cheaply is a repository that gets misread. This section names the purpose of every top-level directory, so nothing in the tree is unexplained, and records what left.
 
@@ -1726,7 +1726,7 @@ What every directory is for
 
 Ordered as the request flows through them — §13's bands, as files.
 
-core/ · 105
+core/ · 108
     What it is: Layer 1 — the product's actual logic. Money arithmetic, Belgian VAT, gapless
     invoice numbering, legal mentions, Peppol XML, PDF rendering, the legacy importer.
     Imports no web framework and no ORM.
@@ -1745,7 +1745,7 @@ db/ · 39
     implementation behind core/repository/'s abstract ports.
     What breaks without it: Nothing persists. The domain would run entirely in memory.
 
-tests/ · 74
+tests/ · 77
     What it is: 557 backend tests. Includes the palette guard test and the icon-grammar
     guard test, both build-failing.
     What breaks without it: The brand decisions at 4e39460 and 81d2c66 become suggestions
@@ -2509,6 +2509,7 @@ audits/                       14
 billgen_audit/                27
 tests/                        1
 core/                         3
+backup/                       3
 documents/                    2
 einvoicing/                   3
 imports/                      4
@@ -2541,12 +2542,12 @@ src/                          85
 docker/                       3
 scripts/                      8
 tests/                        1
-api/                          30
-core/                         34
+api/                          31
+core/                         36
 db/                           4
 desktop/                      5
 files at the repository root  15
-Total tracked                 673
+Total tracked                 679
 
 Reading the layers
 

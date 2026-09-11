@@ -93,6 +93,7 @@ which it cannot know.
 | 18 | T-27 · the documents leave the database | `DONE` | Ships in *feat: an issued invoice leaves a file behind*. Issuing writes `<DOCUMENT_ROOT>/invoices/<year>/<ref>.pdf` and registers path, hash and size; the folder is written and never read back, so deleting a file changes no endpoint's answer. Backup schema 3 carries the register, and a restore names what is missing instead of failing. 16 new tests. |
 | 19 | T-23 · backup on close | `IN PROGRESS` | Ships in *feat: the sidecar backs the database up without being asked*. `desktop/backups.py` writes `<data dir>/backups/<date>.zip` and keeps thirty. Not on close alone: the shell `child.kill()`s the sidecar, so a close-only backup would never have run on her machine — it runs on start (always) and on a clean exit (overwriting today's). 12 tests, including a real restore of a sidecar-written archive through the API. The remaining half is the note in [RESTORE_LOG.md](RESTORE_LOG.md), which needs her laptop. |
 | 20 | T-28 · a backup that can be carried | `DONE` | Ships in *feat: one file she can take off the laptop*. `core/backup/sealed.py`: AES-256-GCM over a zip of the same ADR-0003 JSON plus the T-27 document bytes, scrypt-derived, with a readable header bound as AAD so editing it breaks the tag. Wrong passphrase is a distinct 409 that leaves the organization empty — decryption runs before anything touches the database. Two deliberate deviations (POST, not a passphrase in a URL) and the UI half left to T-29, replaced by an API that refuses to write an unrecoverable file until the caller acknowledges it. 24 tests. |
+| 21 | T-30 · the shipped package | `IN PROGRESS` | Ships in *feat: the installer carries bytecode, notices and no source*. 62.4 MB against a 120 MB budget; 0 `.py` in the build output; 57 packages named with their licences. Three of the ticket's instructions were wrong and are written up in it — the stdlib was already trimmed, comment-stripping is subsumed by shipping no source, and bytecode *costs* 1.2 MB. **MSIX is not a Tauri bundle target**, so `nsis` stays. `check_sidecar_runtime.py` is 25/25 and now migrates a database for real inside the runtime. What is left is Henri pressing `tauri build` and installing it on a clean VM. |
 
 **This ledger's own list is closed.** Items 6–8 were the three the handover
 note sanctioned explicitly: *"None of these invents a screen; each connects a
@@ -105,11 +106,11 @@ happened to it.
 
 | | |
 |---|---|
-| Python | **656 collected, exit 0** — 16 new in T-27, 12 in T-23, 24 in T-28; `tests/desktop/` is 51 | 
+| Python | **664 collected, exit 0** — 16 new in T-27, 12 in T-23, 24 in T-28, 5 in T-30, 3 for the Edge hand-off found under T-21; `tests/desktop/` is 56 | 
 | Frontend | **193 passed** (`npm run test`, 30 files), typecheck clean across all four workspaces |
 | `ruff check` | clean. CI runs `ruff check .` only — the tree is *not* `ruff format` clean and was not before, so do not reformat it as a side errand |
 | Architecture doc | **in sync** — both `sync-architecture --check` and `architecture_to_text.py --check` green at 102 endpoints across 25 routers |
-| Migrations | head is `e2f7c9b41a55` (the document register). A dev database from before 2026-09-09 needs `alembic upgrade head`, and a desktop install migrates itself on boot |
+| Migrations | head is `e2f7c9b41a55` (the document register). The packaged build reads them as bytecode — `sourceless` is set in the *packaged* `alembic.ini` only, never the repository's (T-30). A dev database from before 2026-09-09 needs `alembic upgrade head`, and a desktop install migrates itself on boot |
 | ROADMAP_IA | regenerated 2026-09-04 from `ia.ts`: 115 areas, 34 wired, 30% |
 | Unpushed | everything on `main` after `origin/main` — count it with the first command in the resume protocol rather than trusting a number here, which is stale the moment the next commit lands. Three trees became one on 2026-09-09: the worktree and its branch were removed, the remote-only docs commit `fde1edc` was folded in as `a5b3948`, and `main` fast-forwarded to the former `audit-engine-and-scaffolds` head |
 

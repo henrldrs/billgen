@@ -92,6 +92,31 @@ def check(name: str, ok: bool, detail: str = "") -> bool:
     return ok
 
 
+def _lockfile_packages() -> list[tuple[str, str]]:
+    """(name, version) from uv.lock, workspace members aside.
+
+    Deliberately re-implemented here rather than imported from
+    `build_sidecar_runtime`: this script exists to check that script's output,
+    and a checker that shares the code under test agrees with it by
+    construction.
+    """
+    text = (REPO / "uv.lock").read_text(encoding="utf-8")
+    packages: list[tuple[str, str]] = []
+    name = None
+    for raw in text.splitlines():
+        line = raw.strip()
+        if line == "[[package]]":
+            name = None
+        elif line.startswith("name = "):
+            name = line.split("=", 1)[1].strip().strip('"')
+        elif line.startswith("version = ") and name:
+            version = line.split("=", 1)[1].strip().strip('"')
+            if name != "billgen" and not name.startswith("billgen-"):
+                packages.append((name, version))
+            name = None
+    return packages
+
+
 def main() -> int:
     if not PYTHON.is_file():
         print(f"no runtime at {PYTHON}")
@@ -203,6 +228,91 @@ def main() -> int:
             "the packaged build requires a license (T-22)",
             verdict == "True True True",
             verdict or policy.stderr,
+        )
+    )
+
+    #  T-30. The build ships bytecode and no source, so the thing most likely
+    #  to break is the thing that reads files by name rather than importing
+    #  them — and that is Alembic. Its default mode matches `*.py` in
+    #  `versions/`, so a bytecode-only build finds **zero revisions** and
+    #  `upgrade head` succeeds against an empty database. Nothing errors; the
+    #  first query does. This runs the migrations for real.
+    migrated = run_in_runtime(
+        "import os, tempfile, sqlite3, pathlib\n"
+        "from alembic.config import Config\n"
+        "from alembic import command\n"
+        "from alembic.script import ScriptDirectory\n"
+        "root = pathlib.Path.cwd()\n"
+        "tmp = pathlib.Path(tempfile.mkdtemp()) / 'check.db'\n"
+        "os.environ['DATABASE_URL'] = 'sqlite:///' + tmp.as_posix()\n"
+        "cfg = Config(str(root / 'alembic.ini'))\n"
+        "cfg.set_main_option('script_location', (root / 'db' / 'migrations').as_posix())\n"
+        "heads = ScriptDirectory.from_config(cfg).get_heads()\n"
+        "revisions = len(list(ScriptDirectory.from_config(cfg).walk_revisions()))\n"
+        "command.upgrade(cfg, 'head')\n"
+        "con = sqlite3.connect(tmp)\n"
+        "q = \"select name from sqlite_master where type='table'\"\n"
+        "tables = {r[0] for r in con.execute(q)}\n"
+        "stamped = {r[0] for r in con.execute('select version_num from alembic_version')}\n"
+        "same = sorted(heads) == sorted(stamped)\n"
+        "print(revisions, same, 'invoices' in tables, 'documents' in tables)\n"
+    )
+    verdict = migrated.stdout.strip().split()
+    ok = (
+        len(verdict) == 4
+        #  Not "more than zero": zero revisions is the exact failure this
+        #  guards, and a guard that inspects a collection must also assert the
+        #  collection is not empty (SOLO_RUN § What changed underneath us).
+        and verdict[0].isdigit()
+        and int(verdict[0]) >= 10
+        and verdict[1:] == ["True", "True", "True"]
+    )
+    results.append(
+        check(
+            "migrations run from bytecode, and actually create the schema (T-30)",
+            ok,
+            migrated.stdout.strip() or migrated.stderr,
+        )
+    )
+
+    #  T-30: no readable source in the build output. Also §11c, the short way —
+    #  a build with no source ships no comments, and nothing was stripped out
+    #  of the tree to achieve it.
+    sources = [path for path in RUNTIME.rglob("*.py")]
+    results.append(
+        check(
+            "the build output contains no .py (T-30)",
+            not sources,
+            "\n".join(str(path.relative_to(RUNTIME)) for path in sources[:10]),
+        )
+    )
+
+    #  T-30: a redistributed build carries third-party licences it must name.
+    notices = RUNTIME / "THIRD-PARTY-NOTICES.txt"
+    named = notices.read_text(encoding="utf-8").splitlines() if notices.is_file() else []
+    missing = [
+        f"{name} {version}"
+        for name, version in _lockfile_packages()
+        if not any(line.startswith(f"{name} {version} ") for line in named)
+    ]
+    results.append(
+        check(
+            "every package in uv.lock is named in THIRD-PARTY-NOTICES.txt (T-30)",
+            bool(named) and not missing,
+            "\n".join(missing[:10]) if named else "no THIRD-PARTY-NOTICES.txt in the runtime",
+        )
+    )
+
+    #  T-30's number. Not a guess: measured on what the installer will carry,
+    #  before NSIS compresses it, so the real download is smaller than this.
+    total = sum(
+        path.stat().st_size for path in RUNTIME.rglob("*") if path.is_file()
+    )
+    results.append(
+        check(
+            "the runtime is under 120 MB before compression (T-30)",
+            total < 120 * 1_000_000,
+            f"{total / 1e6:.1f} MB",
         )
     )
 

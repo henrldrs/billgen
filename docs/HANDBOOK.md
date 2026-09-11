@@ -102,6 +102,16 @@ VAT.
   Thirty are kept, and only files matching `YYYY-MM-DD.zip` are ever deleted.
   Whether a restore has actually been performed lives in
   [RESTORE_LOG.md](RESTORE_LOG.md), not in this file.
+- **The packaged runtime ships bytecode, not source (T-30).**
+  `scripts/build_sidecar_runtime.py` compiles everything under `runtime/` with
+  `-OO` to a `.pyc` beside the source and deletes the source, writes
+  `THIRD-PARTY-NOTICES.txt` from `uv.lock`, and turns on Alembic's `sourceless`
+  mode **in the packaged `alembic.ini` only** — without that a fresh install
+  finds zero revisions and migrates nothing, silently. A compiled runtime
+  cannot be rebuilt in place; the script cleans first, and says so. Verify with
+  `python scripts/check_sidecar_runtime.py` (25 checks, one of which runs the
+  migrations for real inside the runtime). MSIX is **not** a Tauri bundle
+  target — `nsis` is what ships.
 - **Two backups, two jobs (T-23, T-28).** The daily zip stays on the machine
   and carries JSON only — the PDFs are already in the same data folder, a
   metre away. The *portable* archive is the one that leaves:
@@ -115,6 +125,7 @@ VAT.
 
 ## 5. Gotchas already paid for
 
+- **A background Edge takes the print job and the launcher returns at once (T-21, found 2026-09-11).** On Windows 11 startup boost keeps a windowless `msedge.exe --no-startup-window` alive from logon. While it lives, a headless `--print-to-pdf` launch does not render: it hands the job to that instance and exits in 0.1 s, and the PDF lands about a second later, written by a process the renderer never started. A private `--user-data-dir` does not prevent this, nor does `--disable-features=msEdgeStartupBoost` — measured on Edge 152.0.4191.66, every variant handed off the same way. The renderer therefore waits for the file after the launcher returns (non-empty, size-stable, ending in `%%EOF`; 30 s ceiling) instead of trusting the exit. `test_edge_prints_real_bytes_with_a_background_instance_running` starts that background instance on purpose and renders through it. Before the fix, invoice PDFs failed with "exited cleanly and wrote no PDF" whenever Edge happened to be running in the background — which on a customer laptop is most of the time.
 - **Sync Playwright cannot run on a thread with a live asyncio loop.** The PDF
   routes are sync `def` handlers, so Starlette runs them in its threadpool, off
   the event-loop thread, where that is fine. Never call `html_to_pdf()` from an

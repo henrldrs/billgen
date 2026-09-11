@@ -45,7 +45,11 @@ wish, and the queue is not for wishes.
               the project tree for the same reason. MSIX also has no installer
               UI — it installs silently, with no wizard — so the location
               cannot be asked for at install time and has to be a first-run
-              choice.
+              choice. **Since T-30: the MSIX half of that reasoning is
+              weaker than it looked — Tauri cannot produce an MSIX at all, and
+              the NSIS installer it does produce has a UI. The answer below is
+              still the right one (Documents survives an uninstall either way);
+              it is simply no longer forced by the packaging.**
     do        `app_data_dir()` resolves in order: `BILLGEN_DATA_DIR`, then a
               path recorded in a config file beside the executable, then the
               default `%USERPROFILE%\Documents\BillGen`. First run offers the
@@ -203,7 +207,99 @@ wish, and the queue is not for wishes.
               rather than typed into a component. Blocked until the layout is
               drawn — new screens are Henri's (SOLO_RUN § Boundaries).
 
-### T-30 · The shipped package — MSIX, slimmed, and legal
+### T-30 · The shipped package — slimmed, legal, and not MSIX
+    branch    Desktop               status  open
+    needs     T-20 (the VM)
+    why       Everything in this ticket except one thing is done and measured;
+              what is left needs `tauri build` on a machine that is not this
+              one. The original text is preserved below the line, because two
+              of its instructions were wrong and the reasoning for them is
+              worth keeping.
+    do        Press the button: `npm run tauri build` in `frontend-electron`,
+              then install the NSIS output on a clean Windows VM with no Python
+              and no Playwright browsers, and start it.
+    done when The app starts on that VM and `/healthz` answers. Everything else
+              this ticket asked for is asserted by
+              `python scripts/check_sidecar_runtime.py`, 25/25 today, which is
+              runnable by anyone who does not trust this note.
+
+              **Done and measured.** The runtime is **62.4 MB** before the
+              installer compresses it, against the 120 MB the ticket set.
+              `scripts/build_sidecar_runtime.py` now compiles everything under
+              `python/` and `app/` with `-OO` to a `.pyc` beside the source and
+              deletes the source: **0 `.py` files in the build output**, 1211
+              modules compiled, 0 that failed to compile and kept their source.
+              `THIRD-PARTY-NOTICES.txt` names all 57 third-party packages in
+              `uv.lock` with the licence each declares — zero undeclared — and
+              distinguishes shipped from development-only from
+              deliberately-excluded, which are different answers to different
+              questions and were one wrong answer in the first draft.
+
+              **Three things the ticket got wrong, each found by measuring.**
+
+              *The stdlib trim is already done.* T-30 named tkinter, test,
+              idlelib, turtle, ensurepip and pydoc_data. The python.org
+              embeddable distribution ships **none of the first five**; its
+              whole stdlib is a 4.1 MB zip of 563 members, and only
+              `pydoc_data` (4 of them) is in there. Rewriting a stdlib zip to
+              save kilobytes would trade a real risk for nothing.
+
+              *Stripping comments is not a step.* §11c says comments must not
+              ship and must not be deleted from the tree. A build that ships no
+              source ships no comments, and this script only ever writes into
+              `runtime/`, so a checkout keeps every comment it had. The
+              requirement is satisfied by the `.pyc` step, not beside it.
+
+              *Shipping bytecode does not save space — it costs 1.2 MB.* Even
+              with docstrings stripped, the `.pyc` for this dependency set comes
+              out slightly larger than the `.py` it replaces. What it buys is a
+              build that ships no readable source. The manifest records it as a
+              delta, not a saving, because it is not one.
+
+              **MSIX is not a Tauri bundle target.** The ticket said
+              "`tauri.conf.json:30` targets `nsis` today; add the MSIX target".
+              `tauri-utils` 2.11's `BundleType` deserializer accepts exactly
+              `deb`, `rpm`, `appimage`, `msi`, `nsis`, `app`, `dmg` — anything
+              else is "unknown bundle target" and the build fails before it
+              starts. So `"msix"` in that file is not a slower path to a
+              package, it is a broken build.
+              `tests/desktop/test_packaging.py` now asserts every configured
+              target is one Tauri accepts, so the next person to try learns it
+              in a second rather than on the VM.
+
+              If MSIX is still wanted, it is a *second* step over the installer
+              Tauri does produce (`makeappx` / the MSIX Packaging Tool), and it
+              is worth asking first whether it is wanted at all: NSIS has an
+              installer UI, which removes the premise T-25 was built on — that
+              the location cannot be asked for at install time. T-25's answer
+              is still the right one, it is simply no longer forced.
+
+              **The trap the bytecode step set, and how it was caught.**
+              Alembic finds revisions by matching `*.py` in `versions/`. A
+              bytecode-only build therefore finds **zero revisions**, and
+              `upgrade head` *succeeds* against an empty database — nothing
+              errors until the first query. The fix is Alembic's `sourceless`
+              mode, written into the **packaged** `alembic.ini` only: turned on
+              in a checkout it also reads `versions/__pycache__`, and bytecode
+              from a deleted migration returns as a phantom revision. That was
+              tried first, and `a8764bd4120a_drift_check` — gone from the tree
+              for who knows how long — came back as a second head and broke the
+              migration tests on the spot. Both halves are now guarded:
+              `check_sidecar_runtime.py` runs the migrations for real inside
+              the packaged runtime and asserts the schema exists, and
+              `tests/desktop/test_packaging.py` asserts the repository's
+              `alembic.ini` leaves it off.
+
+              **And one this script set for itself.** A compiled runtime cannot
+              be rebuilt in place: `prune` strips `.pyc`, pip skips packages
+              whose dist-info says they are installed, and the sources are
+              gone — leaving *empty package directories* and
+              `ImportError: cannot import name 'Field' from 'pydantic'
+              (unknown location)`. The build now detects a compiled runtime and
+              cleans first.
+
+    ─────────── the ticket as written, for the reasoning ───────────
+
     branch    Desktop               status  open
     needs     T-20, T-21, T-25
     why       As it stands the sidecar would ship around 200 MB, most of it a
@@ -810,6 +906,21 @@ wish, and the queue is not for wishes.
     version drift from two sides rather than one. Nothing is loaded from disk
     on either path — the templates embed their one asset as a data: URI — so
     the command line carries no `--allow-file-access-from-files`.
+
+    **Found 2026-09-11, while T-30 was being verified, and fixed the same day.**
+    The render that had passed all day started failing with "exited cleanly
+    and wrote no PDF", and it was not the build. On Windows 11 startup boost
+    keeps a windowless `msedge.exe --no-startup-window` alive; while it lives,
+    a headless launch hands the print job to it and returns in 0.1 s, and the
+    PDF appears about a second later — written by a process the renderer
+    never started, into a temp directory it had already deleted. The private
+    `--user-data-dir` this ticket relied on does not stop the hand-off (nor
+    does disabling the feature; every variant measured on Edge 152.0.4191.66
+    behaved the same). The renderer now waits for the file after the launcher
+    returns; the reproduction is in the suite and starts the background
+    instance itself. On a customer laptop that instance is the normal state,
+    so this would have been "PDFs do not work" on Emilia's machine and
+    "works for me" on this one.
 
 ### T-19 · One shell — the desktop is the SaaS shell plus an adapter  ·  `a8fc530`, `5cdcc54`
     `frontend-electron/src/DesktopShell.tsx` was a second shell: a tab state
