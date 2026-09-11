@@ -33,6 +33,7 @@ from .organization_service import OrganizationService
 from .payment_service import PaymentService
 from .pdf_service import PdfService
 from .peppol_service import PeppolService
+from .privacy_service import PrivacyService
 from .product_service import ProductService
 from .quote_service import QuoteService
 from .reporting_service import KpiSummary, ReportingService, effective_status
@@ -71,6 +72,7 @@ __all__ = [
     "PdfService",
     "PeppolService",
     "PeppolValidationError",
+    "PrivacyService",
     "ProductService",
     "QuoteService",
     "ReportingService",

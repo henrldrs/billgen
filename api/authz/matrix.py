@@ -43,6 +43,7 @@ class Permission(str, Enum):
     IMPORT_RUN = "import.run"
     BACKUP_EXPORT = "backup.export"
     DOCUMENT_REBUILD = "document.rebuild"
+    PRIVACY_ERASE = "privacy.erase"
     BACKUP_RESTORE = "backup.restore"
 
 
@@ -81,6 +82,9 @@ _ADMIN: frozenset[Permission] = _MEMBER | {
     #  data — the rows are already there — but it is a bulk act over the whole
     #  organization's history, which is the line _ADMIN draws.
     Permission.DOCUMENT_REBUILD,
+    #  Erasing a data subject's contact details has no undo, like voiding
+    #  a document. The organization's record, not its trade.
+    Permission.PRIVACY_ERASE,
 }
 
 ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {

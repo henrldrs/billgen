@@ -19,6 +19,7 @@ from core.models import (
     AuditLogEntry,
     Client,
     Company,
+    ConsentRecord,
     CreditNote,
     Document,
     DocumentKind,
@@ -39,6 +40,7 @@ from core.repository import (
     AuditLogRepository,
     ClientRepository,
     CompanyRepository,
+    ConsentRepository,
     CreditNoteRepository,
     DocumentRepository,
     ExpenseRepository,
@@ -59,6 +61,7 @@ from db.models import (
     AuditLogRow,
     ClientRow,
     CompanyRow,
+    ConsentRecordRow,
     CreditNoteRow,
     DocumentRow,
     DocumentTemplateRow,
@@ -1080,3 +1083,25 @@ class SqlAlchemyLegalAcceptanceRepository(LegalAcceptanceRepository):
             .order_by(LegalAcceptanceRow.created_at.desc())
         ).scalars()
         return [to_domain(LegalAcceptance, row) for row in rows]
+
+
+class SqlAlchemyConsentRepository(ConsentRepository):
+    def __init__(self, session: Session) -> None:
+        self._s = session
+
+    def add(self, record: ConsentRecord) -> ConsentRecord:
+        guard_tenant(record.organization_id)
+        self._s.add(ConsentRecordRow(**row_kwargs(record)))
+        self._s.flush()
+        return record
+
+    def list_for_user(self, user_id: UUID) -> list[ConsentRecord]:
+        rows = self._s.execute(
+            select(ConsentRecordRow)
+            .where(
+                ConsentRecordRow.organization_id == current_organization_id(),
+                ConsentRecordRow.user_id == user_id,
+            )
+            .order_by(ConsentRecordRow.created_at.desc())
+        ).scalars()
+        return [to_domain(ConsentRecord, row) for row in rows]

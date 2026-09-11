@@ -18,6 +18,8 @@ import type {
   AcceptRequest,
   ClientStatsResponse,
   OnboardingStatusResponse,
+  PrivacyEraseResponse,
+  PrivacyExportResponse,
   ClientUpdateRequest,
   CompanyCreateRequest,
   CompanyResponse,
@@ -392,6 +394,16 @@ export class ApiClient {
   /** Stamp the first run as done. 409 names every blocker. */
   completeOnboarding(): Promise<OnboardingStatusResponse> {
     return this.request("POST", "/onboarding/complete");
+  }
+
+  /** Everything held about one client, as the controller hands it over (T-35). */
+  exportClientData(clientId: string): Promise<PrivacyExportResponse> {
+    return this.request("POST", `/clients/${clientId}/privacy/export`);
+  }
+
+  /** Blank what the invoices do not carry; keep what they do (T-35). */
+  eraseClientData(clientId: string): Promise<PrivacyEraseResponse> {
+    return this.request("POST", `/clients/${clientId}/privacy/erase`);
   }
 
   /** The commercial history — invoices, credit notes and payments, newest

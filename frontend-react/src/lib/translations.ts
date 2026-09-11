@@ -1434,6 +1434,17 @@ const MESSAGES = {
   "onboarding.blocker.company": { en: "company identifiers", fr: "identifiants de l'entreprise", nl: "ondernemingsgegevens", es: "identificadores de la empresa" },
   "onboarding.blocker.accept": { en: "acceptance of", fr: "acceptation de", nl: "aanvaarding van", es: "aceptación de" },
 
+  // ---- privacy — a client is a data subject (T-35) -----------------------------
+  //  Dutch drafted without a native read; Henri reads FR and NL before this ships.
+  "privacy.title": { en: "Privacy", fr: "Confidentialité", nl: "Privacy", es: "Privacidad" },
+  "privacy.hint": { en: "This client is a data subject. Export what is held about them, or erase their contact details. Issued invoices are kept seven years by law and are never touched.", fr: "Ce client est une personne concernée. Exportez ce qui est conservé à son sujet, ou effacez ses coordonnées. Les factures émises sont conservées sept ans par la loi et ne sont jamais modifiées.", nl: "Deze klant is een betrokkene. Exporteer wat over hem of haar wordt bewaard, of wis de contactgegevens. Uitgegeven facturen worden wettelijk zeven jaar bewaard en worden nooit gewijzigd.", es: "Este cliente es un interesado. Exporte lo que se conserva sobre él, o borre sus datos de contacto. Las facturas emitidas se conservan siete años por ley y nunca se modifican." },
+  "privacy.export": { en: "Export data", fr: "Exporter les données", nl: "Gegevens exporteren", es: "Exportar datos" },
+  "privacy.erase": { en: "Erase personal data", fr: "Effacer les données personnelles", nl: "Persoonsgegevens wissen", es: "Borrar datos personales" },
+  "privacy.erase.confirmTitle": { en: "Erase this client's contact details?", fr: "Effacer les coordonnées de ce client ?", nl: "Contactgegevens van deze klant wissen?", es: "¿Borrar los datos de contacto de este cliente?" },
+  "privacy.erase.confirmBody": { en: "Email, phone and notes are blanked and cannot be recovered. Name, VAT number and address stay: the issued invoices print them and must be kept seven years.", fr: "E-mail, téléphone et notes sont effacés et ne peuvent pas être récupérés. Nom, numéro de TVA et adresse restent : les factures émises les mentionnent et doivent être conservées sept ans.", nl: "E-mail, telefoon en notities worden gewist en kunnen niet worden hersteld. Naam, btw-nummer en adres blijven: de uitgegeven facturen vermelden ze en moeten zeven jaar bewaard blijven.", es: "Correo, teléfono y notas se borran y no pueden recuperarse. Nombre, NIF-IVA y dirección se conservan: las facturas emitidas los mencionan y deben guardarse siete años." },
+  "privacy.erase.done": { en: "Contact details erased.", fr: "Coordonnées effacées.", nl: "Contactgegevens gewist.", es: "Datos de contacto borrados." },
+  "privacy.export.done": { en: "Export saved.", fr: "Export enregistré.", nl: "Export opgeslagen.", es: "Exportación guardada." },
+
 } as const;
 
 export type MessageKey = keyof typeof MESSAGES;

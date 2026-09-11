@@ -116,7 +116,7 @@ test("everything without a backend renders as scaffold, never as data", async ()
   renderWithProvider(<Client360Panel clientId={CLIENT_ID} />);
   await screen.findByRole("heading", { name: "Big Corp" });
 
-  // Tags, risk flags and GDPR each carry the scaffold banner and name the
+  // Tags and risk flags each carry the scaffold banner and name the
   // model that is missing. A regression that "helpfully" fills these with
   // placeholder chips would drop the banner and fail here.
   const tags = screen.getByRole("region", { name: /Tags & groups/ });
@@ -140,9 +140,10 @@ test("everything without a backend renders as scaffold, never as data", async ()
   expect(within(strip as HTMLElement).getByText("Overdue")).toBeInTheDocument();
   expect(screen.queryByText("GET /clients/{id}/stats")).not.toBeInTheDocument();
 
-  const gdpr = screen.getByRole("region", { name: /GDPR/ });
-  // Dead controls are disabled, not merely unstyled.
-  expect(within(gdpr).getByRole("button", { name: "Export data" })).toBeDisabled();
+  // GDPR is real since T-35: both controls are live buttons, no banner.
+  expect(screen.getByRole("button", { name: "Export data" })).toBeEnabled();
+  expect(screen.getByRole("button", { name: "Erase personal data" })).toBeEnabled();
+  expect(screen.queryByText(/anonymize this client/)).not.toBeInTheDocument();
 });
 
 test("the quotes and documents tabs are scaffolds behind real tabs", async () => {
@@ -201,4 +202,35 @@ test("a client that does not exist says so instead of rendering an empty shell",
 
   renderWithProvider(<Client360Panel clientId={CLIENT_ID} />);
   expect(await screen.findByText(/does not exist/)).toBeInTheDocument();
+});
+
+
+test("erasing asks first, then tells the server, then says what happened", async () => {
+  mountHandlers();
+  let erased = false;
+  server.use(
+    http.post(`${BASE}/clients/${CLIENT_ID}/privacy/erase`, () => {
+      erased = true;
+      return HttpResponse.json({
+        client_id: CLIENT_ID,
+        erased: ["email", "phone", "notes"],
+        retained: ["name", "vat_number", "address_line1"],
+        retained_because: "invoices are kept seven years",
+        invoices_untouched: 1,
+      });
+    }),
+  );
+  renderWithProvider(<Client360Panel clientId={CLIENT_ID} />);
+  await screen.findByRole("heading", { name: "Big Corp" });
+
+  await userEvent.click(screen.getByRole("button", { name: "Erase personal data" }));
+  expect(erased).toBe(false);
+  expect(screen.getByText(/cannot be recovered/)).toBeInTheDocument();
+
+  //  The dialog's confirm button carries the same label as the trigger; the
+  //  trigger comes first in the document, the dialog last.
+  const buttons = screen.getAllByRole("button", { name: "Erase personal data" });
+  await userEvent.click(buttons[buttons.length - 1]);
+  expect(await screen.findByText("Contact details erased.")).toBeInTheDocument();
+  expect(erased).toBe(true);
 });

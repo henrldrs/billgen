@@ -45,6 +45,7 @@ from .routers import (
     onboarding,
     organizations,
     payments,
+    privacy,
     products,
     quotes,
     reference,
@@ -196,6 +197,7 @@ _ROUTERS = (
     backup.router,
     documents.router,
     onboarding.router,
+    privacy.router,
     trust.router,
 )
 

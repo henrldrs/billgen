@@ -70,6 +70,43 @@ wish, and the queue is not for wishes.
               her last one; and a test holds an anonymised copy of her
               export's *shape* so the mapping cannot silently rot.
 
+### T-34 · Mother's upgrade — her invoices come with her
+    branch    Backend / Desktop     status  open
+    needs     **one real export from her old app** — FinanceFlow BillGen's
+              JSON backup, the whole `{app, keys}` blob. Henri produces it in
+              minutes; nothing in this repository can stand in for it.
+    why       Henri 2026-09-11: she is on the old BillGen and should be on
+              this desktop build. The old app's export carries her invoices
+              under `billgen-invoices-<companyId>`, and
+              `core/imports/legacy_backup.py` **counts them and imports none**
+              ("not imported in v1" — `invoices_detected`). An upgrade today
+              brings her companies, clients and services and drops every
+              invoice she has ever issued, under a seven-year retention duty
+              — and, worse, the new install would start her numbering from 1
+              on a series that already exists.
+    do        Extend `ImportService` to carry invoices as **already-issued
+              history**, the way `BackupService.restore` inserts them: status
+              ISSUED, the legacy reference verbatim, `sequence_global`
+              assigned in legacy order, dates and totals as recorded, lines
+              as recorded (or one line per invoice if the old app kept only
+              totals — that is a fact her export decides). Then set the
+              company's `invoice` counter past the last legacy number so the
+              next invoice she issues continues the series. Nothing is
+              re-rendered and no number is minted; these documents were
+              issued by another program and this one is their archive.
+
+              The field mapping cannot be written before her file is in
+              hand: the only legacy invoice in this tree is a three-field
+              stub the tests invented. Do not guess it. `preview` must report
+              per invoice what mapped and what did not, so the first run
+              against her file is a report, not a write.
+    done when Her real export, previewed then committed into an empty
+              organization on the desktop build, yields the same number of
+              invoices the old app shows, each with its original reference
+              and total; the next invoice she issues takes the number after
+              her last one; and a test holds an anonymised copy of her
+              export's *shape* so the mapping cannot silently rot.
+
 ### T-35 · The GDPR panel on Client 360 gets its server
     branch    Backend               status  open
     needs     —
@@ -788,6 +825,47 @@ wish, and the queue is not for wishes.
 ---
 
 ## Done
+
+### T-35 · The GDPR panel on Client 360 gets its server  ·  *feat: a client is a data subject*
+    The last scaffold on Client 360, and the one whose absence had a legal
+    clock on it. `core/services/privacy_service.py` answers the two buttons
+    the panel was drawn with and keeps the consent decisions `core/trust/
+    consent.py` had shaped since it was written.
+
+    **Where erasure stops is where the invoice starts.** The templates print
+    the client's name, VAT number, address, postal code, city — and one of
+    them the contact person — and Belgian law keeps an issued invoice seven
+    years. Blanking any of those would change what `GET /invoices/{id}/pdf`
+    renders for a legally frozen document. So erasure blanks email, phone and
+    notes, keeps the rest, and the response names both lists with the
+    register's reason. Asserted three ways: the invoice JSON, the re-rendered
+    PDF and the T-27 file are byte-identical after an erasure. The audit
+    entry records *which fields held a value*, never what they held — an
+    audit trail that preserved the address it was erasing would be an
+    erasure in name only.
+
+    Export (`POST /clients/{id}/privacy/export`) is the client row, the
+    invoices, credit notes, quotes and payments that name them, the activity
+    about the record, and what the register says is retained regardless. A
+    read shaped as a POST because handing a person's data over is an event
+    worth an audit entry; every member may read a client, so every member
+    may export one. Erasure declares `privacy.erase`, an admin permission:
+    no undo, like voiding.
+
+    Consent: `consent_records`, append-only — a change of mind is a new row
+    and the newest is in force — behind `GET /consent` and `POST /consent`,
+    normalised through the categories' defaults and refusing a category
+    that does not exist. Retained on erasure, as the register says: proof a
+    choice was made is the one thing an erasure must not destroy.
+
+    The panel: `PrivacyBlock` in Client 360 — export saves the JSON through
+    the app's download path; erase asks first, in words that say what stays
+    and why, then tells the server. No scaffold banner remains on that
+    screen under any exposure.
+
+    Evidence: `tests/api/test_privacy.py` (5), the erase flow in
+    `Client360Panel.test.tsx`; migration `b8d2f6a1c930`; 678 collected exit
+    0, 202 frontend tests, ruff and typecheck clean.
 
 ### T-33 · Two tenants, one document path  ·  *fix: each organization gets its own document folder on a host*
     Measured before it was fixed: two organizations, each with a company

@@ -99,6 +99,7 @@ which it cannot know.
 | 24 | Client 360 on the beta surface | `DONE` | Ships in *fix: scaffold blocks stay off a handed-over build, and the totals are the server's*. Henri's screenshot showed three scaffold banners on a shipped screen. Totals wired to the `GET /clients/{id}/stats` that already existed; `ScaffoldBlock` renders nothing under `exposure="mvp"`. GDPR's server is T-35; tags no longer ship. 196 frontend tests. |
 | 25 | T-29 · the guided first run, backend half | `IN PROGRESS` | Ships in *feat: the first run has a ledger*. `GET /onboarding` derives the state; acceptances are per user per version and written as `contract` Documents into her data folder; `POST /onboarding/complete` refuses while the company fails validation or a required text is unaccepted. The legal registry is entirely undrafted, so the acceptance step gates on nothing until Henri supplies texts — the mechanism is real, the texts are his. Wizard, first-run gate and Settings → Data & privacy are next. 7 tests. |
 | 26 | T-29 · the guided first run, the wizard | `IN PROGRESS` | Ships in *feat: the guided first run*. Five steps on the Stepper, state re-read from `GET /onboarding` after every act, `FirstRunGate` in both shells, migration `a7c41e9d5f02` stamps organizations that already had a company. Left: toggles, logo, Data & privacy, data-directory choice — and Henri's texts, without which the legal step gates on nothing. 5 tests; 201 frontend. |
+| 27 | T-35 · the GDPR panel gets its server | `DONE` | Ships in *feat: a client is a data subject*. Export, erasure that stops where the invoice starts (name, VAT, address, contact person stay; email, phone, notes go; the invoice JSON, the re-rendered PDF and the archived file asserted byte-identical), and consent records kept append-only. The last scaffold on Client 360 is gone. 5 tests; 202 frontend. |
 
 **This ledger's own list is closed.** Items 6–8 were the three the handover
 note sanctioned explicitly: *"None of these invents a screen; each connects a
@@ -111,11 +112,11 @@ happened to it.
 
 | | |
 |---|---|
-| Python | **673 collected, exit 0** — 16 new in T-27, 12 in T-23, 24 in T-28, 5 in T-30, 3 for the Edge hand-off found under T-21, 2 in T-33, 7 in T-29; `tests/desktop/` is 56 | 
-| Frontend | **201 passed** (`npm run test`, 32 files), typecheck clean across all four workspaces |
+| Python | **678 collected, exit 0** — 16 new in T-27, 12 in T-23, 24 in T-28, 5 in T-30, 3 for the Edge hand-off found under T-21, 2 in T-33, 7 in T-29, 5 in T-35; `tests/desktop/` is 56 | 
+| Frontend | **202 passed** (`npm run test`, 32 files), typecheck clean across all four workspaces |
 | `ruff check` | clean. CI runs `ruff check .` only — the tree is *not* `ruff format` clean and was not before, so do not reformat it as a side errand |
 | Architecture doc | **in sync** — both `sync-architecture --check` and `architecture_to_text.py --check` green at 102 endpoints across 25 routers |
-| Migrations | head is `a7c41e9d5f02` (existing organizations stamped as onboarded). The packaged build reads them as bytecode — `sourceless` is set in the *packaged* `alembic.ini` only, never the repository's (T-30). A dev database from before 2026-09-09 needs `alembic upgrade head`, and a desktop install migrates itself on boot |
+| Migrations | head is `b8d2f6a1c930` (consent records). The packaged build reads them as bytecode — `sourceless` is set in the *packaged* `alembic.ini` only, never the repository's (T-30). A dev database from before 2026-09-09 needs `alembic upgrade head`, and a desktop install migrates itself on boot |
 | ROADMAP_IA | regenerated 2026-09-04 from `ia.ts`: 115 areas, 34 wired, 30% |
 | Unpushed | everything on `main` after `origin/main` — count it with the first command in the resume protocol rather than trusting a number here, which is stale the moment the next commit lands. Three trees became one on 2026-09-09: the worktree and its branch were removed, the remote-only docs commit `fde1edc` was folded in as `a5b3948`, and `main` fast-forwarded to the former `audit-engine-and-scaffolds` head |
 

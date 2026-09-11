@@ -1865,6 +1865,77 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/clients/{client_id}/privacy/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Export Client Data
+         * @description Everything held about this client — Article 15, as the controller hands
+         *     it over. A read that every member may perform, audited because handing a
+         *     person's data to someone is an event.
+         */
+        post: operations["export_client_data_clients__client_id__privacy_export_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/clients/{client_id}/privacy/erase": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Erase Client Data
+         * @description Blank what the invoices do not carry, keep what they do.
+         *
+         *     Belgian law retains an invoice seven years, and the invoice prints the
+         *     client's name, VAT number and address — so those stay, and the response
+         *     says so in the register's own words. Contact channels and notes go.
+         */
+        post: operations["erase_client_data_clients__client_id__privacy_erase_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/consent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consent Status
+         * @description The caller's decision in force, and every decision before it.
+         */
+        get: operations["consent_status_consent_get"];
+        put?: never;
+        /**
+         * Record Consent
+         * @description Record a decision. The caller's own act on the caller's own identity,
+         *     so no permission is declared — a viewer may decline analytics too.
+         */
+        post: operations["record_consent_consent_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/trust/legal/documents": {
         parameters: {
             query?: never;
@@ -2584,6 +2655,47 @@ export interface components {
             default_on: boolean;
             /** In Use */
             in_use: string[];
+        };
+        /** ConsentRecordResponse */
+        ConsentRecordResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Policy Version */
+            policy_version: string;
+            /** State */
+            state: {
+                [key: string]: boolean;
+            };
+            /** Source */
+            source: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** ConsentRequest */
+        ConsentRequest: {
+            /** Policy Version */
+            policy_version: string;
+            /** State */
+            state: {
+                [key: string]: boolean;
+            };
+            /**
+             * Source
+             * @default settings
+             */
+            source?: string;
+        };
+        /** ConsentStatusResponse */
+        ConsentStatusResponse: {
+            current: components["schemas"]["ConsentRecordResponse"] | null;
+            /** History */
+            history: components["schemas"]["ConsentRecordResponse"][];
         };
         /** CreditNoteIssueRequest */
         CreditNoteIssueRequest: {
@@ -3564,6 +3676,62 @@ export interface components {
         PlansResponse: {
             /** Tiers */
             tiers: components["schemas"]["TierResponse"][];
+        };
+        /** PrivacyEraseResponse */
+        PrivacyEraseResponse: {
+            /**
+             * Client Id
+             * Format: uuid
+             */
+            client_id: string;
+            /** Erased */
+            erased: string[];
+            /** Retained */
+            retained: string[];
+            /** Retained Because */
+            retained_because: string;
+            /** Invoices Untouched */
+            invoices_untouched: number;
+        };
+        /**
+         * PrivacyExportResponse
+         * @description Everything held about one client, as the controller would hand it to
+         *     the data subject (Article 15). Shaped for reading, not for restore.
+         */
+        PrivacyExportResponse: {
+            /** Format */
+            format: string;
+            /**
+             * Exported At
+             * Format: date-time
+             */
+            exported_at: string;
+            /** Client */
+            client: {
+                [key: string]: unknown;
+            };
+            /** Invoices */
+            invoices: {
+                [key: string]: unknown;
+            }[];
+            /** Credit Notes */
+            credit_notes: {
+                [key: string]: unknown;
+            }[];
+            /** Quotes */
+            quotes: {
+                [key: string]: unknown;
+            }[];
+            /** Payments */
+            payments: {
+                [key: string]: unknown;
+            }[];
+            /** Activity */
+            activity: {
+                [key: string]: unknown;
+            }[];
+            /** Retained */
+            retained: string[];
         };
         /**
          * PrivacyRegisterResponse
@@ -7776,6 +7944,121 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OnboardingStatusResponse"];
+                };
+            };
+        };
+    };
+    export_client_data_clients__client_id__privacy_export_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                client_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrivacyExportResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    erase_client_data_clients__client_id__privacy_erase_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                client_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrivacyEraseResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    consent_status_consent_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsentStatusResponse"];
+                };
+            };
+        };
+    };
+    record_consent_consent_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConsentRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsentRecordResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

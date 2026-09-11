@@ -4896,6 +4896,156 @@
         }
       }
     },
+    "/clients/{client_id}/privacy/export": {
+      "post": {
+        "tags": [
+          "privacy"
+        ],
+        "summary": "Export Client Data",
+        "description": "Everything held about this client — Article 15, as the controller hands\nit over. A read that every member may perform, audited because handing a\nperson's data to someone is an event.",
+        "operationId": "export_client_data_clients__client_id__privacy_export_post",
+        "parameters": [
+          {
+            "name": "client_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Client Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivacyExportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clients/{client_id}/privacy/erase": {
+      "post": {
+        "tags": [
+          "privacy"
+        ],
+        "summary": "Erase Client Data",
+        "description": "Blank what the invoices do not carry, keep what they do.\n\nBelgian law retains an invoice seven years, and the invoice prints the\nclient's name, VAT number and address — so those stay, and the response\nsays so in the register's own words. Contact channels and notes go.",
+        "operationId": "erase_client_data_clients__client_id__privacy_erase_post",
+        "parameters": [
+          {
+            "name": "client_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Client Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivacyEraseResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/consent": {
+      "get": {
+        "tags": [
+          "privacy"
+        ],
+        "summary": "Consent Status",
+        "description": "The caller's decision in force, and every decision before it.",
+        "operationId": "consent_status_consent_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "privacy"
+        ],
+        "summary": "Record Consent",
+        "description": "Record a decision. The caller's own act on the caller's own identity,\nso no permission is declared — a viewer may decline analytics too.",
+        "operationId": "record_consent_consent_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentRecordResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/trust/legal/documents": {
       "get": {
         "tags": [
@@ -6820,6 +6970,100 @@
           "in_use"
         ],
         "title": "ConsentCategoryResponse"
+      },
+      "ConsentRecordResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "policy_version": {
+            "type": "string",
+            "title": "Policy Version"
+          },
+          "state": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object",
+            "title": "State"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "policy_version",
+          "state",
+          "source",
+          "created_at"
+        ],
+        "title": "ConsentRecordResponse"
+      },
+      "ConsentRequest": {
+        "properties": {
+          "policy_version": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Policy Version"
+          },
+          "state": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object",
+            "title": "State"
+          },
+          "source": {
+            "type": "string",
+            "pattern": "^(banner|settings|onboarding)$",
+            "title": "Source",
+            "default": "settings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "policy_version",
+          "state"
+        ],
+        "title": "ConsentRequest"
+      },
+      "ConsentStatusResponse": {
+        "properties": {
+          "current": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConsentRecordResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/ConsentRecordResponse"
+            },
+            "type": "array",
+            "title": "History"
+          }
+        },
+        "type": "object",
+        "required": [
+          "current",
+          "history"
+        ],
+        "title": "ConsentStatusResponse"
       },
       "CreditNoteIssueRequest": {
         "properties": {
@@ -9574,6 +9818,125 @@
         ],
         "title": "PlansResponse",
         "description": "The whole commercial matrix, so a pricing or upgrade screen renders from\nthe server's table instead of a second copy maintained in TypeScript."
+      },
+      "PrivacyEraseResponse": {
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Client Id"
+          },
+          "erased": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Erased"
+          },
+          "retained": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Retained"
+          },
+          "retained_because": {
+            "type": "string",
+            "title": "Retained Because"
+          },
+          "invoices_untouched": {
+            "type": "integer",
+            "title": "Invoices Untouched"
+          }
+        },
+        "type": "object",
+        "required": [
+          "client_id",
+          "erased",
+          "retained",
+          "retained_because",
+          "invoices_untouched"
+        ],
+        "title": "PrivacyEraseResponse"
+      },
+      "PrivacyExportResponse": {
+        "properties": {
+          "format": {
+            "type": "string",
+            "title": "Format"
+          },
+          "exported_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Exported At"
+          },
+          "client": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Client"
+          },
+          "invoices": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Invoices"
+          },
+          "credit_notes": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Credit Notes"
+          },
+          "quotes": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Quotes"
+          },
+          "payments": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Payments"
+          },
+          "activity": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Activity"
+          },
+          "retained": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Retained"
+          }
+        },
+        "type": "object",
+        "required": [
+          "format",
+          "exported_at",
+          "client",
+          "invoices",
+          "credit_notes",
+          "quotes",
+          "payments",
+          "activity",
+          "retained"
+        ],
+        "title": "PrivacyExportResponse",
+        "description": "Everything held about one client, as the controller would hand it to\nthe data subject (Article 15). Shaped for reading, not for restore."
       },
       "PrivacyRegisterResponse": {
         "properties": {

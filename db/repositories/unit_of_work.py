@@ -8,6 +8,7 @@ from .sqlalchemy_repositories import (
     SqlAlchemyAuditLogRepository,
     SqlAlchemyClientRepository,
     SqlAlchemyCompanyRepository,
+    SqlAlchemyConsentRepository,
     SqlAlchemyCreditNoteRepository,
     SqlAlchemyDocumentRepository,
     SqlAlchemyExpenseRepository,
@@ -43,6 +44,7 @@ class SqlAlchemyUnitOfWork(UnitOfWork):
         self.expenses = SqlAlchemyExpenseRepository(s)
         self.documents = SqlAlchemyDocumentRepository(s)
         self.legal_acceptances = SqlAlchemyLegalAcceptanceRepository(s)
+        self.consents = SqlAlchemyConsentRepository(s)
         self.templates = SqlAlchemyTemplateRepository(s)
         self.sequences = SqlAlchemySequenceRepository(s)
         self.audit_log = SqlAlchemyAuditLogRepository(s)

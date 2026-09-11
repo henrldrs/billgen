@@ -22,6 +22,10 @@ class AuditAction(str, Enum):
     #  T-29: a versioned legal text accepted, and the first run finished.
     ACCEPT_LEGAL = "accept_legal"
     ONBOARDING_COMPLETE = "onboarding_complete"
+    #  T-35: a data subject's export, an erasure, a consent decision recorded.
+    PRIVACY_EXPORT = "privacy_export"
+    PRIVACY_ERASE = "privacy_erase"
+    CONSENT = "consent"
     RESTORE = "restore"
     DELETE = "delete"
     LOGIN = "login"

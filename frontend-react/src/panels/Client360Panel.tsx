@@ -26,6 +26,7 @@ import {
   Banner,
   Button,
   Card,
+  ConfirmDialog,
   DataList,
   EmptyState,
   ErrorState,
@@ -44,12 +45,15 @@ import {
   useActivity,
   useClient,
   useClientStats,
+  useEraseClientData,
+  useExportClientData,
   useInvoices,
 } from "../hooks/queries";
 import {
   formatDate,
   formatMoney,
 } from "../lib/format";
+import { documentFilename, saveBlob } from "../lib/download";
 import { t, type Lang } from "../lib/translations";
 import { findByPath } from "../scaffold/ia";
 import {
@@ -452,27 +456,67 @@ function ContextRail({
         )}
       </Card>
 
-      <ScaffoldBlockFor
-        path="settings/privacy"
-        title="GDPR"
-        body={
-          <>
-            <ScaffoldNote>
-              A client is a data subject. Export and erasure have to be
-              per-client and have to leave the fiscal audit trail intact —
-              Belgian law requires invoices to be retained for seven years, so
-              "delete this client" can never mean "delete these invoices".
-            </ScaffoldNote>
-            <ScaffoldButton wouldDo="export everything held about this client">
-              Export data
-            </ScaffoldButton>
-            <ScaffoldButton wouldDo="anonymize this client while keeping the invoices">
-              Erase personal data
-            </ScaffoldButton>
-          </>
-        }
-      />
+      <PrivacyBlock lang={lang} clientId={clientId} />
     </>
+  );
+}
+
+// --------------------------------------------------------------- privacy (T-35)
+
+/** A client is a data subject. Export hands over what is held; erasure blanks
+ *  the contact channels and keeps what the issued invoices print — the server
+ *  decides which is which, and its answer is what the dialog says. */
+function PrivacyBlock({ lang, clientId }: { lang: Lang; clientId: string }) {
+  const exportData = useExportClientData();
+  const erase = useEraseClientData();
+  const [confirming, setConfirming] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  return (
+    <Card>
+      <h3 className="bg-card__title">{t(lang, "privacy.title")}</h3>
+      <p className="bg-muted">{t(lang, "privacy.hint")}</p>
+      <div className="bg-actions">
+        <Button
+          variant="secondary"
+          disabled={exportData.isPending}
+          onClick={() => {
+            exportData.mutate(clientId, {
+              onSuccess: async (data) => {
+                const blob = new Blob([JSON.stringify(data, null, 2)], {
+                  type: "application/json",
+                });
+                await saveBlob(blob, documentFilename(`client-${clientId}-export`, "json"));
+                setNotice(t(lang, "privacy.export.done"));
+              },
+            });
+          }}
+        >
+          {t(lang, "privacy.export")}
+        </Button>
+        <Button variant="danger" disabled={erase.isPending} onClick={() => setConfirming(true)}>
+          {t(lang, "privacy.erase")}
+        </Button>
+      </div>
+      {notice ? <Banner tone="success">{notice}</Banner> : null}
+      {exportData.isError || erase.isError ? (
+        <Banner tone="danger">{t(lang, "common.error")}</Banner>
+      ) : null}
+      <ConfirmDialog
+        open={confirming}
+        title={t(lang, "privacy.erase.confirmTitle")}
+        confirmLabel={t(lang, "privacy.erase")}
+        cancelLabel={t(lang, "common.cancel")}
+        danger
+        onCancel={() => setConfirming(false)}
+        onConfirm={() => {
+          setConfirming(false);
+          erase.mutate(clientId, { onSuccess: () => setNotice(t(lang, "privacy.erase.done")) });
+        }}
+      >
+        {t(lang, "privacy.erase.confirmBody")}
+      </ConfirmDialog>
+    </Card>
   );
 }
 

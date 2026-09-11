@@ -6,6 +6,7 @@ from types import TracebackType
 from .audit_log_repo import AuditLogRepository
 from .client_repo import ClientRepository
 from .company_repo import CompanyRepository
+from .consent_repo import ConsentRepository
 from .credit_note_repo import CreditNoteRepository
 from .document_repo import DocumentRepository
 from .expense_repo import ExpenseRepository
@@ -36,6 +37,7 @@ class UnitOfWork(ABC):
     expenses: ExpenseRepository
     documents: DocumentRepository
     legal_acceptances: LegalAcceptanceRepository
+    consents: ConsentRepository
     templates: TemplateRepository
     sequences: SequenceRepository
     audit_log: AuditLogRepository

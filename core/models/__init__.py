@@ -1,6 +1,7 @@
 from .audit_log import AuditAction, AuditLogEntry
 from .client import Client
 from .company import Company
+from .consent_record import ConsentRecord
 from .credit_note import CreditNote, CreditNoteLine
 from .currency import Currency
 from .discount import Discount, DiscountType
@@ -36,6 +37,7 @@ __all__ = [
     "BillingType",
     "Client",
     "Company",
+    "ConsentRecord",
     "CreditNote",
     "CreditNoteLine",
     "Currency",

@@ -398,6 +398,25 @@ export function useCompanyValidation(companyId: string | undefined) {
   });
 }
 
+// ---- privacy — a client is a data subject (T-35) ---------------------------------
+
+export function useExportClientData() {
+  const api = useApi();
+  return useMutation({ mutationFn: (clientId: string) => api.exportClientData(clientId) });
+}
+
+export function useEraseClientData() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (clientId: string) => api.eraseClientData(clientId),
+    onSuccess: (_result, clientId) => {
+      void queryClient.invalidateQueries({ queryKey: ["clients", "detail", clientId] });
+      void queryClient.invalidateQueries({ queryKey: ["activity"] });
+    },
+  });
+}
+
 // ---- onboarding — the guided first run (T-29) ----------------------------------
 
 /** Derived on every call; `completed_at` is what the first-run gate reads. */

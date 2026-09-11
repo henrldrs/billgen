@@ -347,6 +347,14 @@ _UNGUARDED_BY_DESIGN = {
     #                        first run reshapes the organization and does
     #                        declare one (company.write).
     ("POST", "/onboarding/acceptances"),
+    #   /consent            — same argument: recording one's own consent is the
+    #                        caller's own act on the caller's own identity.
+    #   /clients/{id}/privacy/export — a read shaped as a POST because it is
+    #                        an event worth auditing, not a change; every
+    #                        member may read a client, so every member may
+    #                        export one. Erasure declares privacy.erase.
+    ("POST", "/consent"),
+    ("POST", "/clients/{client_id}/privacy/export"),
 }
 
 
