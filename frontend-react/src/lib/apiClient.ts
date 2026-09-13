@@ -58,6 +58,10 @@ import type {
   VatRatesResponse,
   VatTreatmentResponse,
   VatReportResponse,
+  LegalDocumentResponse,
+  PassphraseNoticeResponse,
+  PrivacyRegisterResponse,
+  RestoreReportResponse,
 } from "../types";
 
 /** Runtime shape of POST /backup/restore's response. Hand-typed: the backup
@@ -641,6 +645,82 @@ export class ApiClient {
    *  409 if the org already has companies or the file isn't a valid backup. */
   restoreBackup(backup: unknown): Promise<RestoreReport> {
     return this.request("POST", "/backup/restore", backup);
+  }
+
+  /** What a person must be told before choosing a passphrase — one wording,
+   *  generated from core/backup/sealed.py, never typed into a component. */
+  passphraseNotice(): Promise<PassphraseNoticeResponse> {
+    return this.request("GET", "/backup/passphrase-notice");
+  }
+
+  /** The carried backup (T-28): JSON plus every PDF, zipped and sealed. A POST
+   *  with the passphrase in the body, never a query string. The server refuses
+   *  unless the caller acknowledges the passphrase is unrecoverable; this
+   *  client only ever sends `true` because the panel gates the button on the
+   *  checkbox — the acknowledgement is the person's, relayed. */
+  async exportBackupEncrypted(passphrase: string): Promise<{ blob: Blob; documents: number }> {
+    const response = await this.fetchWithAuth("POST", "/backup/export/encrypted", {
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ passphrase, acknowledge_unrecoverable: true }),
+    });
+    return {
+      blob: await response.blob(),
+      documents: Number(response.headers.get("X-Backup-Documents") ?? 0),
+    };
+  }
+
+  /** Restore from a file — sealed, zipped or the plain JSON export. The kind
+   *  comes from the file's own bytes; the passphrase travels in a header. */
+  async restoreBackupFile(archive: ArrayBuffer, passphrase?: string): Promise<RestoreReportResponse> {
+    const headers: Record<string, string> = { "Content-Type": "application/octet-stream" };
+    if (passphrase) headers["X-Backup-Passphrase"] = passphrase;
+    // Bytes, not a File: the panel reads the file, so this method has one
+    // input shape that every runtime (browser, WebView2, jsdom) sends whole.
+    const response = await this.fetchWithAuth("POST", "/backup/restore/file", {
+      headers,
+      body: new Uint8Array(archive),
+    });
+    return (await response.json()) as RestoreReportResponse;
+  }
+
+  /** A raw authenticated request for the two endpoints above, whose bodies
+   *  are not JSON. Same 401-then-refresh dance as `request`, same ApiError. */
+  private async fetchWithAuth(
+    method: string,
+    path: string,
+    init: { headers: Record<string, string>; body: BodyInit },
+  ): Promise<Response> {
+    const send = () => {
+      const headers = { ...init.headers };
+      const access = this.tokens.getAccess();
+      if (access) headers["Authorization"] = `Bearer ${access}`;
+      return this.fetchImpl(`${this.baseUrl}${path}`, { method, headers, body: init.body });
+    };
+    let response = await send();
+    if (response.status === 401 && (await this.tryRefresh())) response = await send();
+    if (!response.ok) {
+      let detail = response.statusText;
+      try {
+        const parsed = (await response.json()) as { detail?: unknown };
+        if (typeof parsed.detail === "string") detail = parsed.detail;
+      } catch {
+        /* non-JSON error body */
+      }
+      throw new ApiError(response.status, detail);
+    }
+    return response;
+  }
+
+  // ---- trust — the registries a privacy screen is drawn from (L4) ---------------
+
+  /** The art. 30 register, the erasure-retention list and the subprocessors. */
+  privacyRegister(): Promise<PrivacyRegisterResponse> {
+    return this.request("GET", "/trust/privacy/register");
+  }
+
+  /** Every legal text BillGen has, drafted or not, with its version. */
+  legalDocuments(): Promise<LegalDocumentResponse[]> {
+    return this.request("GET", "/trust/legal/documents");
   }
 
   // ---- reports & activity ------------------------------------------------------

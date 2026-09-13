@@ -102,6 +102,10 @@ which it cannot know.
 | 27 | T-35 · the GDPR panel gets its server | `DONE` | Ships in *feat: a client is a data subject*. Export, erasure that stops where the invoice starts (name, VAT, address, contact person stay; email, phone, notes go; the invoice JSON, the re-rendered PDF and the archived file asserted byte-identical), and consent records kept append-only. The last scaffold on Client 360 is gone. 5 tests; 202 frontend. |
 | 28 | T-29 · the first run asks who is accepting | `IN PROGRESS` | Ships in *feat: the first run asks who is accepting*. The desktop bootstrap mints "Local user" for "My Business", so an accepted contract named nobody. A profile step asks for both and the server refuses to finish while either is a placeholder; the e-mail is left alone because it is the bootstrap's lookup key. Compliance check the same day filed T-36 and T-37 and added two conditions to T-34. |
 | 29 | The download hub | `DONE` (his to press) | Ships in *feat: the installer has somewhere to come from*. Two repos — source stays private, `billgen-desktop` public carries Releases only. `release.yml` builds on `windows-latest`, **which is the clean VM T-20 and T-30 are open on**, verifies with `check_sidecar_runtime.py`, and opens a draft release only on a tag Henri pushes. Setup is four steps in [DISTRIBUTION.md](DISTRIBUTION.md); T-38 filed for the signing certificate. |
+| 31 | The desktop signs in | `DONE` | Ships in *feat: the desktop signs in, and the tour follows the first run*. Until now the window went from a spinner into the dashboard and never said whose copy it was. `DesktopSignIn` (shared package, testable without Tauri) on a new `AuthPage` frame the web login and signup now use too: the account it opens as, the business, the plan, the data folder, one button, an "open automatically next time" switch, and language + theme under the card. Sign out in the account menu returns to it — the tokens were only ever in memory. 5 tests. Browser-verified on the 8010/1421 pair. |
+| 32 | The guided tour (onboarding spec, step 5) | `DONE` | Same commit. `GuidedTour` in the design system — a spotlight cut from a dimmed backdrop by one box-shadow, a coach card, keyboard driven, degrades to a centered card when an anchor is missing. Six stops from `shell/tourSteps.ts` (top bar, +, search, company/language/theme, the numbers, the account menu); the selectors are asserted against the real shell in `tourAnchors.test.tsx`. Owed once, by the wizard's finish (`lib/tour.ts`, localStorage — a screen fact, not an organization fact; the reasoning is in the file); replayed from the account menu. 6 tests. |
+| 33 | The dashboard's cards | `DONE` | Ships in *feat: the dashboard's cards, and the settings that keep what the first run says*. From `docs/dashboard nice to have.txt`, only what the server answers: the four KPIs gain hints and a fifth, the VAT to set aside this quarter (`GET /reports/vat` for the current quarter); a first card with the two actions when nothing is issued yet; quick actions; recent activity as "what happened to what" in the right column. The agenda, forecast, hourly rate and "safe to spend" are left out and the panel's docstring says why. 3 tests. |
+| 34 | Settings — T-29's settings half and T-28's UI half | `DONE` | Same commit. **Appearance**: theme light/dark/system (system is now the default for a fresh install), density, text size, reduced motion, translucency — token remaps on `<html>`, applied pre-paint by both shells (`lib/preferences.ts`). **Account**: name and business name editable through the wizard's two calls; e-mail read-only with the reason. **Data & privacy**: the resolved folder and what each sub-folder holds, the art. 30 register with retention, what an erasure keeps, subprocessors, the legal texts with their acceptance state (accept from here with `source: settings`), the way to backups. **Backup**: the sealed export with the server's passphrase notice before the field and the acknowledgement the API demands; restore from a `.billgenbak` through the file endpoint, passphrase in a header. The settings index is tiles in the interface language on a handed-over build, the rail is translated and pruned to what the build offers; `settings/account` and `settings/privacy` join `MVP_SURFACE`. 9 tests. Left from T-29: the folder opener (a Tauri plugin), the data-directory choice, toggles, logo. |
 | 30 | Vanta evaluated | `DONE` (not now) | Ships in *docs: vanta proves controls are written down, not that they hold*. Recorded as T-00g with the trigger to revisit. Two tickets filed from it: T-39 secret scanning (dependency audit already ran in CI — only secrets were missing) and T-40 an external pentest, Henri's to commission after T-05. |
 
 **This ledger's own list is closed.** Items 6–8 were the three the handover
@@ -116,9 +120,9 @@ happened to it.
 | | |
 |---|---|
 | Python | **681 collected, exit 0** — 16 new in T-27, 12 in T-23, 24 in T-28, 5 in T-30, 3 for the Edge hand-off found under T-21, 2 in T-33, 7 in T-29, 5 in T-35, 3 for the first run's profile step; `tests/desktop/` is 56 | 
-| Frontend | **203 passed** (`npm run test`, 32 files), typecheck clean across all four workspaces |
+| Frontend | **225 passed** (`npm run test`, 39 files), typecheck clean across all four workspaces |
 | `ruff check` | clean. CI runs `ruff check .` only — the tree is *not* `ruff format` clean and was not before, so do not reformat it as a side errand |
-| Architecture doc | **in sync** — both `sync-architecture --check` and `architecture_to_text.py --check` green at 102 endpoints across 25 routers |
+| Architecture doc | **in sync** — both `sync-architecture --check` and `architecture_to_text.py --check` green at 113 endpoints across 27 routers (regenerated 2026-09-13) |
 | Migrations | head is `b8d2f6a1c930` (consent records). The packaged build reads them as bytecode — `sourceless` is set in the *packaged* `alembic.ini` only, never the repository's (T-30). A dev database from before 2026-09-09 needs `alembic upgrade head`, and a desktop install migrates itself on boot |
 | ROADMAP_IA | regenerated 2026-09-04 from `ia.ts`: 115 areas, 34 wired, 30% |
 | Unpushed | everything on `main` after `origin/main` — count it with the first command in the resume protocol rather than trusting a number here, which is stale the moment the next commit lands. Three trees became one on 2026-09-09: the worktree and its branch were removed, the remote-only docs commit `fde1edc` was folded in as `a5b3948`, and `main` fast-forwarded to the former `audit-engine-and-scaffolds` head |
@@ -166,6 +170,17 @@ he has to undo.
   product; the copy is the credibility.
 
 ### Open decisions parked for him
+
+- **The default theme follows the operating system now** (2026-09-13). A
+  fresh install with nothing stored resolves `system`; his onboarding spec
+  lists dark as "the default Satoshi/Emerald theme" and the settings spec
+  says "OS system sync", and the second is what a laptop that goes dark at
+  sunset expects. One line in `lib/theme.ts` (`storedTheme`) if he wants
+  dark. A stored choice from before keeps meaning what it meant.
+- **Sign-in on every launch, or straight in.** The desktop shows its sign-in
+  screen by default and offers "open automatically next time" as a switch.
+  The reverse default — straight in, with the screen reachable only through
+  sign-out — is one boolean in `frontend-electron/src/App.tsx`.
 
 - **Which green is canonical.** `#10B981` (the app's accent, guard-pinned)
   versus `#529984` (what the logo actually is). Both are now in the token layer

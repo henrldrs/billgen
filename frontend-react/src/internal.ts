@@ -28,7 +28,9 @@ export {
   type Lang,
   type MessageKey,
   LANGS,
+  hasMessage,
   isLang,
+  tf,
 } from "./lib/translations";
 export { formatDate, formatMoney, monthName } from "./lib/format";
 export { documentFilename, saveBlob } from "./lib/download";
@@ -105,8 +107,11 @@ export {
 } from "./scaffold/Scaffold";
 
 // Panels — BillGen business UI (data via hooks, no math here).
+export { AccountPanel, type AccountPanelProps } from "./panels/AccountPanel";
 export { ActivityPanel } from "./panels/ActivityPanel";
+export { AppearancePanel, type AppearancePanelProps } from "./panels/AppearancePanel";
 export { BackupPanel } from "./panels/BackupPanel";
+export { DataPrivacyPanel, type DataPrivacyPanelProps } from "./panels/DataPrivacyPanel";
 export { Client360Panel, type Client360PanelProps } from "./panels/Client360Panel";
 export { ClientsPanel } from "./panels/ClientsPanel";
 export { CompanyForm } from "./panels/CompanyForm";

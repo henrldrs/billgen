@@ -410,14 +410,32 @@ wish, and the queue is not for wishes.
               them, so the refusal cannot drift from what the bootstrap
               writes; a test asserts the two still agree.
 
+              **The settings half, and the tour, 2026-09-13** (*feat: the
+              dashboard's cards, and the settings that keep what the first
+              run says*; *feat: the desktop signs in, and the tour follows
+              the first run*). Settings → Data & privacy is built
+              (`DataPrivacyPanel`, on the beta surface): the folder
+              `GET /onboarding` resolved and what each sub-folder holds,
+              the art. 30 register with its retention column, what an
+              erasure keeps, the subprocessors, every legal text with its
+              acceptance state — acceptable from there with
+              `source: settings` — and the way to the backups; the
+              passphrase prompt before the first sealed export is in
+              `BackupPanel` with the server's own sentence. The spec's step
+              5 tour exists: six coach marks over the real shell, owed once
+              when the wizard finishes, replayable from the account menu.
+              And the desktop got the sign-in screen the walkthrough
+              assumed: whose copy this is, on what plan, where the data is.
+
               Left, each named in the wizard's docstring: the feature
               toggles of the spec's step 3 (no `organization.modules`
               model), logo upload (B2), the sample-invoice extraction (no AI
-              surface), Settings → Data & privacy, and the data-directory
-              choice, which needs a restart story with the Tauri shell. The
-              step order is T-37. And the texts: until `core/trust/legal.py`
-              carries a drafted, versioned body, the legal step gates on
-              nothing.
+              surface), the data-directory choice, which needs a restart
+              story with the Tauri shell, and an "open folder" control,
+              which needs a Tauri opener plugin the shell does not carry
+              (the path can be copied meanwhile). The step order is T-37.
+              And the texts: until `core/trust/legal.py` carries a drafted,
+              versioned body, the legal step gates on nothing.
 
 ### T-30 · The shipped package — slimmed, legal, and not MSIX
     branch    Desktop               status  open

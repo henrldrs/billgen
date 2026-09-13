@@ -13,7 +13,9 @@
 import { ScaffoldExposureProvider } from "../scaffold/Scaffold";
 import { OnboardingWizard } from "../panels/OnboardingWizard";
 import {
+  AccountPanel,
   ActivityPanel,
+  AppearancePanel,
   BackupPanel,
   Badge,
   Breadcrumbs,
@@ -24,6 +26,7 @@ import {
   CompanySettingsPanel,
   CreditNotesPanel,
   DashboardPanel,
+  DataPrivacyPanel,
   HistoryPanel,
   IA,
   ImportPanel,
@@ -46,15 +49,14 @@ import {
   ScaffoldTable,
   SettingsShell,
   Tabs,
-  ThemeSwitcher,
   UsagePanel,
   VatReportPanel,
   coverage,
+  hasMessage,
   iaTrail,
+  isExposed,
   routableNodes,
   t,
-  tAuditAction,
-  useActivity,
   useCompanies,
   type IaNode,
   type Exposure,
@@ -66,8 +68,22 @@ import { Navigate, Route, useNavigate, useOutletContext, useParams } from "react
 import { DevTierSwitch } from "./DevTierSwitch";
 import { TemplateStudioScreen } from "./TemplateStudioScreen";
 
-import { useTheme } from "../lib/theme";
 import type { ShellContext } from "./ProductShell";
+
+/** A settings node's label and description in the interface language.
+ *
+ *  The IA's labels are English and are the ledger's; the rail, the tiles and
+ *  the page titles read these instead when a translation exists, and fall
+ *  back to the ledger's word when it does not — an untranslated section is a
+ *  section with an English name, never a blank. */
+function settingsLabel(lang: Lang, node: IaNode): string {
+  const key = `settings.label.${node.key.replace(/^settings\./, "")}`;
+  return hasMessage(key) ? t(lang, key) : node.label;
+}
+function settingsDescription(lang: Lang, node: IaNode): string | undefined {
+  const key = `settings.desc.${node.key.replace(/^settings\./, "")}`;
+  return hasMessage(key) ? t(lang, key) : undefined;
+}
 
 // ---------------------------------------------------------------- screen glue
 
@@ -135,7 +151,16 @@ function IaScreen({ node }: { node: IaNode }) {
 /** Trail from the section down to this screen, every ancestor clickable. */
 function IaBreadcrumbs({ node }: { node: IaNode }) {
   const navigate = useNavigate();
-  const trail = iaTrail(node.path as string);
+  const { lang } = useOutletContext<ShellContext>();
+  //  The settings section reads in the interface language everywhere else
+  //  (rail, tiles, titles); its trail should not be the one place it does not.
+  const trail = iaTrail(node.path as string).map((entry) =>
+    entry.key === "settings"
+      ? { ...entry, label: t(lang, "settings.title") }
+      : entry.key.startsWith("settings.")
+        ? { ...entry, label: settingsLabel(lang, entry) }
+        : entry,
+  );
 
   // A one-item trail is the dashboard: "Dashboard ›" and nothing else is noise.
   if (trail.length < 2) return null;
@@ -169,12 +194,18 @@ function isSettingsChild(node: IaNode): boolean {
  *  settings page must still be escapable. */
 function SettingsFrame({ node, children }: { node: IaNode; children: ReactNode }) {
   const navigate = useNavigate();
-  const sections = findNode("settings")?.children ?? [];
+  const { lang, exposure } = useOutletContext<ShellContext>();
+  // The rail lists what this build offers. A dev build sees the whole
+  // ledger; a handed-over build sees its doors and nothing greyed out.
+  const sections = (findNode("settings")?.children ?? []).filter((section) =>
+    isExposed(section, exposure),
+  );
   return (
     <SettingsShell
       sections={sections.map((section) => ({
         key: section.key,
-        label: section.label,
+        label: settingsLabel(lang, section),
+        description: settingsDescription(lang, section),
       }))}
       activeKey={node.key}
       onSectionChange={(key) => {
@@ -220,10 +251,45 @@ export function buildAppRoutes(surface: Surface = "saas", exposure: Exposure = "
 /** Section landing page: what lives here, and what state each part is in.
  *  This screen needs no backend — it is navigation — so it is built for real,
  *  with the design system rather than the scaffold kit. */
-function SectionIndex({ node }: ScreenProps) {
+function SectionIndex({ node, lang, exposure }: ScreenProps) {
   const navigate = useNavigate();
   const stats = coverage([node]);
   const children = node.children ?? [];
+  const isSettings = node.key === "settings";
+
+  // A handed-over build gets tiles, in the interface language, with no
+  // coverage arithmetic: "2 of 4 areas fully wired" is a sentence for the
+  // person building the product, not the person using it. The dev build
+  // keeps the ledger view below, badges and all.
+  if (exposure !== "all") {
+    return (
+      <>
+        <PageHeader
+          title={isSettings ? t(lang, "settings.title") : node.label}
+          subtitle={isSettings ? t(lang, "settings.intro") : undefined}
+        />
+        <div className="bg-settings-grid">
+          {children
+            .filter((child) => child.path)
+            .map((child) => (
+              <button
+                key={child.key}
+                type="button"
+                className="bg-settings-tile"
+                onClick={() => navigate(`/app/${child.path}`)}
+              >
+                <span className="bg-settings-tile__label">
+                  {isSettings ? settingsLabel(lang, child) : child.label}
+                </span>
+                {isSettings && settingsDescription(lang, child) ? (
+                  <span className="bg-settings-tile__desc">{settingsDescription(lang, child)}</span>
+                ) : null}
+              </button>
+            ))}
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -260,12 +326,24 @@ function SectionIndex({ node }: ScreenProps) {
  *  pruning the tree does not reach it: it has to read the exposure itself.
  *  That is the whole reason `exposure` is in `ShellContext`. */
 function DashboardScreen({ companyId, lang, currency, exposure }: ScreenProps) {
+  const navigate = useNavigate();
   const alerts = exposure === "all" ? findNode("dashboard.alerts") : undefined;
+  // "See everything" only where the audit log is a screen this build offers.
+  const audit = findNode("activity.audit");
+  const auditOffered = audit != null && isExposed(audit, exposure);
   return (
     <>
       <PageHeader title={t(lang, "dashboard.title")} />
-      <DashboardPanel companyId={companyId} lang={lang} currency={currency} />
-      <RecentActivityCard lang={lang} />
+      <DashboardPanel
+        companyId={companyId}
+        lang={lang}
+        currency={currency}
+        onNewInvoice={() => navigate("/app/sales/invoices/new")}
+        onNewClient={() => navigate("/app/customers/clients")}
+        onNewProduct={() => navigate("/app/catalog/products")}
+        onBackup={() => navigate("/app/settings/backup")}
+        onOpenActivity={auditOffered ? () => navigate("/app/activity/audit") : undefined}
+      />
       {alerts ? (
         <ScaffoldPage node={alerts}>
           <ScaffoldNote>
@@ -279,25 +357,6 @@ function DashboardScreen({ companyId, lang, currency, exposure }: ScreenProps) {
   );
 }
 
-function RecentActivityCard({ lang }: { lang: Lang }) {
-  const { data } = useActivity({ limit: 8 });
-  return (
-    <Card title={t(lang, "activity.title")}>
-      {data && data.length > 0 ? (
-        <List
-          items={data.map((entry, index) => ({
-            key: `${entry.timestamp}-${index}`,
-            // The wire value ("export_pdf") is a contract, not a label.
-            primary: tAuditAction(lang, entry.action),
-            secondary: new Date(entry.timestamp).toLocaleString(),
-          }))}
-        />
-      ) : (
-        <p>{t(lang, "activity.empty")}</p>
-      )}
-    </Card>
-  );
-}
 
 /** Invoices with the status tabs from the IA. The tab IS the filter, so the
  *  panel's own dropdown is suppressed via the `status` prop. */
@@ -379,21 +438,6 @@ function CompanyScreen({ node, companyId, lang }: ScreenProps) {
   );
 }
 
-/** Appearance — the one settings section with something real to change. The
- *  rail around it is supplied by SettingsFrame, so this renders only its own
- *  content; rendering the shell here is what used to make the rail a property
- *  of two screens instead of the section. */
-function AppearanceScreen({ node }: ScreenProps) {
-  const [theme, setTheme] = useTheme();
-  return (
-    <>
-      <PageHeader title={node.label} />
-      <Card title="Appearance">
-        <ThemeSwitcher theme={theme} onChange={setTheme} />
-      </Card>
-    </>
-  );
-}
 
 // --------------------------------------------------------- the built registry
 
@@ -625,7 +669,23 @@ const BUILT: Record<string, Screen> = {
   // one PATCH costs.
   company: CompanyScreen,
   settings: SectionIndex,
-  "settings/appearance": AppearanceScreen,
+  //  The settings screens render only their own content; the rail around
+  //  them is SettingsFrame's, which is what keeps it a property of the
+  //  section rather than of the screens that happen to be built.
+  "settings/account": ({ lang, node }) => <AccountPanel lang={lang} title={settingsLabel(lang, node)} />,
+  "settings/appearance": ({ lang, node }) => (
+    <AppearancePanel lang={lang} title={settingsLabel(lang, node)} />
+  ),
+  "settings/privacy": ({ lang, node }) => {
+    const navigate = useNavigate();
+    return (
+      <DataPrivacyPanel
+        lang={lang}
+        title={settingsLabel(lang, node)}
+        onOpenBackup={() => navigate("/app/settings/backup")}
+      />
+    );
+  },
   "settings/import": ({ lang }) => <ImportPanel lang={lang} />,
   "settings/backup": ({ lang }) => <BackupPanel lang={lang} />,
   //  The first run (T-29). Reads the language itself; state is the server's.

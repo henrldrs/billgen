@@ -1726,7 +1726,7 @@ What is still open here. GET /clients/{id}/stats is the only endpoint left on th
 Repo Map
 --------
 
-What every directory is for, and the record of what was removed on 2026-08-26. 704 tracked files.
+What every directory is for, and the record of what was removed on 2026-08-26. 707 tracked files.
 
 A repository that cannot be read cheaply is a repository that gets misread. This section names the purpose of every top-level directory, so nothing in the tree is unexplained, and records what left.
 
@@ -1795,7 +1795,7 @@ assets/brand/ · 1
     above from the vector geometry at 92e5f07.
     What breaks without it: Regenerate it. Never hand-edit it.
 
-docs/ · 34
+docs/ · 35
     What it is: This document, the marketing-site companion, four ADRs, the token standard,
     the IA roadmap, the minimal-stack checklist, the solo-run ledger, and the working specs.
     Down from 356 files.
@@ -2502,7 +2502,7 @@ Path                          Files
 ----------------------------  -----
 .claude/                      1
 commands/                     1
-workflows/                    1
+workflows/                    2
 api/                          6
 authz/                        4
 entitlements/                 6
@@ -2534,7 +2534,8 @@ migrations/                   16
 models/                       20
 repositories/                 4
 desktop/                      7
-docs/                         24
+distribution/                 1
+docs/                         25
 ARCHITECTURE/                 10
 frontend-electron/            5
 public/                       3
@@ -2555,7 +2556,7 @@ core/                         36
 db/                           4
 desktop/                      6
 files at the repository root  15
-Total tracked                 704
+Total tracked                 707
 
 Reading the layers
 

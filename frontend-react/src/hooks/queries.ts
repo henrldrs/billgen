@@ -344,6 +344,67 @@ export function useBackupExport() {
   });
 }
 
+/** T-28's carried backup. No cache: a download is an act, not a read. */
+export function useSealedBackupExport() {
+  const api = useApi();
+  return useMutation({
+    mutationFn: (passphrase: string) => api.exportBackupEncrypted(passphrase),
+  });
+}
+
+export function useBackupRestoreFile() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ archive, passphrase }: { archive: ArrayBuffer; passphrase?: string }) =>
+      api.restoreBackupFile(archive, passphrase),
+    onSuccess: () => void queryClient.invalidateQueries(),
+  });
+}
+
+/** The sentence a person reads before choosing a passphrase. Generated
+ *  server-side, so it never goes stale against the archive format. */
+export function usePassphraseNotice() {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["backup", "passphrase-notice"],
+    queryFn: () => api.passphraseNotice(),
+    staleTime: Infinity,
+  });
+}
+
+// ---- trust — read by Settings → Data & privacy (2026-09-13) ---------------------
+
+export function usePrivacyRegister() {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["trust", "privacy-register"],
+    queryFn: () => api.privacyRegister(),
+    staleTime: 10 * 60_000,
+  });
+}
+
+export function useLegalDocuments() {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["trust", "legal-documents"],
+    queryFn: () => api.legalDocuments(),
+    staleTime: 10 * 60_000,
+  });
+}
+
+// ---- the signed-in person and their organization ---------------------------------
+
+export function useMe() {
+  const api = useApi();
+  return useQuery({ queryKey: ["me"], queryFn: () => api.me() });
+}
+
+export function useCurrentOrganization() {
+  const api = useApi();
+  return useQuery({ queryKey: ["organization"], queryFn: () => api.currentOrganization() });
+}
+
 export function useBackupRestore() {
   const api = useApi();
   const queryClient = useQueryClient();
@@ -410,7 +471,10 @@ export function useUpdateMe() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body: { display_name?: string; language?: string }) => api.updateMe(body),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["onboarding"] }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["onboarding"] });
+      void queryClient.invalidateQueries({ queryKey: ["me"] });
+    },
   });
 }
 

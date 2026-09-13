@@ -1023,9 +1023,9 @@ export const IA: IaSection[] = [
         path: "settings/account",
         status: "partial",
         layer: "L3",
-        endpoints: ["GET /users/me"],
-        missing: ["PATCH /users/me", "email change + re-verification"],
-        note: "Profile is readable and not editable.",
+        endpoints: ["GET /users/me", "PATCH /users/me", "PATCH /orgs/current"],
+        missing: ["email change + re-verification"],
+        note: "Name, business name and interface language are editable (AccountPanel, 2026-09-13) — the same two calls the first run's profile step makes. The e-mail stays read-only: changing it needs a verification message the product cannot send (B1), and on a desktop install it is the bootstrap's lookup key.",
       },
       {
         key: "settings.team",
@@ -1094,16 +1094,18 @@ export const IA: IaSection[] = [
         status: "partial",
         layer: "L4",
         endpoints: [
-          "GET /backup/export",
+          "GET /onboarding",
           "GET /trust/privacy/register",
-          "GET /trust/subprocessors",
+          "GET /trust/legal/documents",
+          "POST /onboarding/acceptances",
+          "GET /backup/passphrase-notice",
         ],
         missing: [
           "POST /privacy/export (structured GDPR export)",
           "POST /privacy/delete-account",
-          "consent records (no storage)",
+          "an opener for the data folder (Tauri plugin)",
         ],
-        note: "The art. 30 register and the subprocessor list are served from core/trust as data, so the screen can be built now. What is still missing is the two actions: /backup/export is an org backup, not a subject-access export, and there is no deletion workflow. The deletion dialog must show the register's `retained_on_erasure` — invoices and client contacts are frozen for seven years, so \"delete everything\" would be a false promise.",
+        note: "Built 2026-09-13 as T-29's permanent half (DataPrivacyPanel): the resolved data directory and what each folder holds, the art. 30 register with retention, what an erasure keeps, the subprocessors, the legal texts with their acceptance state, and the way to the backups. What is still missing is the two actions: /backup/export is an org backup, not a subject-access export, and there is no deletion workflow. The deletion dialog must show the register's `retained_on_erasure` — invoices and client contacts are frozen for seven years, so \"delete everything\" would be a false promise.",
       },
       {
         key: "settings.cookies",
@@ -1167,7 +1169,7 @@ export const IA: IaSection[] = [
         path: "settings/appearance",
         status: "wired",
         layer: "L6",
-        note: "Theme is a client-side preference persisted pre-paint — correctly needs no endpoint.",
+        note: "Theme (light / dark / system), density, text size, reduced motion and translucency — all client-side preferences persisted pre-paint (lib/preferences.ts), which correctly need no endpoint.",
       },
       {
         key: "settings.advanced",
@@ -1522,9 +1524,13 @@ export const MVP_SURFACE: readonly string[] = [
   //  Her plan and her allowances — the 402 has to be explicable.
   "billing/plan",
   "billing/usage",
-  //  Her data, and the controls for reading the interface at all.
+  //  Her data, and the controls for reading the interface at all. Account is
+  //  where a name typed past the wizard gets fixed; Data & privacy is what
+  //  the first run says once and the settings keep (T-29).
+  "settings/account",
   "settings/backup",
   "settings/appearance",
+  "settings/privacy",
   //  The first run. Reached by not having finished it, not from the nav.
   "onboarding/wizard",
 ];

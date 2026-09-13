@@ -105,3 +105,11 @@ export type ExpenseResponse = components["schemas"]["ExpenseResponse"];
 export type ExpenseImportRequest = components["schemas"]["ExpenseImportRequest"];
 export type ExpenseReviewRequest = components["schemas"]["ExpenseReviewRequest"];
 export type TvaPositionResponse = components["schemas"]["TvaPositionResponse"];
+
+// ---- trust and backup surfaces read by Settings → Data & privacy (2026-09-13)
+export type PrivacyRegisterResponse = components["schemas"]["PrivacyRegisterResponse"];
+export type DataSetResponse = components["schemas"]["DataSetResponse"];
+export type SubprocessorResponse = components["schemas"]["SubprocessorResponse"];
+export type LegalDocumentResponse = components["schemas"]["LegalDocumentResponse"];
+export type PassphraseNoticeResponse = components["schemas"]["PassphraseNoticeResponse"];
+export type RestoreReportResponse = components["schemas"]["RestoreReportResponse"];

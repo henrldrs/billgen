@@ -565,7 +565,9 @@ Named "Explore" rather than "Research": it is the app's internal search engine.
   lifecycle GDPR touches, the *documented* half now exists as data:
   `GET /trust/privacy/register` returns the art. 30 processing register (six
   datasets, each with a lawful basis, a retention and an erasure outcome) and
-  the subprocessor list, so the reading screen is buildable today. The two
+  the subprocessor list — and the reading screen was built on 2026-09-13
+  (`DataPrivacyPanel`: the resolved data folder, the register, the retained
+  list, the texts and their acceptance state). The two
   actions are what remain, and the deletion one has a constraint that must
   reach the UI: **issued invoices and the client contacts on them are retained
   for seven years** under Belgian bookkeeping law, so an unqualified "delete
