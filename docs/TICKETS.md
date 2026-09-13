@@ -790,6 +790,35 @@ wish, and the queue is not for wishes.
     done when `unrecorded()` returns one fewer action, and the security screen
               shows a failed attempt.
 
+### T-39 · Secret scanning — the half of supply-chain hygiene CI lacks
+    branch    Security              status  open
+    needs     —
+    why       The `audit` job in `.github/workflows/ci.yml` already runs
+              `pip-audit` and `npm audit`, advisory by design (ADR-0004
+              deviation, reasoned in the job's comment). **Nothing looks for a
+              committed secret.** This repo is about to hold the reasons one
+              would be committed: the licence signing key (T-22,
+              `scripts/license_tool.py keygen`), a code-signing credential
+              (T-38), mail provider keys (T-01). `.gitignore` covers `.env`;
+              it does not cover a key pasted into a test or a script.
+
+              **This one is a gate, not advisory.** The dependency audit is
+              advisory because a CVE published upstream is unrelated to the
+              change under test. A secret in the diff *is* the change under
+              test — failing that build is exactly right.
+    do        A `secrets` job in `ci.yml` running gitleaks over the pushed
+              range, no `continue-on-error`. A `.gitleaks.toml` only if the
+              first run needs an allowlist — each allowlisted path with a
+              comment saying why it is not a secret (test fixtures, the
+              public half of the licence key).
+
+              Once, by hand: a **full-history** scan. Anything it finds is
+              rotated, not merely deleted — a secret in history stays in
+              every clone that already exists.
+    done when A branch carrying a planted fake key fails CI on the `secrets`
+              job; and a dated line in this ticket's Done entry records the
+              full-history scan and what, if anything, was rotated.
+
 ### T-13 · Postgres row-level security
     branch    Security              status  open
     needs     T-05
@@ -797,6 +826,28 @@ wish, and the queue is not for wishes.
               repository layer, so a raw query or a future service that
               bypasses it is stopped by nothing. Belt exists; this is braces.
     done when A deliberately raw cross-tenant query returns zero rows.
+
+### T-40 · An external penetration test
+    branch    Security / Henri      status  open — his to commission
+    needs     T-05 (something to test), T-11, T-13
+    why       Every security control in this repo was written and tested by
+              the same hands. The tests prove the controls do what their
+              author thought of; a pentest is the only check here on what the
+              author did *not* think of. A T3 product — fiscal documents and
+              the personal data of customers' customers — sold to people who
+              cannot evaluate this themselves.
+
+              This is the money the Vanta evaluation (Done, T-00g) redirected:
+              a compliance platform proves controls are *documented*; a tester
+              finds whether they *hold*.
+    do        Not engineering. A scoped test of the hosted SaaS — auth,
+              tenancy isolation, the invoice and document paths, the API
+              surface as classified in MINIMAL_STACK B2. Commission it after
+              hosting, CSP and RLS land, so the report is about the product
+              being sold rather than about gaps already queued.
+    done when A dated report from a named tester is in `docs/`, and every
+              finding is either a ticket in this file or a written, signed
+              acceptance of the risk.
 
 ### T-14 · Retention policy in code
     branch    Data / DBA            status  open
@@ -866,6 +917,21 @@ wish, and the queue is not for wishes.
 ---
 
 ## Done
+
+### T-00g · Vanta — evaluated, not now  ·  2026-09-13
+    Henri asked whether Vanta suits BillGen. It answers a different question:
+    it collects evidence that controls are *documented*, for a SOC 2 or ISO
+    27001 auditor, and finds no defects. At this stage it would cost
+    ~€10–25k/yr plus a separate audit, report most controls N/A for a one-person
+    org, and certify nothing of the regime that actually binds this product —
+    GDPR as a processor, the Belgian e-invoicing mandate and Peppol
+    conformance, seven-year retention, AI Act art. 50. SOC 2 is an American
+    buyer's ask; the TPE market sends no questionnaires.
+    **Revisit when** a buyer blocks a contract on ISO 27001 — then Vanta,
+    Drata or Secureframe are interchangeable, Sprinto or Scytale cheaper for
+    EU scope. **The money goes instead to:** a rehearsed restore (T-06, T-23),
+    counsel for the DPA (T-16), secret scanning (T-39), a pentest (T-40).
+    `docs/MINIMAL_STACK.md` remains the security posture document.
 
 ### T-35 · The GDPR panel on Client 360 gets its server  ·  *feat: a client is a data subject*
     The last scaffold on Client 360, and the one whose absence had a legal
