@@ -554,3 +554,44 @@
      dark themes that happen to co-exist. */
   --bg-app-backdrop: var(--bg-deep);
 }
+
+/* ==== preferences: density and text size (2026-09-13) ====================
+ * Two per-person preferences, each a token remap on the root element and
+ * nothing else — the same mechanism as dark mode, for the same reason: a
+ * component that reads tokens gets the preference for free, and one that
+ * hard-codes a padding does not deserve to. The app sets the attributes
+ * before first paint (frontend-react/src/lib/preferences.ts).
+ *
+ * Density moves the spacing pairs; the type scale is untouched because a
+ * "compact" screen is one with more rows on it, not smaller words. Text size
+ * scales the root font, which every rem in the type scale follows.
+ * ======================================================================== */
+:root[data-bg-density="compact"] {
+  --bg-pad-card: 1.1rem;
+  --bg-space-field: 0.95rem;
+  --bg-pad-input-y: 0.55rem;
+  --bg-pad-input-x: 0.7rem;
+}
+:root[data-bg-density="spacious"] {
+  --bg-pad-card: 2.25rem;
+  --bg-space-field: 1.7rem;
+  --bg-pad-input-y: 1rem;
+  --bg-pad-input-x: 1rem;
+}
+:root[data-bg-text="small"] {
+  font-size: 90%;
+}
+:root[data-bg-text="large"] {
+  font-size: 112.5%;
+}
+
+/* Translucency off: the glass gradients collapse to the plain surface, so a
+ * card is a card. The blur itself is removed in components.css, because a
+ * filter is not a token. */
+:root[data-bg-glass="off"] {
+  --bg-glass-from: var(--bg-surface);
+  --bg-glass-to: var(--bg-surface);
+  --bg-glass-overlay-from: var(--bg-surface);
+  --bg-glass-overlay-to: var(--bg-surface);
+  --bg-glass-border: var(--bg-line);
+}

@@ -1,14 +1,36 @@
 import { Segmented } from "./Segmented";
 
-export type ThemeValue = "light" | "dark";
+/** `system` follows the operating system's own light/dark setting and tracks
+ *  it live. It is a preference, not a theme: the app resolves it to one of
+ *  the other two before setting `data-bg-theme`. */
+export type ThemeValue = "light" | "dark" | "system";
+
+export interface ThemeSwitcherLabels {
+  light: string;
+  dark: string;
+  system: string;
+  /** Accessible name of the whole control. */
+  group: string;
+}
 
 export interface ThemeSwitcherProps {
   theme: ThemeValue;
   /** Persist + apply is the app's job: set data-bg-theme="dark" on <html>. */
   onChange: (theme: ThemeValue) => void;
   size?: "sm" | "md";
+  /** Offer the system option. On by default; the top-bar shortcut hides it
+   *  because three words do not fit beside the company switcher. */
+  withSystem?: boolean;
+  labels?: Partial<ThemeSwitcherLabels>;
   className?: string;
 }
+
+const DEFAULT_LABELS: ThemeSwitcherLabels = {
+  light: "Light",
+  dark: "Dark",
+  system: "System",
+  group: "Theme",
+};
 
 function SunIcon() {
   return (
@@ -27,23 +49,44 @@ function MoonIcon() {
   );
 }
 
+function SystemIcon() {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+      <rect x="1.75" y="2.75" width="12.5" height="8.5" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M5.5 13.5h5M8 11.25v2.25" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 /**
- * Light/dark toggle over the Segmented primitive. Controlled: the app keeps
- * the value (usually in localStorage) and flips data-bg-theme on <html> —
- * the token layer does the rest.
+ * Light / dark / system toggle over the Segmented primitive. Controlled: the
+ * app keeps the value (usually in localStorage) and flips data-bg-theme on
+ * <html> — the token layer does the rest.
  */
-export function ThemeSwitcher({ theme, onChange, size = "md", className }: ThemeSwitcherProps) {
+export function ThemeSwitcher({
+  theme,
+  onChange,
+  size = "md",
+  withSystem = true,
+  labels: labelOverrides,
+  className,
+}: ThemeSwitcherProps) {
+  const labels = { ...DEFAULT_LABELS, ...labelOverrides };
+  const options = [
+    { value: "light" as const, label: labels.light, icon: <SunIcon /> },
+    { value: "dark" as const, label: labels.dark, icon: <MoonIcon /> },
+    ...(withSystem ? [{ value: "system" as const, label: labels.system, icon: <SystemIcon /> }] : []),
+  ];
+  // Without the system option a `system` preference is shown as neither
+  // pressed — a lie of omission; the shortcut is for flipping, not reading.
   return (
     <Segmented<ThemeValue>
-      ariaLabel="Theme"
+      ariaLabel={labels.group}
       size={size}
       className={className}
       value={theme}
       onChange={onChange}
-      options={[
-        { value: "light", label: "Light", icon: <SunIcon /> },
-        { value: "dark", label: "Dark", icon: <MoonIcon /> },
-      ]}
+      options={options}
     />
   );
 }

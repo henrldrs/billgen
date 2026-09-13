@@ -1,4 +1,15 @@
-import { ApiError, Button, Field, LogoMark, TextInput } from "@billgen/ui";
+import {
+  ApiError,
+  AuthPage,
+  Button,
+  Field,
+  LanguageToggle,
+  TextInput,
+  ThemeSwitcher,
+  t,
+  useLang,
+  useTheme,
+} from "@billgen/ui";
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -7,6 +18,8 @@ import { useSession } from "../auth/session";
 export function LoginPage() {
   const { login, devBootstrap } = useSession();
   const navigate = useNavigate();
+  const { lang } = useLang();
+  const [theme, setTheme] = useTheme();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -45,67 +58,79 @@ export function LoginPage() {
   };
 
   return (
-    <main className="bg-auth-page">
-      <div className="bg-panel bg-auth-page__card">
-        <div className="bg-auth-page__brand">
-          <LogoMark size={26} />
-          <h1>BillGen</h1>
-        </div>
-        <p className="bg-muted mb-4">Sign in to your account</p>
-        <form onSubmit={handleSubmit}>
-          <Field label="Email" required>
-            <TextInput
-              type="email"
-              value={email}
-              required
-              autoComplete="email"
-              onChange={(event) => setEmail(event.target.value)}
-            />
-          </Field>
-          <Field label="Password" required>
-            <TextInput
-              type="password"
-              value={password}
-              required
-              autoComplete="current-password"
-              onChange={(event) => setPassword(event.target.value)}
-            />
-          </Field>
-          {error ? (
-            <div role="alert" className="bg-field__error mb-2">
-              {error}
-            </div>
-          ) : null}
-          <Button type="submit" disabled={pending} className="w-full">
-            Sign in
-          </Button>
-        </form>
-        <p className="bg-muted mt-4">
-          No account yet? <Link to="/signup" className="bg-link">Create one</Link>
-        </p>
-
-        {/* Dev-only escape hatch. `import.meta.env.DEV` is replaced with the
-            literal `false` by Vite in a production build, so this block is
-            tree-shaken out of the shipped bundle — it cannot be reached by
-            flipping a runtime flag, because it is not there. */}
-        {import.meta.env.DEV ? (
-          <div className="bg-auth-page__dev">
-            <p className="bg-muted">
-              Development build. Signs in as the local single-user account via
-              POST /auth/desktop-bootstrap — no password, and the API returns
-              404 unless it was started with DESKTOP_MODE=true.
-            </p>
-            <Button
-              variant="secondary"
-              disabled={pending}
-              className="w-full"
-              onClick={() => void handleDevBootstrap()}
-            >
-              Continue as local dev user
-            </Button>
+    // The same frame the desktop's sign-in screen uses (shell/DesktopSignIn),
+    // with the password form in the card — two products a person may open on
+    // the same day should look like one.
+    <AuthPage
+      tagline={t(lang, "signin.tagline")}
+      aside={
+        <ul>
+          <li>{t(lang, "signin.aside1")}</li>
+          <li>{t(lang, "signin.aside2")}</li>
+          <li>{t(lang, "signin.aside3")}</li>
+        </ul>
+      }
+      footer={
+        <>
+          <LanguageToggle ariaLabel={t(lang, "settings.language")} />
+          <ThemeSwitcher theme={theme} onChange={setTheme} size="sm" withSystem={false} />
+        </>
+      }
+    >
+      <p className="bg-muted mb-4">Sign in to your account</p>
+      <form onSubmit={handleSubmit}>
+        <Field label="Email" required>
+          <TextInput
+            type="email"
+            value={email}
+            required
+            autoComplete="email"
+            onChange={(event) => setEmail(event.target.value)}
+          />
+        </Field>
+        <Field label="Password" required>
+          <TextInput
+            type="password"
+            value={password}
+            required
+            autoComplete="current-password"
+            onChange={(event) => setPassword(event.target.value)}
+          />
+        </Field>
+        {error ? (
+          <div role="alert" className="bg-field__error mb-2">
+            {error}
           </div>
         ) : null}
-      </div>
-    </main>
+        <Button type="submit" disabled={pending} className="w-full">
+          Sign in
+        </Button>
+      </form>
+      <p className="bg-muted mt-4">
+        No account yet? <Link to="/signup" className="bg-link">Create one</Link>
+      </p>
+
+      {/* Dev-only escape hatch. `import.meta.env.DEV` is replaced with the
+          literal `false` by Vite in a production build, so this block is
+          tree-shaken out of the shipped bundle — it cannot be reached by
+          flipping a runtime flag, because it is not there. */}
+      {import.meta.env.DEV ? (
+        <div className="bg-auth-page__dev">
+          <p className="bg-muted">
+            Development build. Signs in as the local single-user account via
+            POST /auth/desktop-bootstrap — no password, and the API returns
+            404 unless it was started with DESKTOP_MODE=true.
+          </p>
+          <Button
+            variant="secondary"
+            disabled={pending}
+            className="w-full"
+            onClick={() => void handleDevBootstrap()}
+          >
+            Continue as local dev user
+          </Button>
+        </div>
+      ) : null}
+    </AuthPage>
   );
 }

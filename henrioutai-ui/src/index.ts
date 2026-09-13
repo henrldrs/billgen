@@ -79,7 +79,12 @@ export {
   type CommandItem,
 } from "./components/CommandPalette";
 export { Segmented, type SegmentedProps, type SegmentedOption } from "./components/Segmented";
-export { ThemeSwitcher, type ThemeSwitcherProps, type ThemeValue } from "./components/ThemeSwitcher";
+export {
+  ThemeSwitcher,
+  type ThemeSwitcherProps,
+  type ThemeSwitcherLabels,
+  type ThemeValue,
+} from "./components/ThemeSwitcher";
 export {
   LanguageSwitcher,
   type LanguageSwitcherProps,
@@ -101,6 +106,13 @@ export { CopyButton, type CopyButtonProps } from "./components/CopyButton";
 export { ContextMenu, type ContextMenuProps } from "./components/ContextMenu";
 export { OrgSwitcher, type OrgSwitcherProps, type OrgItem } from "./components/OrgSwitcher";
 export { HelpBubble, type HelpBubbleProps, type HelpLink } from "./components/HelpBubble";
+export {
+  GuidedTour,
+  type GuidedTourProps,
+  type GuidedTourLabels,
+  type TourStep,
+} from "./components/GuidedTour";
+export { AuthPage, type AuthPageProps } from "./components/AuthPage";
 export {
   ChartWrapper,
   type ChartWrapperProps,

@@ -23,6 +23,8 @@
  *  offered works, and the marker would only cast doubt on it. */
 
 import { useTheme } from "../lib/theme";
+import { markTourDone, tourPending } from "../lib/tour";
+import { tourLabels, tourSteps } from "./tourSteps";
 
 import {
   AccountMenu,
@@ -32,6 +34,8 @@ import {
   CompanyIcon,
   EntitlementBoundary,
   DashboardIcon,
+  GuidedTour,
+  HelpIcon,
   iaFor,
   isNavDestination,
   routableNodes,
@@ -176,6 +180,25 @@ export function ProductShell({ surface, exposure = "all", account }: PlatformAda
   // its own filtering; this is a copy, so the server can be asked too.
   const [paletteQuery, setPaletteQuery] = useState("");
   const [theme, setTheme] = useTheme();
+
+  // The guided tour. Opens by itself once, when the first run has just been
+  // finished and the person has left the wizard (`lib/tour.ts`), and from
+  // the account menu whenever they want it again. It walks the dashboard,
+  // so opening it goes there first.
+  const [tourOpen, setTourOpen] = useState(false);
+  const startTour = () => {
+    navigate("/app");
+    setTourOpen(true);
+  };
+  useEffect(() => {
+    if (tourOpen || pathname.startsWith("/app/onboarding") || !tourPending()) return;
+    setTourOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-check on navigation only
+  }, [pathname]);
+  const closeTour = () => {
+    markTourDone();
+    setTourOpen(false);
+  };
 
   // Records, from the server. The palette used to navigate to pages and nothing
   // else, so typing an invoice number off a bank statement answered "nothing
@@ -400,15 +423,24 @@ export function ProductShell({ surface, exposure = "all", account }: PlatformAda
       icon: section.key === "company" ? <CompanyIcon /> : undefined,
       onSelect: () => navigate(toHref(section.path)),
     })),
-    // No separator and no entry where there is nothing to log out to: the
-    // desktop's session is the machine's, and offering to end it would offer
-    // a screen that surface does not have.
+    { type: "separator" as const, key: "sep-help" },
+    // The tour lives here because this is where its last stop points: the
+    // menu that reaches settings, the plan and help.
+    {
+      key: "tour",
+      label: t(lang, "tour.menu"),
+      icon: <HelpIcon />,
+      onSelect: startTour,
+    },
+    // No entry where there is nothing to sign out to. The web ends a real
+    // session; the desktop returns to its sign-in screen; a surface that
+    // supplies neither gets no such entry.
     ...(account?.onLogout
       ? [
           { type: "separator" as const, key: "sep" },
           {
             key: "logout",
-            label: "Log out",
+            label: t(lang, "account.signOut"),
             danger: true,
             onSelect: account.onLogout,
           },
@@ -481,6 +513,7 @@ export function ProductShell({ surface, exposure = "all", account }: PlatformAda
           for. It lives here rather than around <BillGenProvider> because the
           upgrade prompt needs the router to reach the plan screen. */}
       <EntitlementBoundary lang={lang} onSeePlans={() => navigate("/app/billing/plan")} />
+      <GuidedTour open={tourOpen} steps={tourSteps(lang)} labels={tourLabels(lang)} onClose={closeTour} />
     </Shell>
   );
 }

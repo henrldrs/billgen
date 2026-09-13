@@ -9,9 +9,10 @@
  *    · `surface="desktop"` — the IA's desktop-only areas (connection status,
  *      printing, auto-update) are mounted here and excluded from the web,
  *      which is what `iaFor` and `routableNodes` have always been for.
- *    · an account with no `onLogout`. The session is the machine's; there is
- *      nowhere to log out to and no login screen to land on, so the menu
- *      simply carries no such entry.
+ *    · an account whose "sign out" returns to the sign-in screen (App.tsx)
+ *      rather than ending a server session. Until 2026-09-13 there was no
+ *      such screen and therefore no such entry; now there is, so the menu
+ *      carries it — same shape as the web's, different destination.
  *
  *  Everything the old file did by hand — the company switcher, the palette,
  *  the settings rail, the entitlement boundary, the theme control — the shared
@@ -22,7 +23,7 @@ import { ProductShell, type Exposure } from "@billgen/ui";
 
 export interface DesktopShellProps {
   /** How much of the product this build offers — see App.tsx. Packaged builds
-   *  pass "wired": a beta tester is not auditing the roadmap, and a page that
+   *  pass "mvp": a beta tester is not auditing the roadmap, and a page that
    *  does nothing is a bug report she has to write. */
   exposure: Exposure;
   /** The local user, from `POST /auth/desktop-bootstrap` at startup. Passed in
@@ -30,14 +31,16 @@ export interface DesktopShellProps {
    *  single-user session that cannot change is a request for nothing. */
   displayName?: string;
   email?: string;
+  /** Back to the sign-in screen. The tokens are in memory; App drops them. */
+  onSignOut?: () => void;
 }
 
-export function DesktopShell({ exposure, displayName, email }: DesktopShellProps) {
+export function DesktopShell({ exposure, displayName, email, onSignOut }: DesktopShellProps) {
   return (
     <ProductShell
       surface="desktop"
       exposure={exposure}
-      account={{ name: displayName, email }}
+      account={{ name: displayName, email, onLogout: onSignOut }}
     />
   );
 }

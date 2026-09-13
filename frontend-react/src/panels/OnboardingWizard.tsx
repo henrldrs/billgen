@@ -41,6 +41,7 @@ import {
   useRenameOrganization,
   useUpdateMe,
 } from "../hooks/queries";
+import { requestTour } from "../lib/tour";
 import { LANGS, t, type Lang } from "../lib/translations";
 import { useLang } from "../providers/LanguageProvider";
 import { useTheme } from "../lib/theme";
@@ -399,7 +400,13 @@ function DoneStep({
       {done ? (
         <p>{t(lang, "onboarding.done.hint")}</p>
       ) : status.can_complete ? (
-        <Button variant="primary" disabled={complete.isPending} onClick={() => complete.mutate()}>
+        <Button
+          variant="primary"
+          disabled={complete.isPending}
+          // Finishing setup is what earns the tour: it starts once the wizard
+          // is left, from the shell, over the real screen.
+          onClick={() => complete.mutate(undefined, { onSuccess: requestTour })}
+        >
           {t(lang, "onboarding.done.finish")}
         </Button>
       ) : (

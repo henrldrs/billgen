@@ -1454,9 +1454,174 @@ const MESSAGES = {
   "privacy.erase.done": { en: "Contact details erased.", fr: "Coordonnées effacées.", nl: "Contactgegevens gewist.", es: "Datos de contacto borrados." },
   "privacy.export.done": { en: "Export saved.", fr: "Export enregistré.", nl: "Export opgeslagen.", es: "Exportación guardada." },
 
+  // ---- the guided tour (2026-09-13) --------------------------------------------
+  //  Six coach marks over the live shell, from the onboarding spec's step 5.
+  //  Dutch drafted without a native read (SOLO_RUN § Boundaries).
+  "tour.dialog": { en: "Guided tour", fr: "Visite guidée", nl: "Rondleiding", es: "Visita guiada" },
+  "tour.menu": { en: "Take the tour", fr: "Faire la visite", nl: "Rondleiding volgen", es: "Hacer la visita" },
+  "tour.next": { en: "Next", fr: "Suivant", nl: "Volgende", es: "Siguiente" },
+  "tour.back": { en: "Back", fr: "Retour", nl: "Terug", es: "Atrás" },
+  "tour.skip": { en: "Skip", fr: "Passer", nl: "Overslaan", es: "Omitir" },
+  "tour.finish": { en: "Done", fr: "Terminé", nl: "Klaar", es: "Listo" },
+  "tour.stepOf": { en: "Step {index} of {count}", fr: "Étape {index} sur {count}", nl: "Stap {index} van {count}", es: "Paso {index} de {count}" },
+  "tour.sections.title": { en: "Everything is in the top bar", fr: "Tout est dans la barre du haut", nl: "Alles zit in de bovenbalk", es: "Todo está en la barra superior" },
+  "tour.sections.body": { en: "Sales, clients and your catalog. Each one opens a short list of its pages — there is no sidebar to hunt through.", fr: "Ventes, clients et catalogue. Chacun ouvre une courte liste de ses pages — pas de barre latérale à explorer.", nl: "Verkoop, klanten en uw catalogus. Elk opent een korte lijst van zijn pagina's — geen zijbalk om te doorzoeken.", es: "Ventas, clientes y su catálogo. Cada uno abre una lista corta de sus páginas — no hay barra lateral que recorrer." },
+  "tour.create.title": { en: "One button creates an invoice", fr: "Un seul bouton crée une facture", nl: "Eén knop maakt een factuur", es: "Un solo botón crea una factura" },
+  "tour.create.body": { en: "Pick a client, add a line, preview the PDF. The number is assigned the moment you issue it, never before — so a draft you delete leaves no gap.", fr: "Choisissez un client, ajoutez une ligne, prévisualisez le PDF. Le numéro est attribué au moment de l'émission, jamais avant — un brouillon supprimé ne laisse aucun trou.", nl: "Kies een klant, voeg een lijn toe, bekijk de PDF. Het nummer wordt toegekend op het moment van uitreiken, nooit eerder — een verwijderd ontwerp laat geen gat na.", es: "Elija un cliente, añada una línea, previsualice el PDF. El número se asigna al emitirla, nunca antes — un borrador eliminado no deja hueco." },
+  "tour.search.title": { en: "Find anything by typing", fr: "Retrouvez tout en tapant", nl: "Vind alles door te typen", es: "Encuentre todo escribiendo" },
+  "tour.search.body": { en: "An invoice number from a bank statement, a client's VAT number, a page name. Ctrl+K opens it from anywhere.", fr: "Un numéro de facture lu sur un extrait bancaire, le numéro de TVA d'un client, le nom d'une page. Ctrl+K l'ouvre de partout.", nl: "Een factuurnummer van een bankuittreksel, het btw-nummer van een klant, een paginanaam. Ctrl+K opent het overal.", es: "Un número de factura de un extracto bancario, el NIF-IVA de un cliente, el nombre de una página. Ctrl+K lo abre desde cualquier lugar." },
+  "tour.company.title": { en: "Company, language, theme", fr: "Entreprise, langue, thème", nl: "Onderneming, taal, thema", es: "Empresa, idioma, tema" },
+  "tour.company.body": { en: "The company you invoice from is switched here. Beside it, the interface language and the theme — the interface, not your documents, which keep the company's language.", fr: "L'entreprise émettrice se change ici. À côté, la langue de l'interface et le thème — l'interface seulement : vos documents gardent la langue de l'entreprise.", nl: "De onderneming waaruit u factureert wisselt u hier. Ernaast de taal van de interface en het thema — de interface, niet uw documenten, die de taal van de onderneming behouden.", es: "La empresa desde la que factura se cambia aquí. Al lado, el idioma de la interfaz y el tema — la interfaz, no sus documentos, que conservan el idioma de la empresa." },
+  "tour.numbers.title": { en: "Your numbers, computed by the server", fr: "Vos chiffres, calculés par le serveur", nl: "Uw cijfers, berekend door de server", es: "Sus cifras, calculadas por el servidor" },
+  "tour.numbers.body": { en: "Invoiced, paid, outstanding, overdue, and the VAT to set aside this quarter. Nothing here is estimated on your screen — the same figures decide what the reports say.", fr: "Facturé, encaissé, en attente, en retard, et la TVA à mettre de côté ce trimestre. Rien n'est estimé à l'écran — ce sont les mêmes chiffres que ceux des rapports.", nl: "Gefactureerd, betaald, openstaand, achterstallig, en de btw om dit kwartaal opzij te zetten. Niets wordt op uw scherm geschat — dezelfde cijfers bepalen wat de rapporten zeggen.", es: "Facturado, cobrado, pendiente, vencido y el IVA a reservar este trimestre. Nada se estima en su pantalla — las mismas cifras deciden lo que dicen los informes." },
+  "tour.account.title": { en: "Settings, plan and help", fr: "Paramètres, formule et aide", nl: "Instellingen, abonnement en hulp", es: "Ajustes, plan y ayuda" },
+  "tour.account.body": { en: "Your company details, your plan and its allowances, backups, appearance, and where your data lives. This tour is here too, whenever you want it again.", fr: "Les données de votre entreprise, votre formule et ses quotas, les sauvegardes, l'apparence et l'emplacement de vos données. Cette visite s'y trouve aussi, quand vous voudrez la refaire.", nl: "Uw bedrijfsgegevens, uw abonnement en zijn limieten, back-ups, uiterlijk en waar uw gegevens staan. Deze rondleiding staat er ook, wanneer u ze opnieuw wilt.", es: "Los datos de su empresa, su plan y sus límites, copias de seguridad, apariencia y dónde viven sus datos. Esta visita también está ahí, cuando quiera repetirla." },
+
+  // ---- the desktop sign-in screen (2026-09-13) ----------------------------------
+  "signin.tagline": { en: "Belgian invoicing that lives on your own computer.", fr: "La facturation belge, sur votre propre ordinateur.", nl: "Belgisch factureren, op uw eigen computer.", es: "Facturación belga que vive en su propio ordenador." },
+  "signin.aside1": { en: "Your invoices, clients and documents stay in a folder you can open.", fr: "Vos factures, clients et documents restent dans un dossier que vous pouvez ouvrir.", nl: "Uw facturen, klanten en documenten blijven in een map die u kunt openen.", es: "Sus facturas, clientes y documentos se quedan en una carpeta que puede abrir." },
+  "signin.aside2": { en: "A backup every day, and one sealed file you can carry.", fr: "Une sauvegarde chaque jour, et un fichier scellé à emporter.", nl: "Elke dag een back-up, en één verzegeld bestand dat u kunt meenemen.", es: "Una copia cada día y un archivo sellado que puede llevarse." },
+  "signin.aside3": { en: "Gapless numbering, VAT rules and Peppol XML — with no account to create.", fr: "Numérotation continue, règles de TVA et XML Peppol — sans compte à créer.", nl: "Doorlopende nummering, btw-regels en Peppol-XML — zonder account aan te maken.", es: "Numeración sin huecos, reglas de IVA y XML Peppol — sin crear ninguna cuenta." },
+  "signin.starting": { en: "Starting the local service…", fr: "Démarrage du service local…", nl: "Lokale dienst wordt gestart…", es: "Iniciando el servicio local…" },
+  "signin.welcome": { en: "Welcome back", fr: "Bon retour", nl: "Welkom terug", es: "Bienvenido de nuevo" },
+  "signin.lead": { en: "This copy of BillGen opens as the account below. There is no password: your data never leaves this computer.", fr: "Cette copie de BillGen s'ouvre avec le compte ci-dessous. Pas de mot de passe : vos données ne quittent jamais cet ordinateur.", nl: "Deze kopie van BillGen opent als het account hieronder. Er is geen wachtwoord: uw gegevens verlaten deze computer nooit.", es: "Esta copia de BillGen se abre con la cuenta de abajo. No hay contraseña: sus datos nunca salen de este ordenador." },
+  "signin.continue": { en: "Open BillGen", fr: "Ouvrir BillGen", nl: "BillGen openen", es: "Abrir BillGen" },
+  "signin.autoOpen": { en: "Open automatically next time", fr: "Ouvrir automatiquement la prochaine fois", nl: "Volgende keer automatisch openen", es: "Abrir automáticamente la próxima vez" },
+  "signin.autoOpenHint": { en: "Skip this screen and land on the dashboard. Sign out from the account menu to see it again.", fr: "Passer cet écran et arriver sur le tableau de bord. Déconnectez-vous depuis le menu du compte pour le revoir.", nl: "Dit scherm overslaan en op het dashboard landen. Meld u af via het accountmenu om het opnieuw te zien.", es: "Omitir esta pantalla y llegar al panel. Cierre sesión desde el menú de cuenta para verla de nuevo." },
+  "signin.plan": { en: "Plan", fr: "Formule", nl: "Abonnement", es: "Plan" },
+  "signin.dataDir": { en: "Your data", fr: "Vos données", nl: "Uw gegevens", es: "Sus datos" },
+  "signin.errorTitle": { en: "BillGen could not start", fr: "BillGen n'a pas pu démarrer", nl: "BillGen kon niet starten", es: "BillGen no pudo iniciarse" },
+  "signin.errorHint": { en: "The local service did not answer. Try again; if it keeps happening, relaunch the app — the log is in your data folder.", fr: "Le service local n'a pas répondu. Réessayez ; si cela persiste, relancez l'application — le journal se trouve dans votre dossier de données.", nl: "De lokale dienst antwoordde niet. Probeer opnieuw; blijft het gebeuren, herstart dan de app — het logboek staat in uw gegevensmap.", es: "El servicio local no respondió. Inténtelo de nuevo; si persiste, reinicie la aplicación — el registro está en su carpeta de datos." },
+  "signin.signedOut": { en: "You signed out. Everything is still on this computer.", fr: "Vous êtes déconnecté. Tout reste sur cet ordinateur.", nl: "U bent afgemeld. Alles staat nog op deze computer.", es: "Ha cerrado sesión. Todo sigue en este ordenador." },
+  "account.signOut": { en: "Sign out", fr: "Se déconnecter", nl: "Afmelden", es: "Cerrar sesión" },
+
+  // ---- dashboard cards (2026-09-13) — from `docs/dashboard nice to have.txt` -----
+  "dashboard.quickActions": { en: "Quick actions", fr: "Actions rapides", nl: "Snelle acties", es: "Acciones rápidas" },
+  "dashboard.newInvoice": { en: "New invoice", fr: "Nouvelle facture", nl: "Nieuwe factuur", es: "Nueva factura" },
+  "dashboard.newInvoiceHint": { en: "Numbered when you issue it", fr: "Numérotée à l'émission", nl: "Genummerd bij uitreiking", es: "Numerada al emitirla" },
+  "dashboard.newClient": { en: "Add a client", fr: "Ajouter un client", nl: "Klant toevoegen", es: "Añadir un cliente" },
+  "dashboard.newClientHint": { en: "Business or private", fr: "Professionnel ou particulier", nl: "Zakelijk of particulier", es: "Empresa o particular" },
+  "dashboard.newProduct": { en: "Add a service or product", fr: "Ajouter un service ou produit", nl: "Dienst of product toevoegen", es: "Añadir un servicio o producto" },
+  "dashboard.newProductHint": { en: "A fixed rate you reuse", fr: "Un tarif réutilisable", nl: "Een vast tarief dat u hergebruikt", es: "Una tarifa que reutiliza" },
+  "dashboard.backup": { en: "Back up now", fr: "Sauvegarder maintenant", nl: "Nu back-uppen", es: "Copia ahora" },
+  "dashboard.backupHint": { en: "One file you can carry", fr: "Un fichier à emporter", nl: "Eén bestand om mee te nemen", es: "Un archivo que puede llevarse" },
+  "dashboard.recentActivity": { en: "Recent activity", fr: "Activité récente", nl: "Recente activiteit", es: "Actividad reciente" },
+  "dashboard.seeAll": { en: "See everything", fr: "Tout voir", nl: "Alles bekijken", es: "Ver todo" },
+  "dashboard.noActivity": { en: "Nothing has happened yet.", fr: "Rien ne s'est encore passé.", nl: "Er is nog niets gebeurd.", es: "Aún no ha pasado nada." },
+  "dashboard.welcomeTitle": { en: "No invoices issued yet", fr: "Aucune facture émise pour l'instant", nl: "Nog geen facturen uitgereikt", es: "Aún no hay facturas emitidas" },
+  "dashboard.welcomeBody": { en: "Your first one takes a client and one line. The number is assigned the moment you issue it.", fr: "La première demande un client et une ligne. Le numéro est attribué au moment de l'émission.", nl: "Uw eerste heeft een klant en één lijn nodig. Het nummer wordt toegekend bij het uitreiken.", es: "La primera necesita un cliente y una línea. El número se asigna al emitirla." },
+  "dashboard.thisYear": { en: "this year", fr: "cette année", nl: "dit jaar", es: "este año" },
+  "dashboard.paidCount": { en: "{n} settled", fr: "{n} réglée(s)", nl: "{n} vereffend", es: "{n} liquidada(s)" },
+  "dashboard.outstandingHint": { en: "Issued, not yet paid", fr: "Émis, pas encore encaissé", nl: "Uitgereikt, nog niet betaald", es: "Emitido, aún no cobrado" },
+  "dashboard.overdueNone": { en: "Nothing past its due date", fr: "Rien en retard", nl: "Niets over de vervaldag", es: "Nada vencido" },
+  "dashboard.overdueSome": { en: "Past due date — worth a reminder", fr: "Échéance dépassée — un rappel s'impose", nl: "Vervaldag voorbij — een herinnering waard", es: "Vencidas — merecen un recordatorio" },
+  "dashboard.vatBuffer": { en: "VAT to set aside", fr: "TVA à mettre de côté", nl: "Btw om opzij te zetten", es: "IVA a reservar" },
+  "dashboard.vatBufferHint": { en: "Output VAT this quarter ({period})", fr: "TVA collectée ce trimestre ({period})", nl: "Verschuldigde btw dit kwartaal ({period})", es: "IVA repercutido este trimestre ({period})" },
+
+  // ---- settings (2026-09-13) — the section, its rail and its tiles ----------------
+  //  Labels and one-line descriptions per IA key. A key with no entry falls
+  //  back to the IA's own English label, so the ledger stays the source.
+  "settings.title": { en: "Settings", fr: "Paramètres", nl: "Instellingen", es: "Ajustes" },
+  "settings.intro": { en: "Your account, your screen, and your data.", fr: "Votre compte, votre écran et vos données.", nl: "Uw account, uw scherm en uw gegevens.", es: "Su cuenta, su pantalla y sus datos." },
+  "settings.label.account": { en: "Account", fr: "Compte", nl: "Account", es: "Cuenta" },
+  "settings.label.appearance": { en: "Appearance", fr: "Apparence", nl: "Uiterlijk", es: "Apariencia" },
+  "settings.label.backup": { en: "Backup & restore", fr: "Sauvegarde et restauration", nl: "Back-up en herstel", es: "Copia y restauración" },
+  "settings.label.privacy": { en: "Data & privacy", fr: "Données et confidentialité", nl: "Gegevens en privacy", es: "Datos y privacidad" },
+  "settings.label.import": { en: "Import", fr: "Importer", nl: "Importeren", es: "Importar" },
+  "settings.label.export": { en: "Export", fr: "Exporter", nl: "Exporteren", es: "Exportar" },
+  "settings.label.security": { en: "Security", fr: "Sécurité", nl: "Beveiliging", es: "Seguridad" },
+  "settings.label.team": { en: "Users & permissions", fr: "Utilisateurs et droits", nl: "Gebruikers en rechten", es: "Usuarios y permisos" },
+  "settings.label.notifications": { en: "Notifications", fr: "Notifications", nl: "Meldingen", es: "Notificaciones" },
+  "settings.label.email": { en: "Email", fr: "E-mail", nl: "E-mail", es: "Correo" },
+  "settings.label.integrations": { en: "Integrations", fr: "Intégrations", nl: "Integraties", es: "Integraciones" },
+  "settings.label.cookies": { en: "Cookie preferences", fr: "Préférences de cookies", nl: "Cookievoorkeuren", es: "Preferencias de cookies" },
+  "settings.label.api": { en: "API & webhooks", fr: "API et webhooks", nl: "API en webhooks", es: "API y webhooks" },
+  "settings.label.localization": { en: "Localization", fr: "Localisation", nl: "Lokalisatie", es: "Localización" },
+  "settings.label.advanced": { en: "Advanced", fr: "Avancé", nl: "Geavanceerd", es: "Avanzado" },
+  "settings.desc.account": { en: "Your name, your business name, the interface language.", fr: "Votre nom, le nom de votre activité, la langue de l'interface.", nl: "Uw naam, de naam van uw zaak, de taal van de interface.", es: "Su nombre, el nombre de su negocio, el idioma de la interfaz." },
+  "settings.desc.appearance": { en: "Theme, density, text size, motion.", fr: "Thème, densité, taille du texte, animations.", nl: "Thema, dichtheid, tekstgrootte, beweging.", es: "Tema, densidad, tamaño del texto, movimiento." },
+  "settings.desc.backup": { en: "A copy of everything, and the way back from a broken laptop.", fr: "Une copie de tout, et le retour après un ordinateur en panne.", nl: "Een kopie van alles, en de weg terug na een kapotte laptop.", es: "Una copia de todo, y el camino de vuelta tras un portátil roto." },
+  "settings.desc.privacy": { en: "Where your data lives, what is kept and for how long, the texts you accepted.", fr: "Où vivent vos données, ce qui est conservé et combien de temps, les textes acceptés.", nl: "Waar uw gegevens staan, wat bewaard wordt en hoe lang, de aanvaarde teksten.", es: "Dónde viven sus datos, qué se conserva y cuánto tiempo, los textos aceptados." },
+  "settings.desc.import": { en: "Bring the invoices from the previous BillGen with you.", fr: "Reprenez les factures de l'ancien BillGen.", nl: "Neem de facturen uit de vorige BillGen mee.", es: "Traiga las facturas del BillGen anterior." },
+  "settings.unavailable": { en: "Not in this release", fr: "Pas dans cette version", nl: "Niet in deze versie", es: "No en esta versión" },
+
+  // ---- appearance (2026-09-13) — from `docs/appearance for saas.txt` -------------
+  "appearance.theme": { en: "Theme", fr: "Thème", nl: "Thema", es: "Tema" },
+  "appearance.themeHint": { en: "Follow the system, or pick one. The shortcut in the top bar flips it too.", fr: "Suivre le système, ou choisir. Le raccourci de la barre du haut le change aussi.", nl: "Volg het systeem, of kies er een. De snelkoppeling in de bovenbalk wisselt ook.", es: "Seguir el sistema, o elegir uno. El atajo de la barra superior también lo cambia." },
+  "appearance.light": { en: "Light", fr: "Clair", nl: "Licht", es: "Claro" },
+  "appearance.dark": { en: "Dark", fr: "Sombre", nl: "Donker", es: "Oscuro" },
+  "appearance.system": { en: "System", fr: "Système", nl: "Systeem", es: "Sistema" },
+  "appearance.density": { en: "Density", fr: "Densité", nl: "Dichtheid", es: "Densidad" },
+  "appearance.densityHint": { en: "How much fits on one screen. Compact is for long lists; spacious for a touch screen.", fr: "Ce qui tient sur un écran. Compact pour les longues listes ; spacieux pour un écran tactile.", nl: "Hoeveel er op één scherm past. Compact voor lange lijsten; ruim voor een aanraakscherm.", es: "Cuánto cabe en una pantalla. Compacto para listas largas; amplio para pantalla táctil." },
+  "appearance.compact": { en: "Compact", fr: "Compact", nl: "Compact", es: "Compacto" },
+  "appearance.comfortable": { en: "Comfortable", fr: "Confortable", nl: "Comfortabel", es: "Cómodo" },
+  "appearance.spacious": { en: "Spacious", fr: "Spacieux", nl: "Ruim", es: "Amplio" },
+  "appearance.textSize": { en: "Text size", fr: "Taille du texte", nl: "Tekstgrootte", es: "Tamaño del texto" },
+  "appearance.textSizeHint": { en: "Scales every label and number, not the documents you send.", fr: "Agrandit chaque libellé et chiffre, pas les documents que vous envoyez.", nl: "Schaalt elk label en getal, niet de documenten die u verstuurt.", es: "Escala cada etiqueta y número, no los documentos que envía." },
+  "appearance.small": { en: "Small", fr: "Petit", nl: "Klein", es: "Pequeño" },
+  "appearance.medium": { en: "Medium", fr: "Moyen", nl: "Normaal", es: "Mediano" },
+  "appearance.large": { en: "Large", fr: "Grand", nl: "Groot", es: "Grande" },
+  "appearance.motion": { en: "Reduce motion", fr: "Réduire les animations", nl: "Minder beweging", es: "Reducir el movimiento" },
+  "appearance.motionHint": { en: "No animations or transitions anywhere.", fr: "Aucune animation ni transition, nulle part.", nl: "Nergens animaties of overgangen.", es: "Sin animaciones ni transiciones en ningún sitio." },
+  "appearance.translucency": { en: "Translucent surfaces", fr: "Surfaces translucides", nl: "Doorschijnende vlakken", es: "Superficies translúcidas" },
+  "appearance.translucencyHint": { en: "The frosted cards and menus. Turn off on a slow machine — everything becomes plain.", fr: "Les cartes et menus givrés. À désactiver sur une machine lente — tout devient uni.", nl: "De matglazen kaarten en menu's. Zet uit op een trage machine — alles wordt effen.", es: "Las tarjetas y menús esmerilados. Desactívelo en una máquina lenta — todo se vuelve liso." },
+
+  // ---- account (2026-09-13) --------------------------------------------------------
+  "account.title": { en: "Account", fr: "Compte", nl: "Account", es: "Cuenta" },
+  "account.identity": { en: "Who you are", fr: "Qui vous êtes", nl: "Wie u bent", es: "Quién es usted" },
+  "account.email": { en: "E-mail", fr: "E-mail", nl: "E-mail", es: "Correo" },
+  "account.emailHint": { en: "Changing an address needs a verification message the product cannot send yet.", fr: "Changer d'adresse demande un message de vérification que le produit ne peut pas encore envoyer.", nl: "Een adres wijzigen vereist een verificatiebericht dat het product nog niet kan versturen.", es: "Cambiar la dirección requiere un mensaje de verificación que el producto aún no puede enviar." },
+  "account.role": { en: "Role", fr: "Rôle", nl: "Rol", es: "Rol" },
+  "account.preferences": { en: "Preferences", fr: "Préférences", nl: "Voorkeuren", es: "Preferencias" },
+
+  // ---- data & privacy (2026-09-13) — T-29's settings half -------------------------
+  //  Legal sentences on this screen come from `core/trust` through the API;
+  //  what is typed here is the product's own description of its folders.
+  "data.title": { en: "Data & privacy", fr: "Données et confidentialité", nl: "Gegevens en privacy", es: "Datos y privacidad" },
+  "data.where": { en: "Where your data lives", fr: "Où vivent vos données", nl: "Waar uw gegevens staan", es: "Dónde viven sus datos" },
+  "data.whereHint": { en: "Everything BillGen knows is in this folder on this computer. Nothing is sent anywhere.", fr: "Tout ce que BillGen sait se trouve dans ce dossier, sur cet ordinateur. Rien n'est envoyé nulle part.", nl: "Alles wat BillGen weet staat in deze map op deze computer. Er wordt niets verstuurd.", es: "Todo lo que BillGen sabe está en esta carpeta de este ordenador. No se envía nada a ninguna parte." },
+  "data.hosted": { en: "This account is hosted. The register below says what is held, why, and for how long.", fr: "Ce compte est hébergé. Le registre ci-dessous indique ce qui est conservé, pourquoi et combien de temps.", nl: "Dit account wordt gehost. Het register hieronder zegt wat bewaard wordt, waarom en hoe lang.", es: "Esta cuenta está alojada. El registro de abajo indica qué se conserva, por qué y durante cuánto tiempo." },
+  "data.copyPath": { en: "Copy the path", fr: "Copier le chemin", nl: "Pad kopiëren", es: "Copiar la ruta" },
+  "data.folder.db": { en: "The database: companies, clients, products, invoices, payments and the activity log.", fr: "La base de données : entreprises, clients, produits, factures, paiements et journal d'activité.", nl: "De database: bedrijven, klanten, producten, facturen, betalingen en het activiteitenlog.", es: "La base de datos: empresas, clientes, productos, facturas, pagos y el registro de actividad." },
+  "data.folder.invoices": { en: "One PDF per issued invoice, filed by year, exactly as it was sent.", fr: "Un PDF par facture émise, classé par année, tel qu'envoyé.", nl: "Eén PDF per uitgereikte factuur, per jaar, precies zoals verstuurd.", es: "Un PDF por factura emitida, archivado por año, tal como se envió." },
+  "data.folder.contracts": { en: "The texts you accepted, as PDF, with the version and the date.", fr: "Les textes acceptés, en PDF, avec la version et la date.", nl: "De teksten die u aanvaardde, als PDF, met versie en datum.", es: "Los textos que aceptó, en PDF, con la versión y la fecha." },
+  "data.folder.backups": { en: "A copy of the database each day BillGen starts; the last thirty are kept.", fr: "Une copie de la base chaque jour où BillGen démarre ; les trente dernières sont conservées.", nl: "Een kopie van de database elke dag dat BillGen start; de laatste dertig worden bewaard.", es: "Una copia de la base cada día que BillGen arranca; se conservan las últimas treinta." },
+  "data.retention": { en: "What is kept, and for how long", fr: "Ce qui est conservé, et combien de temps", nl: "Wat bewaard wordt, en hoe lang", es: "Qué se conserva, y durante cuánto tiempo" },
+  "data.retentionHint": { en: "The register the privacy policy is drafted from. Issued invoices are kept seven years by Belgian law; erasing a client leaves them untouched.", fr: "Le registre dont la politique de confidentialité est tirée. Les factures émises sont conservées sept ans selon la loi belge ; effacer un client ne les touche pas.", nl: "Het register waaruit het privacybeleid wordt opgesteld. Uitgereikte facturen worden volgens de Belgische wet zeven jaar bewaard; een klant wissen raakt ze niet.", es: "El registro del que se redacta la política de privacidad. Las facturas emitidas se conservan siete años por ley belga; borrar un cliente no las toca." },
+  "data.col.dataset": { en: "Data", fr: "Données", nl: "Gegevens", es: "Datos" },
+  "data.col.purpose": { en: "Purpose", fr: "Finalité", nl: "Doel", es: "Finalidad" },
+  "data.col.basis": { en: "Lawful basis", fr: "Base légale", nl: "Rechtsgrond", es: "Base jurídica" },
+  "data.col.retention": { en: "Kept", fr: "Conservation", nl: "Bewaard", es: "Conservación" },
+  "data.retained": { en: "Kept even after an erasure", fr: "Conservé même après un effacement", nl: "Bewaard, ook na een wissing", es: "Conservado incluso tras un borrado" },
+  "data.subprocessors": { en: "Who else receives it", fr: "Qui d'autre les reçoit", nl: "Wie ze nog ontvangt", es: "Quién más los recibe" },
+  "data.noSubprocessors": { en: "Nobody. On this install no third party receives your data.", fr: "Personne. Sur cette installation, aucun tiers ne reçoit vos données.", nl: "Niemand. Op deze installatie ontvangt geen derde uw gegevens.", es: "Nadie. En esta instalación ningún tercero recibe sus datos." },
+  "data.texts": { en: "Texts you accepted", fr: "Textes acceptés", nl: "Aanvaarde teksten", es: "Textos aceptados" },
+  "data.textsHint": { en: "Each one is kept as a PDF in the contracts folder and travels with your backup.", fr: "Chacun est conservé en PDF dans le dossier contracts et voyage avec votre sauvegarde.", nl: "Elk wordt als PDF in de map contracts bewaard en reist mee met uw back-up.", es: "Cada uno se conserva como PDF en la carpeta contracts y viaja con su copia de seguridad." },
+  "data.textPending": { en: "Awaiting your acceptance", fr: "En attente de votre acceptation", nl: "Wacht op uw aanvaarding", es: "Pendiente de su aceptación" },
+  "data.textUndrafted": { en: "Not drafted yet", fr: "Pas encore rédigé", nl: "Nog niet opgesteld", es: "Aún no redactado" },
+  "data.backupTitle": { en: "Backups", fr: "Sauvegardes", nl: "Back-ups", es: "Copias de seguridad" },
+  "data.backupHint": { en: "The daily copy is automatic. A carried backup is one file you take off this computer, sealed with a passphrase only you know.", fr: "La copie quotidienne est automatique. Une sauvegarde à emporter est un fichier que vous sortez de cet ordinateur, scellé par une phrase secrète que vous seul connaissez.", nl: "De dagelijkse kopie is automatisch. Een meegenomen back-up is één bestand dat u van deze computer haalt, verzegeld met een wachtwoordzin die alleen u kent.", es: "La copia diaria es automática. Una copia para llevar es un archivo que saca de este ordenador, sellado con una frase de contraseña que solo usted conoce." },
+
+  // ---- backup — the sealed export, T-28's UI half (2026-09-13) ------------------
+  "backup.carryHeading": { en: "One file you can carry", fr: "Un fichier à emporter", nl: "Eén bestand om mee te nemen", es: "Un archivo que puede llevarse" },
+  "backup.carryIntro": { en: "The same data as above plus every PDF, zipped and sealed. This is the copy that leaves the computer — on a USB stick, in a cloud folder, with your accountant.", fr: "Les mêmes données que ci-dessus plus chaque PDF, compressées et scellées. C'est la copie qui quitte l'ordinateur — sur une clé USB, dans un dossier cloud, chez votre comptable.", nl: "Dezelfde gegevens als hierboven plus elke PDF, gezipt en verzegeld. Dit is de kopie die de computer verlaat — op een USB-stick, in een cloudmap, bij uw boekhouder.", es: "Los mismos datos que arriba más cada PDF, comprimidos y sellados. Esta es la copia que sale del ordenador — en una memoria USB, en una carpeta en la nube, con su contable." },
+  "backup.passphrase": { en: "Passphrase", fr: "Phrase secrète", nl: "Wachtwoordzin", es: "Frase de contraseña" },
+  "backup.passphraseHint": { en: "At least {n} characters.", fr: "Au moins {n} caractères.", nl: "Minstens {n} tekens.", es: "Al menos {n} caracteres." },
+  "backup.acknowledge": { en: "I understand: a lost passphrase is a lost backup.", fr: "J'ai compris : une phrase secrète perdue est une sauvegarde perdue.", nl: "Ik begrijp het: een verloren wachtwoordzin is een verloren back-up.", es: "Entiendo: una frase perdida es una copia perdida." },
+  "backup.carry": { en: "Download sealed backup", fr: "Télécharger la sauvegarde scellée", nl: "Verzegelde back-up downloaden", es: "Descargar copia sellada" },
+  "backup.carryDone": { en: "Sealed backup saved — {n} documents inside.", fr: "Sauvegarde scellée enregistrée — {n} documents inclus.", nl: "Verzegelde back-up opgeslagen — {n} documenten erin.", es: "Copia sellada guardada — {n} documentos dentro." },
+  "backup.restorePassphrase": { en: "Passphrase of the archive", fr: "Phrase secrète de l'archive", nl: "Wachtwoordzin van het archief", es: "Frase de contraseña del archivo" },
+  "backup.restoreFileHint": { en: "A sealed archive (.billgenbak) needs the passphrase it was made with. A plain backup needs nothing.", fr: "Une archive scellée (.billgenbak) demande la phrase secrète de sa création. Une sauvegarde simple ne demande rien.", nl: "Een verzegeld archief (.billgenbak) heeft de wachtwoordzin nodig waarmee het gemaakt is. Een gewone back-up heeft niets nodig.", es: "Un archivo sellado (.billgenbak) necesita la frase con la que se creó. Una copia simple no necesita nada." },
+
 } as const;
 
 export type MessageKey = keyof typeof MESSAGES;
+
+/** Whether a key built at runtime (`settings.label.${key}`) has a message,
+ *  so a caller can fall back to something better than the key itself. */
+export function hasMessage(key: string): key is MessageKey {
+  return key in MESSAGES;
+}
 
 export function t(lang: Lang, key: MessageKey): string {
   // The key is typed, but not every call site can prove it: HistoryPanel builds
@@ -1467,6 +1632,14 @@ export function t(lang: Lang, key: MessageKey): string {
   const entry = MESSAGES[key];
   if (!entry) return key;
   return entry[lang] ?? entry.en;
+}
+
+/** `t` with `{name}` placeholders filled in. Kept out of `t` itself so the
+ *  common case stays a lookup; only a handful of strings carry a number. */
+export function tf(lang: Lang, key: MessageKey, values: Record<string, string | number>): string {
+  return t(lang, key).replace(/\{(\w+)\}/g, (match, name: string) =>
+    name in values ? String(values[name]) : match,
+  );
 }
 
 /** Translate a backend Peppol-gate message key (e.g. "errSupplierVat").

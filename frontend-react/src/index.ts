@@ -27,4 +27,25 @@ export { buildAppRoutes, InvoiceBuilderRoute } from "./shell/routes";
 
 // Theme: one remap of the token layer, persisted per surface by localStorage.
 // Shared because it was byte-identical in both shells apart from a comment.
-export { applyTheme, storedTheme, useTheme } from "./lib/theme";
+export { applyTheme, resolveTheme, storedTheme, useTheme } from "./lib/theme";
+
+// The other appearance preferences — density, text size, motion, translucency
+// — applied the same way, before first paint, by both shells.
+export {
+  applyAppearance,
+  applyStoredAppearance,
+  storedAppearance,
+  useAppearance,
+  type Appearance,
+} from "./lib/preferences";
+
+// The desktop's sign-in screen and the tour flag. Both are the shell's to
+// drive: the boot state machine lives in frontend-electron, the tour opens
+// itself from ProductShell once the flag says it is owed.
+export {
+  DesktopSignIn,
+  type DesktopAccount,
+  type DesktopSignInProps,
+  type DesktopSignInState,
+} from "./shell/DesktopSignIn";
+export { markTourDone, requestTour, tourPending } from "./lib/tour";
