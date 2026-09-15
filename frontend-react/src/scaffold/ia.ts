@@ -156,10 +156,10 @@ export const IA: IaSection[] = [
       {
         key: "dashboard.alerts",
         label: "Alerts & tasks",
-        status: "none",
+        status: "wired",
         layer: "L2",
         endpoints: ["GET /alerts?company_id&today&limit"],
-        note: "The rules engine landed 2026-08-28: overdue invoices (a partial payment leaves only the remainder), forgotten drafts, business clients with no VAT number, and the company's own identifiers — each a code plus a context dict, severity-ranked, with counts covering everything that fired while the list is capped. `status` stays `none` because no screen consumes it yet: this is a screen to build, not a backend to write.",
+        note: "The rules engine landed 2026-08-28: overdue invoices (a partial payment leaves only the remainder), forgotten drafts, business clients with no VAT number, and the company's own identifiers — each a code plus a context dict, severity-ranked, with counts covering everything that fired while the list is capped. Consumed since 2026-09-15 by AlertsPanel on the dashboard and by the top bar's bell. Off the beta surface by `alertsOffered` — §MVP's line, not a missing screen.",
       },
     ],
   },
@@ -1534,6 +1534,19 @@ export const MVP_SURFACE: readonly string[] = [
   //  The first run. Reached by not having finished it, not from the nav.
   "onboarding/wizard",
 ];
+
+/** Whether the alerts card and the bell are on this build.
+ *
+ *  The card is wired (AlertsPanel over GET /alerts), and a pathless wired
+ *  node rides with its section — which would put it on the beta surface by
+ *  default. Henri's §MVP line (CLAUDE.md, 2026-09-11) keeps the alerts panel
+ *  out of the first release, so the exception is written here, once, and
+ *  read by the dashboard route and the shell's bell alike. Flip this to
+ *  `true` and it ships.
+ */
+export function alertsOffered(exposure: Exposure): boolean {
+  return exposure !== "mvp";
+}
 
 /** Is this leaf offered under this exposure?
  *

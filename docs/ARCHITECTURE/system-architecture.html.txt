@@ -1726,7 +1726,7 @@ What is still open here. GET /clients/{id}/stats is the only endpoint left on th
 Repo Map
 --------
 
-What every directory is for, and the record of what was removed on 2026-08-26. 707 tracked files.
+What every directory is for, and the record of what was removed on 2026-08-26. 723 tracked files.
 
 A repository that cannot be read cheaply is a repository that gets misread. This section names the purpose of every top-level directory, so nothing in the tree is unexplained, and records what left.
 
@@ -1759,14 +1759,14 @@ tests/ · 81
     What breaks without it: The brand decisions at 4e39460 and 81d2c66 become suggestions
     rather than rules.
 
-henrioutai-ui/ · 89
+henrioutai-ui/ · 91
     What it is: The design system, and the only place components are edited. 63 components
     (ls src/components/*.tsx, minus tests), tokens.css, three vendored font files. Its own
     package, MIT, public-ready.
     What breaks without it: Every frontend loses its component vocabulary. @billgen/ui
     re-exports this; it holds nothing of its own.
 
-frontend-react/ · 123
+frontend-react/ · 137
     What it is: Holds src/scaffold/ia.ts — the source of truth for nav, routes, status and
     the 149 gaps in §14. Also the scaffold kit that renders unwired areas as deliberately
     ugly.
@@ -2542,12 +2542,12 @@ public/                       3
 src/                          5
 src-tauri/                    24
 frontend-react/               4
-src/                          119
+src/                          133
 frontend-saas/                5
 public/                       3
 src/                          8
 henrioutai-ui/                4
-src/                          85
+src/                          87
 docker/                       3
 scripts/                      8
 tests/                        1
@@ -2556,7 +2556,7 @@ core/                         36
 db/                           4
 desktop/                      6
 files at the repository root  15
-Total tracked                 707
+Total tracked                 723
 
 Reading the layers
 

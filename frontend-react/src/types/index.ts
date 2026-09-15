@@ -113,3 +113,7 @@ export type SubprocessorResponse = components["schemas"]["SubprocessorResponse"]
 export type LegalDocumentResponse = components["schemas"]["LegalDocumentResponse"];
 export type PassphraseNoticeResponse = components["schemas"]["PassphraseNoticeResponse"];
 export type RestoreReportResponse = components["schemas"]["RestoreReportResponse"];
+
+// ---- what needs attention (2026-09-15) — the dashboard's alerts card
+export type AlertResponse = components["schemas"]["AlertResponse"];
+export type AlertsResponse = components["schemas"]["AlertsResponse"];

@@ -5871,3 +5871,97 @@ hr.bg-divider {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
+
+/* ==== alerts card — what needs attention (2026-09-15) ====================
+ * Hairline rows, a severity dot, the record's name over the sentence, the
+ * one action on the right. The dot's colour is the only place severity is
+ * painted; the tone tokens carry it, so dark mode inherits.
+ * ======================================================================== */
+.bg-alerts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.bg-alerts__row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.7rem 0;
+  border-top: 1px solid color-mix(in srgb, var(--bg-line) 60%, transparent);
+}
+.bg-alerts__row:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.bg-alerts__row:last-child {
+  padding-bottom: 0;
+}
+.bg-alerts__dot {
+  flex-shrink: 0;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: var(--bg-ink-soft);
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 14%, transparent);
+}
+.bg-alerts__dot--critical {
+  background: var(--bg-danger);
+  color: var(--bg-danger);
+}
+.bg-alerts__dot--warning {
+  background: var(--bg-warn);
+  color: var(--bg-warn);
+}
+.bg-alerts__dot--info {
+  background: var(--bg-navy);
+  color: var(--bg-navy);
+}
+.bg-alerts__dot--clear {
+  background: var(--bg-success);
+  color: var(--bg-success);
+}
+.bg-alerts__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 1;
+}
+.bg-alerts__title {
+  font-size: var(--bg-text-label);
+  font-weight: var(--bg-weight-button-strong);
+  letter-spacing: var(--bg-tracking-button-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bg-alerts__detail {
+  font-size: var(--bg-text-helper);
+  color: var(--bg-ink-soft);
+  line-height: 1.4;
+}
+.bg-alerts__counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.bg-alerts__clear {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0;
+  color: var(--bg-ink-soft);
+  font-size: var(--bg-text-body);
+}
+.bg-alerts__more {
+  margin: 0.75rem 0 0;
+  font-size: var(--bg-text-helper);
+}
+@media (max-width: 640px) {
+  .bg-alerts__row {
+    flex-wrap: wrap;
+  }
+  .bg-alerts__row .bg-button {
+    margin-left: 1.45rem;
+  }
+}

@@ -62,6 +62,7 @@ import type {
   PassphraseNoticeResponse,
   PrivacyRegisterResponse,
   RestoreReportResponse,
+  AlertsResponse,
 } from "../types";
 
 /** Runtime shape of POST /backup/restore's response. Hand-typed: the backup
@@ -724,6 +725,16 @@ export class ApiClient {
   }
 
   // ---- reports & activity ------------------------------------------------------
+
+  /** What needs attention, decided on the server — worst first. `today`
+   *  lets a screen (or a test) ask for a given day; `limit` caps the list,
+   *  never the counts. */
+  alerts(companyId: string, today?: string, limit?: number): Promise<AlertsResponse> {
+    const params = new URLSearchParams({ company_id: companyId });
+    if (today) params.set("today", today);
+    if (limit !== undefined) params.set("limit", String(limit));
+    return this.request("GET", `/alerts?${params.toString()}`);
+  }
 
   kpi(companyId: string, today?: string): Promise<KpiResponse> {
     const query = today ? `&today=${today}` : "";

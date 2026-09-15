@@ -49,7 +49,9 @@ import {
   ThemeSwitcher,
   TopNav,
   UpgradeIcon,
+  alertsOffered,
   t,
+  useAlerts,
   useCompanies,
   useLang,
   useSearch,
@@ -214,6 +216,22 @@ export function ProductShell({ surface, exposure = "all", account }: PlatformAda
   // Above the early returns, for the reason already written out further down
   // beside `activeCompanyLanguage` — this file has made that mistake once.
   const { data: searchResults } = useSearch(paletteOpen ? paletteQuery : "", 5);
+
+  // The bell. Its dot is the server's alert count for the active company,
+  // and clicking it lands on the dashboard's alerts card — the bell is a
+  // pointer to the card, not a second list. Same §MVP switch as the card.
+  const { data: alertsData } = useAlerts(
+    alertsOffered(exposure) && selectedId ? selectedId : undefined,
+  );
+  const alertCount =
+    (alertsData?.counts_by_severity.critical ?? 0) + (alertsData?.counts_by_severity.warning ?? 0);
+  const goToAlerts = () => {
+    navigate("/app");
+    requestAnimationFrame(() => {
+      const card = document.getElementById("bg-alerts");
+      if (card && typeof card.scrollIntoView === "function") card.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
 
   // Pin the active company once the list loads. Without this, refetches (e.g.
   // after an import adds a company) fall back to companies[0] and yank the user
@@ -459,6 +477,8 @@ export function ProductShell({ surface, exposure = "all", account }: PlatformAda
           onNavigateHome={() => navigate("/app")}
           onCreateBill={() => navigate("/app/sales/invoices/new")}
           onSearchClick={() => setPaletteOpen(true)}
+          notificationCount={alertCount}
+          onNotificationsClick={goToAlerts}
           accountSlot={
             <AccountMenu
               name={account?.name ?? "Account"}

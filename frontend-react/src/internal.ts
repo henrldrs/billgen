@@ -71,6 +71,7 @@ export * from "@henrioutai/ui";
 export {
   IA,
   MVP_SURFACE,
+  alertsOffered,
   coverage,
   findByPath,
   flattenIa,
@@ -109,6 +110,7 @@ export {
 // Panels — BillGen business UI (data via hooks, no math here).
 export { AccountPanel, type AccountPanelProps } from "./panels/AccountPanel";
 export { ActivityPanel } from "./panels/ActivityPanel";
+export { AlertsPanel, alertSentence, type AlertsPanelProps } from "./panels/AlertsPanel";
 export { AppearancePanel, type AppearancePanelProps } from "./panels/AppearancePanel";
 export { BackupPanel } from "./panels/BackupPanel";
 export { DataPrivacyPanel, type DataPrivacyPanelProps } from "./panels/DataPrivacyPanel";

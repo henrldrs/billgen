@@ -15,6 +15,7 @@ import { OnboardingWizard } from "../panels/OnboardingWizard";
 import {
   AccountPanel,
   ActivityPanel,
+  AlertsPanel,
   AppearancePanel,
   BackupPanel,
   Badge,
@@ -51,6 +52,7 @@ import {
   Tabs,
   UsagePanel,
   VatReportPanel,
+  alertsOffered,
   coverage,
   hasMessage,
   iaTrail,
@@ -319,15 +321,13 @@ function SectionIndex({ node, lang, exposure }: ScreenProps) {
   );
 }
 
-/** Dashboard: real KPIs and revenue, real recent activity, and — only where
- *  placeholders are wanted — a scaffold for the alerts panel.
- *
- *  The alerts block is embedded here rather than owned by an IA route, so
- *  pruning the tree does not reach it: it has to read the exposure itself.
- *  That is the whole reason `exposure` is in `ShellContext`. */
+/** Dashboard: the KPIs, the alerts card, the chart, the shortcuts, the last
+ *  few events — all real. The alerts card is composed here rather than inside
+ *  DashboardPanel because where an alert's action *goes* is routing, and
+ *  because the §MVP switch (`alertsOffered`) is the build's to read, not the
+ *  panel's. That is the reason `exposure` is in `ShellContext`. */
 function DashboardScreen({ companyId, lang, currency, exposure }: ScreenProps) {
   const navigate = useNavigate();
-  const alerts = exposure === "all" ? findNode("dashboard.alerts") : undefined;
   // "See everything" only where the audit log is a screen this build offers.
   const audit = findNode("activity.audit");
   const auditOffered = audit != null && isExposed(audit, exposure);
@@ -343,16 +343,21 @@ function DashboardScreen({ companyId, lang, currency, exposure }: ScreenProps) {
         onNewProduct={() => navigate("/app/catalog/products")}
         onBackup={() => navigate("/app/settings/backup")}
         onOpenActivity={auditOffered ? () => navigate("/app/activity/audit") : undefined}
+        alerts={
+          alertsOffered(exposure) ? (
+            <AlertsPanel
+              companyId={companyId}
+              lang={lang}
+              currency={currency}
+              onOpen={(alert) => {
+                if (alert.target_type === "invoice") navigate(`/app/sales/invoices/id/${alert.target_id}`);
+                else if (alert.target_type === "client") navigate(`/app/customers/clients/${alert.target_id}`);
+                else navigate("/app/company/profile");
+              }}
+            />
+          ) : undefined
+        }
       />
-      {alerts ? (
-        <ScaffoldPage node={alerts}>
-          <ScaffoldNote>
-            Intended content: overdue invoices, clients missing VAT or address,
-            and plan-limit warnings — each a link into the screen that fixes it.
-          </ScaffoldNote>
-          <ScaffoldTable columns={["Severity", "Message", "Action"]} rows={3} />
-        </ScaffoldPage>
-      ) : null}
     </>
   );
 }

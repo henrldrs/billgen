@@ -274,6 +274,18 @@ export function useRecordPayment() {
 
 // ---- reports & activity -----------------------------------------------------------------
 
+/** The dashboard's alerts, and the top bar's bell. Refetched after any
+ *  mutation (see BillGenProvider): an alert is a function of the data, so a
+ *  recorded payment or a fixed VAT number changes the answer immediately. */
+export function useAlerts(companyId: string | undefined, today?: string, limit?: number) {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["alerts", companyId, today ?? "", limit ?? 0],
+    queryFn: () => api.alerts(companyId as string, today, limit),
+    enabled: Boolean(companyId),
+  });
+}
+
 export function useKpi(companyId: string | undefined, today?: string) {
   const api = useApi();
   return useQuery({

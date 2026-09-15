@@ -1613,6 +1613,25 @@ const MESSAGES = {
   "backup.restorePassphrase": { en: "Passphrase of the archive", fr: "Phrase secrète de l'archive", nl: "Wachtwoordzin van het archief", es: "Frase de contraseña del archivo" },
   "backup.restoreFileHint": { en: "A sealed archive (.billgenbak) needs the passphrase it was made with. A plain backup needs nothing.", fr: "Une archive scellée (.billgenbak) demande la phrase secrète de sa création. Une sauvegarde simple ne demande rien.", nl: "Een verzegeld archief (.billgenbak) heeft de wachtwoordzin nodig waarmee het gemaakt is. Een gewone back-up heeft niets nodig.", es: "Un archivo sellado (.billgenbak) necesita la frase con la que se creó. Una copia simple no necesita nada." },
 
+  // ---- alerts — what needs attention (2026-09-15) --------------------------------
+  //  One sentence per rule the server can fire (core/services/alerts_service.py).
+  //  The numbers arrive in `context`; the wording is this file's. Dutch drafted
+  //  without a native read.
+  "alerts.title": { en: "What needs attention", fr: "À traiter", nl: "Wat aandacht vraagt", es: "Qué requiere atención" },
+  "alerts.empty": { en: "Nothing needs attention today.", fr: "Rien à traiter aujourd'hui.", nl: "Niets vraagt vandaag aandacht.", es: "Nada requiere atención hoy." },
+  "alerts.more": { en: "{n} more not shown — the lists have them all.", fr: "{n} de plus non affichés — les listes les contiennent tous.", nl: "{n} meer niet getoond — de lijsten bevatten ze allemaal.", es: "{n} más no mostrados — las listas los contienen todos." },
+  "alerts.severity.critical": { en: "critical", fr: "critique", nl: "kritiek", es: "crítico" },
+  "alerts.severity.warning": { en: "warning", fr: "à surveiller", nl: "aandacht", es: "aviso" },
+  "alerts.severity.info": { en: "note", fr: "note", nl: "opmerking", es: "nota" },
+  "alerts.invoice.overdue": { en: "Overdue by {days} days — {outstanding} still open", fr: "En retard de {days} jours — {outstanding} restent dus", nl: "{days} dagen te laat — {outstanding} nog open", es: "Vencida hace {days} días — {outstanding} pendientes" },
+  "alerts.invoice.draft_stale": { en: "Draft untouched for {days} days — {amount}", fr: "Brouillon inchangé depuis {days} jours — {amount}", nl: "Ontwerp al {days} dagen onaangeroerd — {amount}", es: "Borrador sin tocar desde hace {days} días — {amount}" },
+  "alerts.client.missing_vat_number": { en: "Business client without a VAT number: no Peppol, no reverse charge — invoiced as a consumer.", fr: "Client professionnel sans numéro de TVA : pas de Peppol, pas d'autoliquidation — facturé comme un particulier.", nl: "Zakelijke klant zonder btw-nummer: geen Peppol, geen verlegging — gefactureerd als particulier.", es: "Cliente empresa sin NIF-IVA: sin Peppol, sin inversión del sujeto pasivo — facturado como particular." },
+  "alerts.company.incomplete": { en: "Company identifiers to fix: {fields}", fr: "Identifiants de l'entreprise à corriger : {fields}", nl: "Ondernemingsgegevens te verbeteren: {fields}", es: "Identificadores de la empresa por corregir: {fields}" },
+  "alerts.company.peppol": { en: "Missing for Peppol: {fields}", fr: "Manque pour Peppol : {fields}", nl: "Ontbreekt voor Peppol: {fields}", es: "Falta para Peppol: {fields}" },
+  "alerts.open.invoice": { en: "Open invoice", fr: "Ouvrir la facture", nl: "Factuur openen", es: "Abrir factura" },
+  "alerts.open.client": { en: "Open client", fr: "Ouvrir le client", nl: "Klant openen", es: "Abrir cliente" },
+  "alerts.open.company": { en: "Fix company", fr: "Corriger l'entreprise", nl: "Onderneming verbeteren", es: "Corregir empresa" },
+
 } as const;
 
 export type MessageKey = keyof typeof MESSAGES;

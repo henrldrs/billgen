@@ -14,7 +14,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { expect, test } from "vitest";
 
 import { LanguageProvider } from "../providers/LanguageProvider";
-import { BASE, companyRecord, renderWithProvider } from "../test/utils";
+import { BASE, COMPANY_ID, companyRecord, renderWithProvider } from "../test/utils";
 import { markTourDone, requestTour } from "../lib/tour";
 import { ProductShell } from "./ProductShell";
 import { buildAppRoutes } from "./routes";
@@ -49,6 +49,16 @@ const server = setupServer(
     }),
   ),
   http.get(`${BASE}/activity`, () => HttpResponse.json([])),
+  http.get(`${BASE}/alerts`, () =>
+    HttpResponse.json({
+      company_id: COMPANY_ID,
+      as_of: "2026-09-15",
+      alerts: [],
+      counts_by_severity: {},
+      counts_by_code: {},
+      truncated: false,
+    }),
+  ),
 );
 
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));

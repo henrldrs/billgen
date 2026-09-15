@@ -49,15 +49,15 @@ concluding anything is finished.
 
 ## 1. Where the product actually stands
 
-Measured over **115 leaf areas**, regenerated 2026-09-04:
+Measured over **115 leaf areas**, regenerated 2026-09-15:
 
 | | Count | Share |
 |---|---:|---:|
-| Fully wired | 34 | **30%** |
-| Partial | 33 | 29% |
-| No backend | 48 | 42% |
+| Fully wired | 36 | **31%** |
+| Partial | 32 | 28% |
+| No backend | 47 | 41% |
 
-**149 distinct backend capabilities** are missing. That number is not a
+**144 distinct backend capabilities** are missing. That number is not a
 criticism — it is the honest size of "a real SaaS platform" versus "a working
 invoicing core", and the core is genuinely done.
 
@@ -65,7 +65,7 @@ invoicing core", and the core is genuinely done.
 
 | Section | Wired | Partial | None | Total |
 |---|---:|---:|---:|---:|
-| Dashboard | 6 | 0 | 1 | 7 |
+| Dashboard | 7 | 0 | 0 | 7 |
 | Sales | 7 | 1 | 6 | 14 |
 | Clients | 2 | 1 | 4 | 7 |
 | Catalog | 3 | 4 | 0 | 7 |
@@ -78,7 +78,7 @@ invoicing core", and the core is genuinely done.
 | Settings | 2 | 8 | 5 | 15 |
 | Help & support | 0 | 1 | 6 | 7 |
 | Legal | 0 | 8 | 1 | 9 |
-| Onboarding | 0 | 1 | 0 | 1 |
+| Onboarding | 1 | 0 | 0 | 1 |
 | Desktop (Windows) | 0 | 3 | 2 | 5 |
 
 **Company reached 4 wired**, from 0 as recently as 2026-08-26, when every field
@@ -99,8 +99,8 @@ tested data in `core/trust/legal.py` and served, so eight screens moved from
 | Layer | Wired | Partial | None | Total |
 |---|---:|---:|---:|---:|
 | **L1 — Core** | 19 | 2 | 0 | 21 |
-| **L2 — Business** | 9 | 8 | 23 | 40 |
-| **L3 — SaaS** | 2 | 2 | 16 | 20 |
+| **L2 — Business** | 10 | 8 | 22 | 40 |
+| **L3 — SaaS** | 3 | 1 | 16 | 20 |
 | **L4 — Trust** | 2 | 11 | 2 | 15 |
 | **L5 — Platform** | 1 | 7 | 4 | 12 |
 | **L6 — Experience** | 1 | 3 | 3 | 7 |

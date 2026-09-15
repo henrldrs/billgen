@@ -25,6 +25,8 @@
  *  above this), so this panel renders only its own content.
  */
 
+import type { ReactNode } from "react";
+
 import {
   Button,
   Card,
@@ -59,6 +61,10 @@ export interface DashboardPanelProps {
   onBackup?: () => void;
   /** "See everything" under the activity card. */
   onOpenActivity?: () => void;
+  /** The alerts card, composed by the route (it owns the navigation and the
+   *  §MVP switch). Rendered full width under the KPI bar, where the spec
+   *  puts the action banner. */
+  alerts?: ReactNode;
 }
 
 interface MonthRow {
@@ -85,6 +91,7 @@ export function DashboardPanel({
   onNewProduct,
   onBackup,
   onOpenActivity,
+  alerts,
 }: DashboardPanelProps) {
   const kpi = useKpi(companyId, today);
   const revenue = useRevenue(companyId, year);
@@ -212,6 +219,8 @@ export function DashboardPanel({
           )}
         </div>
       )}
+
+      {alerts}
 
       <div className="bg-dash__grid">
         <div className="bg-dash__column">

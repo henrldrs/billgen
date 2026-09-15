@@ -39,6 +39,8 @@ export interface CardProps {
   frosted?: boolean | "soft";
   children: ReactNode;
   className?: string;
+  /** A DOM id, for a control elsewhere that scrolls to this card. */
+  id?: string;
 }
 
 /**
@@ -56,6 +58,7 @@ export function Card({
   frosted = false,
   children,
   className,
+  id,
 }: CardProps) {
   const classes = [
     "bg-card",
@@ -68,7 +71,7 @@ export function Card({
   const frost = frosted === "soft" ? frostedSurfaceSoft : frosted ? frostedSurface : undefined;
   const hasHeader = title != null || actions != null;
   return (
-    <div className={classes} style={frost}>
+    <div className={classes} style={frost} id={id}>
       {hasHeader ? (
         <div className="bg-card__header">
           <div className="bg-card__titles">
