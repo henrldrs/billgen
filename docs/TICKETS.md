@@ -33,6 +33,96 @@ wish, and the queue is not for wishes.
 
 ## Open — in priority order
 
+*T-45…T-49 come from the UX review of 2026-09-15
+(https://claude.ai/artifact/J5ZHGSoaL5yAcCjeea7SCZ), which Henri accepted the
+same day: "all rest you start building". They sit above the launch tickets
+because each is a defect a first beta user meets on day one.*
+
+### T-45 · The invoice list names who owes you, and by when
+    branch    Frontend              status  open
+    needs     —
+    why       `HistoryPanel.tsx` shows Reference · Date · Total · Status. No
+              client, no due date, so a receivables list cannot be read for the
+              one thing it exists for. Three drafts all read "Draft" and differ
+              only by amount; an issued invoice 43 days past due badges as
+              "Issued"; a Status select sits under status tabs that already do
+              its job; the TOTAL header is left-aligned over right-aligned money.
+    do        `frontend-react/src/panels/HistoryPanel.tsx`: Client and Due
+              columns (client names from the clients query the panel can
+              already reach); an overdue invoice renders an Overdue badge with
+              its age in days; a draft's reference cell says it has no number
+              yet; the duplicate select goes; numeric headers align with their
+              cells.
+    done when `HistoryPanel.test.tsx` asserts, against seeded rows: the client's
+              name and the due date render in their row; an issued invoice past
+              its due date shows the overdue badge with the day count; no
+              `select` labelled Status exists.
+
+### T-46 · The navigation speaks the interface language
+    branch    Frontend              status  open
+    needs     —
+    why       With NL selected, headings say "Facturen" and "Klanten" while the
+              nav, breadcrumbs, status tabs ("Partially paid", "Sent",
+              "Viewed"), and status badges stay English — `scaffold/ia.ts`
+              labels are string literals, not translation keys. The activity
+              feed prints `document_template` and a bare `quote`. For a
+              compliance product a half-translated screen is a credibility
+              defect, not a cosmetic one.
+    do        `ia.ts` labels become keys resolved through `t()` at render;
+              `lib/translations` gains the keys in en/fr/nl (fr/nl marked for
+              Henri's native read — SOLO_RUN § Boundaries); `ActivityPanel.tsx`
+              maps entity types to words.
+    done when A test renders the shell under `nl` and finds none of the English
+              section/status labels in the nav or tabs; a guard test fails if a
+              literal `label: "…"` reappears in `ia.ts`; the activity test finds
+              no raw entity type.
+
+### T-47 · The invoice sheet leads with the action its status calls for
+    branch    Frontend / design system   status  open
+    needs     —
+    why       The preview's action strip gives Open full record, Download PDF,
+              Peppol XML, Payment, Credit note and Void equal weight; Void —
+              irreversible — sits beside Credit note, and the sheet does not
+              show its own status. Separately, `Menu.tsx` only hears Escape
+              once focus is inside the popup, so a menu opened by mouse ignores
+              it.
+    do        The sheet header carries the status badge (with overdue age); one
+              primary action chosen by status (draft → Issue, issued/overdue →
+              Record payment); exports grouped; Credit note and Void behind a
+              More menu, Void last, below a separator, in danger ink.
+              `henrioutai-ui/src/components/Menu.tsx`: Escape closes from the
+              trigger too.
+    done when Tests assert: an overdue invoice's sheet has exactly one primary
+              button, labelled Record payment; Void is not visible until More is
+              opened; pressing Escape on a focused, open Menu trigger closes it.
+
+### T-48 · Navigation is a choice — two styles per platform
+    branch    Design system / Henri   status  open
+    needs     Henri's review of the prototypes in the UX review artifact
+    why       Decided 2026-09-15: the guide offers the choice. Mobile: the orb
+              or a bottom bar. Desktop: the drum or the top bar. Both read the
+              same `ia.ts` tree; neither may be the only way in.
+    do        `NavOrb`, `NavDrum`, `BottomBar` in `henrioutai-ui`, shown first in
+              `/_preview`; a `navStyle` preference in `lib/preferences.ts`; a
+              stop in `shell/tourSteps.ts` that offers it; top bar keeps T-44's
+              narrow-screen rules as its fallback.
+    done when Each style renders the same destinations as `links` in
+              `ProductShell` (one test over all four); every style is operable by
+              keyboard alone with `aria-current="page"` on the active node; the
+              preference survives a reload.
+
+### T-49 · Amounts set in a tabular sans, identifiers stay mono
+    branch    Design system / Henri   status  open
+    needs     Henri — changes the rule written in `fonts.css`
+    why       Geist Mono gives `,` `.` and `€` a digit's width, so "€2,758.80"
+              reads as terminal output. The two-face split stays (Henri,
+              2026-09-15: deliberate); what changes is which face sets money.
+    do        Bundle Geist (sans, OFL) beside Geist Mono; `.bg-num` → Geist 600
+              with `tabular-nums`; a new identifier class keeps Geist Mono for
+              IBAN, VAT number, invoice reference, structured communication.
+    done when `tokens.test.ts` pins the amount face and the identifier face
+              separately; a KPI value computes to Geist in the browser.
+
 ### T-38 · The installer is unsigned, and Windows says so
     branch    DevOps / Henri        status  open
     needs     BETA_LAUNCH_PLAN W1 (the registered entity)
@@ -1042,6 +1132,17 @@ wish, and the queue is not for wishes.
 ---
 
 ## Done
+
+### T-44 · On a phone, + was off the screen  ·  *fix: on a phone the create button is on the screen*
+At 375px the top bar asked for 769: its action cluster never wrapped, so Search,
+the bell, + and the account menu sat past the right edge — and + is the only
+creator in the product. Narrow-screen rules in `henrioutai-ui/.../components.css`
+give way in order of cost: the title (visually hidden, still the h1), the name
+inside the company switcher, the theme switcher's words (gone entirely under
+400px — it stays in Settings), the section links' icons. The language toggle
+keeps its size on purpose. **Measured in the browser:** `scrollWidth` equals
+the viewport at 375 and 320; + spans 229–273 at 320; the bar is 122px, not
+172 (100 on a beta build, which renders no scaffold dots); desktop unchanged.
 
 ### T-41 · A reference pack for the seven documents, and the eighth the registry doesn't have  ·  2026-09-13
     The research half: [LEGAL_REFERENCE_PACK.md](LEGAL_REFERENCE_PACK.md)

@@ -4963,6 +4963,86 @@ hr.bg-divider {
   }
 }
 
+/* A phone is 375px, and the bar used to ask for 769: the action cluster never
+   wrapped, so Search, the bell, + and the account menu all sat past the right
+   edge and the page scrolled sideways to reach them. + is the only creator in
+   the product (see billgen-nav-structure), so this was not cosmetic — on a
+   phone nothing could be created. T-44.
+
+   What gives way, in order of what it costs:
+   - the title, which repeats the company switcher beside it. Visually hidden,
+     not removed — it is the page's h1, and a screen reader still needs one;
+   - the company name inside the switcher (its avatar still says whose books);
+   - the theme switcher's words (its three icons stay: it is the night-time
+     shortcut, and the icons are enough to flip it);
+   - the section links' icons, which is what turns three rows into one or two.
+     They still wrap rather than scroll — see .bg-topnav__links for why.
+   The language toggle keeps its full size, for the reason ProductShell gives
+   beside it: it is what you need when you cannot read the interface. */
+@media (max-width: 640px) {
+  .bg-topnav__row {
+    gap: 0.4rem;
+    padding: 0 0.75rem;
+    height: 3.5rem;
+  }
+  .bg-topnav__title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .bg-topnav .bg-org__name {
+    display: none;
+  }
+  .bg-topnav .bg-org__trigger {
+    padding: 0.3rem;
+  }
+  .bg-topnav__actions {
+    gap: 0.35rem;
+  }
+  .bg-topnav .bg-segmented__option {
+    gap: 0;
+    font-size: 0;
+    padding: 0.4rem;
+  }
+  .bg-topnav__links {
+    gap: 0;
+    padding: 0 0.5rem 0.4rem;
+  }
+  .bg-topnav__link {
+    padding: 0.45rem 0.55rem;
+  }
+  .bg-topnav__link > svg {
+    display: none;
+  }
+}
+
+/* Under ~400px the theme icons are what no longer fit. The shortcut goes; the
+   setting stays in Settings → Appearance, where it always also lived. At 320px
+   (the narrowest phone still sold) the gaps give way too, and + shrinks to
+   44px — the touch minimum, not below it. */
+@media (max-width: 400px) {
+  .bg-topnav .bg-segmented {
+    display: none;
+  }
+  .bg-topnav__row,
+  .bg-topnav__actions {
+    gap: 0.25rem;
+  }
+  .bg-topnav__row {
+    padding: 0 0.5rem;
+  }
+  .bg-topnav .bg-create-bill {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+  .bg-topnav .bg-org__trigger {
+    gap: 0.2rem;
+    padding: 0.2rem;
+  }
+}
+
 /* The shell's texture layer. `position: fixed` rather than absolute: the field
    is a property of the window, not of the document, so it must not scroll with
    a long invoice list and it must not stretch to the height of one.
