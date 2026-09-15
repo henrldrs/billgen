@@ -901,8 +901,115 @@ wish, and the queue is not for wishes.
               register, live and planned subprocessors, the cookie
               categories, and six questions only counsel can answer.
               Send it. Do not hand-edit it — regenerate.
+
+              [LEGAL_REFERENCE_PACK.md](LEGAL_REFERENCE_PACK.md) (T-41) is
+              comparison notes against Google's terms and two named
+              competitors, gathered 2026-09-13 — not a draft, but a map of
+              what shape other companies' documents take before counsel
+              writes BillGen's own.
     done when `legal.undrafted()` returns fewer than seven, and each drafted
               document carries a version and an effective date.
+
+### T-42 · The register names two US subprocessors and no transfer mechanism
+    branch    Compliance            status  open
+    needs     —
+    why       `core/trust/personal_data.py:152` gives `Subprocessor` four
+              fields — name, purpose, location, in_use — and none of them is
+              the transfer basis. Two are live and both are American: GitHub
+              (`location="United States"`) and Vercel
+              (`location="United States / EU edge"`), and Vercel is not
+              incidental — it hosts the pre-sale site **and its capture
+              form**, so an e-mail address typed by a visitor today is a
+              Chapter V transfer with nothing written down about what makes
+              it lawful.
+
+              `LEGAL_BRIEF.md` half-sees this: it says of the *planned*
+              subprocessors that "plusieurs d'entre eux posent en réalité la
+              question du mécanisme de transfert", then prints the two live
+              ones in a table with a location column and no such question.
+              None of Q1–Q8 asks counsel about transfers. So the one
+              sentence that notices the problem is attached to the
+              subprocessors that do not exist yet, and not to the two that
+              do.
+
+              This blocks `privacy` specifically, and blocks it by
+              construction: `legal.py:93` requires the privacy policy to
+              match the register "field for field", and art. 13(1)(f) wants
+              the transfer and its safeguard named. A field the register
+              does not carry is a sentence the policy cannot honestly write.
+    do        A transfer basis on `Subprocessor` — adequacy decision, SCCs,
+              derogation, or none-needed-because-EU — plus the safeguard's
+              own reference where one applies. Fill it for GitHub and Vercel
+              from **what their DPAs actually say**, not from what is
+              assumed: this is the module that already warns its own list is
+              "assembled from what the repository shows… Nothing here has
+              been confirmed against a signed contract." Then add the
+              transfer question to the brief's counsel questions, so the
+              generated document asks about the live case rather than the
+              planned one.
+    done when Every `in_use=True` subprocessor outside the EU carries a named
+              transfer basis, asserted in `tests/core/trust/test_registries.py`
+              the way `test_planned_subprocessors_are_not_presented_as_live_ones`
+              already guards the in_use split; and `LEGAL_BRIEF.md`
+              regenerates with a counsel question about the mechanism.
+
+### T-43 · The entity sells two things; the registry knows about one
+    branch    Legal counsel / Henri status  open — waiting on Henri, not on code
+    needs     T-16
+    why       `core/trust/legal.py:3` opens with *"Seven documents decide
+              whether BillGen can be sold to a business."* That is true of
+              BillGen. It is not true of the legal person doing the selling.
+              [BETA_LAUNCH_PLAN.md](BETA_LAUNCH_PLAN.md) settled the entity
+              question at W2 — *"BillGen and henriOutai are noms commerciaux
+              over one legal person"*, one invoice per client, from
+              henriOutai — so the registry covers the software half of a
+              business whose **other half invoices first**.
+
+              Not hypothetical. W2 already carries two consultancy
+              engagements: 2.1 (Emilia — consultancy scope and price), 2.3
+              (mother — scope sheet and tariffs, tariffs done) and 2.4, her
+              invoice, *drafted and held only until the BCE number exists*.
+              None of the three has a contract in any registry, and
+              `legal.undrafted()` cannot report a document it does not
+              model — so the queue's own completeness check reads clean over
+              a gap it was never given eyes for.
+
+              The clause with the sharpest edge is the one the software
+              documents have no reason to contain: a consultancy that walks
+              people through Belgian administration needs **no guarantee of
+              result before the administration**, in writing. A refused
+              application or a missed deadline is the foreseeable case, not
+              the exotic one. The nearest existing equivalent — the beta
+              convention's *"absence de garantie de conformité fiscale"*
+              (brief Q6) — disclaims the software's output, not a service
+              rendered by a person.
+
+              Source for the pack this came from: Henri's own legal/fiscal
+              compilation of 2026-09-15 (§6.3), held outside this tree and
+              deliberately not copied into it — it is mostly personal, and a
+              git history outlives a deletion (the T-34 rule).
+    do        The scoping decision first, because it decides where the rest
+              goes: is the consultancy contract a document in
+              `core/trust/legal.py` — which makes that module's opening
+              sentence false and the seven eight — or is it out of scope,
+              with the docstring saying so and naming what does track it?
+              T-41 kept the registry to BillGen's own paperwork for the AI
+              clause; the same reasoning points the same way here, but the
+              consequence differs: an AI clause folded into `terms` still
+              ends up drafted, whereas a consultancy contract ruled out of
+              scope ends up tracked nowhere unless this ticket says where.
+
+              Then the drafting itself, which is counsel's and belongs with
+              T-16's engagement rather than beside it — object of the
+              engagement, remuneration (forfait / hourly / per dossier is
+              still undecided), confidentiality, limitation of liability and
+              the no-guarantee-of-result clause above.
+    done when The scoping decision is recorded where a cold session finds it
+              — one line in `legal.py`'s docstring — and a consultancy
+              contract is tracked somewhere with a `done when` of its own.
+              The assertion that matters in the meantime: **W2's 2.4 invoice
+              does not leave before a contract exists**, because an invoice
+              is the first document that implies terms nobody wrote.
 
 ### T-17 · Mandatory-mention sign-off
     branch    Belgian accountant    status  open
@@ -935,6 +1042,33 @@ wish, and the queue is not for wishes.
 ---
 
 ## Done
+
+### T-41 · A reference pack for the seven documents, and the eighth the registry doesn't have  ·  2026-09-13
+    The research half: [LEGAL_REFERENCE_PACK.md](LEGAL_REFERENCE_PACK.md)
+    compares Google's Terms of Service and its separate Generative AI
+    Prohibited Use Policy against Billit's and Moneybird's terms — named
+    against `BETA_LAUNCH_PLAN.md`'s own competitor benchmark. It records what
+    each competitor's liability cap looks like and, at Billit, what a
+    competitor's terms leave out entirely (DPA, subprocessors, SLA, any AI
+    clause) — the exact gaps T-16 must not repeat. Dexxter and Accountable
+    did not yield a fetchable page this pass and are flagged for a second
+    attempt when T-16 is actually drafted.
+
+    The decision half, made rather than left open: AI-generated output stays
+    disclosed **inside** `terms` rather than becoming an eighth
+    `LegalDocument`. Google splits its Generative AI policy out because
+    Gemini is used far outside any one product's terms; every BillGen AI
+    surface today (`ai_transparency.py`) is narrow, human-confirmed and
+    already carries its own Art. 50 marking, and lives entirely inside the
+    product `terms` already covers. Recorded as a note on the `terms` entry
+    in `core/trust/legal.py` rather than as prose in a new document — the
+    registry still holds no legal text, only the shape of a claim.
+
+    Evidence: `test_ai_usage_is_disclosed_inside_terms_not_a_separate_document`
+    in `tests/core/trust/test_registries.py` — asserts no `ai_usage` document
+    exists, the registry still counts seven, and the reasoning is on the
+    `terms` note. `python scripts/generate_legal_brief.py --check` passes
+    against the regenerated brief; 26/26 in `tests/core/trust/`.
 
 ### T-00g · Vanta — evaluated, not now  ·  2026-09-13
     Henri asked whether Vanta suits BillGen. It answers a different question:

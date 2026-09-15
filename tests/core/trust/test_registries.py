@@ -47,6 +47,18 @@ def test_document_lookup_misses_cleanly():
     assert legal.document("not-a-document") is None
 
 
+def test_ai_usage_is_disclosed_inside_terms_not_a_separate_document():
+    """T-41's decision, recorded rather than left open: BillGen's AI surfaces
+    are narrow, human-confirmed and already marked per Art. 50 (see
+    ai_transparency.py), so the disclosure lives inside the terms a customer
+    already accepts instead of a document of its own. This is the assertion
+    that would break if someone quietly added an eighth document without
+    updating the reasoning here."""
+    assert legal.document("ai_usage") is None
+    assert len(legal.documents()) == 7
+    assert "ai_transparency" in legal.document("terms").note
+
+
 # -- consent ---------------------------------------------------------------
 
 

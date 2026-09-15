@@ -81,7 +81,16 @@ DOCUMENTS: tuple[LegalDocument, ...] = (
         blocks=("charging money", "any paid signup"),
         note=(
             "Needs a version and a per-user acceptance record, not just a page: "
-            "a term nobody can prove was shown is a term you do not have."
+            "a term nobody can prove was shown is a term you do not have. "
+            "AI-generated output (TVA suggestions, marked per Art. 50 in "
+            "core.trust.ai_transparency) is disclosed inline in this document "
+            "rather than as a separate AI usage policy — decided 2026-09-13 "
+            "(T-41), because every current surface is narrow, human-confirmed "
+            "and already carries its own marking. Google splits its Generative "
+            "AI policy out from its ToS because Gemini is used far outside any "
+            "one product's terms; BillGen's AI lives entirely inside the "
+            "product this document already covers. Revisit if a surface ships "
+            "that needs its own acceptance cadence or a non-customer audience."
         ),
     ),
     LegalDocument(

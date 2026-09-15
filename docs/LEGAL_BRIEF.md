@@ -1,6 +1,6 @@
 # BillGen — note de synthèse à l'attention du conseil juridique
 
-*Document généré depuis `core/trust/` le 11/09/2026 par
+*Document généré depuis `core/trust/` le 15/09/2026 par
 `scripts/generate_legal_brief.py`. Merci de ne pas le modifier à la main : les
 tableaux sont lus directement dans le code, une correction manuelle serait
 écrasée et — plus grave — finirait par diverger du système réellement en
