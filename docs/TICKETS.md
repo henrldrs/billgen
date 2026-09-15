@@ -71,7 +71,10 @@ because each is a defect a first beta user meets on day one.*
     do        `ia.ts` labels become keys resolved through `t()` at render;
               `lib/translations` gains the keys in en/fr/nl (fr/nl marked for
               Henri's native read — SOLO_RUN § Boundaries); `ActivityPanel.tsx`
-              maps entity types to words.
+              maps entity types to words. Henri's ES screenshot the same day
+              adds two: the alerts card prints field names ("vat_number, iban,
+              address_line1") where it should name the fields, and counts are
+              not pluralised ("2 crítico", "0 liquidada(s)").
     done when A test renders the shell under `nl` and finds none of the English
               section/status labels in the nav or tabs; a guard test fails if a
               literal `label: "…"` reappears in `ia.ts`; the activity test finds
@@ -95,6 +98,24 @@ because each is a defect a first beta user meets on day one.*
     done when Tests assert: an overdue invoice's sheet has exactly one primary
               button, labelled Record payment; Void is not visible until More is
               opened; pressing Escape on a focused, open Menu trigger closes it.
+
+### T-50 · The content uses the screen the top bar already spans
+    branch    Design system / Frontend   status  open
+    needs     —
+    why       Henri's desktop screenshot, 2026-09-15, 1920px: the floating top
+              bar runs edge to edge but `.bg-app-shell__content--wide` stops at
+              1400px, leaving ~260px empty either side. He asked whether his
+              laptop causes it; it is this cap. His appearance spec already asks
+              for "Container width: Fluid vs Boxed", and SOLO_RUN parked item 10
+              says lists and reports want full width while forms want a measure.
+    do        `lib/preferences.ts` gains `containerWidth: fluid | boxed`
+              (default fluid), applied as a `data-bg-width` attribute like
+              density; fluid lets list, report and dashboard routes run to the
+              top bar's inner edges, forms and record pages keep a reading
+              measure either way; Settings → Appearance offers the choice.
+    done when At 1920px, fluid: the dashboard's content edges sit within the top
+              bar's padding (browser-measured); boxed: 1400px as today; the
+              preference survives a reload (test in `preferences.test`).
 
 ### T-48 · Navigation is a choice — two styles per platform
     branch    Design system / Henri   status  open
