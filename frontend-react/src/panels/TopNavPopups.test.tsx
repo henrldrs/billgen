@@ -167,3 +167,30 @@ test("a section curated down to one destination offers no sub-page popup", async
   await user.click(trigger);
   expect(screen.queryByText("VAT / BCE information")).not.toBeInTheDocument();
 });
+
+test("Escape closes a popup from its focused trigger, not only from inside it", async () => {
+  // T-47. Opening moves focus into the popup, so Escape there always worked;
+  // Shift+Tab back to the trigger with the popup still open — or a first item
+  // that is disabled — left focus on a trigger that ignored it.
+  const user = userEvent.setup();
+  navWith([
+    {
+      key: "sales",
+      label: "Sales",
+      items: [{ key: "invoices", label: "Invoices", onSelect: vi.fn() }],
+    },
+  ]);
+
+  const trigger = screen.getByRole("button", { name: /Sales/ });
+  await user.click(trigger);
+  expect(trigger).toHaveAttribute("aria-expanded", "true");
+
+  await user.tab({ shift: true });
+  expect(trigger).toHaveFocus();
+  expect(screen.getByRole("menu")).toBeInTheDocument();
+
+  await user.keyboard("{Escape}");
+  expect(trigger).toHaveAttribute("aria-expanded", "false");
+  expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  expect(trigger).toHaveFocus();
+});

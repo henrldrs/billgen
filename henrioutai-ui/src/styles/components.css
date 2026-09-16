@@ -2218,6 +2218,12 @@ textarea.bg-field__input {
 .bg-menu__popup--end {
   right: 0;
 }
+/* A trigger at the foot of the viewport — the document sheet's action bar —
+   opens its popup upward, or the popup opens off the screen. */
+.bg-menu__popup--above {
+  top: auto;
+  bottom: calc(100% + 0.5rem);
+}
 @keyframes bg-menu-in {
   from {
     opacity: 0;
@@ -5123,6 +5129,14 @@ hr.bg-divider {
   font-weight: var(--bg-weight-button-strong);
   letter-spacing: 0.01em;
 }
+/* Beside the title, pushed no further than the title's own end: the close
+   button keeps the far edge. */
+.bg-docsheet__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-right: auto;
+}
 .bg-docsheet__close {
   border: none;
   background: color-mix(in srgb, #fff 14%, transparent);
@@ -5192,6 +5206,18 @@ hr.bg-divider {
   );
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+}
+/* Two groups on the strip: what leaves the sheet (open, PDF, Peppol) on the
+   left, what decides its fate (More, the one primary) on the right. Six equal
+   buttons in a row made none of them readable (T-47). */
+.bg-docsheet__group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.bg-docsheet__group--exports {
+  margin-right: auto;
 }
 
 /* ---- what goes on the paper --------------------------------------------- */

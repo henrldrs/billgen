@@ -5,7 +5,6 @@
 import { useMemo, useState, type FormEvent } from "react";
 
 import {
-  Badge,
   Banner,
   Button,
   Card,
@@ -14,12 +13,14 @@ import {
   EmptyState,
   ErrorState,
   Field,
+  Menu,
   Modal,
   Pagination,
   Skeleton,
   Table,
   Textarea,
   TextInput,
+  type MenuEntry,
   type TableColumn,
   type TableSort,
 } from "@henrioutai/ui";
@@ -37,9 +38,9 @@ import {
 import { ApiError } from "../lib/apiClient";
 import { documentFilename, saveBlob } from "../lib/download";
 import { formatDate, formatMoney } from "../lib/format";
-import { daysOverdue } from "../lib/invoiceStatus";
-import { statusLabel, t, tPeppolError, tf, type Lang } from "../lib/translations";
+import { t, tPeppolError, type Lang } from "../lib/translations";
 import { InvoiceDocument } from "./InvoiceDocument";
+import { InvoiceStatusBadge } from "./InvoiceStatusBadge";
 import { useApi } from "../providers/BillGenProvider";
 import type { InvoiceResponse } from "../types";
 
@@ -261,28 +262,9 @@ export function HistoryPanel({
       key: "status",
       label: t(lang, "history.status"),
       sortable: true,
-      // Overdue is derived from the calendar, the way the server's reports
-      // derive it, and carries its age: "Issued" on a receivable 43 days late
-      // was the defect. It is the one state Badge has no colour for, so a warn
-      // tone rather than an invented modifier class.
-      render: (invoice) => {
-        const late = daysOverdue(invoice);
-        if (late !== null) {
-          return (
-            <Badge tone="warn">
-              {late === 1
-                ? t(lang, "history.overdueDay")
-                : tf(lang, "history.overdueDays", { days: late })}
-            </Badge>
-          );
-        }
-        if (invoice.status === "overdue") {
-          // A row that says so without a date to count from — a restored
-          // backup could — still reads as what it is rather than as nothing.
-          return <Badge tone="warn">{t(lang, "history.overdue")}</Badge>;
-        }
-        return <Badge status={invoice.status as never}>{statusLabel(lang, invoice.status)}</Badge>;
-      },
+      // "Issued" on a receivable 43 days late was the defect (T-45); the
+      // badge derives overdue from the calendar and is shared with the sheet.
+      render: (invoice) => <InvoiceStatusBadge invoice={invoice} lang={lang} />,
     },
   ];
 
@@ -307,6 +289,78 @@ export function HistoryPanel({
     issueCreditNote.isError ||
     recordPayment.isError;
   const isConfirmOnly = action?.kind === "issue" || action?.kind === "delete";
+
+  // The action strip under the paper (T-47). Six equal-weight buttons, Void
+  // beside Credit note, and no status anywhere was the old strip. Now: what
+  // leaves the sheet on the left; on the right, one primary action chosen by
+  // the status — the thing this invoice is waiting for — and the corrections
+  // behind More, Void last, below a separator, in danger ink. The sheet's
+  // chrome carries the status itself, with its age when it is late.
+  const sheetActions = (invoice: InvoiceResponse) => {
+    const isDraft = invoice.status === "draft";
+    const isVoided = invoice.status === "voided";
+    const isPaid = invoice.status === "paid";
+    // What the confirmation dialog names: a draft has no number to name.
+    const named = isDraft ? t(lang, "history.draft") : (invoice.reference ?? invoice.id);
+    const start = (kind: ActionKind) =>
+      setAction({ kind, invoiceId: invoice.id, reference: named });
+
+    // Issued invoices only: a draft has no gapless number, so it can neither
+    // be exported to Peppol nor corrected by a credit note.
+    const more: MenuEntry[] = isDraft
+      ? [{ key: "delete", label: t(lang, "history.delete"), danger: true, onSelect: () => start("delete") }]
+      : isVoided
+        ? []
+        : [
+            { key: "credit_note", label: t(lang, "history.creditNote"), onSelect: () => start("credit_note") },
+            { type: "separator", key: "sep" },
+            { key: "void", label: t(lang, "history.void"), danger: true, onSelect: () => start("void") },
+          ];
+
+    return (
+      <>
+        <div className="bg-docsheet__group bg-docsheet__group--exports">
+          {onOpenInvoice ? (
+            <Button variant="secondary" onClick={() => onOpenInvoice(invoice.id)}>
+              {t(lang, "invoiceDetail.open")}
+            </Button>
+          ) : null}
+          <Button
+            variant="secondary"
+            disabled={downloading === `${invoice.id}:pdf`}
+            onClick={() => void download("pdf", invoice.id, invoice.reference ?? `draft-${invoice.id}`)}
+          >
+            {t(lang, "history.downloadPdf")}
+          </Button>
+          {!isDraft && !isVoided ? (
+            <Button
+              variant="secondary"
+              disabled={downloading === `${invoice.id}:xml`}
+              onClick={() => void download("xml", invoice.id, invoice.reference ?? invoice.id)}
+            >
+              {t(lang, "history.downloadXml")}
+            </Button>
+          ) : null}
+        </div>
+        <div className="bg-docsheet__group">
+          {more.length > 0 ? (
+            <Menu
+              trigger={t(lang, "history.more")}
+              triggerClassName="bg-button bg-button--secondary bg-button--md"
+              align="end"
+              placement="above"
+              items={more}
+            />
+          ) : null}
+          {isDraft ? (
+            <Button onClick={() => start("issue")}>{t(lang, "history.issue")}</Button>
+          ) : !isVoided && !isPaid ? (
+            <Button onClick={() => start("payment")}>{t(lang, "history.recordPayment")}</Button>
+          ) : null}
+        </div>
+      </>
+    );
+  };
 
   return (
     <section className="bg-stack" aria-label={t(lang, "history.title")}>
@@ -379,111 +433,14 @@ export function HistoryPanel({
 
           Every action lives under the paper rather than in the row: a row that
           ends in five equal-weight buttons makes none of them readable, and
-          Menu cannot be used inside Table because .bg-table-wrap clips it. */}
+          Menu cannot be used inside Table because .bg-table-wrap clips it.
+          Under the paper it can, opening upward (T-47). */}
       <DocumentSheet
         open={selected !== undefined}
         onClose={() => setSelectedId(null)}
         title={selected ? (selected.reference ?? t(lang, "history.draft")) : ""}
-        footer={
-          selected ? (
-            <>
-              {onOpenInvoice ? (
-                <Button variant="secondary" onClick={() => onOpenInvoice(selected.id)}>
-                  {t(lang, "invoiceDetail.open")}
-                </Button>
-              ) : null}
-              <Button
-                variant="secondary"
-                disabled={downloading === `${selected.id}:pdf`}
-                onClick={() =>
-                  void download("pdf", selected.id, selected.reference ?? `draft-${selected.id}`)
-                }
-              >
-                {t(lang, "history.downloadPdf")}
-              </Button>
-
-              {/* Issued invoices only: a draft has no gapless number, so it can
-                  neither be exported to Peppol nor corrected by a credit note. */}
-              {selected.status !== "draft" && selected.status !== "voided" ? (
-                <>
-                  <Button
-                    variant="secondary"
-                    disabled={downloading === `${selected.id}:xml`}
-                    onClick={() =>
-                      void download("xml", selected.id, selected.reference ?? selected.id)
-                    }
-                  >
-                    {t(lang, "history.downloadXml")}
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    onClick={() =>
-                      setAction({
-                        kind: "payment",
-                        invoiceId: selected.id,
-                        reference: selected.reference ?? selected.id,
-                      })
-                    }
-                  >
-                    {t(lang, "history.payment")}
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    onClick={() =>
-                      setAction({
-                        kind: "credit_note",
-                        invoiceId: selected.id,
-                        reference: selected.reference ?? selected.id,
-                      })
-                    }
-                  >
-                    {t(lang, "history.creditNote")}
-                  </Button>
-                  <Button
-                    variant="danger"
-                    onClick={() =>
-                      setAction({
-                        kind: "void",
-                        invoiceId: selected.id,
-                        reference: selected.reference ?? selected.id,
-                      })
-                    }
-                  >
-                    {t(lang, "history.void")}
-                  </Button>
-                </>
-              ) : null}
-
-              {selected.status === "draft" ? (
-                <>
-                  <Button
-                    variant="danger"
-                    onClick={() =>
-                      setAction({
-                        kind: "delete",
-                        invoiceId: selected.id,
-                        reference: t(lang, "history.draft"),
-                      })
-                    }
-                  >
-                    {t(lang, "history.delete")}
-                  </Button>
-                  <Button
-                    onClick={() =>
-                      setAction({
-                        kind: "issue",
-                        invoiceId: selected.id,
-                        reference: t(lang, "history.draft"),
-                      })
-                    }
-                  >
-                    {t(lang, "history.issue")}
-                  </Button>
-                </>
-              ) : null}
-            </>
-          ) : null
-        }
+        meta={selected ? <InvoiceStatusBadge invoice={selected} lang={lang} /> : null}
+        footer={selected ? sheetActions(selected) : null}
       >
         {selected ? (
           <InvoiceDocument

@@ -38,25 +38,6 @@ wish, and the queue is not for wishes.
 same day: "all rest you start building". They sit above the launch tickets
 because each is a defect a first beta user meets on day one.*
 
-### T-47 · The invoice sheet leads with the action its status calls for
-    branch    Frontend / design system   status  open
-    needs     —
-    why       The preview's action strip gives Open full record, Download PDF,
-              Peppol XML, Payment, Credit note and Void equal weight; Void —
-              irreversible — sits beside Credit note, and the sheet does not
-              show its own status. Separately, `Menu.tsx` only hears Escape
-              once focus is inside the popup, so a menu opened by mouse ignores
-              it.
-    do        The sheet header carries the status badge (with overdue age); one
-              primary action chosen by status (draft → Issue, issued/overdue →
-              Record payment); exports grouped; Credit note and Void behind a
-              More menu, Void last, below a separator, in danger ink.
-              `henrioutai-ui/src/components/Menu.tsx`: Escape closes from the
-              trigger too.
-    done when Tests assert: an overdue invoice's sheet has exactly one primary
-              button, labelled Record payment; Void is not visible until More is
-              opened; pressing Escape on a focused, open Menu trigger closes it.
-
 ### T-50 · The content uses the screen the top bar already spans
     branch    Design system / Frontend   status  open
     needs     —
@@ -1111,6 +1092,30 @@ because each is a defect a first beta user meets on day one.*
 ---
 
 ## Done
+
+### T-47 · The invoice sheet leads with the action its status calls for  ·  *feat: the invoice sheet leads with the action its status calls for*
+The sheet's chrome carries the status beside the title — `DocumentSheet` grew
+a `meta` slot, kept out of the heading so the dialog's accessible name stays
+the reference — through `InvoiceStatusBadge`, one component the invoice list,
+the receivables report and the sheet now share (the third copy of the overdue
+rule was about to be written). The strip is two groups: what leaves the sheet
+on the left (open, PDF, Peppol), and on the right the one primary action the
+status calls for — Issue for a draft, Record payment for anything still owed,
+nothing for a paid or voided invoice — with the corrections behind More:
+Credit note, a separator, Void last in danger ink; a draft's Delete sits
+there too. `Menu` gained `placement="above"` for a trigger at the foot of the
+viewport, and its trigger now hears Escape — focus lands there after Shift+Tab
+out of an open popup, and Escape did nothing; stopped at the trigger so the
+sheet behind the menu does not close with it. **Tests:** an overdue invoice's
+sheet has exactly one `.bg-button--primary`, "Record payment"; Void is absent
+from the strip and from the DOM until More opens, then last, after the
+separator, with the danger class; a draft leads with Issue and a paid invoice
+leads with nothing; Escape on the focused, open trigger closes the popup and
+keeps focus (in `TopNavPopups.test.tsx`, where the popups live). **Seen in the
+browser** on the desktop pair under NL: "Te laat · 44 dagen" beside the
+title; the exports group ends at x=659 and the decisions group starts at 820;
+one primary, "Betaling registreren"; Meer opens upward (popup bottom 656 over
+a trigger at 664) with Creditnota · — · Annuleren. 246 frontend tests.
 
 ### T-46 · The navigation speaks the interface language  ·  *feat: the navigation speaks the interface language*
 `ia.ts` declares no labels any more: 131 string literals became messages keyed

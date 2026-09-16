@@ -248,6 +248,15 @@ const MESSAGES = {
     es: "Motivo de la nota de crédito",
   },
   "history.payment": { en: "Payment", fr: "Paiement", nl: "Betaling", es: "Pago" },
+  // T-47 — the sheet's one primary action, and the menu the corrections sit
+  // behind. French and Dutch drafted without a native read.
+  "history.recordPayment": {
+    en: "Record payment",
+    fr: "Enregistrer un paiement",
+    nl: "Betaling registreren",
+    es: "Registrar un pago",
+  },
+  "history.more": { en: "More", fr: "Plus", nl: "Meer", es: "Más" },
   "history.paymentAmount": { en: "Amount", fr: "Montant", nl: "Bedrag", es: "Importe" },
   "history.paymentDate": {
     en: "Payment date",

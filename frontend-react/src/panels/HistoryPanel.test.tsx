@@ -125,7 +125,8 @@ test("voiding an invoice asks for a reason and refreshes the list", async () => 
   const user = userEvent.setup();
 
   const drawer = await openInvoice(user, "ACME-BC07012026");
-  await user.click(drawer.getByRole("button", { name: "Void" }));
+  await user.click(drawer.getByRole("button", { name: "More" }));
+  await user.click(drawer.getByRole("menuitem", { name: "Void" }));
   const dialog = await screen.findByRole("dialog", { name: /Void/ });
   await user.type(
     within(dialog).getByLabelText("Reason for voiding"),
@@ -268,8 +269,12 @@ test("a draft shows a Draft placeholder and badge, with its actions in the drawe
 
   const drawer = await openInvoice(user, "Draft");
   expect(drawer.getByRole("button", { name: "Issue" })).toBeInTheDocument();
-  expect(drawer.getByRole("button", { name: "Delete" })).toBeInTheDocument();
   expect(drawer.getByRole("button", { name: "Download PDF" })).toBeInTheDocument();
+  // Delete is destructive, so it sits behind More rather than on the strip.
+  expect(drawer.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+  await user.click(drawer.getByRole("button", { name: "More" }));
+  expect(drawer.getByRole("menuitem", { name: "Delete" })).toHaveClass("bg-menu__item--danger");
+  await user.keyboard("{Escape}");
 
   // Still no gapless number, so no void / credit-note / Peppol actions anywhere.
   expect(screen.queryByRole("button", { name: "Void" })).not.toBeInTheDocument();
@@ -322,7 +327,8 @@ test("deleting a draft confirms then removes it", async () => {
   const user = userEvent.setup();
 
   const deleteDrawer = await openInvoice(user, "Draft");
-  await user.click(deleteDrawer.getByRole("button", { name: "Delete" }));
+  await user.click(deleteDrawer.getByRole("button", { name: "More" }));
+  await user.click(deleteDrawer.getByRole("menuitem", { name: "Delete" }));
   const dialog = await screen.findByRole("dialog", { name: /Delete/ });
   await user.click(within(dialog).getByRole("button", { name: "Confirm" }));
 
@@ -364,7 +370,7 @@ test("recording a payment posts amount and the date picked in the calendar", asy
   const user = userEvent.setup();
 
   const payDrawer = await openInvoice(user, "ACME-BC07012026");
-  await user.click(payDrawer.getByRole("button", { name: "Payment" }));
+  await user.click(payDrawer.getByRole("button", { name: "Record payment" }));
   const dialog = await screen.findByRole("dialog", { name: /Payment/ });
   await user.type(within(dialog).getByLabelText("Amount"), "500.00");
 
@@ -571,18 +577,88 @@ test("only draft, paid and voided are stamped", async () => {
   renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
   const user = userEvent.setup();
 
+  // The chrome above the paper carries a status badge for every invoice
+  // (T-47); the stamp is the ink ON the paper, and only it is asserted here.
+  const stamp = () => document.querySelector(".bg-invdoc__stamp")?.textContent ?? null;
+
   // `issued` is what an invoice IS — a stamp on every ordinary invoice would
   // make the stamp mean nothing.
-  const issued = await openInvoice(user, "ACME-BC07012026");
-  expect(issued.queryByText("Paid")).not.toBeInTheDocument();
+  await openInvoice(user, "ACME-BC07012026");
+  expect(stamp()).toBeNull();
   await user.keyboard("{Escape}");
 
-  const paid = await openInvoice(user, "ACME-BC07012027");
-  expect(paid.getByText("Paid")).toBeInTheDocument();
+  await openInvoice(user, "ACME-BC07012027");
+  expect(stamp()).toBe("Paid");
   await user.keyboard("{Escape}");
 
   // `overdue` describes the receivable and moves with the calendar. Permanent
   // ink must not carry a claim the paper cannot keep.
-  const overdue = await openInvoice(user, "ACME-BC07012028");
-  expect(overdue.queryByText("Overdue")).not.toBeInTheDocument();
+  await openInvoice(user, "ACME-BC07012028");
+  expect(stamp()).toBeNull();
+});
+
+/* ---- T-47: the sheet leads with the action its status calls for ---------
+ * Six equal-weight buttons, Void beside Credit note, and no status on the
+ * sheet was the old strip. One primary per status; exports grouped; the
+ * corrections behind More with Void last, after a separator, in danger ink.
+ * ---------------------------------------------------------------------- */
+
+function primaryActions(scope: HTMLElement): string[] {
+  return [...scope.querySelectorAll(".bg-docsheet__actions .bg-button--primary")].map(
+    (button) => button.textContent ?? "",
+  );
+}
+
+test("an overdue invoice's sheet has one primary action, Record payment, and Void behind More", async () => {
+  server.use(
+    http.get(`${BASE}/invoices`, () =>
+      HttpResponse.json([
+        invoiceRecord("inv-1", "ACME-BC07012026", { status: "issued", due_date: isoDaysFromToday(-43) }),
+      ]),
+    ),
+  );
+
+  renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
+  const user = userEvent.setup();
+  const sheet = await openInvoice(user, "ACME-BC07012026");
+  const dialog = screen.getByRole("dialog", { name: "ACME-BC07012026" });
+
+  // The sheet says what it is, with its age, in the chrome above the paper.
+  expect(sheet.getByText("Overdue · 43 days")).toBeInTheDocument();
+
+  expect(primaryActions(dialog)).toEqual(["Record payment"]);
+
+  // Void is nowhere on the strip until More is opened — and then it is last,
+  // after a separator, in danger ink.
+  expect(sheet.queryByRole("button", { name: "Void" })).not.toBeInTheDocument();
+  expect(sheet.queryByRole("menuitem", { name: "Void" })).not.toBeInTheDocument();
+  await user.click(sheet.getByRole("button", { name: "More" }));
+  const items = sheet.getAllByRole("menuitem");
+  expect(items.map((item) => item.textContent)).toEqual(["Credit note", "Void"]);
+  expect(items[1]).toHaveClass("bg-menu__item--danger");
+  expect(sheet.getByRole("separator")).toBeInTheDocument();
+  expect(sheet.getByRole("menu")).toHaveClass("bg-menu__popup--above");
+});
+
+test("a draft's sheet leads with Issue; a paid one has nothing left to lead with", async () => {
+  server.use(
+    http.get(`${BASE}/invoices`, () =>
+      HttpResponse.json([
+        draftRecord("inv-1"),
+        invoiceRecord("inv-2", "ACME-BC07022026", { status: "paid" }),
+      ]),
+    ),
+  );
+
+  renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
+  const user = userEvent.setup();
+
+  await openInvoice(user, "Draft");
+  expect(primaryActions(screen.getByRole("dialog", { name: "Draft" }))).toEqual(["Issue"]);
+  await user.keyboard("{Escape}");
+
+  const paid = await openInvoice(user, "ACME-BC07022026");
+  expect(primaryActions(screen.getByRole("dialog", { name: "ACME-BC07022026" }))).toEqual([]);
+  expect(paid.getByRole("button", { name: "Peppol XML" })).toBeInTheDocument();
+  expect(paid.getByRole("button", { name: "More" })).toBeInTheDocument();
 });

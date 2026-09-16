@@ -32,6 +32,10 @@ export interface MenuProps {
   header?: ReactNode;
   /** Popup edge alignment relative to the trigger. */
   align?: "start" | "end";
+  /** Which way the popup opens. `above` is for a trigger that sits at the
+   *  bottom of the viewport — a sheet's action bar — where a popup opening
+   *  downward would open off the screen. */
+  placement?: "below" | "above";
   className?: string;
 }
 
@@ -48,6 +52,7 @@ export function Menu({
   items,
   header,
   align = "start",
+  placement = "below",
   className,
 }: MenuProps) {
   const [open, setOpen] = useState(false);
@@ -120,6 +125,14 @@ export function Menu({
             event.preventDefault();
             setOpen(true);
           }
+          // Escape used to be heard only inside the popup. Focus is on the
+          // trigger with the popup open after Shift+Tab out of it, or when
+          // the first item was disabled — and there Escape did nothing (T-47).
+          // Stopped here so an overlay behind the menu does not close too.
+          if (event.key === "Escape" && open) {
+            event.stopPropagation();
+            close(true);
+          }
         }}
       >
         {trigger}
@@ -129,7 +142,7 @@ export function Menu({
           ref={listRef}
           id={menuId}
           role="menu"
-          className={`bg-menu__popup bg-menu__popup--${align}`}
+          className={`bg-menu__popup bg-menu__popup--${align} bg-menu__popup--${placement}`}
           onKeyDown={onPopupKeyDown}
         >
           {header ? <div className="bg-menu__header">{header}</div> : null}

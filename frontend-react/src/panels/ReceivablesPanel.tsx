@@ -15,7 +15,6 @@
 import { useMemo, useState } from "react";
 
 import {
-  Badge,
   Card,
   EmptyState,
   ErrorState,
@@ -29,8 +28,8 @@ import {
 
 import { useClients, useInvoices, useKpi } from "../hooks/queries";
 import { formatDate, formatMoney } from "../lib/format";
-import { daysOverdue } from "../lib/invoiceStatus";
-import { statusLabel, t, tf, type Lang } from "../lib/translations";
+import { t, type Lang } from "../lib/translations";
+import { InvoiceStatusBadge } from "./InvoiceStatusBadge";
 import type { InvoiceResponse } from "../types";
 
 const PAGE_SIZE = 25;
@@ -149,29 +148,8 @@ export function ReceivablesPanel({
     {
       key: "status",
       label: t(lang, "history.status"),
-      // Overdue is the calendar's word, with its age — the same rule and the
-      // same badge as the invoice list. It is the one state Badge has no
-      // colour for, so a warn tone rather than an invented modifier class.
-      render: (row) => {
-        const late = daysOverdue(row);
-        if (late !== null) {
-          return (
-            <Badge tone="warn">
-              {late === 1
-                ? t(lang, "history.overdueDay")
-                : tf(lang, "history.overdueDays", { days: late })}
-            </Badge>
-          );
-        }
-        if (row.status === "overdue") {
-          return <Badge tone="warn">{t(lang, "history.overdue")}</Badge>;
-        }
-        return (
-          <Badge status={row.status as "issued" | "partially_paid"}>
-            {statusLabel(lang, row.status)}
-          </Badge>
-        );
-      },
+      // The same badge as the invoice list and the record sheet.
+      render: (row) => <InvoiceStatusBadge invoice={row} lang={lang} />,
     },
     {
       key: "total_ttc",

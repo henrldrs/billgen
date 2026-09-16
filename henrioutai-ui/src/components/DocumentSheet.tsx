@@ -8,6 +8,9 @@ export interface DocumentSheetProps {
   /** The accessible name. Rendered in the chrome above the paper, not on it —
    *  a sheet of paper does not carry a window title. */
   title: ReactNode;
+  /** What stands beside the title in the chrome — a status badge, say. Kept
+   *  out of the heading so the dialog's accessible name stays the title. */
+  meta?: ReactNode;
   /** The document itself. Rendered on the paper. */
   children: ReactNode;
   /** Actions, in a bar under the paper rather than on it. */
@@ -41,6 +44,7 @@ export function DocumentSheet({
   open,
   onClose,
   title,
+  meta,
   children,
   footer,
   ratio = "a4",
@@ -78,6 +82,7 @@ export function DocumentSheet({
           <h2 className="bg-docsheet__title" id={titleId}>
             {title}
           </h2>
+          {meta != null ? <div className="bg-docsheet__meta">{meta}</div> : null}
           <button
             type="button"
             className="bg-docsheet__close"
