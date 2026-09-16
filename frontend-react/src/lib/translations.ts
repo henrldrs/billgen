@@ -1445,6 +1445,21 @@ const MESSAGES = {
   "onboarding.company.hint": { en: "Every invoice's mandatory mentions come from here. The enterprise number, VAT number and IBAN are checked as you type.", fr: "Les mentions obligatoires de chaque facture viennent d'ici. Numéro d'entreprise, TVA et IBAN sont vérifiés à la saisie.", nl: "De verplichte vermeldingen van elke factuur komen hiervandaan. Ondernemingsnummer, btw-nummer en IBAN worden bij het typen gecontroleerd.", es: "Las menciones obligatorias de cada factura salen de aquí. El número de empresa, el NIF-IVA y el IBAN se comprueban al escribir." },
   "onboarding.company.valid": { en: "Identifiers check out.", fr: "Identifiants valides.", nl: "Identificatiegegevens in orde.", es: "Identificadores correctos." },
   "onboarding.company.invalid": { en: "Fix these before the first invoice:", fr: "À corriger avant la première facture :", nl: "Te verbeteren vóór de eerste factuur:", es: "Corrija esto antes de la primera factura:" },
+  // T-37 — the texts, named on the step that first collects an identifier
+  //  (Article 13). French and Dutch drafted without a native read.
+  "onboarding.company.texts": {
+    en: "What you enter here is covered by the texts on the next step — {texts}. You can read them before you type.",
+    fr: "Ce que vous saisissez ici est couvert par les textes de l'étape suivante — {texts}. Vous pouvez les lire avant de saisir.",
+    nl: "Wat u hier invult, valt onder de teksten van de volgende stap — {texts}. U kunt ze lezen voor u iets invult.",
+    es: "Lo que introduzca aquí está cubierto por los textos del paso siguiente — {texts}. Puede leerlos antes de escribir.",
+  },
+  "onboarding.company.noTexts": {
+    en: "No text requires your acceptance yet; what you enter here stays with your data.",
+    fr: "Aucun texte ne requiert encore votre acceptation ; ce que vous saisissez ici reste avec vos données.",
+    nl: "Nog geen tekst vereist uw aanvaarding; wat u hier invult, blijft bij uw gegevens.",
+    es: "Ningún texto requiere aún su aceptación; lo que introduzca aquí se queda con sus datos.",
+  },
+  "onboarding.company.readFirst": { en: "Read them first", fr: "Les lire d'abord", nl: "Eerst lezen", es: "Leerlos primero" },
   "onboarding.company.edit": { en: "Edit company", fr: "Modifier l'entreprise", nl: "Onderneming bewerken", es: "Editar empresa" },
   "onboarding.legal.hint": { en: "Read each text, then accept it. A copy of what you accepted is kept with your data.", fr: "Lisez chaque texte, puis acceptez-le. Une copie de ce que vous avez accepté est conservée avec vos données.", nl: "Lees elke tekst en aanvaard hem. Een kopie van wat u aanvaardde wordt bij uw gegevens bewaard.", es: "Lea cada texto y acéptelo. Se guarda una copia de lo aceptado junto con sus datos." },
   "onboarding.legal.none": { en: "No text requires your acceptance yet.", fr: "Aucun texte ne requiert votre acceptation pour l'instant.", nl: "Nog geen tekst vereist uw aanvaarding.", es: "Ningún texto requiere aún su aceptación." },

@@ -42,7 +42,7 @@ import {
   useUpdateMe,
 } from "../hooks/queries";
 import { requestTour } from "../lib/tour";
-import { LANGS, t, type Lang } from "../lib/translations";
+import { LANGS, t, tf, type Lang } from "../lib/translations";
 import { useLang } from "../providers/LanguageProvider";
 import { useTheme } from "../lib/theme";
 import type { OnboardingStatusResponse } from "../types";
@@ -96,7 +96,9 @@ export function OnboardingWizard({
       <Card>
         {step === "language" ? <LanguageStep lang={lang} /> : null}
         {step === "profile" ? <ProfileStep lang={lang} status={status.data} /> : null}
-        {step === "company" ? <CompanyStep lang={lang} status={status.data} /> : null}
+        {step === "company" ? (
+          <CompanyStep lang={lang} status={status.data} onReadTexts={() => setStep("legal")} />
+        ) : null}
         {step === "legal" ? <LegalStep lang={lang} status={status.data} /> : null}
         {step === "seed" ? <SeedStep lang={lang} status={status.data} /> : null}
         {step === "done" ? (
@@ -198,12 +200,55 @@ function ProfileStep({ lang, status }: { lang: Lang; status: OnboardingStatusRes
 
 // ------------------------------------------------------------- 3 · company
 
-function CompanyStep({ lang, status }: { lang: Lang; status: OnboardingStatusResponse }) {
+/** The texts, named on the step that first asks for an identifier.
+ *
+ *  T-37, from the compliance check of 2026-09-11: Article 13 wants the
+ *  information given at or before collection, and this step collects a sole
+ *  trader's KBO number, VAT number and IBAN one step before the texts are
+ *  shown. Moving the legal step ahead of this one is a product call and
+ *  Henri's; naming the texts here, with a way to read them first, is the
+ *  compliance half and needs no decision. It does not bite on the desktop —
+ *  nothing typed here reaches us — and it bites the day the same wizard runs
+ *  hosted, which is why it is built now rather than remembered then. */
+function TextsNotice({
+  lang,
+  status,
+  onReadTexts,
+}: {
+  lang: Lang;
+  status: OnboardingStatusResponse;
+  onReadTexts: () => void;
+}) {
+  const texts = status.required_texts;
+  if (texts.length === 0) {
+    return <p className="bg-muted">{t(lang, "onboarding.company.noTexts")}</p>;
+  }
+  const named = texts.map((text) => `${text.title} v${text.version}`).join(", ");
+  return (
+    <p className="bg-muted">
+      {tf(lang, "onboarding.company.texts", { texts: named })}{" "}
+      <Button variant="link" size="sm" onClick={onReadTexts}>
+        {t(lang, "onboarding.company.readFirst")}
+      </Button>
+    </p>
+  );
+}
+
+function CompanyStep({
+  lang,
+  status,
+  onReadTexts,
+}: {
+  lang: Lang;
+  status: OnboardingStatusResponse;
+  onReadTexts: () => void;
+}) {
   const navigate = useNavigate();
   if (!status.company_id) {
     return (
       <div className="bg-stack">
         <p className="bg-muted">{t(lang, "onboarding.company.hint")}</p>
+        <TextsNotice lang={lang} status={status} onReadTexts={onReadTexts} />
         <CompanyForm lang={lang} />
       </div>
     );
@@ -211,6 +256,7 @@ function CompanyStep({ lang, status }: { lang: Lang; status: OnboardingStatusRes
   return (
     <div className="bg-stack">
       <p className="bg-muted">{t(lang, "onboarding.company.hint")}</p>
+      <TextsNotice lang={lang} status={status} onReadTexts={onReadTexts} />
       {status.company_valid ? (
         <Badge tone="success">{t(lang, "onboarding.company.valid")}</Badge>
       ) : (

@@ -94,32 +94,6 @@ because each is a defect a first beta user meets on day one.*
               "Unknown", and `Get-AuthenticodeSignature` reports `Valid` on a
               machine that has never seen BillGen.
 
-### T-37 · The first run asks before it tells
-    branch    Frontend              status  open
-    needs     T-29
-    why       Found by the compliance check on 2026-09-11. The wizard's order
-              is language → profile → company → **terms** → seed. Article 13
-              wants the information given *at or before* collection, and the
-              company step collects a sole trader's KBO number, VAT number and
-              IBAN — personal data, for an *eenmanszaak* (brief Q2) — one step
-              before the texts are shown.
-
-              **It does not bite on the desktop**, which is why this is a
-              ticket and not a fix: nothing she types reaches us, so there is
-              no collection by us to inform her about. It bites the day the
-              same wizard runs on the hosted SaaS, where it does.
-    do        Move `legal` ahead of `company` in `STEP_KEYS` — identify
-              yourself, accept the texts, then set up. One line, plus the step
-              counts in `OnboardingWizard.test.tsx`.
-
-              **The product call is Henri's, not the compliance one:** asking
-              someone to accept terms before they have seen anything is a real
-              cost in a first run, and the alternative — a short notice on the
-              company step linking to the texts — satisfies Article 13 without
-              moving the gate.
-    done when The texts are shown or linked no later than the step that first
-              collects an identifier, asserted in the wizard test.
-
 ### T-34 · Mother's upgrade — her invoices come with her
     branch    Backend / Desktop     status  open
     needs     **one real export from her old app** — FinanceFlow BillGen's
@@ -1040,6 +1014,24 @@ because each is a defect a first beta user meets on day one.*
 ---
 
 ## Done
+
+### T-37 · The first run asks before it tells  ·  *feat: the first run names the texts on the step that collects an identifier*
+Closed by the ticket's own alternative, not its `do`: **the gate did not
+move.** Reordering the steps is the product call the ticket reserves for
+Henri; the compliance half needs no decision. The company step — the one that
+collects a sole trader's KBO number, VAT number and IBAN — now carries a
+notice under its hint that names every text the run will ask her to accept,
+with their versions, and a "Read them first" control that opens the legal
+step and comes back on Back. With nothing published (the registry's state
+today) the notice says so and says where what she types stays. **Asserted in
+the wizard test:** on the company step the sentence names "Terms of Service
+v1.0"; the control lands on the legal step with its accept button; Back
+returns; with no texts there is no control and the plain sentence. **Seen in
+the browser** under NL on the desktop pair: "Nog geen tekst vereist uw
+aanvaarding; wat u hier invult, blijft bij uw gegevens." under the company
+hint. If Henri decides the texts should gate before the company step after
+all, `STEP_KEYS` in `OnboardingWizard.tsx` is still the one line. 253
+frontend tests.
 
 ### T-36 · The register describes a product we are not shipping  ·  *fix: the register names the deployment it describes, and the one dataset a desktop sends us*
 `core/trust/personal_data.py` no longer states processor status as a fact of

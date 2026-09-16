@@ -214,3 +214,40 @@ test("the placeholder identity a desktop install starts with blocks the finish",
   }
   expect(await screen.findByRole("button", { name: "Finish setup" })).toBeInTheDocument();
 });
+
+test("the company step names the texts before it asks for an identifier, and can show them first", async () => {
+  //  T-37. Article 13 wants the information at or before collection; the
+  //  company step collects a KBO number, a VAT number and an IBAN one step
+  //  before the legal step. The texts are linked on this step, and the link
+  //  goes to them and comes back — the gate itself has not moved, which is
+  //  Henri's product call, not the compliance one.
+  mount(
+    status({
+      required_texts: [{ key: "terms", title: "Terms of Service", version: "1.0", accepted: false }],
+    }),
+  );
+  await screen.findByRole("heading", { name: "Welcome to BillGen" });
+
+  await userEvent.click(screen.getByRole("button", { name: "Next" }));
+  await userEvent.click(screen.getByRole("button", { name: "Next" }));
+  expect(screen.getByText(/mandatory mentions come from here/)).toBeInTheDocument();
+
+  //  Named on the step that collects the identifiers, not one step later.
+  expect(screen.getByText(/covered by the texts on the next step — Terms of Service v1\.0/)).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Read them first" }));
+  expect(screen.getByText("Terms of Service")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "I have read and accept" })).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Back" }));
+  expect(screen.getByText(/mandatory mentions come from here/)).toBeInTheDocument();
+});
+
+test("with nothing published the company step still says where what is typed goes", async () => {
+  mount(status());
+  await screen.findByRole("heading", { name: "Welcome to BillGen" });
+  await userEvent.click(screen.getByRole("button", { name: "Next" }));
+  await userEvent.click(screen.getByRole("button", { name: "Next" }));
+  expect(screen.getByText(/No text requires your acceptance yet/)).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Read them first" })).not.toBeInTheDocument();
+});
