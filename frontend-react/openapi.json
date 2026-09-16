@@ -1495,6 +1495,7 @@
           "invoices"
         ],
         "summary": "List Invoices",
+        "description": "`status` filters on the stored status — except `overdue`, which no row\never holds: that one is derived from the due date, the way every report\nderives it (T-51). `today` pins the calendar, for tests and for a screen\nthat asks \"as of the 31st\"; it defaults to today.",
         "operationId": "list_invoices_invoices_get",
         "parameters": [
           {
@@ -1545,6 +1546,23 @@
                 }
               ],
               "title": "Client Id"
+            }
+          },
+          {
+            "name": "today",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Today"
             }
           }
         ],
@@ -1732,6 +1750,23 @@
               "type": "string",
               "format": "uuid",
               "title": "Invoice Id"
+            }
+          },
+          {
+            "name": "today",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Today"
             }
           }
         ],
@@ -8881,6 +8916,10 @@
             "type": "string",
             "title": "Status"
           },
+          "effective_status": {
+            "type": "string",
+            "title": "Effective Status"
+          },
           "voided_at": {
             "anyOf": [
               {
@@ -8937,6 +8976,7 @@
           "total_vat",
           "total_ttc",
           "status",
+          "effective_status",
           "voided_at",
           "voided_reason",
           "voided_by_credit_note_id"

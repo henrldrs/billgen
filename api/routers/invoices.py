@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from datetime import date
 from uuid import UUID
 
 import structlog
@@ -60,8 +61,13 @@ def _to_core_discount(discount: DiscountIn | None) -> Discount | None:
     return Discount.model_validate(discount.model_dump()) if discount else None
 
 
-def _to_response(invoice: Invoice) -> InvoiceResponse:
-    return InvoiceResponse.model_validate(invoice.model_dump())
+def _to_response(invoice: Invoice, today: date | None = None) -> InvoiceResponse:
+    return InvoiceResponse.model_validate(
+        {
+            **invoice.model_dump(),
+            "effective_status": invoice.effective_status(today or date.today()),
+        }
+    )
 
 
 @router.post("/preview", response_model=InvoicePreviewResponse)
@@ -178,20 +184,26 @@ def list_invoices(
     company_id: UUID | None = None,
     status: InvoiceStatus | None = None,
     client_id: UUID | None = None,
+    today: date | None = None,
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
 ):
+    """`status` filters on the stored status — except `overdue`, which no row
+    ever holds: that one is derived from the due date, the way every report
+    derives it (T-51). `today` pins the calendar, for tests and for a screen
+    that asks "as of the 31st"; it defaults to today."""
     invoices = InvoiceService(uow_factory).list(
-        company_id=company_id, status=status, client_id=client_id
+        company_id=company_id, status=status, client_id=client_id, today=today
     )
-    return [_to_response(invoice) for invoice in invoices]
+    return [_to_response(invoice, today) for invoice in invoices]
 
 
 @router.get("/{invoice_id}", response_model=InvoiceResponse)
 def get_invoice(
     invoice_id: UUID,
+    today: date | None = None,
     uow_factory: Callable[[], UnitOfWork] = Depends(get_uow_factory),
 ):
-    return _to_response(InvoiceService(uow_factory).get(invoice_id))
+    return _to_response(InvoiceService(uow_factory).get(invoice_id), today)
 
 
 @router.get("/{invoice_id}/compliance", response_model=InvoiceComplianceResponse)

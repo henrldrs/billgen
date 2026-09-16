@@ -8,6 +8,7 @@ import {
   COMPANY_ID,
   companyRecord,
   invoiceRecord,
+  isoDaysFromToday,
   renderWithProvider,
 } from "../test/utils";
 import { HistoryPanel } from "./HistoryPanel";
@@ -70,18 +71,6 @@ beforeEach(() => {
  */
 async function listTable() {
   return screen.findByRole("table", { name: "Invoices" });
-}
-
-/** An ISO date `offset` days from today — negative for the past.
- *
- *  The shared fixture's due date is a fixed day in 2026, and the list now
- *  reads the calendar (T-45): a fixture that was "issued" when written is
- *  overdue once that day passes. A test that means "still on time" says so
- *  relative to today rather than trusting a literal to stay in the future. */
-function isoDaysFromToday(offset: number): string {
-  const day = new Date();
-  day.setDate(day.getDate() + offset);
-  return `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
 }
 
 /**

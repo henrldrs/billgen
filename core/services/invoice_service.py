@@ -287,13 +287,35 @@ class InvoiceService:
         company_id: UUID | None = None,
         status: InvoiceStatus | None = None,
         client_id: UUID | None = None,
+        today: date | None = None,
     ) -> list[Invoice]:
         """`client_id` is what Client 360's invoice history reads: filtering the
-        whole company list in the browser is correct but does not scale."""
+        whole company list in the browser is correct but does not scale.
+
+        `status=OVERDUE` is the one filter no column answers: nothing stores
+        OVERDUE, so the repository's equality returned nothing on every database
+        there has ever been (T-51). It reads the issued and partially paid rows
+        and keeps those the calendar calls overdue — `Invoice.effective_status`,
+        the rule the reports, the KPIs and the alerts already apply. The stored
+        statuses filter as stored: an overdue invoice is still an issued one,
+        and "outstanding" (issued + partially paid) has to keep it."""
         with self._uow_factory() as uow:
-            return uow.invoices.list(
-                company_id=company_id, status=status, client_id=client_id
-            )
+            if status is not InvoiceStatus.OVERDUE:
+                return uow.invoices.list(
+                    company_id=company_id, status=status, client_id=client_id
+                )
+            as_of = today or date.today()
+            overdue = [
+                invoice
+                for open_status in (InvoiceStatus.ISSUED, InvoiceStatus.PARTIALLY_PAID)
+                for invoice in uow.invoices.list(
+                    company_id=company_id, status=open_status, client_id=client_id
+                )
+                if invoice.effective_status(as_of) == InvoiceStatus.OVERDUE.value
+            ]
+            # Two reads, one order: the repository lists the newest number first.
+            overdue.sort(key=lambda invoice: invoice.sequence_global or 0, reverse=True)
+            return overdue
 
     def void(
         self, invoice_id: UUID, reason: str, actor_user_id: UUID | None = None

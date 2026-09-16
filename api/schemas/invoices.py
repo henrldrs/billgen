@@ -109,6 +109,12 @@ class InvoiceResponse(BaseModel):
     total_vat: Decimal
     total_ttc: Decimal
     status: str
+    # The stored status refined with the calendar: an issued or partially paid
+    # invoice past its due date reads "overdue" here while `status` still says
+    # what was written down. The same split as QuoteResponse, for the same
+    # reason — nothing stores OVERDUE, and a stored flag would need a scheduler
+    # to stay true (T-51).
+    effective_status: str
     voided_at: datetime | None
     voided_reason: str | None
     voided_by_credit_note_id: UUID | None

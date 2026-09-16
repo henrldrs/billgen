@@ -276,6 +276,11 @@ export function HistoryPanel({
             </Badge>
           );
         }
+        if (invoice.status === "overdue") {
+          // A row that says so without a date to count from — a restored
+          // backup could — still reads as what it is rather than as nothing.
+          return <Badge tone="warn">{t(lang, "history.overdue")}</Badge>;
+        }
         return <Badge status={invoice.status as never} />;
       },
     },

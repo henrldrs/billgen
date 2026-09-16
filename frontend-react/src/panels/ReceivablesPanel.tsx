@@ -1,7 +1,9 @@
 /** Receivables — the two report screens that read money the company is owed.
  *
  *    outstanding   issued + partially paid: billed, not yet in the bank
- *    overdue       what the server itself has moved to OVERDUE
+ *    overdue       what the server derives as overdue from the due date — no
+ *                  row ever holds that status (T-51), so the wire still says
+ *                  "issued" and the badge reads the calendar
  *
  *  One panel, two modes, because the only difference is which statuses the
  *  server is asked for. The headline figures come from /reports/kpi and the
@@ -27,7 +29,8 @@ import {
 
 import { useClients, useInvoices, useKpi } from "../hooks/queries";
 import { formatDate, formatMoney } from "../lib/format";
-import { t, type Lang } from "../lib/translations";
+import { daysOverdue } from "../lib/invoiceStatus";
+import { t, tf, type Lang } from "../lib/translations";
 import type { InvoiceResponse } from "../types";
 
 const PAGE_SIZE = 25;
@@ -146,15 +149,25 @@ export function ReceivablesPanel({
     {
       key: "status",
       label: t(lang, "history.status"),
-      // Badge's status set mirrors InvoiceStatus except for OVERDUE, which the
-      // design system has no colour for — a warn tone rather than an invented
-      // modifier class.
-      render: (row) =>
-        row.status === "overdue" ? (
-          <Badge tone="warn">{row.status}</Badge>
-        ) : (
-          <Badge status={row.status as "issued" | "partially_paid"} />
-        ),
+      // Overdue is the calendar's word, with its age — the same rule and the
+      // same badge as the invoice list. It is the one state Badge has no
+      // colour for, so a warn tone rather than an invented modifier class.
+      render: (row) => {
+        const late = daysOverdue(row);
+        if (late !== null) {
+          return (
+            <Badge tone="warn">
+              {late === 1
+                ? t(lang, "history.overdueDay")
+                : tf(lang, "history.overdueDays", { days: late })}
+            </Badge>
+          );
+        }
+        if (row.status === "overdue") {
+          return <Badge tone="warn">{t(lang, "history.overdue")}</Badge>;
+        }
+        return <Badge status={row.status as "issued" | "partially_paid"} />;
+      },
     },
     {
       key: "total_ttc",

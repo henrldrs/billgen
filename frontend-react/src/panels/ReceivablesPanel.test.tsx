@@ -2,7 +2,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
-import { BASE, COMPANY_ID, invoiceRecord, renderWithProvider } from "../test/utils";
+import { BASE, COMPANY_ID, invoiceRecord, isoDaysFromToday, renderWithProvider } from "../test/utils";
 import { ReceivablesPanel } from "./ReceivablesPanel";
 
 const server = setupServer();
@@ -79,7 +79,15 @@ test("overdue asks only for overdue and never for the unfiltered list", async ()
     http.get(`${BASE}/reports/kpi`, () => HttpResponse.json(KPI)),
     http.get(`${BASE}/clients`, () => HttpResponse.json([clientRecord("c-1", "Big Corp")])),
     statusRouter(seen, {
-      overdue: [invoiceRecord("inv-3", "ACME-0003", { status: "overdue" })],
+      // What the server answers for ?status=overdue since T-51: the stored
+      // status, with the due date the screen counts from.
+      overdue: [
+        invoiceRecord("inv-3", "ACME-0003", {
+          status: "issued",
+          effective_status: "overdue",
+          due_date: isoDaysFromToday(-43),
+        }),
+      ],
     }),
   );
 
@@ -87,8 +95,9 @@ test("overdue asks only for overdue and never for the unfiltered list", async ()
 
   const table = within(await screen.findByRole("table"));
   expect(await table.findByText("ACME-0003")).toBeInTheDocument();
-  // Badge has no colour for OVERDUE, so it renders as a warn-toned tag.
-  expect(table.getByText("overdue")).toBeInTheDocument();
+  // Badge has no colour for OVERDUE, so it renders as a warn-toned tag, and
+  // it carries the age rather than the word "issued" the wire sent.
+  expect(table.getByText("Overdue · 43 days")).toBeInTheDocument();
   expect(seen).not.toContain("");
   expect(new Set(seen)).toEqual(new Set(["overdue"]));
 });

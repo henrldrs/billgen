@@ -354,12 +354,12 @@ _TIMELINE_ORDER: dict[str, int] = {
 
 
 def effective_status(invoice: Invoice, today: date) -> str:
-    """Stored status refined with the derived 'overdue' state."""
-    if invoice.status in (InvoiceStatus.VOIDED, InvoiceStatus.PAID, InvoiceStatus.DRAFT):
-        return invoice.status.value
-    if invoice.due_date and invoice.due_date < today:
-        return InvoiceStatus.OVERDUE.value
-    return invoice.status.value
+    """Stored status refined with the derived 'overdue' state.
+
+    The rule is `Invoice.effective_status` on the model, so the invoice service
+    can apply it to a list filter without importing the reports (T-51). This
+    name stays for the callers that grew up with it."""
+    return invoice.effective_status(today)
 
 
 class ReportingService:

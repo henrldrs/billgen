@@ -265,3 +265,77 @@ async def test_invoices_are_tenant_isolated(client):
         f"/invoices/{invoice['id']}/void", json={"reason": "attack"}, headers=bearer(bob)
     )
     assert bob_void.status_code == 404
+
+
+# ---- T-51: overdue is the calendar's word, not a column's ------------------
+# Nothing writes OVERDUE to a row, so `?status=overdue` compared a column that
+# never held it and answered [] on every database there had ever been. The
+# filter and the response field both read the due date now; `today` pins it so
+# these assertions never move with the clock.
+
+
+async def test_overdue_is_derived_from_the_calendar_not_stored(client):
+    headers, company, record = await _setup(client)
+    invoice = await create_invoice(client, headers, company["id"], record["id"])
+    assert invoice["due_date"] == "2026-08-03"
+
+    # Still on time on the due date itself; late the day after.
+    on_time = await client.get(
+        "/invoices", params={"status": "overdue", "today": "2026-08-03"}, headers=headers
+    )
+    assert on_time.status_code == 200, on_time.text
+    assert on_time.json() == []
+
+    late = await client.get(
+        "/invoices", params={"status": "overdue", "today": "2026-08-04"}, headers=headers
+    )
+    assert [row["id"] for row in late.json()] == [invoice["id"]]
+    assert late.json()[0]["status"] == "issued"
+    assert late.json()[0]["effective_status"] == "overdue"
+
+    # The stored status still answers as stored: an overdue invoice is an
+    # issued one, and "outstanding" (issued + partially paid) has to keep it.
+    issued = await client.get(
+        "/invoices", params={"status": "issued", "today": "2026-08-04"}, headers=headers
+    )
+    assert [row["id"] for row in issued.json()] == [invoice["id"]]
+    assert issued.json()[0]["effective_status"] == "overdue"
+
+    single = await client.get(
+        f"/invoices/{invoice['id']}", params={"today": "2026-08-04"}, headers=headers
+    )
+    assert single.json()["status"] == "issued"
+    assert single.json()["effective_status"] == "overdue"
+
+
+async def test_a_part_paid_invoice_past_due_is_overdue_and_a_settled_one_is_not(client):
+    headers, company, record = await _setup(client)
+    invoice = await create_invoice(client, headers, company["id"], record["id"])
+
+    partial = await client.post(
+        "/payments",
+        json={"invoice_id": invoice["id"], "amount": "500.00", "paid_on": "2026-07-10"},
+        headers=headers,
+    )
+    assert partial.status_code == 201, partial.text
+
+    late = await client.get(
+        "/invoices", params={"status": "overdue", "today": "2026-09-16"}, headers=headers
+    )
+    assert [(row["status"], row["effective_status"]) for row in late.json()] == [
+        ("partially_paid", "overdue")
+    ]
+
+    settled = await client.post(
+        "/payments",
+        json={"invoice_id": invoice["id"], "amount": "1012.50", "paid_on": "2026-07-11"},
+        headers=headers,
+    )
+    assert settled.status_code == 201, settled.text
+
+    none_late = await client.get(
+        "/invoices", params={"status": "overdue", "today": "2026-09-16"}, headers=headers
+    )
+    assert none_late.json() == []
+    paid = await client.get(f"/invoices/{invoice['id']}", headers=headers)
+    assert (paid.json()["status"], paid.json()["effective_status"]) == ("paid", "paid")

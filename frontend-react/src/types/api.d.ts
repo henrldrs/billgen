@@ -585,7 +585,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Invoices */
+        /**
+         * List Invoices
+         * @description `status` filters on the stored status — except `overdue`, which no row
+         *     ever holds: that one is derived from the due date, the way every report
+         *     derives it (T-51). `today` pins the calendar, for tests and for a screen
+         *     that asks "as of the 31st"; it defaults to today.
+         */
         get: operations["list_invoices_invoices_get"];
         put?: never;
         /**
@@ -3334,6 +3340,8 @@ export interface components {
             total_ttc: string;
             /** Status */
             status: string;
+            /** Effective Status */
+            effective_status: string;
             /** Voided At */
             voided_at: string | null;
             /** Voided Reason */
@@ -5915,6 +5923,7 @@ export interface operations {
                 company_id?: string | null;
                 status?: components["schemas"]["InvoiceStatus"] | null;
                 client_id?: string | null;
+                today?: string | null;
             };
             header?: never;
             path?: never;
@@ -6043,7 +6052,9 @@ export interface operations {
     };
     get_invoice_invoices__invoice_id__get: {
         parameters: {
-            query?: never;
+            query?: {
+                today?: string | null;
+            };
             header?: never;
             path: {
                 invoice_id: string;

@@ -38,36 +38,6 @@ wish, and the queue is not for wishes.
 same day: "all rest you start building". They sit above the launch tickets
 because each is a defect a first beta user meets on day one.*
 
-### T-51 · The Overdue tab has always been empty
-    branch    Backend               status  open
-    needs     —
-    why       Found under T-45. `InvoiceStatus.OVERDUE` is a member nothing
-              ever assigns: `effective_status()` in
-              `core/services/reporting_service.py` derives it from the due
-              date for the reports, the KPIs and the alerts, but
-              `InvoiceService.list` hands the status straight to the
-              repository, which compares the stored column. So
-              `GET /invoices?status=overdue` returns `[]` on every database
-              there has ever been — and with it the Overdue tab and
-              `ReceivablesPanel` in overdue mode, whose docstring trusts "what
-              the server itself has moved to OVERDUE". The same invoices sit
-              under Issued with the stored status on the wire, which is the
-              43-day-old "Issued" badge T-45 fixed on the screen only.
-    do        `InvoiceService.list`: `status=overdue` reads the issued and
-              partially paid rows and keeps the ones `effective_status()`
-              calls overdue; `issued` and `partially_paid` drop those. The
-              invoice responses carry the effective status, so one invoice
-              never answers "issued" to `GET /invoices/{id}` and "overdue" to
-              the report beside it. `effective_status` moves next to the model
-              so the invoice service does not import the reporting service.
-              Every frontend branch on `status === "issued"` is checked for
-              whether it means "issued" or "open".
-    done when An API test issues an invoice due in the past and finds it under
-              `?status=overdue` and not under `?status=issued`, with
-              `status: "overdue"` in the list and in the single read; a
-              second asserts one due tomorrow stays `issued`. The Overdue tab
-              shows it in the browser.
-
 ### T-46 · The navigation speaks the interface language
     branch    Frontend              status  open
     needs     —
@@ -1163,6 +1133,30 @@ because each is a defect a first beta user meets on day one.*
 ---
 
 ## Done
+
+### T-51 · The Overdue tab has always been empty  ·  *fix: the Overdue tab has something in it*
+Found under T-45. `InvoiceStatus.OVERDUE` was a member nothing ever assigned:
+`effective_status()` derived it for the reports, the KPIs and the alerts, but
+`InvoiceService.list` handed `status=overdue` to the repository, which compared
+the stored column and answered `[]` on every database there has ever been — so
+the Overdue tab and the Receivables overdue report sat empty under a KPI that
+said 2. The rule now lives on the model as `Invoice.effective_status(today)`;
+the reporting function delegates to it; the service reads the issued and
+partially paid rows for `status=overdue` and keeps the ones the calendar calls
+late. **The stored statuses filter as stored** — an overdue invoice is still an
+issued one, and "outstanding" (issued + partially paid) has to keep it — which
+is the one place this closes differently from the ticket's `do`. The response
+carries `effective_status` beside `status`, the split `QuoteResponse` already
+makes and for the same reason; `GET /invoices` and `GET /invoices/{id}` take
+`today`, as the quote reads do, so a test never depends on the clock. Both list
+panels badge from the calendar, so the wire's "issued" never reaches the eye
+on an overdue row. **Seen in the browser** on the desktop pair: the Overdue
+tab lists OUT-KZ07012026 and OUT-BC07012026, "Te laat · 33 dagen" and "44
+dagen"; the report screen shows the same two under "Achterstallig 2"; the API
+answers one of them as of 2026-08-10 and both today. Two API tests, three
+model tests; `openapi.json` and `api.d.ts` regenerated (the file is written
+with `ensure_ascii=False` — the first regeneration escaped every § and — into
+a 174-line diff for a one-field change).
 
 ### T-45 · The invoice list names who owes you, and by when  ·  *feat: the invoice list names who owes you, and by when*
 Reference · Client · Date · Due · Total · Status. The client index is the

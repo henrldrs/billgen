@@ -39,6 +39,10 @@ export function invoiceRecord(
     total_vat: "262.50",
     total_ttc: "1512.50",
     status: "issued",
+    // What the server says the status means today. The fixture's default due
+    // date is fixed, so a caller that wants "overdue" says so with a relative
+    // due_date (isoDaysFromToday) and lets the panels derive the badge.
+    effective_status: extra.status ?? "issued",
     voided_at: null,
     voided_reason: null,
     voided_by_credit_note_id: null,
@@ -69,4 +73,16 @@ export function companyRecord(extra: Partial<CompanyResponse> = {}): CompanyResp
     invoice_reference_prefix: "ACME-",
     ...extra,
   };
+}
+
+/** An ISO date `offset` days from today — negative for the past.
+ *
+ *  The invoice fixture's due date is a fixed day in 2026, and the lists read
+ *  the calendar (T-45): a fixture that was "issued" when written is overdue
+ *  once that day passes. A test that means "still on time" or "43 days late"
+ *  says so relative to today rather than trusting a literal to stay put. */
+export function isoDaysFromToday(offset: number): string {
+  const day = new Date();
+  day.setDate(day.getDate() + offset);
+  return `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
 }

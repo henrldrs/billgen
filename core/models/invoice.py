@@ -63,3 +63,19 @@ class Invoice(TenantModel):
     voided_at: datetime | None = None
     voided_reason: str | None = None
     voided_by_credit_note_id: UUID | None = None
+
+    def effective_status(self, today: date) -> str:
+        """The stored status refined with the calendar.
+
+        An issued or partially paid invoice whose due date has passed is
+        overdue the moment it is looked at. Nothing writes OVERDUE to the row —
+        a stored flag would need a scheduler to stay true — so the reports,
+        the KPIs, the alerts and the list filter all ask this instead (T-51).
+        Strict: an invoice due today is still on time. A draft binds nobody;
+        paid and voided invoices are closed whatever their date said.
+        """
+        if self.status in (InvoiceStatus.VOIDED, InvoiceStatus.PAID, InvoiceStatus.DRAFT):
+            return self.status.value
+        if self.due_date and self.due_date < today:
+            return InvoiceStatus.OVERDUE.value
+        return self.status.value
