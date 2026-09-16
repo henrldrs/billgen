@@ -94,40 +94,6 @@ because each is a defect a first beta user meets on day one.*
               "Unknown", and `Get-AuthenticodeSignature` reports `Valid` on a
               machine that has never seen BillGen.
 
-### T-36 · The register describes a product we are not shipping
-    branch    Compliance            status  open
-    needs     —
-    why       Found by the compliance check on 2026-09-11. Two of our own
-              artifacts disagree, and the wrong one is the one counsel reads.
-
-              `core/trust/personal_data.py:44` states as fact: *"it is their
-              clients', which is exactly why BillGen is a processor and needs
-              a DPA"*. [BETA_LAUNCH_PLAN.md](BETA_LAUNCH_PLAN.md) reversed that
-              on 2026-09-09 for the shape that actually ships: *"A desktop
-              build keeps that data on her laptop… The DPA drops out of the
-              beta."* The register generates [LEGAL_BRIEF.md](LEGAL_BRIEF.md),
-              so counsel is currently being told to draft a DPA for a
-              deployment that does not need one.
-
-              Second gap in the same file: the **licensing dataset is missing
-              from the register entirely** — e-mail, plan and a hardware
-              fingerprint (`desktop/licensing.py`), held by us, for a named
-              person. On a desktop install it is the *only* dataset that
-              reaches us, and it is the one not written down. Article 30 asks
-              for exactly that.
-    do        Rewrite the processor sentence to say which shape it describes:
-              hosted — processor, DPA required; desktop — the customer is the
-              controller and we are a software supplier, DPA out of scope
-              except for support (see Q6's note in the brief). Add a
-              `licensing` DataSet: fields (e-mail, plan, hardware
-              fingerprint), subject (the customer), basis CONTRACT, retention
-              (life of the licence), erasure ERASE, source
-              `desktop/licensing.py`. Regenerate the brief.
-    done when `GET /trust/privacy/register` lists a `licensing` dataset;
-              `LEGAL_BRIEF.md` no longer asserts processor status without
-              naming the deployment; a test asserts the register names every
-              dataset that reaches us, licensing included.
-
 ### T-37 · The first run asks before it tells
     branch    Frontend              status  open
     needs     T-29
@@ -1074,6 +1040,24 @@ because each is a defect a first beta user meets on day one.*
 ---
 
 ## Done
+
+### T-36 · The register describes a product we are not shipping  ·  *fix: the register names the deployment it describes, and the one dataset a desktop sends us*
+`core/trust/personal_data.py` no longer states processor status as a fact of
+the product: the `subject` comment and the `clients` note say **hosted →
+processor, DPA required; desktop → the customer is the controller, BillGen is
+a software supplier, DPA out of scope except for support** (Q6's backup sent
+for a diagnosis). The `licensing` dataset joins the register — e-mail, plan,
+hardware fingerprint, expiry; subject the customer; basis contract; retention
+the life of the licence; erasure erase; source `desktop/licensing.py` — with
+the note that on a desktop install it is the only dataset that reaches us.
+The brief's generator carries the same split into its element 1 and Q5
+("en mode hébergé" / "en version bureau"), and `LEGAL_BRIEF.md` is
+regenerated and `--check` green. **Guards:** the register test cross-checks
+the dataset's fields against `LicenseInfo`'s own — a field added to the
+licence payload without a word in the register fails; a second asserts the
+`clients` note names both deployments; the API test finds `licensing` under
+`GET /trust/privacy/register` with its source. 41/41 in `tests/core/trust`
+and `tests/api/test_trust.py`.
 
 ### T-50 · The content uses the screen the top bar already spans  ·  *feat: the content uses the screen the top bar already spans*
 `lib/preferences.ts` gained `containerWidth: fluid | boxed`, fluid by default,

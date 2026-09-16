@@ -1,6 +1,6 @@
 # BillGen — note de synthèse à l'attention du conseil juridique
 
-*Document généré depuis `core/trust/` le 15/09/2026 par
+*Document généré depuis `core/trust/` le 16/09/2026 par
 `scripts/generate_legal_brief.py`. Merci de ne pas le modifier à la main : les
 tableaux sont lus directement dans le code, une correction manuelle serait
 écrasée et — plus grave — finirait par diverger du système réellement en
@@ -29,10 +29,17 @@ assure le suivi des paiements et des dépenses.
 
 Trois éléments déterminent tout ce qui suit :
 
-1. **BillGen traite les données des clients de ses clients.** Un utilisateur de
-   BillGen facture *ses* propres clients : le système détient donc des noms,
-   adresses et numéros de TVA de personnes qui ne se sont jamais inscrites chez
-   nous. C'est la raison pour laquelle le DPA n'est pas optionnel.
+1. **BillGen traite les données des clients de ses clients — et ce que cela
+   fait de BillGen dépend du mode de déploiement.** Un utilisateur de BillGen
+   facture *ses* propres clients : le système détient donc des noms, adresses
+   et numéros de TVA de personnes qui ne se sont jamais inscrites chez nous.
+   **Hébergé (SaaS)**, BillGen est sous-traitant de ces données et le DPA n'est
+   pas optionnel. **En version bureau** — le mode du bêta, décidé le
+   09/09/2026 — ces données ne quittent jamais la machine de l'utilisateur :
+   il en est le responsable du traitement, nous sommes fournisseur d'un
+   logiciel, et le seul jeu de données qui nous parvienne est celui de la
+   licence (`licensing` dans le registre ci-dessous). Le DPA sort du périmètre
+   du bêta, sauf pour l'assistance (Q6).
 2. **L'obligation comptable belge prime sur le droit à l'effacement.** Les
    factures, et les fiches clients auxquelles elles sont adressées, doivent
    survivre à une demande fondée sur l'article 17 du RGPD — les supprimer
@@ -78,6 +85,7 @@ Quelles données à caractère personnel le système détient, pourquoi, pendant
 | clients | Adresser une facture à une contrepartie légalement identifiée. | Sept ans après la dernière facture, en suivant les documents où elles figurent. | **conservé** |
 | invoices | Émettre une facture légalement valable et alimenter la déclaration TVA du client. | Sept ans (art. 60 du Code de la TVA / règles comptables du CIR 92). | **conservé** |
 | audit | Prouver qui a modifié quoi — la garantie d'intégrité sur laquelle repose le cœur de facturation. | Sept ans, avec les documents qu'il décrit. | anonymisé |
+| licensing | Émettre une licence bureau liée à une seule machine, et la vérifier hors ligne. | Durée de vie de la licence. | effacé |
 | consent | Prouver que le consentement a été donné, à quoi, et quand. | Cinq ans après le retrait ou le remplacement du consentement. | **conservé** |
 
 *Conservés malgré une demande d'effacement : **clients, consent, invoices**. C'est l'objet de la question Q1 — le système refuse déjà de les supprimer, et il revient au conseil de confirmer le fondement et les durées.*
@@ -175,10 +183,14 @@ comporter, et quelle est l'urgence réelle de cette lacune ?
 
 ### Q5 · Responsable du traitement ou sous-traitant, jeu de données par jeu de données ?
 
-Notre analyse : BillGen est **responsable du traitement** pour les données de
-compte (ses propres clients) et **sous-traitant** pour les données de factures
-et de fiches clients (les clients de ses clients). Le contenu du DPA dépend
-entièrement de la justesse de cette répartition.
+Notre analyse, **en mode hébergé** : BillGen est **responsable du
+traitement** pour les données de compte (ses propres clients) et
+**sous-traitant** pour les données de factures et de fiches clients (les
+clients de ses clients). **En version bureau**, BillGen est responsable du
+traitement du seul jeu `licensing` — e-mail, formule, empreinte machine — et
+ne traite rien d'autre. Le contenu du DPA dépend entièrement de la justesse de
+cette répartition, et de ne pas le faire signer pour un déploiement qui n'en a
+pas besoin.
 
 ### Q6 · Convention de bêta / pilote
 

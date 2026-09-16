@@ -39,9 +39,14 @@ class DataSet(BaseModel):
 
     key: str
     label: str
-    #  Whose data it is. Note that most of it is not the customer's own: it is
-    #  their clients', which is exactly why BillGen is a processor and needs
-    #  a DPA (see core.trust.legal).
+    #  Whose data it is. Most of it is not the customer's own but their
+    #  clients' — and what that makes BillGen depends on the deployment shape
+    #  (BETA_LAUNCH_PLAN, 2026-09-09; T-36). Hosted, BillGen is a processor of
+    #  the customer's clients' data and the DPA is required (core.trust.legal).
+    #  On the desktop the data never leaves the customer's machine: the
+    #  customer is the controller and BillGen is a software supplier, so the
+    #  DPA is out of scope — except for support, when a backup sent for a
+    #  diagnosis makes us a processor for that one act (LEGAL_BRIEF Q6).
     subject: str
     fields: tuple[str, ...]
     purpose: str
@@ -93,9 +98,10 @@ REGISTER: tuple[DataSet, ...] = (
         erasure=Erasure.RETAIN,
         source="core.models.client",
         note=(
-            "BillGen is the processor here, not the controller — this data "
-            "belongs to the customer's relationship with their client. An "
-            "erasure request from a client goes to the customer, not to us."
+            "Hosted, BillGen is the processor here, not the controller — this "
+            "data belongs to the customer's relationship with their client, and "
+            "an erasure request from a client goes to the customer, not to us. "
+            "On the desktop it never reaches us at all."
         ),
     ),
     DataSet(
@@ -127,6 +133,25 @@ REGISTER: tuple[DataSet, ...] = (
         note=(
             "Append-only by construction (there is no update or delete on the "
             "repository). Erasure detaches the actor; it never rewrites history."
+        ),
+    ),
+    DataSet(
+        #  On a desktop install this is the ONLY dataset that reaches us, and
+        #  it was the one not written down (T-36). Article 30 asks for exactly
+        #  this: held by us, about a named person, for the life of a contract.
+        key="licensing",
+        label="Desktop licence",
+        subject="The customer",
+        fields=("email", "plan", "hardware fingerprint", "expiry"),
+        purpose="Issue a desktop licence bound to one machine, and verify it offline.",
+        basis=LawfulBasis.CONTRACT,
+        retention="Life of the licence.",
+        erasure=Erasure.ERASE,
+        source="desktop/licensing.py",
+        note=(
+            "The licence is a signed file verified on her machine; nothing "
+            "else she types leaves it. The fingerprint is a binding, not a "
+            "secret — Windows' MachineGuid, read out to us for the signing."
         ),
     ),
     DataSet(

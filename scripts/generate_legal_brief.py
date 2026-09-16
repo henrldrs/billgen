@@ -83,6 +83,10 @@ FR: dict[str, str] = {
         "Prouver que le consentement a été donné, à quoi, et quand."
     ),
     # --- retentions ---
+    "Issue a desktop licence bound to one machine, and verify it offline.": (
+        "Émettre une licence bureau liée à une seule machine, et la vérifier hors ligne."
+    ),
+    "Life of the licence.": "Durée de vie de la licence.",
     "Life of the account, then 30 days in backups.": (
         "Durée de vie du compte, puis 30 jours dans les sauvegardes."
     ),
@@ -182,10 +186,17 @@ assure le suivi des paiements et des dépenses.
 
 Trois éléments déterminent tout ce qui suit :
 
-1. **BillGen traite les données des clients de ses clients.** Un utilisateur de
-   BillGen facture *ses* propres clients : le système détient donc des noms,
-   adresses et numéros de TVA de personnes qui ne se sont jamais inscrites chez
-   nous. C'est la raison pour laquelle le DPA n'est pas optionnel.
+1. **BillGen traite les données des clients de ses clients — et ce que cela
+   fait de BillGen dépend du mode de déploiement.** Un utilisateur de BillGen
+   facture *ses* propres clients : le système détient donc des noms, adresses
+   et numéros de TVA de personnes qui ne se sont jamais inscrites chez nous.
+   **Hébergé (SaaS)**, BillGen est sous-traitant de ces données et le DPA n'est
+   pas optionnel. **En version bureau** — le mode du bêta, décidé le
+   09/09/2026 — ces données ne quittent jamais la machine de l'utilisateur :
+   il en est le responsable du traitement, nous sommes fournisseur d'un
+   logiciel, et le seul jeu de données qui nous parvienne est celui de la
+   licence (`licensing` dans le registre ci-dessous). Le DPA sort du périmètre
+   du bêta, sauf pour l'assistance (Q6).
 2. **L'obligation comptable belge prime sur le droit à l'effacement.** Les
    factures, et les fiches clients auxquelles elles sont adressées, doivent
    survivre à une demande fondée sur l'article 17 du RGPD — les supprimer
@@ -258,10 +269,14 @@ comporter, et quelle est l'urgence réelle de cette lacune ?
 
 ### Q5 · Responsable du traitement ou sous-traitant, jeu de données par jeu de données ?
 
-Notre analyse : BillGen est **responsable du traitement** pour les données de
-compte (ses propres clients) et **sous-traitant** pour les données de factures
-et de fiches clients (les clients de ses clients). Le contenu du DPA dépend
-entièrement de la justesse de cette répartition.
+Notre analyse, **en mode hébergé** : BillGen est **responsable du
+traitement** pour les données de compte (ses propres clients) et
+**sous-traitant** pour les données de factures et de fiches clients (les
+clients de ses clients). **En version bureau**, BillGen est responsable du
+traitement du seul jeu `licensing` — e-mail, formule, empreinte machine — et
+ne traite rien d'autre. Le contenu du DPA dépend entièrement de la justesse de
+cette répartition, et de ne pas le faire signer pour un déploiement qui n'en a
+pas besoin.
 
 ### Q6 · Convention de bêta / pilote
 

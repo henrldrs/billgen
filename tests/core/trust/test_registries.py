@@ -126,6 +126,43 @@ def test_the_audit_log_is_anonymised_rather_than_erased():
     assert personal_data.dataset("audit").erasure is personal_data.Erasure.ANONYMISE
 
 
+def test_the_register_names_the_one_dataset_a_desktop_install_sends_us():
+    """T-36. On a desktop install nothing she types reaches us except the
+    licence payload, and the register said nothing about it. Cross-checked
+    against the licence code: a field added to LicenseInfo without a word here
+    fails, so the register cannot rot behind the code it describes."""
+    import dataclasses
+
+    from desktop.licensing import LicenseInfo
+
+    ds = personal_data.dataset("licensing")
+    assert ds is not None
+    assert ds.source == "desktop/licensing.py"
+    assert ds.basis is personal_data.LawfulBasis.CONTRACT
+    assert ds.erasure is personal_data.Erasure.ERASE
+    assert ds.subject == "The customer"
+
+    held = {f.name for f in dataclasses.fields(LicenseInfo)} - {"payload"}
+    registered_as = {
+        "email": "email",
+        "plan": "plan",
+        "hardware_id": "hardware fingerprint",
+        "expires": "expiry",
+    }
+    assert held == set(registered_as), "LicenseInfo grew a field the register does not name"
+    assert set(registered_as.values()) <= set(ds.fields)
+
+
+def test_processor_status_is_never_asserted_without_naming_the_deployment():
+    """The same register generates the brief counsel reads. A sentence that
+    says "BillGen is the processor" is true hosted and false on the desktop
+    (BETA_LAUNCH_PLAN, 2026-09-09), so every such sentence names its shape."""
+    clients = personal_data.dataset("clients")
+    assert clients is not None and clients.note is not None
+    assert "Hosted" in clients.note
+    assert "desktop" in clients.note
+
+
 def test_every_dataset_states_a_basis_and_a_retention():
     for ds in personal_data.register():
         assert ds.retention.strip(), ds.key

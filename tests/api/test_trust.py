@@ -51,6 +51,11 @@ async def test_the_privacy_register_names_what_survives_a_deletion_request(clien
     assert invoices["basis"] == "legal_obligation"
     assert invoices["erasure"] == "retain"
 
+    # T-36: the one dataset a desktop install sends us is in the register.
+    licensing = next(ds for ds in body["datasets"] if ds["key"] == "licensing")
+    assert licensing["source"] == "desktop/licensing.py"
+    assert "hardware fingerprint" in licensing["fields"]
+
 
 async def test_the_subprocessor_list_separates_live_from_planned(client):
     response = await client.get("/trust/subprocessors")

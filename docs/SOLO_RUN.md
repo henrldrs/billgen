@@ -113,6 +113,7 @@ which it cannot know.
 | 39 | T-46 · the navigation speaks the interface language | `DONE` | Ships in *feat: the navigation speaks the interface language*. `ia.ts` carries no labels; a node's name is a message keyed by its key, resolved per language by `navLabel`, with the English one derived for the ledger. Bar, popups, palette, crumbs, tiles, titles, tabs, badges, the activity feed's record kinds, the alerts card's field names and plurals. Two guard tests and one that mounts the shell under `nl`. Browser-verified. French and Dutch await Henri's native read. |
 | 40 | T-47 · the sheet leads with the action its status calls for | `DONE` | Ships in *feat: the invoice sheet leads with the action its status calls for*. Status in the chrome; exports left, one status-chosen primary right, the corrections behind More with Void last in danger ink; `Menu` opens upward and hears Escape on its trigger; one shared `InvoiceStatusBadge`. Browser-verified. |
 | 41 | T-50 · the content uses the screen the top bar spans | `DONE` | Ships in *feat: the content uses the screen the top bar already spans*. `containerWidth: fluid \| boxed`, fluid by default; lists, reports and the dashboard run to the bar's inner edges, forms and records keep the reading measure per route (parked item 10, built). Measured at 1920px. |
+| 42 | T-36 · the register describes the product we ship | `DONE` | Ships in *fix: the register names the deployment it describes, and the one dataset a desktop sends us*. Processor status is stated per deployment now, the `licensing` dataset is registered and cross-checked against `LicenseInfo`, the brief regenerated. |
 | 30 | Vanta evaluated | `DONE` (not now) | Ships in *docs: vanta proves controls are written down, not that they hold*. Recorded as T-00g with the trigger to revisit. Two tickets filed from it: T-39 secret scanning (dependency audit already ran in CI — only secrets were missing) and T-40 an external pentest, Henri's to commission after T-05. |
 
 **This ledger's own list is closed.** Items 6–8 were the three the handover
@@ -126,7 +127,7 @@ happened to it.
 
 | | |
 |---|---|
-| Python | **687 collected, exit 0** — 16 new in T-27, 12 in T-23, 24 in T-28, 5 in T-30, 3 for the Edge hand-off found under T-21, 2 in T-33, 7 in T-29, 5 in T-35, 3 for the first run's profile step, 5 in T-51; `tests/desktop/` is 56 | 
+| Python | **689 collected, exit 0** — 16 new in T-27, 12 in T-23, 24 in T-28, 5 in T-30, 3 for the Edge hand-off found under T-21, 2 in T-33, 7 in T-29, 5 in T-35, 3 for the first run's profile step, 5 in T-51, 2 in T-36; `tests/desktop/` is 56 | 
 | Frontend | **251 passed** (`npm run test`, 44 files), typecheck clean across all four workspaces |
 | `ruff check` | clean. CI runs `ruff check .` only — the tree is *not* `ruff format` clean and was not before, so do not reformat it as a side errand |
 | Architecture doc | **in sync** — both `sync-architecture --check` and `architecture_to_text.py --check` green at 113 endpoints across 27 routers (regenerated 2026-09-16; the file count moved, nothing else) |
