@@ -33,10 +33,12 @@ wish, and the queue is not for wishes.
 
 ## Open — in priority order
 
-*T-45…T-49 come from the UX review of 2026-09-15
+*T-48 and T-49 are what is left of the UX review of 2026-09-15
 (https://claude.ai/artifact/J5ZHGSoaL5yAcCjeea7SCZ), which Henri accepted the
-same day: "all rest you start building". They sit above the launch tickets
-because each is a defect a first beta user meets on day one.*
+same day: "all rest you start building". T-44…T-47 and T-50 shipped on
+2026-09-15/16 and are in § Done; these two wait on him — one on his review of
+the prototypes, one on a rule he wrote. Everything below them waits on a
+certificate, a VM, a file, or a laptop that is not this one.*
 
 ### T-48 · Navigation is a choice — two styles per platform
     branch    Design system / Henri   status  open

@@ -1726,7 +1726,7 @@ What is still open here. GET /clients/{id}/stats is the only endpoint left on th
 Repo Map
 --------
 
-What every directory is for, and the record of what was removed on 2026-08-26. 728 tracked files.
+What every directory is for, and the record of what was removed on 2026-08-26. 734 tracked files.
 
 A repository that cannot be read cheaply is a repository that gets misread. This section names the purpose of every top-level directory, so nothing in the tree is unexplained, and records what left.
 
@@ -1753,7 +1753,7 @@ db/ · 44
     implementation behind core/repository/'s abstract ports.
     What breaks without it: Nothing persists. The domain would run entirely in memory.
 
-tests/ · 81
+tests/ · 82
     What it is: 557 backend tests. Includes the palette guard test and the icon-grammar
     guard test, both build-failing.
     What breaks without it: The brand decisions at 4e39460 and 81d2c66 become suggestions
@@ -1766,7 +1766,7 @@ henrioutai-ui/ · 91
     What breaks without it: Every frontend loses its component vocabulary. @billgen/ui
     re-exports this; it holds nothing of its own.
 
-frontend-react/ · 141
+frontend-react/ · 146
     What it is: Holds src/scaffold/ia.ts — the source of truth for nav, routes, status and
     the 149 gaps in §14. Also the scaffold kit that renders unwired areas as deliberately
     ugly.
@@ -2542,7 +2542,7 @@ public/                       3
 src/                          5
 src-tauri/                    24
 frontend-react/               4
-src/                          137
+src/                          142
 frontend-saas/                5
 public/                       3
 src/                          8
@@ -2552,11 +2552,11 @@ docker/                       3
 scripts/                      8
 tests/                        1
 api/                          34
-core/                         36
+core/                         37
 db/                           4
 desktop/                      6
 files at the repository root  15
-Total tracked                 728
+Total tracked                 734
 
 Reading the layers
 
