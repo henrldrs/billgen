@@ -38,25 +38,35 @@ wish, and the queue is not for wishes.
 same day: "all rest you start building". They sit above the launch tickets
 because each is a defect a first beta user meets on day one.*
 
-### T-45 · The invoice list names who owes you, and by when
-    branch    Frontend              status  open
+### T-51 · The Overdue tab has always been empty
+    branch    Backend               status  open
     needs     —
-    why       `HistoryPanel.tsx` shows Reference · Date · Total · Status. No
-              client, no due date, so a receivables list cannot be read for the
-              one thing it exists for. Three drafts all read "Draft" and differ
-              only by amount; an issued invoice 43 days past due badges as
-              "Issued"; a Status select sits under status tabs that already do
-              its job; the TOTAL header is left-aligned over right-aligned money.
-    do        `frontend-react/src/panels/HistoryPanel.tsx`: Client and Due
-              columns (client names from the clients query the panel can
-              already reach); an overdue invoice renders an Overdue badge with
-              its age in days; a draft's reference cell says it has no number
-              yet; the duplicate select goes; numeric headers align with their
-              cells.
-    done when `HistoryPanel.test.tsx` asserts, against seeded rows: the client's
-              name and the due date render in their row; an issued invoice past
-              its due date shows the overdue badge with the day count; no
-              `select` labelled Status exists.
+    why       Found under T-45. `InvoiceStatus.OVERDUE` is a member nothing
+              ever assigns: `effective_status()` in
+              `core/services/reporting_service.py` derives it from the due
+              date for the reports, the KPIs and the alerts, but
+              `InvoiceService.list` hands the status straight to the
+              repository, which compares the stored column. So
+              `GET /invoices?status=overdue` returns `[]` on every database
+              there has ever been — and with it the Overdue tab and
+              `ReceivablesPanel` in overdue mode, whose docstring trusts "what
+              the server itself has moved to OVERDUE". The same invoices sit
+              under Issued with the stored status on the wire, which is the
+              43-day-old "Issued" badge T-45 fixed on the screen only.
+    do        `InvoiceService.list`: `status=overdue` reads the issued and
+              partially paid rows and keeps the ones `effective_status()`
+              calls overdue; `issued` and `partially_paid` drop those. The
+              invoice responses carry the effective status, so one invoice
+              never answers "issued" to `GET /invoices/{id}` and "overdue" to
+              the report beside it. `effective_status` moves next to the model
+              so the invoice service does not import the reporting service.
+              Every frontend branch on `status === "issued"` is checked for
+              whether it means "issued" or "open".
+    done when An API test issues an invoice due in the past and finds it under
+              `?status=overdue` and not under `?status=issued`, with
+              `status: "overdue"` in the list and in the single read; a
+              second asserts one due tomorrow stays `issued`. The Overdue tab
+              shows it in the browser.
 
 ### T-46 · The navigation speaks the interface language
     branch    Frontend              status  open
@@ -1153,6 +1163,24 @@ because each is a defect a first beta user meets on day one.*
 ---
 
 ## Done
+
+### T-45 · The invoice list names who owes you, and by when  ·  *feat: the invoice list names who owes you, and by when*
+Reference · Client · Date · Due · Total · Status. The client index is the
+company's clients query, the shape `ReceivablesPanel` already used; a draft's
+reference cell says "No number yet" instead of repeating its badge; overdue is
+derived from the calendar by `lib/invoiceStatus.ts`, the screen-side twin of
+`effective_status()` in the reporting service, and the badge carries its age.
+The in-panel Status select is gone — the route's tabs were the filter. The
+TOTAL header sat left over right-aligned money because `.bg-table th` at
+(0,1,1) beat `.bg-table__th--num` at (0,1,0); the fix is the element in the
+selector, in `henrioutai-ui`. **Measured in the browser** on the desktop pair:
+the header computes `text-align: right`, its sort button ends 5px from the
+header's right edge and starts 57px from its left; the two past-due invoices
+read "Te laat · 33 dagen" and "Te laat · 44 dagen" under NL; no `<select>` on
+the screen. 16 tests in `HistoryPanel.test.tsx` (two fixtures had a due date
+that quietly went past — they now say "on time" relative to today), 5 in
+`invoiceStatus.test.ts`. Found underneath it and filed: nothing stores
+`overdue`, so the Overdue tab has always been empty — T-51.
 
 ### T-44 · On a phone, + was off the screen  ·  *fix: on a phone the create button is on the screen*
 At 375px the top bar asked for 769: its action cluster never wrapped, so Search,

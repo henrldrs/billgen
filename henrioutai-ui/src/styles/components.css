@@ -1863,7 +1863,10 @@ textarea.bg-field__input {
   font-size: var(--bg-text-body);
   border-bottom: 1px solid color-mix(in srgb, var(--bg-line) 70%, transparent);
 }
-.bg-table__th--num,
+/* `.bg-table th` above sets text-align: left at (0,1,1); a bare modifier class
+ * loses to it, which is how the TOTAL header sat left over right-aligned money
+ * for months (T-45). The element in the selector is the fix, not a rewrite. */
+.bg-table th.bg-table__th--num,
 .bg-table__cell--num {
   text-align: right;
 }

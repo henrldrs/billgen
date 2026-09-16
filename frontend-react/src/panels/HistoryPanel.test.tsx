@@ -14,7 +14,26 @@ import { HistoryPanel } from "./HistoryPanel";
 
 const server = setupServer();
 
-/** The two records the record sheet draws its party blocks from.
+const BIG_CORP = {
+  id: "c-1",
+  organization_id: "org-1",
+  company_id: COMPANY_ID,
+  name: "Big Corp",
+  contact_person: null,
+  email: null,
+  phone: null,
+  vat_number: "BE9876543265",
+  address_line1: "Grote Markt 5",
+  postal_code: "2000",
+  city: "Antwerpen",
+  country_code: "BE",
+  is_business: true,
+  notes: null,
+};
+
+/** The records the list and the record sheet read beside the invoices: the
+ *  client index every row names its debtor from (T-45), and the two party
+ *  records the sheet draws its blocks from.
  *
  *  Registered once, for every test in this file, rather than added to each
  *  `server.use(...)`: the sheet asks for them the moment a row is clicked, and
@@ -24,6 +43,7 @@ const server = setupServer();
  *  cost nothing visible and had to be found in the MSW log. */
 beforeEach(() => {
   server.use(
+    http.get(`${BASE}/clients`, () => HttpResponse.json([BIG_CORP])),
     http.get(`${BASE}/companies/:id`, () =>
       HttpResponse.json(
         companyRecord({
@@ -36,24 +56,7 @@ beforeEach(() => {
         }),
       ),
     ),
-    http.get(`${BASE}/clients/:id`, () =>
-      HttpResponse.json({
-        id: "c-1",
-        organization_id: "org-1",
-        company_id: COMPANY_ID,
-        name: "Big Corp",
-        contact_person: null,
-        email: null,
-        phone: null,
-        vat_number: "BE9876543265",
-        address_line1: "Grote Markt 5",
-        postal_code: "2000",
-        city: "Antwerpen",
-        country_code: "BE",
-        is_business: true,
-        notes: null,
-      }),
-    ),
+    http.get(`${BASE}/clients/:id`, () => HttpResponse.json(BIG_CORP)),
   );
 });
 
@@ -67,6 +70,18 @@ beforeEach(() => {
  */
 async function listTable() {
   return screen.findByRole("table", { name: "Invoices" });
+}
+
+/** An ISO date `offset` days from today — negative for the past.
+ *
+ *  The shared fixture's due date is a fixed day in 2026, and the list now
+ *  reads the calendar (T-45): a fixture that was "issued" when written is
+ *  overdue once that day passes. A test that means "still on time" says so
+ *  relative to today rather than trusting a literal to stay in the future. */
+function isoDaysFromToday(offset: number): string {
+  const day = new Date();
+  day.setDate(day.getDate() + offset);
+  return `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
 }
 
 /**
@@ -238,7 +253,12 @@ test("a blocked Peppol export lists the offending fields", async () => {
 });
 
 function draftRecord(id = "inv-1") {
-  return invoiceRecord(id, null, { status: "draft", sequence_global: null });
+  // Due in the future, so the invoice it becomes on issue reads "Issued".
+  return invoiceRecord(id, null, {
+    status: "draft",
+    sequence_global: null,
+    due_date: isoDaysFromToday(30),
+  });
 }
 
 test("a draft shows a Draft placeholder and badge, with its actions in the drawer", async () => {
@@ -248,9 +268,11 @@ test("a draft shows a Draft placeholder and badge, with its actions in the drawe
   const user = userEvent.setup();
   const table = within(await listTable());
 
-  // "Draft" appears twice on the row: once as the reference placeholder (a
-  // draft has no gapless number yet) and once as the status badge.
-  expect(table.getAllByText("Draft")).toHaveLength(2);
+  // The badge says Draft; the reference cell says what the draft lacks. Three
+  // drafts that all read "Draft · Draft" and differed only by amount was the
+  // row T-45 replaced.
+  expect(table.getAllByText("Draft")).toHaveLength(1);
+  expect(table.getByText("No number yet")).toBeInTheDocument();
 
   // Actions live in the record inspector, not the row.
   expect(screen.queryByRole("button", { name: "Issue" })).not.toBeInTheDocument();
@@ -325,7 +347,9 @@ test("recording a payment posts amount and the date picked in the calendar", asy
   const today = new Date();
   const todayISO = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
-  const record = invoiceRecord("inv-1", "ACME-BC07012026");
+  // Still on time: a part-paid invoice past its due date badges overdue, and
+  // this test is about the payment changing the status, not the calendar.
+  const record = invoiceRecord("inv-1", "ACME-BC07012026", { due_date: isoDaysFromToday(30) });
   server.use(
     http.get(`${BASE}/invoices`, () => HttpResponse.json([record])),
     http.post(`${BASE}/payments`, async ({ request }) => {
@@ -367,24 +391,99 @@ test("recording a payment posts amount and the date picked in the calendar", asy
   expect(await table.findByText("Partially paid")).toBeInTheDocument();
 });
 
-test("the status filter is a Select and drives the server-side query", async () => {
+test("the status prop is the query, and there is no second filter on the panel", async () => {
   const seen: string[] = [];
   server.use(
     http.get(`${BASE}/invoices`, ({ request }) => {
       seen.push(new URL(request.url).searchParams.get("status") ?? "");
-      return HttpResponse.json([invoiceRecord("inv-1", "ACME-BC07012026")]);
+      return HttpResponse.json([invoiceRecord("inv-1", "ACME-BC07012026", { status: "paid" })]);
     }),
   );
 
-  renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
-  const user = userEvent.setup();
-
-  const filter = await screen.findByLabelText("Status");
-  await user.selectOptions(filter, "paid");
+  renderWithProvider(<HistoryPanel companyId={COMPANY_ID} status="paid" />);
+  await listTable();
 
   // The filter is a query parameter, not a client-side predicate over an
-  // already-fetched list — that is the whole point of the control existing.
+  // already-fetched list. The route's tabs set it; the panel used to add a
+  // Status select of its own underneath them, two controls for one thing
+  // (T-45), and must not grow one back.
   await waitFor(() => expect(seen).toContain("paid"));
+  expect(screen.queryByRole("combobox", { name: "Status" })).not.toBeInTheDocument();
+  expect(screen.queryByLabelText("Status")).not.toBeInTheDocument();
+});
+
+/* ---- T-45: who owes you, and by when -------------------------------------
+ * The list showed Reference · Date · Total · Status — no debtor, no deadline —
+ * and an issued invoice 43 days past due badged as "Issued", because the
+ * stored status is what the wire carries and only the server's reports refine
+ * it with the calendar. The row now names the client, shows the due date, and
+ * derives overdue the way the reports do.
+ * ---------------------------------------------------------------------- */
+
+test("a row names its client and its due date", async () => {
+  server.use(
+    http.get(`${BASE}/invoices`, () =>
+      HttpResponse.json([
+        invoiceRecord("inv-1", "ACME-BC07012026", { status: "paid", due_date: "2026-08-03" }),
+      ]),
+    ),
+  );
+
+  renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
+  const table = within(await listTable());
+
+  expect(table.getByRole("columnheader", { name: /Client/ })).toBeInTheDocument();
+  expect(table.getByRole("columnheader", { name: /Due date/ })).toBeInTheDocument();
+
+  const row = table.getByText("ACME-BC07012026").closest("tr") as HTMLElement;
+  expect(within(row).getByText("Big Corp")).toBeInTheDocument();
+  expect(within(row).getByText("Aug 3, 2026")).toBeInTheDocument();
+});
+
+test("an issued invoice past its due date is badged overdue, with its age", async () => {
+  server.use(
+    http.get(`${BASE}/invoices`, () =>
+      HttpResponse.json([
+        // Stored status "issued": the wire has not refined it, the screen must.
+        invoiceRecord("inv-1", "ACME-BC07012026", { status: "issued", due_date: isoDaysFromToday(-43) }),
+        invoiceRecord("inv-2", "ACME-BC07022026", { status: "issued", due_date: isoDaysFromToday(-1) }),
+        // Paid is closed; a due date in the past means nothing any more.
+        invoiceRecord("inv-3", "ACME-BC07032026", { status: "paid", due_date: isoDaysFromToday(-90) }),
+      ]),
+    ),
+  );
+
+  renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
+  const table = within(await listTable());
+
+  const late = table.getByText("ACME-BC07012026").closest("tr") as HTMLElement;
+  expect(within(late).getByText("Overdue · 43 days")).toBeInTheDocument();
+  expect(within(late).queryByText("Issued")).not.toBeInTheDocument();
+
+  const oneDay = table.getByText("ACME-BC07022026").closest("tr") as HTMLElement;
+  expect(within(oneDay).getByText("Overdue · 1 day")).toBeInTheDocument();
+
+  const paid = table.getByText("ACME-BC07032026").closest("tr") as HTMLElement;
+  expect(within(paid).getByText("Paid")).toBeInTheDocument();
+  expect(within(paid).queryByText(/Overdue/)).not.toBeInTheDocument();
+});
+
+test("the money header sits over its column", async () => {
+  server.use(
+    http.get(`${BASE}/invoices`, () =>
+      HttpResponse.json([invoiceRecord("inv-1", "ACME-BC07012026")]),
+    ),
+  );
+
+  renderWithProvider(<HistoryPanel companyId={COMPANY_ID} />);
+  const table = within(await listTable());
+
+  // jsdom computes no layout, so the class the stylesheet keys on is the
+  // assertion: the header carries the numeric modifier its cells carry.
+  const header = table.getByRole("columnheader", { name: /Total/ });
+  expect(header).toHaveClass("bg-table__th--num");
+  const cell = table.getByText("€1,512.50").closest("td");
+  expect(cell).toHaveClass("bg-table__cell--num");
 });
 
 /* ---- the record sheet, as a document ------------------------------------

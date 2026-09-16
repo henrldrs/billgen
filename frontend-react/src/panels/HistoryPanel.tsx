@@ -16,7 +16,6 @@ import {
   Field,
   Modal,
   Pagination,
-  Select,
   Skeleton,
   Table,
   Textarea,
@@ -26,6 +25,7 @@ import {
 } from "@henrioutai/ui";
 import {
   useClient,
+  useClients,
   useCompany,
   useDeleteInvoice,
   useInvoices,
@@ -37,7 +37,8 @@ import {
 import { ApiError } from "../lib/apiClient";
 import { documentFilename, saveBlob } from "../lib/download";
 import { formatDate, formatMoney } from "../lib/format";
-import { t, tPeppolError, type Lang } from "../lib/translations";
+import { daysOverdue } from "../lib/invoiceStatus";
+import { t, tf, tPeppolError, type Lang } from "../lib/translations";
 import { InvoiceDocument } from "./InvoiceDocument";
 import { useApi } from "../providers/BillGenProvider";
 import type { InvoiceResponse } from "../types";
@@ -47,9 +48,10 @@ export interface HistoryPanelProps {
   lang?: Lang;
   /**
    * Lock the list to one invoice status. Supplied by the /sales/invoices/:status
-   * routes, where the tab itself IS the filter — the in-panel dropdown is hidden
-   * so there are never two competing controls for the same thing. Mount with a
-   * `key` of the status so switching tabs remounts with the new seed.
+   * routes, where the tab IS the filter. The panel used to carry a Status
+   * select of its own for the unfiltered route, which put two controls for the
+   * same thing on one screen (T-45); the tabs are the only filter now. Mount
+   * with a `key` of the status so switching tabs remounts with the new seed.
    */
   status?: string;
   /** Open one invoice's full record screen. The sheet is the quick look at the
@@ -66,16 +68,6 @@ interface PendingAction {
   reference: string;
 }
 
-const STATUS_FILTERS = [
-  "",
-  "draft",
-  "issued",
-  "partially_paid",
-  "paid",
-  "overdue",
-  "voided",
-] as const;
-
 const PAGE_SIZE = 25;
 
 export function HistoryPanel({
@@ -84,12 +76,7 @@ export function HistoryPanel({
   status,
   onOpenInvoice,
 }: HistoryPanelProps) {
-  const routeFiltered = status !== undefined;
-  const [statusFilter, setStatusFilter] = useState(status ?? "");
-  const { data: invoices, isLoading, isError } = useInvoices({
-    companyId,
-    status: statusFilter || undefined,
-  });
+  const { data: invoices, isLoading, isError } = useInvoices({ companyId, status });
 
   const api = useApi();
   const voidInvoice = useVoidInvoice();
@@ -182,6 +169,16 @@ export function HistoryPanel({
   const { data: company } = useCompany(companyId);
   const { data: documentClient } = useClient(selected?.client_id);
 
+  // Who owes: the list carries client ids, and a receivables list that cannot
+  // be read for its debtor cannot be read for the one thing it is for. One
+  // company-wide fetch and an index, the same shape ReceivablesPanel uses.
+  const { data: clients } = useClients(companyId);
+  const clientName = useMemo(() => {
+    const index = new Map<string, string>();
+    for (const client of clients ?? []) index.set(client.id, client.name);
+    return (id: string) => index.get(id) ?? "—";
+  }, [clients]);
+
   const [sort, setSort] = useState<TableSort>({ key: "issue_date", direction: "desc" });
   const [page, setPage] = useState(1);
 
@@ -194,6 +191,11 @@ export function HistoryPanel({
           // Drafts have no number yet, so they sort together at one end rather
           // than interleaving with the numbered invoices.
           return row.reference ?? "";
+        case "client":
+          return clientName(row.client_id);
+        case "due_date":
+          // A draft may have no due date; it sorts last rather than first.
+          return row.due_date ?? "9999-12-31";
         case "total_ttc":
           return Number(row.total_ttc);
         case "status":
@@ -209,25 +211,44 @@ export function HistoryPanel({
       return (left < right ? -1 : 1) * direction;
     });
     return rows;
-  }, [invoices, sort]);
+  }, [invoices, sort, clientName]);
 
   const pageCount = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
   const visible = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+  // Reference · Client · Date · Due · Total · Status. Three drafts that all
+  // read "Draft" and differ only by amount was the old row (T-45); now the
+  // reference cell says what a draft lacks, and the debtor and the deadline
+  // are on the row because they are what a receivables list is read for.
   const columns: TableColumn<InvoiceResponse>[] = [
     {
       key: "reference",
       label: t(lang, "history.reference"),
       sortable: true,
-      render: (invoice) => (
-        <span className="bg-num">{invoice.reference ?? t(lang, "history.draft")}</span>
-      ),
+      render: (invoice) =>
+        invoice.reference ? (
+          <span className="bg-num">{invoice.reference}</span>
+        ) : (
+          <span className="bg-muted">{t(lang, "history.noNumber")}</span>
+        ),
+    },
+    {
+      key: "client",
+      label: t(lang, "invoice.client"),
+      sortable: true,
+      render: (invoice) => clientName(invoice.client_id),
     },
     {
       key: "issue_date",
       label: t(lang, "history.date"),
       sortable: true,
       render: (invoice) => formatDate(invoice.issue_date, lang),
+    },
+    {
+      key: "due_date",
+      label: t(lang, "reports.dueDate"),
+      sortable: true,
+      render: (invoice) => (invoice.due_date ? formatDate(invoice.due_date, lang) : "—"),
     },
     {
       key: "total_ttc",
@@ -240,14 +261,23 @@ export function HistoryPanel({
       key: "status",
       label: t(lang, "history.status"),
       sortable: true,
-      // OVERDUE is the one InvoiceStatus member Badge has no colour for; a warn
+      // Overdue is derived from the calendar, the way the server's reports
+      // derive it, and carries its age: "Issued" on a receivable 43 days late
+      // was the defect. It is the one state Badge has no colour for, so a warn
       // tone rather than an invented modifier class.
-      render: (invoice) =>
-        invoice.status === "overdue" ? (
-          <Badge tone="warn">{invoice.status}</Badge>
-        ) : (
-          <Badge status={invoice.status as never} />
-        ),
+      render: (invoice) => {
+        const late = daysOverdue(invoice);
+        if (late !== null) {
+          return (
+            <Badge tone="warn">
+              {late === 1
+                ? t(lang, "history.overdueDay")
+                : tf(lang, "history.overdueDays", { days: late })}
+            </Badge>
+          );
+        }
+        return <Badge status={invoice.status as never} />;
+      },
     },
   ];
 
@@ -275,26 +305,8 @@ export function HistoryPanel({
 
   return (
     <section className="bg-stack" aria-label={t(lang, "history.title")}>
-      {/* The route already renders a PageHeader with this title, so the panel
-          owns only its filter — two <h1>s on one screen was the old shape. */}
-      {routeFiltered ? null : (
-        <div className="bg-report__controls">
-          <Field label={t(lang, "history.status")}>
-            <Select
-              value={statusFilter}
-              options={STATUS_FILTERS.map((option) => ({
-                value: option,
-                label: option === "" ? t(lang, "history.all") : option,
-              }))}
-              onChange={(event) => {
-                setStatusFilter(event.target.value);
-                setPage(1);
-              }}
-            />
-          </Field>
-        </div>
-      )}
-
+      {/* The route renders the PageHeader and the status tabs; the panel owns
+          the list and the sheet, nothing above them. */}
       {downloadFailed ? (
         <Banner tone="danger" onDismiss={() => setDownloadFailed(false)}>
           {t(lang, "history.downloadError")}

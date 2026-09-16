@@ -167,6 +167,28 @@ const MESSAGES = {
   "history.reference": { en: "Reference", fr: "Référence", nl: "Referentie", es: "Referencia" },
   "history.date": { en: "Date", fr: "Date", nl: "Datum", es: "Fecha" },
   "history.total": { en: "Total", fr: "Total TTC", nl: "Totaal", es: "Total" },
+  // T-45 — the list names who owes, and by when. The Client and Due headers
+  //  reuse invoice.client and reports.dueDate. French and Dutch drafted without
+  //  a native read (SOLO_RUN § Boundaries).
+  "history.noNumber": {
+    en: "No number yet",
+    fr: "Pas encore de numéro",
+    nl: "Nog geen nummer",
+    es: "Sin número todavía",
+  },
+  "history.overdue": { en: "Overdue", fr: "En retard", nl: "Te laat", es: "Vencida" },
+  "history.overdueDays": {
+    en: "Overdue · {days} days",
+    fr: "En retard · {days} jours",
+    nl: "Te laat · {days} dagen",
+    es: "Vencida · {days} días",
+  },
+  "history.overdueDay": {
+    en: "Overdue · 1 day",
+    fr: "En retard · 1 jour",
+    nl: "Te laat · 1 dag",
+    es: "Vencida · 1 día",
+  },
   "history.actions": { en: "Actions", fr: "Actions", nl: "Acties", es: "Acciones" },
   "history.void": { en: "Void", fr: "Annuler", nl: "Annuleren", es: "Anular" },
   "history.duplicate": { en: "Duplicate", fr: "Dupliquer", nl: "Dupliceren", es: "Duplicar" },
