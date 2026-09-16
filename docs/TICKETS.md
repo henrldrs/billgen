@@ -38,28 +38,6 @@ wish, and the queue is not for wishes.
 same day: "all rest you start building". They sit above the launch tickets
 because each is a defect a first beta user meets on day one.*
 
-### T-46 · The navigation speaks the interface language
-    branch    Frontend              status  open
-    needs     —
-    why       With NL selected, headings say "Facturen" and "Klanten" while the
-              nav, breadcrumbs, status tabs ("Partially paid", "Sent",
-              "Viewed"), and status badges stay English — `scaffold/ia.ts`
-              labels are string literals, not translation keys. The activity
-              feed prints `document_template` and a bare `quote`. For a
-              compliance product a half-translated screen is a credibility
-              defect, not a cosmetic one.
-    do        `ia.ts` labels become keys resolved through `t()` at render;
-              `lib/translations` gains the keys in en/fr/nl (fr/nl marked for
-              Henri's native read — SOLO_RUN § Boundaries); `ActivityPanel.tsx`
-              maps entity types to words. Henri's ES screenshot the same day
-              adds two: the alerts card prints field names ("vat_number, iban,
-              address_line1") where it should name the fields, and counts are
-              not pluralised ("2 crítico", "0 liquidada(s)").
-    done when A test renders the shell under `nl` and finds none of the English
-              section/status labels in the nav or tabs; a guard test fails if a
-              literal `label: "…"` reappears in `ia.ts`; the activity test finds
-              no raw entity type.
-
 ### T-47 · The invoice sheet leads with the action its status calls for
     branch    Frontend / design system   status  open
     needs     —
@@ -1133,6 +1111,35 @@ because each is a defect a first beta user meets on day one.*
 ---
 
 ## Done
+
+### T-46 · The navigation speaks the interface language  ·  *feat: the navigation speaks the interface language*
+`ia.ts` declares no labels any more: 131 string literals became messages keyed
+`nav.<node key>`, and `navLabel(lang, key)` resolves them — the settings
+children through the `settings.label.*` entries the rail already had, the
+dashboard and settings sections through their titles, so no word exists twice.
+The English `label` every consumer of the tree reads (the ledger, the roadmap
+tables, the palette's keywords, the scaffold pages) is derived from the same
+table at module load, which is why `ROADMAP_IA.md` did not move. The top bar,
+its popups, the account menu, the palette's labels and section headers, the
+breadcrumbs, the section tiles, the page titles and the status tabs all read
+`navLabel`; the five status badges take a translated child through
+`statusLabel`; the activity feed names its record kinds (`tEntity`); the
+alerts card names fields (`tField`) and counts with both plural forms (`tn`
+over `key.one` / `key.other`), and `dashboard.paidCount` gained its second
+form. French and Dutch drafted without a native read — 117 nav names, 16
+record kinds, 13 field names, 8 counted phrases — flagged in the file for
+Henri. **Guards:** `ia.test.ts` fails on a literal `label: "` in `ia.ts`
+and on any node that lacks a name in any of the four languages;
+`navLanguage.test.tsx` mounts the real shell under `nl` and finds none of
+the English section or status words in the bar, the tabs, or the badges;
+the activity test finds no `document_template`; the alerts test finds
+"2 críticos" and "Número de IVA" where "2 crítico" and `vat_number` were.
+**Seen in the browser** on the desktop pair under NL: Dashboard · Verkoop ·
+Klanten · Catalogus · Rapporten; "Verkoop › Facturen"; Concepten ·
+Uitgegeven · Betaald · Deels betaald · Te laat · Geannuleerd; badges
+"Concept", "Betaald", "Te laat · 44 dagen". Left English on purpose: the
+scaffold kit's pages (dev builds only) and the design system's own
+`STATUS_LABELS`, which every panel now overrides. 243 frontend tests.
 
 ### T-51 · The Overdue tab has always been empty  ·  *fix: the Overdue tab has something in it*
 Found under T-45. `InvoiceStatus.OVERDUE` was a member nothing ever assigned:

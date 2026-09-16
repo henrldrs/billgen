@@ -74,7 +74,7 @@ test("each code becomes a sentence with its numbers, worst first, and the action
   renderWithProvider(<AlertsPanel companyId={COMPANY_ID} today="2026-09-15" onOpen={onOpen} />);
 
   expect(await screen.findByText("Overdue by 45 days — €1,512.50 still open")).toBeInTheDocument();
-  expect(screen.getByText("Company identifiers to fix: vat_number · Missing for Peppol: iban")).toBeInTheDocument();
+  expect(screen.getByText("Company identifiers to fix: VAT number · Missing for Peppol: IBAN")).toBeInTheDocument();
   expect(screen.getByText(/Business client without a VAT number/)).toBeInTheDocument();
   expect(screen.getByText("Draft untouched for 76 days — €250.00")).toBeInTheDocument();
 
@@ -117,4 +117,21 @@ test("a code the UI does not know still shows its title and the code", async () 
   expect(await screen.findByText("ACME-2026/0009")).toBeInTheDocument();
   expect(screen.getByText("invoice.something_new")).toBeInTheDocument();
   expect(screen.getByText("À traiter")).toBeInTheDocument();
+});
+
+test("the counts are pluralised and the fields are named — Henri's ES screenshot", async () => {
+  // "2 crítico" and "vat_number, iban" were the two defects T-46 lists.
+  server.use(alerts({ counts_by_severity: { critical: 2, warning: 1, info: 3 } }));
+
+  renderWithProvider(<AlertsPanel companyId={COMPANY_ID} lang="es" today="2026-09-15" />);
+
+  // The rows arrive with the data; the title is on screen before it.
+  expect(await screen.findByText(/Número de IVA/)).toBeInTheDocument();
+  expect(screen.getByText(/IBAN/)).toBeInTheDocument();
+  expect(screen.queryByText(/vat_number/)).not.toBeInTheDocument();
+
+  const header = screen.getByText("Qué requiere atención").closest(".bg-card__header") as HTMLElement;
+  expect(within(header).getByText("2 críticos")).toBeInTheDocument();
+  expect(within(header).getByText("1 aviso")).toBeInTheDocument();
+  expect(within(header).getByText("3 notas")).toBeInTheDocument();
 });

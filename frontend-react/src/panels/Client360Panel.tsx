@@ -54,7 +54,7 @@ import {
   formatMoney,
 } from "../lib/format";
 import { documentFilename, saveBlob } from "../lib/download";
-import { t, type Lang } from "../lib/translations";
+import { statusLabel, t, type Lang } from "../lib/translations";
 import { findByPath } from "../scaffold/ia";
 import {
   ScaffoldBlock,
@@ -384,7 +384,9 @@ function InvoiceHistory({
       label: t(lang, "history.status"),
       render: (row) =>
         BADGE_STATUS.has(row.status) ? (
-          <Badge status={row.status as "draft" | "issued" | "paid" | "partially_paid" | "voided"} />
+          <Badge status={row.status as "draft" | "issued" | "paid" | "partially_paid" | "voided"}>
+            {statusLabel(lang, row.status)}
+          </Badge>
         ) : (
           <Badge tone="neutral">{row.status}</Badge>
         ),

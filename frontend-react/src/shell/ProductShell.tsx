@@ -50,7 +50,9 @@ import {
   TopNav,
   UpgradeIcon,
   alertsOffered,
+  navLabel,
   t,
+  tf,
   useAlerts,
   useCompanies,
   useLang,
@@ -312,7 +314,7 @@ export function ProductShell({ surface, exposure = "all", account }: PlatformAda
     const to = toHref(section.path);
     const label = (
       <>
-        {section.key === "dashboard" ? t(lang, "dashboard.title") : section.label}
+        {navLabel(lang, section.key)}
         {marker(section.status)}
       </>
     );
@@ -338,12 +340,12 @@ export function ProductShell({ surface, exposure = "all", account }: PlatformAda
         // than navigating, so without this the overview is unreachable.
         {
           key: `${section.key}:overview`,
-          label: `${section.label} overview`,
+          label: tf(lang, "nav.overview", { section: navLabel(lang, section.key) }),
           onSelect: () => navigate(to),
         },
         ...subPages.map((child) => ({
           key: child.key,
-          label: child.label,
+          label: navLabel(lang, child.key),
           // The same marker the nav uses, so an unfinished destination is
           // legible before you click it rather than after.
           hint: marker(child.status),
@@ -399,7 +401,7 @@ export function ProductShell({ surface, exposure = "all", account }: PlatformAda
       key: "new-invoice",
       label: t(lang, "invoice.title"),
       icon: <PlusIcon />,
-      section: "Create",
+      section: t(lang, "palette.sectionCreate"),
       keywords: "new invoice bill create facture",
       onRun: () => {
         setPaletteOpen(false);
@@ -419,10 +421,12 @@ export function ProductShell({ surface, exposure = "all", account }: PlatformAda
           // CommandPalette interpolates label into its substring filter, so this
           // stays a plain string — the status rides along as searchable text
           // ("partial", "no backend") rather than as a marker node.
-          label: `${node.label}${exposure === "all" ? STATUS_SUFFIX[node.status] : ""}`,
+          label: `${navLabel(lang, node.key)}${exposure === "all" ? STATUS_SUFFIX[node.status] : ""}`,
           icon: sectionIcon[section.key],
-          section: section === node ? "Go to" : section.label,
-          keywords: `${section.label} ${node.label} ${node.path ?? ""} ${node.status}`,
+          section: section === node ? t(lang, "palette.sectionGoTo") : navLabel(lang, section.key),
+          // The English names ride along as keywords: "invoices" still finds
+          // Facturen, which is what a bilingual office types.
+          keywords: `${navLabel(lang, section.key)} ${navLabel(lang, node.key)} ${section.label} ${node.label} ${node.path ?? ""} ${node.status}`,
           onRun: () => {
             setPaletteOpen(false);
             navigate(toHref(node.path));
@@ -437,7 +441,7 @@ export function ProductShell({ surface, exposure = "all", account }: PlatformAda
   const accountItems: MenuEntry[] = [
     ...secondary.map((section) => ({
       key: section.key,
-      label: section.label,
+      label: navLabel(lang, section.key),
       icon: section.key === "company" ? <CompanyIcon /> : undefined,
       onSelect: () => navigate(toHref(section.path)),
     })),

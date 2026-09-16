@@ -65,7 +65,7 @@ import {
 import { ApiError } from "../lib/apiClient";
 import { documentFilename, saveBlob } from "../lib/download";
 import { formatDate, formatMoney } from "../lib/format";
-import { t, tAuditAction, tPeppolError, type Lang } from "../lib/translations";
+import { statusLabel, t, tAuditAction, tPeppolError, type Lang } from "../lib/translations";
 import { useApi } from "../providers/BillGenProvider";
 import { findByPath } from "../scaffold/ia";
 import { ScaffoldBlock, ScaffoldButton, ScaffoldNote } from "../scaffold/Scaffold";
@@ -475,7 +475,9 @@ function SummaryRail({
               record.status === "overdue" ? (
                 <Badge tone="warn">{record.status}</Badge>
               ) : (
-                <Badge status={record.status as "draft" | "issued" | "paid"} />
+                <Badge status={record.status as "draft" | "issued" | "paid"}>
+                  {statusLabel(lang, record.status)}
+                </Badge>
               ),
           },
           {

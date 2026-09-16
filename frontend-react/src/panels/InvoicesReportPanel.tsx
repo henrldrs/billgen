@@ -40,7 +40,7 @@ import {
 
 import { useInvoiceReport } from "../hooks/queries";
 import { formatMoney, monthName } from "../lib/format";
-import { t, type Lang } from "../lib/translations";
+import { statusLabel, t, type Lang } from "../lib/translations";
 import type { StatusBucketResponse } from "../types";
 import { MonthlyRevenueChart } from "./RevenueReportPanel";
 import { usePeriodPicker } from "./PeriodPicker";
@@ -89,7 +89,9 @@ export function InvoicesReportPanel({
         row.status === "overdue" ? (
           <Badge tone="warn">{row.status}</Badge>
         ) : (
-          <Badge status={row.status as "issued" | "paid" | "draft"} />
+          <Badge status={row.status as "issued" | "paid" | "draft"}>
+            {statusLabel(lang, row.status)}
+          </Badge>
         ),
     },
     {

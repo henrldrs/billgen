@@ -22,7 +22,7 @@ import {
 } from "@henrioutai/ui";
 
 import { useActivity } from "../hooks/queries";
-import { t, tAuditAction, type Lang } from "../lib/translations";
+import { t, tAuditAction, tEntity, type Lang } from "../lib/translations";
 import type { ActivityEntryResponse } from "../types";
 
 const PAGE_SIZE = 25;
@@ -63,7 +63,8 @@ export function ActivityPanel({
     {
       key: "target_type",
       label: t(lang, "activity.target"),
-      render: (entry) => entry.target_type,
+      // The wire says `document_template`; a person reads a word (T-46).
+      render: (entry) => tEntity(lang, entry.target_type),
     },
     {
       key: "timestamp",

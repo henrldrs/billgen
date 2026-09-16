@@ -40,7 +40,7 @@ import {
 
 import { useActivity, useKpi, useRevenue, useVatReport } from "../hooks/queries";
 import { formatMoney, monthName } from "../lib/format";
-import { t, tAuditAction, tf, type Lang } from "../lib/translations";
+import { t, tAuditAction, tf, tn, type Lang } from "../lib/translations";
 import type { ActivityEntryResponse } from "../types";
 import { MonthlyRevenueChart } from "./RevenueReportPanel";
 
@@ -191,7 +191,7 @@ export function DashboardPanel({
           <KpiCard
             label={t(lang, "dashboard.paid")}
             value={formatMoney(kpi.data?.paid_total ?? 0, currency, lang)}
-            hint={tf(lang, "dashboard.paidCount", { n: counts.paid ?? 0 })}
+            hint={tn(lang, "dashboard.paidCount", counts.paid ?? 0)}
           />
           <KpiCard
             label={t(lang, "dashboard.outstanding")}

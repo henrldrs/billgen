@@ -30,7 +30,7 @@ import {
 import { useClients, useInvoices, useKpi } from "../hooks/queries";
 import { formatDate, formatMoney } from "../lib/format";
 import { daysOverdue } from "../lib/invoiceStatus";
-import { t, tf, type Lang } from "../lib/translations";
+import { statusLabel, t, tf, type Lang } from "../lib/translations";
 import type { InvoiceResponse } from "../types";
 
 const PAGE_SIZE = 25;
@@ -166,7 +166,11 @@ export function ReceivablesPanel({
         if (row.status === "overdue") {
           return <Badge tone="warn">{t(lang, "history.overdue")}</Badge>;
         }
-        return <Badge status={row.status as "issued" | "partially_paid"} />;
+        return (
+          <Badge status={row.status as "issued" | "partially_paid"}>
+            {statusLabel(lang, row.status)}
+          </Badge>
+        );
       },
     },
     {

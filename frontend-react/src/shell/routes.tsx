@@ -58,6 +58,7 @@ import {
   iaTrail,
   isExposed,
   routableNodes,
+  navLabel,
   t,
   useCompanies,
   type IaNode,
@@ -74,13 +75,10 @@ import type { ShellContext } from "./ProductShell";
 
 /** A settings node's label and description in the interface language.
  *
- *  The IA's labels are English and are the ledger's; the rail, the tiles and
- *  the page titles read these instead when a translation exists, and fall
- *  back to the ledger's word when it does not — an untranslated section is a
- *  section with an English name, never a blank. */
+ *  The label is `navLabel`, like every other node's since T-46 — it reads the
+ *  `settings.label.*` entries this function used to read itself. */
 function settingsLabel(lang: Lang, node: IaNode): string {
-  const key = `settings.label.${node.key.replace(/^settings\./, "")}`;
-  return hasMessage(key) ? t(lang, key) : node.label;
+  return navLabel(lang, node.key);
 }
 function settingsDescription(lang: Lang, node: IaNode): string | undefined {
   const key = `settings.desc.${node.key.replace(/^settings\./, "")}`;
@@ -154,15 +152,11 @@ function IaScreen({ node }: { node: IaNode }) {
 function IaBreadcrumbs({ node }: { node: IaNode }) {
   const navigate = useNavigate();
   const { lang } = useOutletContext<ShellContext>();
-  //  The settings section reads in the interface language everywhere else
-  //  (rail, tiles, titles); its trail should not be the one place it does not.
-  const trail = iaTrail(node.path as string).map((entry) =>
-    entry.key === "settings"
-      ? { ...entry, label: t(lang, "settings.title") }
-      : entry.key.startsWith("settings.")
-        ? { ...entry, label: settingsLabel(lang, entry) }
-        : entry,
-  );
+  //  In the interface language, like the nav that led here (T-46).
+  const trail = iaTrail(node.path as string).map((entry) => ({
+    ...entry,
+    label: navLabel(lang, entry.key),
+  }));
 
   // A one-item trail is the dashboard: "Dashboard ›" and nothing else is noise.
   if (trail.length < 2) return null;
@@ -267,7 +261,7 @@ function SectionIndex({ node, lang, exposure }: ScreenProps) {
     return (
       <>
         <PageHeader
-          title={isSettings ? t(lang, "settings.title") : node.label}
+          title={navLabel(lang, node.key)}
           subtitle={isSettings ? t(lang, "settings.intro") : undefined}
         />
         <div className="bg-settings-grid">
@@ -281,7 +275,7 @@ function SectionIndex({ node, lang, exposure }: ScreenProps) {
                 onClick={() => navigate(`/app/${child.path}`)}
               >
                 <span className="bg-settings-tile__label">
-                  {isSettings ? settingsLabel(lang, child) : child.label}
+                  {navLabel(lang, child.key)}
                 </span>
                 {isSettings && settingsDescription(lang, child) ? (
                   <span className="bg-settings-tile__desc">{settingsDescription(lang, child)}</span>
@@ -296,14 +290,14 @@ function SectionIndex({ node, lang, exposure }: ScreenProps) {
   return (
     <>
       <PageHeader
-        title={node.label}
+        title={navLabel(lang, node.key)}
         subtitle={`${stats.wired} of ${stats.total} areas fully wired`}
       />
       <Card padded={false}>
         <List
           items={children.map((child) => ({
             key: child.key,
-            primary: child.label,
+            primary: navLabel(lang, child.key),
             secondary: child.note ?? child.endpoints?.join(" · "),
             trailing:
               child.status === "wired" ? (
@@ -388,10 +382,10 @@ function InvoicesScreen({ node, companyId, lang }: ScreenProps) {
       <Tabs
         items={[
           { key: "sales/invoices", label: t(lang, "history.all") },
-          ...tabs.map((tab) => ({ key: tab.path as string, label: tab.label })),
+          ...tabs.map((tab) => ({ key: tab.path as string, label: navLabel(lang, tab.key) })),
           ...unwired.map((tab) => ({
             key: tab.path as string,
-            label: tab.label,
+            label: navLabel(lang, tab.key),
             // Sent and Viewed have no InvoiceStatus behind them. Disabled here
             // rather than hidden, so the missing lifecycle stays visible.
             disabled: true,
@@ -425,7 +419,7 @@ function CompanyScreen({ node, companyId, lang }: ScreenProps) {
         companyId={companyId}
         section="all"
         lang={lang}
-        title={node.label}
+        title={navLabel(lang, node.key)}
       />
       {companies && companies.length > 1 ? (
         <Card title="Companies">
@@ -496,7 +490,7 @@ const BUILT: Record<string, Screen> = {
     const navigate = useNavigate();
     return (
       <>
-        <PageHeader title={node.label} />
+        <PageHeader title={navLabel(lang, node.key)} />
         <CreditNotesPanel
           companyId={companyId}
           lang={lang}
@@ -578,7 +572,7 @@ const BUILT: Record<string, Screen> = {
     <ActivityPanel
       lang={lang}
       targetType="client"
-      title={node.label}
+      title={navLabel(lang, node.key)}
       hint={t(lang, "activity.clientHint")}
     />
   ),
@@ -587,7 +581,7 @@ const BUILT: Record<string, Screen> = {
   // products stay scaffolded: each names the endpoint it is waiting for.
   "reports/revenue": ({ node, companyId, lang }) => (
     <>
-      <PageHeader title={node.label} />
+      <PageHeader title={navLabel(lang, node.key)} />
       <RevenueReportPanel companyId={companyId} lang={lang} />
     </>
   ),
@@ -595,7 +589,7 @@ const BUILT: Record<string, Screen> = {
     const navigate = useNavigate();
     return (
       <>
-        <PageHeader title={node.label} />
+        <PageHeader title={navLabel(lang, node.key)} />
         <ReceivablesPanel
           companyId={companyId}
           mode="outstanding"
@@ -609,7 +603,7 @@ const BUILT: Record<string, Screen> = {
     const navigate = useNavigate();
     return (
       <>
-        <PageHeader title={node.label} />
+        <PageHeader title={navLabel(lang, node.key)} />
         <ReceivablesPanel
           companyId={companyId}
           mode="overdue"

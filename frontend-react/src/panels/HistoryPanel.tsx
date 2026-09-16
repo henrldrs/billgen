@@ -38,7 +38,7 @@ import { ApiError } from "../lib/apiClient";
 import { documentFilename, saveBlob } from "../lib/download";
 import { formatDate, formatMoney } from "../lib/format";
 import { daysOverdue } from "../lib/invoiceStatus";
-import { t, tf, tPeppolError, type Lang } from "../lib/translations";
+import { statusLabel, t, tPeppolError, tf, type Lang } from "../lib/translations";
 import { InvoiceDocument } from "./InvoiceDocument";
 import { useApi } from "../providers/BillGenProvider";
 import type { InvoiceResponse } from "../types";
@@ -281,7 +281,7 @@ export function HistoryPanel({
           // backup could — still reads as what it is rather than as nothing.
           return <Badge tone="warn">{t(lang, "history.overdue")}</Badge>;
         }
-        return <Badge status={invoice.status as never} />;
+        return <Badge status={invoice.status as never}>{statusLabel(lang, invoice.status)}</Badge>;
       },
     },
   ];

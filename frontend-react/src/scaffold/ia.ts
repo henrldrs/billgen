@@ -37,6 +37,8 @@
  *  ago — which has already happened twice.
  */
 
+import { navLabel } from "../lib/translations";
+
 export type BackendStatus = "wired" | "partial" | "none";
 
 /** Which of the six roadmap layers a node belongs to (see docs/ROADMAP_IA.md). */
@@ -100,11 +102,20 @@ export interface IaSection extends IaNode {
   children: IaNode[];
 }
 
-export const IA: IaSection[] = [
+/** The tree as authored: everything but the label.
+ *
+ *  A node's name is a message keyed by its key — `nav.sales.invoices` — so
+ *  the shells render it in the interface language and a node cannot be added
+ *  with an English-only name (T-46). `label` still exists on every node: it
+ *  is the English one, filled in below for the ledger, the roadmap tables and
+ *  the palette's searchable keywords, which are English by design. */
+type IaNodeSpec = Omit<IaNode, "label" | "children"> & { children?: IaNodeSpec[] };
+type IaSectionSpec = Omit<IaSection, "label" | "children"> & { children: IaNodeSpec[] };
+
+const SPEC: IaSectionSpec[] = [
   // ---------------------------------------------------------------- dashboard
   {
     key: "dashboard",
-    label: "Dashboard",
     path: "",
     status: "partial",
     layer: "L1",
@@ -113,49 +124,42 @@ export const IA: IaSection[] = [
     children: [
       {
         key: "dashboard.overview",
-        label: "Financial overview",
         status: "wired",
         layer: "L1",
         endpoints: ["GET /reports/kpi"],
       },
       {
         key: "dashboard.revenue",
-        label: "Revenue",
         status: "wired",
         layer: "L1",
         endpoints: ["GET /reports/revenue"],
       },
       {
         key: "dashboard.outstanding",
-        label: "Outstanding invoices",
         status: "wired",
         layer: "L1",
         endpoints: ["GET /reports/kpi"],
       },
       {
         key: "dashboard.overdue",
-        label: "Overdue invoices",
         status: "wired",
         layer: "L1",
         endpoints: ["GET /reports/kpi", "GET /invoices?status=overdue"],
       },
       {
         key: "dashboard.activity",
-        label: "Recent activity",
         status: "wired",
         layer: "L1",
         endpoints: ["GET /activity?limit"],
       },
       {
         key: "dashboard.quickactions",
-        label: "Quick actions",
         status: "wired",
         layer: "L1",
         note: "Pure client-side navigation — needs no endpoint.",
       },
       {
         key: "dashboard.alerts",
-        label: "Alerts & tasks",
         status: "wired",
         layer: "L2",
         endpoints: ["GET /alerts?company_id&today&limit"],
@@ -167,7 +171,6 @@ export const IA: IaSection[] = [
   // -------------------------------------------------------------------- sales
   {
     key: "sales",
-    label: "Sales",
     path: "sales",
     status: "partial",
     layer: "L1",
@@ -175,7 +178,6 @@ export const IA: IaSection[] = [
     children: [
       {
         key: "sales.invoices",
-        label: "Invoices",
         path: "sales/invoices",
         status: "wired",
         layer: "L1",
@@ -192,7 +194,6 @@ export const IA: IaSection[] = [
         children: [
           {
             key: "sales.invoices.draft",
-            label: "Drafts",
             path: "sales/invoices/draft",
             status: "wired",
             layer: "L1",
@@ -200,7 +201,6 @@ export const IA: IaSection[] = [
           },
           {
             key: "sales.invoices.issued",
-            label: "Issued",
             path: "sales/invoices/issued",
             status: "wired",
             layer: "L1",
@@ -208,7 +208,6 @@ export const IA: IaSection[] = [
           },
           {
             key: "sales.invoices.sent",
-            label: "Sent",
             path: "sales/invoices/sent",
             status: "none",
             layer: "L2",
@@ -221,7 +220,6 @@ export const IA: IaSection[] = [
           },
           {
             key: "sales.invoices.viewed",
-            label: "Viewed",
             path: "sales/invoices/viewed",
             status: "none",
             layer: "L2",
@@ -234,7 +232,6 @@ export const IA: IaSection[] = [
           },
           {
             key: "sales.invoices.paid",
-            label: "Paid",
             path: "sales/invoices/paid",
             status: "wired",
             layer: "L1",
@@ -242,7 +239,6 @@ export const IA: IaSection[] = [
           },
           {
             key: "sales.invoices.partial",
-            label: "Partially paid",
             path: "sales/invoices/partially_paid",
             status: "wired",
             layer: "L1",
@@ -250,7 +246,6 @@ export const IA: IaSection[] = [
           },
           {
             key: "sales.invoices.overdue",
-            label: "Overdue",
             path: "sales/invoices/overdue",
             status: "wired",
             layer: "L1",
@@ -258,7 +253,6 @@ export const IA: IaSection[] = [
           },
           {
             key: "sales.invoices.voided",
-            label: "Cancelled",
             path: "sales/invoices/voided",
             status: "wired",
             layer: "L1",
@@ -269,7 +263,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "sales.invoice.detail",
-        label: "Invoice detail & lifecycle",
         path: "sales/invoices/id/:invoiceId",
         nav: false,
         status: "partial",
@@ -291,7 +284,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "sales.creditnotes",
-        label: "Credit notes",
         path: "sales/credit-notes",
         status: "wired",
         layer: "L2",
@@ -304,7 +296,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "sales.recurring",
-        label: "Recurring invoices",
         path: "sales/recurring",
         status: "none",
         layer: "L2",
@@ -317,7 +308,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "sales.quotes",
-        label: "Quotes",
         path: "sales/quotes",
         status: "none",
         layer: "L2",
@@ -334,7 +324,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "sales.proforma",
-        label: "Pro-forma invoices",
         path: "sales/proforma",
         status: "none",
         layer: "L2",
@@ -343,7 +332,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "sales.reminders",
-        label: "Payment reminders",
         path: "sales/reminders",
         status: "none",
         layer: "L2",
@@ -359,7 +347,6 @@ export const IA: IaSection[] = [
   // ---------------------------------------------------------------- customers
   {
     key: "customers",
-    label: "Clients",
     path: "customers",
     status: "partial",
     layer: "L1",
@@ -367,7 +354,6 @@ export const IA: IaSection[] = [
     children: [
       {
         key: "customers.clients",
-        label: "Clients",
         path: "customers/clients",
         status: "wired",
         layer: "L1",
@@ -380,7 +366,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "customers.detail",
-        label: "Client 360",
         path: "customers/clients/:clientId",
         nav: false,
         status: "partial",
@@ -400,7 +385,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "customers.contacts",
-        label: "Contacts",
         path: "customers/contacts",
         nav: false,
         mergedInto: "customers/clients",
@@ -411,7 +395,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "customers.groups",
-        label: "Client groups",
         path: "customers/groups",
         status: "none",
         layer: "L2",
@@ -419,7 +402,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "customers.history",
-        label: "Client history",
         path: "customers/history",
         nav: false,
         mergedInto: "customers/clients",
@@ -430,7 +412,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "customers.documents",
-        label: "Client documents",
         path: "customers/documents",
         nav: false,
         mergedInto: "customers/clients",
@@ -441,7 +422,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "customers.activity",
-        label: "Client activity",
         path: "customers/activity",
         nav: false,
         status: "wired",
@@ -455,7 +435,6 @@ export const IA: IaSection[] = [
   // ------------------------------------------------------------------ catalog
   {
     key: "catalog",
-    label: "Catalog",
     path: "catalog",
     status: "partial",
     layer: "L1",
@@ -463,7 +442,6 @@ export const IA: IaSection[] = [
     children: [
       {
         key: "catalog.products",
-        label: "Products",
         path: "catalog/products",
         status: "wired",
         layer: "L1",
@@ -476,7 +454,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "catalog.services",
-        label: "Services",
         path: "catalog/services",
         status: "partial",
         layer: "L1",
@@ -486,7 +463,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "catalog.categories",
-        label: "Categories",
         path: "catalog/categories",
         status: "partial",
         layer: "L2",
@@ -496,7 +472,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "catalog.pricing",
-        label: "Pricing",
         path: "catalog/pricing",
         status: "partial",
         layer: "L2",
@@ -505,7 +480,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "catalog.vat",
-        label: "VAT rates",
         path: "catalog/vat",
         status: "partial",
         layer: "L2",
@@ -514,7 +488,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "catalog.templates",
-        label: "Invoice templates",
         path: "catalog/templates",
         status: "wired",
         layer: "L2",
@@ -532,7 +505,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "catalog.archived",
-        label: "Archived",
         path: "catalog/archived",
         status: "wired",
         layer: "L2",
@@ -545,7 +517,6 @@ export const IA: IaSection[] = [
   // ---------------------------------------------------------------- reporting
   {
     key: "reports",
-    label: "Reports",
     path: "reports",
     status: "partial",
     layer: "L2",
@@ -553,7 +524,6 @@ export const IA: IaSection[] = [
     children: [
       {
         key: "reports.revenue",
-        label: "Revenue",
         path: "reports/revenue",
         status: "wired",
         layer: "L2",
@@ -561,7 +531,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "reports.invoices",
-        label: "Invoices",
         path: "reports/invoices",
         status: "wired",
         layer: "L2",
@@ -570,7 +539,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "reports.payments",
-        label: "Payments",
         path: "reports/payments",
         status: "wired",
         layer: "L2",
@@ -584,7 +552,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "reports.outstanding",
-        label: "Outstanding",
         path: "reports/outstanding",
         status: "wired",
         layer: "L2",
@@ -592,7 +559,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "reports.overdue",
-        label: "Overdue",
         path: "reports/overdue",
         status: "wired",
         layer: "L2",
@@ -600,7 +566,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "reports.vat",
-        label: "VAT",
         path: "reports/vat",
         status: "partial",
         layer: "L2",
@@ -610,7 +575,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "reports.clients",
-        label: "Clients",
         path: "reports/clients",
         status: "none",
         layer: "L2",
@@ -620,7 +584,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "reports.products",
-        label: "Products & services",
         path: "reports/products",
         status: "none",
         layer: "L2",
@@ -629,7 +592,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "reports.export",
-        label: "Export",
         path: "reports/export",
         status: "partial",
         layer: "L2",
@@ -643,7 +605,6 @@ export const IA: IaSection[] = [
   // ------------------------------------------------------------------ company
   {
     key: "company",
-    label: "Company",
     path: "company",
     status: "partial",
     layer: "L1",
@@ -651,7 +612,6 @@ export const IA: IaSection[] = [
     children: [
       {
         key: "company.profile",
-        label: "Company profile",
         path: "company/profile",
         nav: false,
         mergedInto: "company",
@@ -662,7 +622,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "company.legal",
-        label: "Legal information",
         path: "company/legal",
         nav: false,
         mergedInto: "company",
@@ -673,7 +632,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "company.vat",
-        label: "VAT / BCE information",
         path: "company/vat",
         nav: false,
         mergedInto: "company",
@@ -684,7 +642,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "company.bank",
-        label: "Bank accounts",
         path: "company/bank",
         nav: false,
         mergedInto: "company",
@@ -696,7 +653,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "company.numbering",
-        label: "Invoice numbering",
         path: "company/numbering",
         nav: false,
         mergedInto: "company",
@@ -707,7 +663,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "company.payment-terms",
-        label: "Payment conditions",
         path: "company/payment-terms",
         nav: false,
         mergedInto: "company",
@@ -717,7 +672,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "company.branding",
-        label: "Branding",
         path: "company/branding",
         nav: false,
         mergedInto: "company",
@@ -728,7 +682,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "company.defaults",
-        label: "Invoice defaults",
         path: "company/defaults",
         nav: false,
         mergedInto: "company",
@@ -740,7 +693,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "company.documents",
-        label: "Company documents",
         path: "company/documents",
         nav: false,
         mergedInto: "company",
@@ -754,7 +706,6 @@ export const IA: IaSection[] = [
   // ------------------------------------------------------------------ billing
   {
     key: "billing",
-    label: "Billing",
     path: "billing",
     status: "partial",
     layer: "L3",
@@ -762,7 +713,6 @@ export const IA: IaSection[] = [
     children: [
       {
         key: "billing.subscription",
-        label: "My subscription",
         path: "billing/subscription",
         status: "none",
         layer: "L3",
@@ -770,7 +720,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "billing.plan",
-        label: "Current plan",
         path: "billing/plan",
         status: "wired",
         layer: "L3",
@@ -779,7 +728,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "billing.usage",
-        label: "Usage",
         path: "billing/usage",
         status: "wired",
         layer: "L3",
@@ -788,7 +736,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "billing.invoices",
-        label: "Invoices from BillGen",
         path: "billing/invoices",
         status: "none",
         layer: "L3",
@@ -796,7 +743,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "billing.payment-method",
-        label: "Payment method",
         path: "billing/payment-method",
         status: "none",
         layer: "L3",
@@ -804,7 +750,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "billing.history",
-        label: "Billing history",
         path: "billing/history",
         status: "none",
         layer: "L3",
@@ -812,7 +757,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "billing.change-plan",
-        label: "Upgrade / downgrade",
         path: "billing/change-plan",
         status: "none",
         layer: "L3",
@@ -820,7 +764,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "billing.cancel",
-        label: "Cancellation",
         path: "billing/cancel",
         status: "none",
         layer: "L3",
@@ -832,7 +775,6 @@ export const IA: IaSection[] = [
   // ---------------------------------------------------------------- documents
   {
     key: "documents",
-    label: "Documents",
     path: "documents",
     status: "none",
     layer: "L2",
@@ -840,7 +782,6 @@ export const IA: IaSection[] = [
     children: [
       {
         key: "documents.all",
-        label: "All documents",
         path: "documents/all",
         status: "none",
         layer: "L2",
@@ -848,7 +789,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "documents.folders",
-        label: "Folders",
         path: "documents/folders",
         status: "none",
         layer: "L2",
@@ -856,7 +796,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "documents.invoice-attachments",
-        label: "Invoice attachments",
         path: "documents/invoice-attachments",
         status: "none",
         layer: "L2",
@@ -864,7 +803,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "documents.client",
-        label: "Client documents",
         path: "documents/client",
         status: "none",
         layer: "L2",
@@ -872,7 +810,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "documents.company",
-        label: "Company documents",
         path: "documents/company",
         status: "none",
         layer: "L2",
@@ -880,7 +817,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "documents.archived",
-        label: "Archived",
         path: "documents/archived",
         status: "none",
         layer: "L2",
@@ -888,7 +824,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "documents.trash",
-        label: "Trash",
         path: "documents/trash",
         status: "none",
         layer: "L4",
@@ -901,7 +836,6 @@ export const IA: IaSection[] = [
   // ------------------------------------------------------------------ explore
   {
     key: "explore",
-    label: "Explore",
     path: "explore",
     status: "none",
     layer: "L6",
@@ -909,7 +843,6 @@ export const IA: IaSection[] = [
     children: [
       {
         key: "explore.search",
-        label: "Global search",
         path: "explore/search",
         status: "none",
         layer: "L6",
@@ -918,7 +851,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "explore.filters",
-        label: "Advanced filters",
         path: "explore/filters",
         status: "partial",
         layer: "L6",
@@ -927,7 +859,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "explore.saved",
-        label: "Saved searches",
         path: "explore/saved",
         status: "none",
         layer: "L6",
@@ -935,7 +866,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "explore.documents",
-        label: "Document search",
         path: "explore/documents",
         status: "none",
         layer: "L6",
@@ -943,7 +873,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "explore.activity",
-        label: "Activity search",
         path: "explore/activity",
         status: "partial",
         layer: "L6",
@@ -956,14 +885,12 @@ export const IA: IaSection[] = [
   // ----------------------------------------------------------------- activity
   {
     key: "activity",
-    label: "Activity",
     path: "activity",
     status: "partial",
     layer: "L1",
     children: [
       {
         key: "activity.notifications",
-        label: "Notifications",
         path: "activity/notifications",
         status: "none",
         layer: "L3",
@@ -972,7 +899,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "activity.audit",
-        label: "Audit log",
         path: "activity/audit",
         status: "wired",
         layer: "L1",
@@ -980,7 +906,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "activity.user",
-        label: "User activity",
         path: "activity/user",
         status: "wired",
         layer: "L4",
@@ -989,7 +914,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "activity.security",
-        label: "Security events",
         path: "activity/security",
         status: "wired",
         layer: "L4",
@@ -999,7 +923,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "activity.system",
-        label: "System events",
         path: "activity/system",
         status: "none",
         layer: "L4",
@@ -1012,14 +935,12 @@ export const IA: IaSection[] = [
   // ----------------------------------------------------------------- settings
   {
     key: "settings",
-    label: "Settings",
     path: "settings",
     status: "partial",
     layer: "L1",
     children: [
       {
         key: "settings.account",
-        label: "Account",
         path: "settings/account",
         status: "partial",
         layer: "L3",
@@ -1029,7 +950,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "settings.team",
-        label: "Users & permissions",
         path: "settings/team",
         status: "none",
         layer: "L3",
@@ -1042,7 +962,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "settings.security",
-        label: "Security",
         path: "settings/security",
         status: "partial",
         layer: "L4",
@@ -1056,7 +975,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "settings.notifications",
-        label: "Notification preferences",
         path: "settings/notifications",
         status: "none",
         layer: "L3",
@@ -1064,7 +982,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "settings.email",
-        label: "Email",
         path: "settings/email",
         status: "none",
         layer: "L3",
@@ -1073,7 +990,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "settings.integrations",
-        label: "Integrations",
         path: "settings/integrations",
         status: "partial",
         layer: "L5",
@@ -1089,7 +1005,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "settings.privacy",
-        label: "Data & privacy",
         path: "settings/privacy",
         status: "partial",
         layer: "L4",
@@ -1109,7 +1024,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "settings.cookies",
-        label: "Cookie preferences",
         path: "settings/cookies",
         status: "partial",
         layer: "L4",
@@ -1119,7 +1033,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "settings.import",
-        label: "Import",
         path: "settings/import",
         status: "partial",
         layer: "L5",
@@ -1129,7 +1042,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "settings.export",
-        label: "Export",
         path: "settings/export",
         status: "partial",
         layer: "L5",
@@ -1139,7 +1051,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "settings.backup",
-        label: "Backup & restore",
         path: "settings/backup",
         status: "wired",
         layer: "L5",
@@ -1147,7 +1058,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "settings.api",
-        label: "API & webhooks",
         path: "settings/api",
         status: "none",
         layer: "L5",
@@ -1155,7 +1065,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "settings.localization",
-        label: "Localization",
         path: "settings/localization",
         status: "partial",
         layer: "L6",
@@ -1165,7 +1074,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "settings.appearance",
-        label: "Appearance",
         path: "settings/appearance",
         status: "wired",
         layer: "L6",
@@ -1173,7 +1081,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "settings.advanced",
-        label: "Advanced",
         path: "settings/advanced",
         status: "none",
         layer: "L5",
@@ -1185,14 +1092,12 @@ export const IA: IaSection[] = [
   // --------------------------------------------------------------------- help
   {
     key: "help",
-    label: "Help & support",
     path: "help",
     status: "partial",
     layer: "L3",
     children: [
       {
         key: "help.center",
-        label: "Help center",
         path: "help/center",
         status: "none",
         layer: "L3",
@@ -1200,7 +1105,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "help.getting-started",
-        label: "Getting started",
         path: "help/getting-started",
         status: "none",
         layer: "L3",
@@ -1208,7 +1112,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "help.tutorials",
-        label: "Tutorials",
         path: "help/tutorials",
         status: "none",
         layer: "L3",
@@ -1216,7 +1119,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "help.faq",
-        label: "FAQ",
         path: "help/faq",
         status: "none",
         layer: "L3",
@@ -1224,7 +1126,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "help.contact",
-        label: "Contact support",
         path: "help/contact",
         status: "none",
         layer: "L3",
@@ -1232,7 +1133,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "help.status",
-        label: "System status",
         path: "help/status",
         status: "partial",
         layer: "L5",
@@ -1245,7 +1145,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "help.whatsnew",
-        label: "What's new",
         path: "help/whats-new",
         status: "none",
         layer: "L3",
@@ -1257,7 +1156,6 @@ export const IA: IaSection[] = [
   // -------------------------------------------------------------------- legal
   {
     key: "legal",
-    label: "Legal",
     path: "legal",
     status: "partial",
     layer: "L4",
@@ -1267,7 +1165,6 @@ export const IA: IaSection[] = [
     children: [
       {
         key: "legal.tos",
-        label: "Terms of Service",
         path: "legal/terms",
         status: "partial",
         layer: "L4",
@@ -1277,7 +1174,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "legal.privacy",
-        label: "Privacy Policy",
         path: "legal/privacy",
         status: "partial",
         layer: "L4",
@@ -1287,7 +1183,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "legal.cookies",
-        label: "Cookie Policy",
         path: "legal/cookies",
         status: "partial",
         layer: "L4",
@@ -1296,7 +1191,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "legal.dpa",
-        label: "Data Processing Agreement",
         path: "legal/dpa",
         status: "partial",
         layer: "L4",
@@ -1306,7 +1200,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "legal.subprocessors",
-        label: "Subprocessors",
         path: "legal/subprocessors",
         status: "partial",
         layer: "L4",
@@ -1316,7 +1209,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "legal.ai",
-        label: "AI transparency",
         path: "legal/ai-transparency",
         status: "partial",
         layer: "L4",
@@ -1326,7 +1218,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "legal.sla",
-        label: "SLA",
         path: "legal/sla",
         status: "partial",
         layer: "L4",
@@ -1336,7 +1227,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "legal.notices",
-        label: "Legal notices",
         path: "legal/notices",
         status: "partial",
         layer: "L4",
@@ -1346,7 +1236,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "legal.contracts",
-        label: "Customer contracts",
         path: "legal/contracts",
         status: "none",
         layer: "L2",
@@ -1359,14 +1248,12 @@ export const IA: IaSection[] = [
   // --------------------------------------------------------------- onboarding
   {
     key: "onboarding",
-    label: "Onboarding",
     path: "onboarding",
     status: "partial",
     layer: "L3",
     children: [
       {
         key: "onboarding.wizard",
-        label: "Setup wizard",
         path: "onboarding/wizard",
         nav: false,
         status: "wired",
@@ -1387,7 +1274,6 @@ export const IA: IaSection[] = [
   // ------------------------------------------------------------------ desktop
   {
     key: "desktop",
-    label: "Desktop (Windows)",
     path: "desktop",
     status: "partial",
     layer: "L5",
@@ -1400,7 +1286,6 @@ export const IA: IaSection[] = [
     children: [
       {
         key: "desktop.connection",
-        label: "Connection status",
         path: "desktop/connection",
         status: "partial",
         layer: "L5",
@@ -1410,7 +1295,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "desktop.offline",
-        label: "Offline mode & sync",
         path: "desktop/offline",
         status: "none",
         layer: "L5",
@@ -1418,7 +1302,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "desktop.backup",
-        label: "Automatic local backup",
         path: "desktop/backup",
         status: "partial",
         layer: "L5",
@@ -1427,7 +1310,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "desktop.printing",
-        label: "Printing & PDF",
         path: "desktop/printing",
         status: "partial",
         layer: "L5",
@@ -1436,7 +1318,6 @@ export const IA: IaSection[] = [
       },
       {
         key: "desktop.updates",
-        label: "Auto-update & crash reporting",
         path: "desktop/updates",
         status: "none",
         layer: "L5",
@@ -1446,6 +1327,18 @@ export const IA: IaSection[] = [
     ],
   },
 ];
+
+function withLabels(node: IaNodeSpec): IaNode {
+  const { children, ...rest } = node;
+  const labelled: IaNode = { ...rest, label: navLabel("en", node.key) };
+  if (children) labelled.children = children.map(withLabels);
+  return labelled;
+}
+
+export const IA: IaSection[] = SPEC.map((section) => ({
+  ...withLabels(section),
+  children: section.children.map(withLabels),
+}));
 
 // ---------------------------------------------------------------- derivations
 

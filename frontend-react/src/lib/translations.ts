@@ -1533,7 +1533,6 @@ const MESSAGES = {
   "dashboard.welcomeTitle": { en: "No invoices issued yet", fr: "Aucune facture émise pour l'instant", nl: "Nog geen facturen uitgereikt", es: "Aún no hay facturas emitidas" },
   "dashboard.welcomeBody": { en: "Your first one takes a client and one line. The number is assigned the moment you issue it.", fr: "La première demande un client et une ligne. Le numéro est attribué au moment de l'émission.", nl: "Uw eerste heeft een klant en één lijn nodig. Het nummer wordt toegekend bij het uitreiken.", es: "La primera necesita un cliente y una línea. El número se asigna al emitirla." },
   "dashboard.thisYear": { en: "this year", fr: "cette année", nl: "dit jaar", es: "este año" },
-  "dashboard.paidCount": { en: "{n} settled", fr: "{n} réglée(s)", nl: "{n} vereffend", es: "{n} liquidada(s)" },
   "dashboard.outstandingHint": { en: "Issued, not yet paid", fr: "Émis, pas encore encaissé", nl: "Uitgereikt, nog niet betaald", es: "Emitido, aún no cobrado" },
   "dashboard.overdueNone": { en: "Nothing past its due date", fr: "Rien en retard", nl: "Niets over de vervaldag", es: "Nada vencido" },
   "dashboard.overdueSome": { en: "Past due date — worth a reminder", fr: "Échéance dépassée — un rappel s'impose", nl: "Vervaldag voorbij — een herinnering waard", es: "Vencidas — merecen un recordatorio" },
@@ -1654,6 +1653,183 @@ const MESSAGES = {
   "alerts.open.client": { en: "Open client", fr: "Ouvrir le client", nl: "Klant openen", es: "Abrir cliente" },
   "alerts.open.company": { en: "Fix company", fr: "Corriger l'entreprise", nl: "Onderneming verbeteren", es: "Corregir empresa" },
 
+
+  // ---- T-46: the navigation speaks the interface language ---------------
+  //  One message per IA node, keyed `nav.<node key>`. `ia.ts` declares no
+  //  labels any more: `navLabel()` resolves these, the settings children read
+  //  the `settings.label.*` entries above, and `dashboard`/`settings` read
+  //  their section titles. ia.test.ts fails the build for a node with no name.
+  //  French and Dutch drafted without a native read (SOLO_RUN § Boundaries).
+  "nav.overview": { en: "{section} overview", fr: "Aperçu — {section}", nl: "{section} — overzicht", es: "Resumen de {section}" },
+  "palette.sectionGoTo": { en: "Go to", fr: "Aller à", nl: "Ga naar", es: "Ir a" },
+  "palette.sectionCreate": { en: "Create", fr: "Créer", nl: "Aanmaken", es: "Crear" },
+  "nav.dashboard.overview": { en: "Financial overview", fr: "Vue financière", nl: "Financieel overzicht", es: "Resumen financiero" },
+  "nav.dashboard.revenue": { en: "Revenue", fr: "Chiffre d'affaires", nl: "Omzet", es: "Ingresos" },
+  "nav.dashboard.outstanding": { en: "Outstanding invoices", fr: "Factures en attente", nl: "Openstaande facturen", es: "Facturas pendientes" },
+  "nav.dashboard.overdue": { en: "Overdue invoices", fr: "Factures en retard", nl: "Achterstallige facturen", es: "Facturas vencidas" },
+  "nav.dashboard.activity": { en: "Recent activity", fr: "Activité récente", nl: "Recente activiteit", es: "Actividad reciente" },
+  "nav.dashboard.quickactions": { en: "Quick actions", fr: "Actions rapides", nl: "Snelle acties", es: "Acciones rápidas" },
+  "nav.dashboard.alerts": { en: "Alerts & tasks", fr: "Alertes et tâches", nl: "Meldingen en taken", es: "Alertas y tareas" },
+  "nav.sales": { en: "Sales", fr: "Ventes", nl: "Verkoop", es: "Ventas" },
+  "nav.sales.invoices": { en: "Invoices", fr: "Factures", nl: "Facturen", es: "Facturas" },
+  "nav.sales.invoices.draft": { en: "Drafts", fr: "Brouillons", nl: "Concepten", es: "Borradores" },
+  "nav.sales.invoices.issued": { en: "Issued", fr: "Émises", nl: "Uitgegeven", es: "Emitidas" },
+  "nav.sales.invoices.sent": { en: "Sent", fr: "Envoyées", nl: "Verzonden", es: "Enviadas" },
+  "nav.sales.invoices.viewed": { en: "Viewed", fr: "Consultées", nl: "Bekeken", es: "Vistas" },
+  "nav.sales.invoices.paid": { en: "Paid", fr: "Payées", nl: "Betaald", es: "Pagadas" },
+  "nav.sales.invoices.partial": { en: "Partially paid", fr: "Partiellement payées", nl: "Deels betaald", es: "Pagadas parcialmente" },
+  "nav.sales.invoices.overdue": { en: "Overdue", fr: "En retard", nl: "Te laat", es: "Vencidas" },
+  "nav.sales.invoices.voided": { en: "Cancelled", fr: "Annulées", nl: "Geannuleerd", es: "Anuladas" },
+  "nav.sales.invoice.detail": { en: "Invoice detail & lifecycle", fr: "Détail et cycle de vie de la facture", nl: "Factuurdetail en levenscyclus", es: "Detalle y ciclo de vida de la factura" },
+  "nav.sales.creditnotes": { en: "Credit notes", fr: "Notes de crédit", nl: "Creditnota's", es: "Notas de crédito" },
+  "nav.sales.recurring": { en: "Recurring invoices", fr: "Factures récurrentes", nl: "Terugkerende facturen", es: "Facturas recurrentes" },
+  "nav.sales.quotes": { en: "Quotes", fr: "Devis", nl: "Offertes", es: "Presupuestos" },
+  "nav.sales.proforma": { en: "Pro-forma invoices", fr: "Factures pro forma", nl: "Pro-formafacturen", es: "Facturas proforma" },
+  "nav.sales.reminders": { en: "Payment reminders", fr: "Rappels de paiement", nl: "Betalingsherinneringen", es: "Recordatorios de pago" },
+  "nav.customers": { en: "Clients", fr: "Clients", nl: "Klanten", es: "Clientes" },
+  "nav.customers.clients": { en: "Clients", fr: "Clients", nl: "Klanten", es: "Clientes" },
+  "nav.customers.detail": { en: "Client 360", fr: "Client 360", nl: "Klant 360", es: "Cliente 360" },
+  "nav.customers.contacts": { en: "Contacts", fr: "Contacts", nl: "Contactpersonen", es: "Contactos" },
+  "nav.customers.groups": { en: "Client groups", fr: "Groupes de clients", nl: "Klantgroepen", es: "Grupos de clientes" },
+  "nav.customers.history": { en: "Client history", fr: "Historique client", nl: "Klantgeschiedenis", es: "Historial del cliente" },
+  "nav.customers.documents": { en: "Client documents", fr: "Documents client", nl: "Klantdocumenten", es: "Documentos del cliente" },
+  "nav.customers.activity": { en: "Client activity", fr: "Activité client", nl: "Klantactiviteit", es: "Actividad del cliente" },
+  "nav.catalog": { en: "Catalog", fr: "Catalogue", nl: "Catalogus", es: "Catálogo" },
+  "nav.catalog.products": { en: "Products", fr: "Produits", nl: "Producten", es: "Productos" },
+  "nav.catalog.services": { en: "Services", fr: "Services", nl: "Diensten", es: "Servicios" },
+  "nav.catalog.categories": { en: "Categories", fr: "Catégories", nl: "Categorieën", es: "Categorías" },
+  "nav.catalog.pricing": { en: "Pricing", fr: "Tarifs", nl: "Prijzen", es: "Precios" },
+  "nav.catalog.vat": { en: "VAT rates", fr: "Taux de TVA", nl: "Btw-tarieven", es: "Tipos de IVA" },
+  "nav.catalog.templates": { en: "Invoice templates", fr: "Modèles de facture", nl: "Factuursjablonen", es: "Plantillas de factura" },
+  "nav.catalog.archived": { en: "Archived", fr: "Archivés", nl: "Gearchiveerd", es: "Archivados" },
+  "nav.reports": { en: "Reports", fr: "Rapports", nl: "Rapporten", es: "Informes" },
+  "nav.reports.revenue": { en: "Revenue", fr: "Chiffre d'affaires", nl: "Omzet", es: "Ingresos" },
+  "nav.reports.invoices": { en: "Invoices", fr: "Factures", nl: "Facturen", es: "Facturas" },
+  "nav.reports.payments": { en: "Payments", fr: "Paiements", nl: "Betalingen", es: "Pagos" },
+  "nav.reports.outstanding": { en: "Outstanding", fr: "En attente", nl: "Openstaand", es: "Pendientes" },
+  "nav.reports.overdue": { en: "Overdue", fr: "En retard", nl: "Achterstallig", es: "Vencidas" },
+  "nav.reports.vat": { en: "VAT", fr: "TVA", nl: "Btw", es: "IVA" },
+  "nav.reports.clients": { en: "Clients", fr: "Clients", nl: "Klanten", es: "Clientes" },
+  "nav.reports.products": { en: "Products & services", fr: "Produits et services", nl: "Producten en diensten", es: "Productos y servicios" },
+  "nav.reports.export": { en: "Export", fr: "Export", nl: "Export", es: "Exportar" },
+  "nav.company": { en: "Company", fr: "Entreprise", nl: "Onderneming", es: "Empresa" },
+  "nav.company.profile": { en: "Company profile", fr: "Profil de l'entreprise", nl: "Bedrijfsprofiel", es: "Perfil de la empresa" },
+  "nav.company.legal": { en: "Legal information", fr: "Informations légales", nl: "Juridische gegevens", es: "Información legal" },
+  "nav.company.vat": { en: "VAT / BCE information", fr: "Informations TVA / BCE", nl: "Btw- en KBO-gegevens", es: "Información de IVA / BCE" },
+  "nav.company.bank": { en: "Bank accounts", fr: "Comptes bancaires", nl: "Bankrekeningen", es: "Cuentas bancarias" },
+  "nav.company.numbering": { en: "Invoice numbering", fr: "Numérotation des factures", nl: "Factuurnummering", es: "Numeración de facturas" },
+  "nav.company.payment-terms": { en: "Payment conditions", fr: "Conditions de paiement", nl: "Betalingsvoorwaarden", es: "Condiciones de pago" },
+  "nav.company.branding": { en: "Branding", fr: "Identité visuelle", nl: "Huisstijl", es: "Imagen de marca" },
+  "nav.company.defaults": { en: "Invoice defaults", fr: "Valeurs par défaut des factures", nl: "Standaardwaarden voor facturen", es: "Valores por defecto de factura" },
+  "nav.company.documents": { en: "Company documents", fr: "Documents de l'entreprise", nl: "Bedrijfsdocumenten", es: "Documentos de la empresa" },
+  "nav.billing": { en: "Billing", fr: "Abonnement", nl: "Abonnement", es: "Suscripción" },
+  "nav.billing.subscription": { en: "My subscription", fr: "Mon abonnement", nl: "Mijn abonnement", es: "Mi suscripción" },
+  "nav.billing.plan": { en: "Current plan", fr: "Formule actuelle", nl: "Huidig plan", es: "Plan actual" },
+  "nav.billing.usage": { en: "Usage", fr: "Utilisation", nl: "Gebruik", es: "Uso" },
+  "nav.billing.invoices": { en: "Invoices from BillGen", fr: "Factures de BillGen", nl: "Facturen van BillGen", es: "Facturas de BillGen" },
+  "nav.billing.payment-method": { en: "Payment method", fr: "Moyen de paiement", nl: "Betaalmethode", es: "Método de pago" },
+  "nav.billing.history": { en: "Billing history", fr: "Historique de facturation", nl: "Factuurgeschiedenis", es: "Historial de facturación" },
+  "nav.billing.change-plan": { en: "Upgrade / downgrade", fr: "Changer de formule", nl: "Plan wijzigen", es: "Cambiar de plan" },
+  "nav.billing.cancel": { en: "Cancellation", fr: "Résiliation", nl: "Opzegging", es: "Cancelación" },
+  "nav.documents": { en: "Documents", fr: "Documents", nl: "Documenten", es: "Documentos" },
+  "nav.documents.all": { en: "All documents", fr: "Tous les documents", nl: "Alle documenten", es: "Todos los documentos" },
+  "nav.documents.folders": { en: "Folders", fr: "Dossiers", nl: "Mappen", es: "Carpetas" },
+  "nav.documents.invoice-attachments": { en: "Invoice attachments", fr: "Pièces jointes des factures", nl: "Factuurbijlagen", es: "Adjuntos de facturas" },
+  "nav.documents.client": { en: "Client documents", fr: "Documents client", nl: "Klantdocumenten", es: "Documentos del cliente" },
+  "nav.documents.company": { en: "Company documents", fr: "Documents de l'entreprise", nl: "Bedrijfsdocumenten", es: "Documentos de la empresa" },
+  "nav.documents.archived": { en: "Archived", fr: "Archivés", nl: "Gearchiveerd", es: "Archivados" },
+  "nav.documents.trash": { en: "Trash", fr: "Corbeille", nl: "Prullenbak", es: "Papelera" },
+  "nav.explore": { en: "Explore", fr: "Explorer", nl: "Verkennen", es: "Explorar" },
+  "nav.explore.search": { en: "Global search", fr: "Recherche globale", nl: "Algemeen zoeken", es: "Búsqueda global" },
+  "nav.explore.filters": { en: "Advanced filters", fr: "Filtres avancés", nl: "Geavanceerde filters", es: "Filtros avanzados" },
+  "nav.explore.saved": { en: "Saved searches", fr: "Recherches enregistrées", nl: "Opgeslagen zoekopdrachten", es: "Búsquedas guardadas" },
+  "nav.explore.documents": { en: "Document search", fr: "Recherche de documents", nl: "Documenten zoeken", es: "Búsqueda de documentos" },
+  "nav.explore.activity": { en: "Activity search", fr: "Recherche d'activité", nl: "Activiteit zoeken", es: "Búsqueda de actividad" },
+  "nav.activity": { en: "Activity", fr: "Activité", nl: "Activiteit", es: "Actividad" },
+  "nav.activity.notifications": { en: "Notifications", fr: "Notifications", nl: "Meldingen", es: "Notificaciones" },
+  "nav.activity.audit": { en: "Audit log", fr: "Journal d'audit", nl: "Auditlogboek", es: "Registro de auditoría" },
+  "nav.activity.user": { en: "User activity", fr: "Activité des utilisateurs", nl: "Gebruikersactiviteit", es: "Actividad de usuarios" },
+  "nav.activity.security": { en: "Security events", fr: "Événements de sécurité", nl: "Beveiligingsgebeurtenissen", es: "Eventos de seguridad" },
+  "nav.activity.system": { en: "System events", fr: "Événements système", nl: "Systeemgebeurtenissen", es: "Eventos del sistema" },
+  "nav.help": { en: "Help & support", fr: "Aide et support", nl: "Hulp en ondersteuning", es: "Ayuda y soporte" },
+  "nav.help.center": { en: "Help center", fr: "Centre d'aide", nl: "Helpcentrum", es: "Centro de ayuda" },
+  "nav.help.getting-started": { en: "Getting started", fr: "Premiers pas", nl: "Aan de slag", es: "Primeros pasos" },
+  "nav.help.tutorials": { en: "Tutorials", fr: "Tutoriels", nl: "Handleidingen", es: "Tutoriales" },
+  "nav.help.faq": { en: "FAQ", fr: "FAQ", nl: "FAQ", es: "Preguntas frecuentes" },
+  "nav.help.contact": { en: "Contact support", fr: "Contacter le support", nl: "Contact opnemen", es: "Contactar con soporte" },
+  "nav.help.status": { en: "System status", fr: "État du système", nl: "Systeemstatus", es: "Estado del sistema" },
+  "nav.help.whatsnew": { en: "What's new", fr: "Nouveautés", nl: "Wat is nieuw", es: "Novedades" },
+  "nav.legal": { en: "Legal", fr: "Juridique", nl: "Juridisch", es: "Legal" },
+  "nav.legal.tos": { en: "Terms of Service", fr: "Conditions générales", nl: "Gebruiksvoorwaarden", es: "Términos del servicio" },
+  "nav.legal.privacy": { en: "Privacy Policy", fr: "Politique de confidentialité", nl: "Privacybeleid", es: "Política de privacidad" },
+  "nav.legal.cookies": { en: "Cookie Policy", fr: "Politique des cookies", nl: "Cookiebeleid", es: "Política de cookies" },
+  "nav.legal.dpa": { en: "Data Processing Agreement", fr: "Accord de traitement des données", nl: "Verwerkersovereenkomst", es: "Acuerdo de tratamiento de datos" },
+  "nav.legal.subprocessors": { en: "Subprocessors", fr: "Sous-traitants", nl: "Subverwerkers", es: "Subencargados" },
+  "nav.legal.ai": { en: "AI transparency", fr: "Transparence IA", nl: "AI-transparantie", es: "Transparencia de IA" },
+  "nav.legal.sla": { en: "SLA", fr: "SLA", nl: "SLA", es: "SLA" },
+  "nav.legal.notices": { en: "Legal notices", fr: "Mentions légales", nl: "Juridische kennisgevingen", es: "Avisos legales" },
+  "nav.legal.contracts": { en: "Customer contracts", fr: "Contrats clients", nl: "Klantcontracten", es: "Contratos de clientes" },
+  "nav.onboarding": { en: "Onboarding", fr: "Prise en main", nl: "Onboarding", es: "Incorporación" },
+  "nav.onboarding.wizard": { en: "Setup wizard", fr: "Assistant de configuration", nl: "Installatiewizard", es: "Asistente de configuración" },
+  "nav.desktop": { en: "Desktop (Windows)", fr: "Bureau (Windows)", nl: "Desktop (Windows)", es: "Escritorio (Windows)" },
+  "nav.desktop.connection": { en: "Connection status", fr: "État de la connexion", nl: "Verbindingsstatus", es: "Estado de la conexión" },
+  "nav.desktop.offline": { en: "Offline mode & sync", fr: "Mode hors ligne et synchronisation", nl: "Offline modus en synchronisatie", es: "Modo sin conexión y sincronización" },
+  "nav.desktop.backup": { en: "Automatic local backup", fr: "Sauvegarde locale automatique", nl: "Automatische lokale back-up", es: "Copia de seguridad local automática" },
+  "nav.desktop.printing": { en: "Printing & PDF", fr: "Impression et PDF", nl: "Afdrukken en PDF", es: "Impresión y PDF" },
+  "nav.desktop.updates": { en: "Auto-update & crash reporting", fr: "Mises à jour automatiques et rapports d'incident", nl: "Automatische updates en crashrapporten", es: "Actualizaciones automáticas e informes de fallos" },
+
+  //  Invoice status, as a badge reads it. Draft, voided, overdue and the paid
+  //  stamp already had words (history.*); `statusLabel()` maps to those, and
+  //  only the two missing ones are new — one copy per word.
+  "status.issued": { en: "Issued", fr: "Émise", nl: "Uitgegeven", es: "Emitida" },
+  "status.partially_paid": { en: "Partially paid", fr: "Partiellement payée", nl: "Deels betaald", es: "Pagada parcialmente" },
+
+  //  The audit log's record kinds (`target_type` on the wire). An unknown one
+  //  humanises rather than printing `document_template`.
+  "entity.invoice": { en: "Invoice", fr: "Facture", nl: "Factuur", es: "Factura" },
+  "entity.client": { en: "Client", fr: "Client", nl: "Klant", es: "Cliente" },
+  "entity.product": { en: "Product", fr: "Produit", nl: "Product", es: "Producto" },
+  "entity.company": { en: "Company", fr: "Entreprise", nl: "Onderneming", es: "Empresa" },
+  "entity.organization": { en: "Organization", fr: "Organisation", nl: "Organisatie", es: "Organización" },
+  "entity.user": { en: "User", fr: "Utilisateur", nl: "Gebruiker", es: "Usuario" },
+  "entity.membership": { en: "Membership", fr: "Adhésion", nl: "Lidmaatschap", es: "Membresía" },
+  "entity.quote": { en: "Quote", fr: "Devis", nl: "Offerte", es: "Presupuesto" },
+  "entity.credit_note": { en: "Credit note", fr: "Note de crédit", nl: "Creditnota", es: "Nota de crédito" },
+  "entity.expense": { en: "Expense", fr: "Dépense", nl: "Uitgave", es: "Gasto" },
+  "entity.document": { en: "Document", fr: "Document", nl: "Document", es: "Documento" },
+  "entity.document_template": { en: "Document template", fr: "Modèle de document", nl: "Documentsjabloon", es: "Plantilla de documento" },
+  "entity.legal_document": { en: "Legal text", fr: "Texte légal", nl: "Juridische tekst", es: "Texto legal" },
+  "entity.consent": { en: "Consent", fr: "Consentement", nl: "Toestemming", es: "Consentimiento" },
+  "entity.backup": { en: "Backup", fr: "Sauvegarde", nl: "Back-up", es: "Copia de seguridad" },
+  "entity.import": { en: "Import", fr: "Import", nl: "Import", es: "Importación" },
+
+  //  Company identifiers, named the way the settings form names them, for the
+  //  alerts card that used to print `vat_number, iban, address_line1`.
+  "field.name": { en: "Name", fr: "Nom", nl: "Naam", es: "Nombre" },
+  "field.legal_name": { en: "Legal name", fr: "Dénomination sociale", nl: "Officiële naam", es: "Razón social" },
+  "field.vat_number": { en: "VAT number", fr: "Numéro de TVA", nl: "Btw-nummer", es: "Número de IVA" },
+  "field.registration_number": { en: "Company number", fr: "Numéro d'entreprise", nl: "Ondernemingsnummer", es: "Número de empresa" },
+  "field.email": { en: "E-mail", fr: "E-mail", nl: "E-mail", es: "Correo electrónico" },
+  "field.phone": { en: "Phone", fr: "Téléphone", nl: "Telefoon", es: "Teléfono" },
+  "field.address_line1": { en: "Address", fr: "Adresse", nl: "Adres", es: "Dirección" },
+  "field.address_line2": { en: "Address (line 2)", fr: "Adresse (ligne 2)", nl: "Adres (regel 2)", es: "Dirección (línea 2)" },
+  "field.postal_code": { en: "Postal code", fr: "Code postal", nl: "Postcode", es: "Código postal" },
+  "field.city": { en: "City", fr: "Ville", nl: "Gemeente", es: "Ciudad" },
+  "field.country_code": { en: "Country", fr: "Pays", nl: "Land", es: "País" },
+  "field.iban": { en: "IBAN", fr: "IBAN", nl: "IBAN", es: "IBAN" },
+  "field.bic": { en: "BIC", fr: "BIC", nl: "BIC", es: "BIC" },
+
+  //  Counted phrases carry both plural forms (`tn()`): "2 crítico" and
+  //  "0 liquidada(s)" were what one string per key produced.
+  "alerts.count.critical.one": { en: "1 critical", fr: "1 critique", nl: "1 kritiek", es: "1 crítico" },
+  "alerts.count.critical.other": { en: "{n} critical", fr: "{n} critiques", nl: "{n} kritiek", es: "{n} críticos" },
+  "alerts.count.warning.one": { en: "1 warning", fr: "1 à surveiller", nl: "1 aandachtspunt", es: "1 aviso" },
+  "alerts.count.warning.other": { en: "{n} warnings", fr: "{n} à surveiller", nl: "{n} aandachtspunten", es: "{n} avisos" },
+  "alerts.count.info.one": { en: "1 note", fr: "1 note", nl: "1 opmerking", es: "1 nota" },
+  "alerts.count.info.other": { en: "{n} notes", fr: "{n} notes", nl: "{n} opmerkingen", es: "{n} notas" },
+  "dashboard.paidCount.one": { en: "1 settled", fr: "1 réglée", nl: "1 vereffend", es: "1 liquidada" },
+  "dashboard.paidCount.other": { en: "{n} settled", fr: "{n} réglées", nl: "{n} vereffend", es: "{n} liquidadas" },
+
 } as const;
 
 export type MessageKey = keyof typeof MESSAGES;
@@ -1681,6 +1857,58 @@ export function tf(lang: Lang, key: MessageKey, values: Record<string, string | 
   return t(lang, key).replace(/\{(\w+)\}/g, (match, name: string) =>
     name in values ? String(values[name]) : match,
   );
+}
+
+/** A counted phrase in the form its number needs.
+ *
+ *  Every one of the four languages inflects something after a count, and
+ *  three of them differently: `key.one` is the phrase for exactly one,
+ *  `key.other` takes `{n}` for everything else, zero included. */
+export function tn(lang: Lang, key: string, n: number): string {
+  const form = `${key}.${n === 1 ? "one" : "other"}`;
+  return hasMessage(form) ? tf(lang, form, { n }) : `${n} ${key}`;
+}
+
+/** The section titles two nodes share with a screen of their own — one word,
+ *  one place. */
+const SECTION_TITLE: Record<string, MessageKey> = {
+  dashboard: "dashboard.title",
+  settings: "settings.title",
+};
+
+/** A navigation node's name in the interface language.
+ *
+ *  `ia.ts` declares no labels (T-46): a node's name is a message keyed by its
+ *  key, so a new node cannot ship an untranslated name — `ia.test.ts` fails
+ *  if one has none. Settings children read the `settings.label.*` entries the
+ *  rail already used. The key itself is the fallback: visible, and ugly on
+ *  purpose. */
+export function navLabel(lang: Lang, key: string): string {
+  const title = SECTION_TITLE[key];
+  if (title) return t(lang, title);
+  if (key.startsWith("settings.")) {
+    const settings = `settings.label.${key.slice("settings.".length)}`;
+    if (hasMessage(settings)) return t(lang, settings);
+  }
+  const nav = `nav.${key}`;
+  return hasMessage(nav) ? t(lang, nav) : key;
+}
+
+/** An invoice status as a badge reads it. The draft placeholder, the voided
+ *  and paid stamps and the overdue word already existed under history.*; the
+ *  two the badges alone needed are status.*. */
+const STATUS_KEY: Record<string, MessageKey> = {
+  draft: "history.draft",
+  issued: "status.issued",
+  paid: "history.paidStamp",
+  partially_paid: "status.partially_paid",
+  overdue: "history.overdue",
+  voided: "history.voided",
+};
+
+export function statusLabel(lang: Lang, status: string): string {
+  const key = STATUS_KEY[status];
+  return key ? t(lang, key) : status;
 }
 
 /** Translate a backend Peppol-gate message key (e.g. "errSupplierVat").
@@ -1717,6 +1945,16 @@ function tWire(lang: Lang, prefix: string, value: string): string {
   if (key in MESSAGES) return t(lang, key as MessageKey);
   const words = value.replace(/_/g, " ");
   return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+/** Translate an audit-log record kind ("document_template"). */
+export function tEntity(lang: Lang, targetType: string): string {
+  return tWire(lang, "entity", targetType);
+}
+
+/** Translate a company field name the server reports ("vat_number"). */
+export function tField(lang: Lang, field: string): string {
+  return tWire(lang, "field", field);
 }
 
 /** Translate a subscription status ("past_due"). */

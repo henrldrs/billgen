@@ -30,7 +30,12 @@ export {
   LANGS,
   hasMessage,
   isLang,
+  navLabel,
+  statusLabel,
+  tEntity,
+  tField,
   tf,
+  tn,
 } from "./lib/translations";
 export { formatDate, formatMoney, monthName } from "./lib/format";
 export { documentFilename, saveBlob } from "./lib/download";

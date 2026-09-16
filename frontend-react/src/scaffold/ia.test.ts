@@ -3,8 +3,12 @@
  *  silently shadows a route; a duplicate key breaks React reconciliation in
  *  the nav and the palette. */
 
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { expect, test } from "vitest";
 
+import { LANGS, navLabel } from "../lib/translations";
 import {
   IA,
   MVP_SURFACE,
@@ -17,6 +21,27 @@ import {
   navNodes,
   routableNodes,
 } from "./ia";
+
+test("ia.ts declares no labels — a node's name is a message keyed by its key", () => {
+  // T-46. The nav, the breadcrumbs and the tabs read `navLabel(lang, key)`;
+  // a literal label here would be English on every screen and invisible to
+  // the translation table. The English `label` on each node is derived.
+  const source = readFileSync(resolve(__dirname, "ia.ts"), "utf8");
+  expect(source.match(/^\s*label:\s*"/gm)).toBeNull();
+});
+
+test("every node has a name in every language", () => {
+  // The fallback is the key itself — visible and ugly on purpose, and this is
+  // where it is caught rather than on a beta tester's screen.
+  const nameless = flattenIa().flatMap((node) =>
+    LANGS.filter(({ value }) => navLabel(value, node.key) === node.key).map(
+      ({ value }) => `${node.key} (${value})`,
+    ),
+  );
+  expect(nameless).toEqual([]);
+  // And the derived English label is the one the ledger always had.
+  expect(flattenIa().find((node) => node.key === "sales.invoices")?.label).toBe("Invoices");
+});
 
 test("every node key is unique", () => {
   const keys = flattenIa().map((node) => node.key);

@@ -21,7 +21,7 @@ import { Badge, Button, Card, Skeleton } from "@henrioutai/ui";
 
 import { useAlerts } from "../hooks/queries";
 import { formatMoney } from "../lib/format";
-import { hasMessage, t, tf, type Lang, type MessageKey } from "../lib/translations";
+import { hasMessage, t, tField, tf, tn, type Lang, type MessageKey } from "../lib/translations";
 import type { AlertResponse } from "../types";
 
 export interface AlertsPanelProps {
@@ -75,8 +75,11 @@ export function alertSentence(lang: Lang, alert: AlertResponse, currency: string
       const invalid = list(ctx.invalid_fields);
       const peppol = list(ctx.missing_for_peppol);
       const parts: string[] = [];
-      if (invalid.length) parts.push(tf(lang, "alerts.company.incomplete", { fields: invalid.join(", ") }));
-      if (peppol.length) parts.push(tf(lang, "alerts.company.peppol", { fields: peppol.join(", ") }));
+      // Field names, not column names: "VAT number, IBAN", never
+      // "vat_number, iban" (T-46, from Henri's ES screenshot).
+      const words = (fields: string[]) => fields.map((field) => tField(lang, field)).join(", ");
+      if (invalid.length) parts.push(tf(lang, "alerts.company.incomplete", { fields: words(invalid) }));
+      if (peppol.length) parts.push(tf(lang, "alerts.company.peppol", { fields: words(peppol) }));
       return parts.join(" · ");
     }
     default:
@@ -112,7 +115,7 @@ export function AlertsPanel({
           <div className="bg-alerts__counts">
             {SEVERITY_ORDER.filter((severity) => (data.counts_by_severity[severity] ?? 0) > 0).map((severity) => (
               <Badge key={severity} tone={SEVERITY_TONE[severity]}>
-                {data.counts_by_severity[severity]} {t(lang, `alerts.severity.${severity}` as const)}
+                {tn(lang, `alerts.count.${severity}`, data.counts_by_severity[severity] ?? 0)}
               </Badge>
             ))}
           </div>
