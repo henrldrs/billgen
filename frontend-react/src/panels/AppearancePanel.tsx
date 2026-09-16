@@ -12,7 +12,7 @@
 
 import { Card, PageHeader, Segmented, Switch, ThemeSwitcher } from "@henrioutai/ui";
 
-import { useAppearance, type Density, type TextSize } from "../lib/preferences";
+import { useAppearance, type ContainerWidth, type Density, type TextSize } from "../lib/preferences";
 import { useTheme } from "../lib/theme";
 import { t, type Lang } from "../lib/translations";
 
@@ -75,6 +75,17 @@ export function AppearancePanel({ lang = "en", title }: AppearancePanelProps) {
               { value: "small", label: t(lang, "appearance.small") },
               { value: "medium", label: t(lang, "appearance.medium") },
               { value: "large", label: t(lang, "appearance.large") },
+            ]}
+          />
+        </Pref>
+        <Pref label={t(lang, "appearance.width")} hint={t(lang, "appearance.widthHint")}>
+          <Segmented<ContainerWidth>
+            ariaLabel={t(lang, "appearance.width")}
+            value={appearance.containerWidth}
+            onChange={(containerWidth) => update({ containerWidth })}
+            options={[
+              { value: "fluid", label: t(lang, "appearance.fluid") },
+              { value: "boxed", label: t(lang, "appearance.boxed") },
             ]}
           />
         </Pref>

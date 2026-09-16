@@ -24,6 +24,7 @@
 
 import { useTheme } from "../lib/theme";
 import { markTourDone, tourPending } from "../lib/tour";
+import { readingMeasure } from "./contentWidth";
 import { tourLabels, tourSteps } from "./tourSteps";
 
 import {
@@ -472,7 +473,9 @@ export function ProductShell({ surface, exposure = "all", account }: PlatformAda
 
   return (
     <Shell
-      width="wide"
+      // Lists, reports and the dashboard run to the edges (fluid by default,
+      // T-50); forms and record pages keep the reading measure either way.
+      width={readingMeasure(pathname) ? "default" : "wide"}
       nav={
         <TopNav
           variant="floating"

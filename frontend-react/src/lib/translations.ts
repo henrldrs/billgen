@@ -1591,6 +1591,12 @@ const MESSAGES = {
   "appearance.small": { en: "Small", fr: "Petit", nl: "Klein", es: "Pequeño" },
   "appearance.medium": { en: "Medium", fr: "Moyen", nl: "Normaal", es: "Mediano" },
   "appearance.large": { en: "Large", fr: "Grand", nl: "Groot", es: "Grande" },
+  // T-50 — container width. From the appearance spec's "Container Width:
+  //  Fluid vs Fixed/Boxed". French and Dutch drafted without a native read.
+  "appearance.width": { en: "Content width", fr: "Largeur du contenu", nl: "Inhoudsbreedte", es: "Ancho del contenido" },
+  "appearance.widthHint": { en: "Fluid lets lists and reports use the whole screen. Boxed keeps them in a centred column. Forms keep a reading width either way.", fr: "Fluide laisse les listes et les rapports occuper tout l'écran. Encadré les garde dans une colonne centrée. Les formulaires gardent une largeur de lecture dans les deux cas.", nl: "Vloeiend laat lijsten en rapporten het hele scherm gebruiken. Begrensd houdt ze in een gecentreerde kolom. Formulieren houden hoe dan ook een leesbreedte.", es: "Fluido deja que las listas y los informes usen toda la pantalla. Fijo los mantiene en una columna centrada. Los formularios conservan un ancho de lectura en ambos casos." },
+  "appearance.fluid": { en: "Fluid", fr: "Fluide", nl: "Vloeiend", es: "Fluido" },
+  "appearance.boxed": { en: "Boxed", fr: "Encadré", nl: "Begrensd", es: "Fijo" },
   "appearance.motion": { en: "Reduce motion", fr: "Réduire les animations", nl: "Minder beweging", es: "Reducir el movimiento" },
   "appearance.motionHint": { en: "No animations or transitions anywhere.", fr: "Aucune animation ni transition, nulle part.", nl: "Nergens animaties of overgangen.", es: "Sin animaciones ni transiciones en ningún sitio." },
   "appearance.translucency": { en: "Translucent surfaces", fr: "Surfaces translucides", nl: "Doorschijnende vlakken", es: "Superficies translúcidas" },

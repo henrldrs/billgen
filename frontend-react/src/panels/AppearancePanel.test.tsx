@@ -11,7 +11,7 @@ import { AppearancePanel } from "./AppearancePanel";
 
 afterEach(() => {
   localStorage.clear();
-  for (const name of ["data-bg-density", "data-bg-text", "data-bg-motion", "data-bg-glass", "data-bg-theme"]) {
+  for (const name of ["data-bg-density", "data-bg-text", "data-bg-width", "data-bg-motion", "data-bg-glass", "data-bg-theme"]) {
     document.documentElement.removeAttribute(name);
   }
 });
@@ -25,6 +25,9 @@ test("density, text size, motion and translucency write the root attributes and 
   await userEvent.click(screen.getByRole("radio", { name: "Large" }));
   expect(document.documentElement.getAttribute("data-bg-text")).toBe("large");
 
+  await userEvent.click(screen.getByRole("radio", { name: "Boxed" }));
+  expect(document.documentElement.getAttribute("data-bg-width")).toBe("boxed");
+
   await userEvent.click(screen.getByRole("switch", { name: "Reduce motion" }));
   expect(document.documentElement.getAttribute("data-bg-motion")).toBe("reduced");
 
@@ -34,6 +37,7 @@ test("density, text size, motion and translucency write the root attributes and 
   expect(storedAppearance()).toEqual({
     density: "compact",
     textSize: "large",
+    containerWidth: "boxed",
     reducedMotion: true,
     translucency: false,
   });
@@ -42,6 +46,8 @@ test("density, text size, motion and translucency write the root attributes and 
   //  a fresh install has nothing "set".
   await userEvent.click(screen.getByRole("radio", { name: "Comfortable" }));
   expect(document.documentElement.hasAttribute("data-bg-density")).toBe(false);
+  await userEvent.click(screen.getByRole("radio", { name: "Fluid" }));
+  expect(document.documentElement.hasAttribute("data-bg-width")).toBe(false);
 });
 
 test("the theme control offers the system option and a fresh install follows it", async () => {

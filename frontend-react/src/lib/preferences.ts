@@ -17,10 +17,16 @@ import { useCallback, useState } from "react";
 
 export type Density = "compact" | "comfortable" | "spacious";
 export type TextSize = "small" | "medium" | "large";
+/** `fluid` lets a list, a report or the dashboard run to the top bar's inner
+ *  edges; `boxed` keeps the 1400px column. Forms and record pages keep a
+ *  reading measure whichever is chosen (T-50, from Henri's 1920px screenshot:
+ *  the bar ran edge to edge over a column that stopped 260px short of it). */
+export type ContainerWidth = "fluid" | "boxed";
 
 export interface Appearance {
   density: Density;
   textSize: TextSize;
+  containerWidth: ContainerWidth;
   /** Off = animations and transitions run. On = they do not. */
   reducedMotion: boolean;
   /** Off = plain surfaces, no backdrop blur; for a weak GPU or a preference. */
@@ -30,6 +36,7 @@ export interface Appearance {
 export const DEFAULT_APPEARANCE: Appearance = {
   density: "comfortable",
   textSize: "medium",
+  containerWidth: "fluid",
   reducedMotion: false,
   translucency: true,
 };
@@ -37,6 +44,7 @@ export const DEFAULT_APPEARANCE: Appearance = {
 const STORAGE_KEY = "billgen.appearance";
 const DENSITIES: Density[] = ["compact", "comfortable", "spacious"];
 const SIZES: TextSize[] = ["small", "medium", "large"];
+const WIDTHS: ContainerWidth[] = ["fluid", "boxed"];
 
 export function storedAppearance(): Appearance {
   try {
@@ -46,6 +54,9 @@ export function storedAppearance(): Appearance {
     return {
       density: DENSITIES.includes(parsed.density as Density) ? (parsed.density as Density) : DEFAULT_APPEARANCE.density,
       textSize: SIZES.includes(parsed.textSize as TextSize) ? (parsed.textSize as TextSize) : DEFAULT_APPEARANCE.textSize,
+      containerWidth: WIDTHS.includes(parsed.containerWidth as ContainerWidth)
+        ? (parsed.containerWidth as ContainerWidth)
+        : DEFAULT_APPEARANCE.containerWidth,
       reducedMotion: typeof parsed.reducedMotion === "boolean" ? parsed.reducedMotion : DEFAULT_APPEARANCE.reducedMotion,
       translucency: typeof parsed.translucency === "boolean" ? parsed.translucency : DEFAULT_APPEARANCE.translucency,
     };
@@ -65,6 +76,7 @@ export function applyAppearance(appearance: Appearance): void {
   };
   set("data-bg-density", appearance.density === "comfortable" ? null : appearance.density);
   set("data-bg-text", appearance.textSize === "medium" ? null : appearance.textSize);
+  set("data-bg-width", appearance.containerWidth === "fluid" ? null : appearance.containerWidth);
   set("data-bg-motion", appearance.reducedMotion ? "reduced" : null);
   set("data-bg-glass", appearance.translucency ? null : "off");
 }

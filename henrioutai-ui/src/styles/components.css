@@ -2392,6 +2392,23 @@ textarea.bg-field__input {
 .bg-app-shell__content--full {
   max-width: none;
 }
+/* T-50. `wide` is the lists', the reports' and the dashboard's column, and
+   fluid is its default: on a 1920px screen the floating bar ran edge to edge
+   over a column that stopped at 1400px, leaving 260px of nothing either side,
+   and Henri asked whether his laptop was the cause. It was this cap. The
+   inline padding is the bar's own inset (1rem margin + 1.5rem floating row
+   padding), so the content's edges sit under the bar's inner edges. `boxed`
+   (`data-bg-width` on <html>, lib/preferences.ts) keeps the 1400px column.
+   Forms and record pages take the `default` measure either way — the shell
+   picks the class per route (shell/contentWidth.ts). */
+:root:not([data-bg-width="boxed"]) .bg-app-shell__content--wide {
+  max-width: none;
+}
+@media (min-width: 641px) {
+  :root:not([data-bg-width="boxed"]) .bg-app-shell__content--wide {
+    padding-inline: 2.5rem;
+  }
+}
 
 /* ==== slice 10: P1 nav & data ============================================
  * Breadcrumbs, Tabs, Pagination, KpiCard (premium upgrade of the flat base

@@ -38,24 +38,6 @@ wish, and the queue is not for wishes.
 same day: "all rest you start building". They sit above the launch tickets
 because each is a defect a first beta user meets on day one.*
 
-### T-50 · The content uses the screen the top bar already spans
-    branch    Design system / Frontend   status  open
-    needs     —
-    why       Henri's desktop screenshot, 2026-09-15, 1920px: the floating top
-              bar runs edge to edge but `.bg-app-shell__content--wide` stops at
-              1400px, leaving ~260px empty either side. He asked whether his
-              laptop causes it; it is this cap. His appearance spec already asks
-              for "Container width: Fluid vs Boxed", and SOLO_RUN parked item 10
-              says lists and reports want full width while forms want a measure.
-    do        `lib/preferences.ts` gains `containerWidth: fluid | boxed`
-              (default fluid), applied as a `data-bg-width` attribute like
-              density; fluid lets list, report and dashboard routes run to the
-              top bar's inner edges, forms and record pages keep a reading
-              measure either way; Settings → Appearance offers the choice.
-    done when At 1920px, fluid: the dashboard's content edges sit within the top
-              bar's padding (browser-measured); boxed: 1400px as today; the
-              preference survives a reload (test in `preferences.test`).
-
 ### T-48 · Navigation is a choice — two styles per platform
     branch    Design system / Henri   status  open
     needs     Henri's review of the prototypes in the UX review artifact
@@ -1092,6 +1074,26 @@ because each is a defect a first beta user meets on day one.*
 ---
 
 ## Done
+
+### T-50 · The content uses the screen the top bar already spans  ·  *feat: the content uses the screen the top bar already spans*
+`lib/preferences.ts` gained `containerWidth: fluid | boxed`, fluid by default,
+written as `data-bg-width` on `<html>` the way density is (a default sets no
+attribute). Under fluid the `wide` column — lists, reports, the dashboard —
+drops its 1400px cap and takes the bar's own inset as its inline padding, so
+its edges sit under the bar's inner edges; boxed keeps the column as it was.
+Forms and record pages take the `default` reading measure whichever is
+chosen: `shell/contentWidth.ts` names the prefixes (the builder, an invoice
+or client record, company, settings, billing, onboarding, legal, help) and
+`ProductShell` picks the class per route — SOLO_RUN's parked item 10, one
+class with two variants. Settings → Appearance offers Fluid / Boxed with a
+hint that says which screens it moves. **Browser-measured at 1920px** on the
+desktop pair: fluid, the dashboard's content edges at x=40 and 1865 against
+the bar's inner content edges at 41 and 1864 (its outer edge is at 17);
+boxed, the column is 1400px, from 253 to 1653. The preference survives a
+reload (`lib/preferences.test.ts`), an unknown stored value falls back to
+fluid, and the panel writes and clears the attribute
+(`AppearancePanel.test.tsx`); `contentWidth.test.ts` pins which routes keep
+the measure. 251 frontend tests.
 
 ### T-47 · The invoice sheet leads with the action its status calls for  ·  *feat: the invoice sheet leads with the action its status calls for*
 The sheet's chrome carries the status beside the title — `DocumentSheet` grew
